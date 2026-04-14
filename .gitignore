@@ -1,0 +1,23 @@
+# Source material (large PDFs, possible copyright restrictions)
+books/*
+!books/.gitkeep
+
+# Working notes meant to stay local
+.legacy/
+.worktrees/
+.private-journal/
+.claude/
+
+# OS / editor cruft
+.DS_Store
+Thumbs.db
+*.swp
+.idea/
+.vscode/
+
+# Node tooling (in case)
+node_modules/
+
+# Triage / inspiration scratch
+inspo/
+triage/
