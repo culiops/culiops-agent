@@ -6,6 +6,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Added
+
+- `service-discovery`: extensible per-tool detector files under `skills/service-discovery/tool-detectors/`. Each detector is one markdown file describing file signatures, stack boundary, parameter sources, resource extraction, and typical cross-stack dependencies for one tool. Adding support for a new tool is now a data-only change.
+- `service-discovery`: detectors for [ecspresso](https://github.com/kayac/ecspresso) and [lambroll](https://github.com/fujiwara/lambroll).
+- `service-discovery`: "Detect unclassified deploy artifacts" sub-step in Step 1 — scans for deploy-shaped files unattributed to any detector and stops to ask the operator (`tool name` / `teach me` / `ignore`). Prevents silent skipping of unrecognized deploy descriptors.
+- `tests/fixtures/service-discovery/`: five new fixtures — `repo-ecspresso-only`, `repo-lambroll-only`, `repo-tf-plus-ecspresso`, `repo-unknown-tool`, `repo-sops-only` — each with a recorded dry-run.
+
+### Changed
+
+- `service-discovery` SKILL.md: replaced the inline IaC detection table with a loader instruction that reads `tool-detectors/*.md`. Step 2's resource extraction, Step 3's dependency derivation, and Step 5's Assumptions section now consult the matched detectors.
+
 ## [0.1.0] — 2026-04-15
 
 First public release. Ships the plugin scaffold and the first skill, `service-discovery`.
