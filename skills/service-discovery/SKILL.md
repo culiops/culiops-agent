@@ -282,7 +282,7 @@ If the team has postmortems for past incidents in this category, reference them 
 
 Only after Steps 1-4 are all confirmed.
 
-**Output path.** `docs/service-discovery/<service>[-<instance>].md`. If a single instance is cataloged, suffix with the instance name (e.g., `-prod-eu`). If the catalog covers all instances of the same template (rare and only if the human confirms it's safe to combine), no suffix.
+**Output path.** `.culiops/service-discovery/<service>[-<instance>].md`. All output documents produced by any `culiops` skill live under the `.culiops/` directory at the repo root — this keeps plugin-generated artifacts separate from hand-written docs and makes them easy to find, regenerate, or gitignore as a group. If a single instance is cataloged, suffix the filename with the instance name (e.g., `-prod-eu`). If the catalog covers all instances of the same template (rare and only if the human confirms it's safe to combine), no suffix.
 
 **Stamp the catalog.** Top of the doc:
 

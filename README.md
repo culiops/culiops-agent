@@ -29,6 +29,10 @@ Each skill has its own `SKILL.md` under `skills/<name>/`:
 
 - [`skills/service-discovery/SKILL.md`](skills/service-discovery/SKILL.md)
 
+## Output Convention
+
+All documents produced by any `culiops` skill are written under **`.culiops/<skill-name>/`** at your repo root. For example, `service-discovery` writes catalogs to `.culiops/service-discovery/<service>[-<instance>].md`. This keeps plugin-generated artifacts separate from hand-written docs, makes them easy to find or regenerate, and lets you gitignore the whole `.culiops/` tree as a group if you prefer not to commit generated content.
+
 ## Design Philosophy
 
 - **Iron Laws and gated workflows.** Every skill has explicit STOP gates where Claude must wait for human confirmation. No silent assumptions.
