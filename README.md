@@ -20,7 +20,7 @@ Planned (not yet shipped):
 Install via Claude Code's plugin system. From any Claude Code session:
 
 ```
-/plugin marketplace add chiplonton/culiops
+/plugin marketplace add chiplonton/culiops-agent
 /plugin install culiops@culiops
 ```
 
@@ -30,7 +30,6 @@ To update later:
 
 ```
 /plugin marketplace update culiops
-/plugin install culiops@culiops
 ```
 
 To uninstall:
