@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [0.2.0] — 2026-04-15
+
 ### Added
 
 - `service-discovery`: extensible per-tool detector files under `skills/service-discovery/tool-detectors/`. Each detector is one markdown file describing file signatures, stack boundary, parameter sources, resource extraction, and typical cross-stack dependencies for one tool. Adding support for a new tool is now a data-only change.
