@@ -264,7 +264,7 @@ These categories replace the legacy alarm-name vocabulary ("5xx spike", "queue b
 2. **First branch — is this an upstream issue?** List the critical-path dependencies (from Step 3). For each: how to check it (named query / dashboard / metric — generic; the per-cloud commands live in `examples/`). If any upstream is unhealthy, the runbook for *this* service ends and the upstream's runbook takes over.
 3. **Second branch — narrow on identifying dimensions.** Use the dimensions captured in Step 2: is this affecting all tenants or one? all regions or one? all shards or one? all deployments or only the latest? Narrowing on dimensions is the single highest-leverage debugging move. Each narrowing answer rules hypotheses in or out.
 4. **Third branch — four-signals walk-through.** For each critical-path resource, in dependency order: check latency, traffic, errors, saturation against the envelope from Step 2. The envelope comparisons drive the next branch ("latency p99 above envelope on resource X → check X's saturation → check X's upstream"). If a resource has no declared envelope, the branch is "compare against last 7-day baseline."
-5. **Tools branch — what to look at, where.** For each check, name the dashboard / log query / CLI. The skill writes this generically here ("check ALB target group health"); the per-cloud `examples/<cloud>.md` provides exact CLIs. If the operator needs a permission or a secret to run a check, name it ("requires read access to <secret reference>").
+5. **Tools branch — what to look at, where.** For each check, name the dashboard / log query / CLI. The skill writes this generically here ("check ALB target group health"); the per-cloud `examples/<cloud>.md` provides exact CLIs. If the operator needs a permission or a secret to run a check, name it ("requires read access to <secret reference>"). Every prescribed CLI is **read-only by default** — the required least-privilege role lives in the matching `examples/<cloud>.md` preamble. If a step would change state (drain, restart, failover, invalidate, scale, rollback, DNS change, config change), label the step **`MUTATION — requires explicit approval`**, state the blast radius, state the elevated permission required, and instruct the operator to pause and confirm with the team before running. The runbook must never chain commands such that one command's output triggers the next without a human review pause.
 6. **What this is NOT.** A line per false-friend: the symptoms that *look* like this category but are actually a different one, with a pointer to the right runbook.
 
 **Step 4c: Validate.** For each runbook tree, ask the human:
@@ -296,15 +296,16 @@ Only after Steps 1-4 are all confirmed.
 **Sections, in order:**
 
 1. `## Overview` — service name, instance, tool(s), short purpose (from human or repo README).
-2. `## Resource Inventory` — the table from Step 2, grouped by category.
-3. `## Naming Patterns` — detected patterns, with the placeholder taxonomy used.
-4. `## Identifying Dimensions` — the cross-cutting dimensions (tenant, region, shard, etc.) operators can pivot by.
-5. `## Dependency Graph` — from Step 3. Critical-path marked.
-6. `## Signal Envelopes` — per critical-path resource, the four-signals envelope and where it's measured.
-7. `## Investigation Runbooks` — one per user-visible symptom from Step 4. Trees rendered as nested lists or DOT blocks.
-8. `## Stack-Specific Tooling` — which `examples/<cloud>.md` file applies, with a 1-line note for any third-party tool the catalog references that doesn't live in `examples/` (the operator will need to ask the team).
-9. `## Assumptions and Caveats` — **mandatory**. Drift status (catalog matches code at commit X; running infra may differ — recommend drift check). Unresolved parameters (any that were skipped). Steps requiring secrets or elevated permissions. Upstream stacks marked "unknown." Anything else the operator should not be surprised by.
-10. `## Open Questions` — anything the human said "I don't know, ask me later."
+2. `## Prerequisites` — what the on-caller must have set up before using this catalog during an incident. Lists: (a) the required CLI tool(s) and minimum versions (from the matching `examples/<cloud>.md` preamble); (b) how to authenticate; (c) the **least-privilege IAM role / scope** needed to run the read-only commands the runbooks reference; (d) any runbook step in this catalog that involves a **mutation** (drain, restart, failover, invalidate, scale, rollback, DNS change, config change) — listed with the elevated permission required and the team-approval expectation.
+3. `## Resource Inventory` — the table from Step 2, grouped by category.
+4. `## Naming Patterns` — detected patterns, with the placeholder taxonomy used.
+5. `## Identifying Dimensions` — the cross-cutting dimensions (tenant, region, shard, etc.) operators can pivot by.
+6. `## Dependency Graph` — from Step 3. Critical-path marked.
+7. `## Signal Envelopes` — per critical-path resource, the four-signals envelope and where it's measured.
+8. `## Investigation Runbooks` — one per user-visible symptom from Step 4. Trees rendered as nested lists or DOT blocks.
+9. `## Stack-Specific Tooling` — which `examples/<cloud>.md` file applies, with a 1-line note for any third-party tool the catalog references that doesn't live in `examples/` (the operator will need to ask the team).
+10. `## Assumptions and Caveats` — **mandatory**. Drift status (catalog matches code at commit X; running infra may differ — recommend drift check). Unresolved parameters (any that were skipped). Steps requiring secrets or elevated permissions. Upstream stacks marked "unknown." Anything else the operator should not be surprised by.
+11. `## Open Questions` — anything the human said "I don't know, ask me later."
 
 **Placeholder taxonomy.** Use only the placeholders the repo actually uses, detected in Step 2. Common ones:
 

@@ -4,6 +4,24 @@ Reference command templates for the `service-discovery` skill when the discovere
 
 Replace placeholders (`{cluster}`, `{service}`, `{function}`, `{T-1h}`, `{now}`, etc.) with the values resolved in Step 2. Only the placeholders the repo actually uses should appear in the rendered runbook — see the SKILL.md section on placeholder taxonomy.
 
+## Prerequisites
+
+**CLI tool:** AWS CLI v2 (`aws --version` ≥ 2.x). v1 still works for most calls but is deprecated.
+
+**Authentication:** any of — a named profile (`aws configure`, selected via `--profile` or `AWS_PROFILE`), AWS SSO (`aws sso login`), IAM role on EC2 / ECS / EKS / Lambda, or temporary credentials from STS. Before running anything, confirm the active identity: `aws sts get-caller-identity`.
+
+**Least-privilege IAM — every command below is read-only.** Grant the operator either:
+
+- **Baseline (simplest):** the AWS-managed `ReadOnlyAccess` policy. Broad but covers everything here.
+- **Tighter (recommended):** a scoped custom policy allowing only `Describe*`, `List*`, `Get*` on the resource types in the catalog, plus `cloudwatch:GetMetricStatistics`, `cloudwatch:GetMetricData`, `logs:FilterLogEvents`, `logs:DescribeLogGroups`, `logs:GetLogEvents`. Grant `s3:GetObject` + `s3:ListBucket` **only on the specific buckets** the runbooks actually reference (e.g., CloudFront / ALB log buckets) — S3 access should never be account-wide.
+- **Never use `PowerUserAccess`, `AdministratorAccess`, or any `*:*` policy** for read-only investigation. If a runbook step needs write access, that step is a mutation and is labeled as such (see below).
+
+**Mutations are flagged inline.** Most commands in this file are read-only. A few change state (e.g., CloudFront invalidation, SQS `receive-message` with `VisibilityTimeout=0`, any `*:put-*` / `*:update-*` / `*:delete-*`). Mutations are labeled explicitly where they appear. **Never run a mutation without explicit team approval and an elevated (non-read-only) role.**
+
+**Cost awareness:** CloudWatch `GetMetric*` and `logs:FilterLogEvents` incur small per-call and per-GB-scanned charges. S3 access log downloads can be gigabytes per day and incur data-transfer charges — prefer CloudWatch metrics first and confirm before pulling logs.
+
+---
+
 ## How to use this file
 
 Each section below maps one AWS resource category to: a status/config check, plus the four golden signals (latency / traffic / errors / saturation) where applicable. Use these as the *concrete CLI realization* of the investigation-tree steps in the runbook — the runbook itself stays generic.

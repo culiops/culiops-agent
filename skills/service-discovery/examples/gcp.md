@@ -4,6 +4,27 @@ Reference command templates for the `service-discovery` skill when the discovere
 
 Replace placeholders (`{service}`, `{cluster}`, `{function}`, etc.) with the values resolved in Step 2.
 
+## Prerequisites
+
+**CLI tools:** Google Cloud SDK (`gcloud --version` ≥ 450) plus `kubectl` for the GKE sections. For BigQuery queries, `bq` ships with the Cloud SDK.
+
+**Authentication:** any of — `gcloud auth login` (user credentials), `gcloud auth activate-service-account --key-file=<path>` (service-account key file), `GOOGLE_APPLICATION_CREDENTIALS` env var pointing at a key file (Application Default Credentials), or the attached service account when running on GCE / GKE / Cloud Run / Cloud Functions. Confirm active context before running anything: `gcloud config list` and `gcloud auth list`.
+
+**Least-privilege IAM — every command below is read-only.** Grant the operator either:
+
+- **Baseline (simplest):** `roles/viewer` at the project scope. Broad read-only but covers everything here.
+- **Tighter (recommended):** combine baseline monitoring and logging viewer roles with per-service viewer roles — add only those the catalog actually references:
+  - `roles/monitoring.viewer` — required for all `gcloud monitoring time-series list` calls.
+  - `roles/logging.viewer` — required for all `gcloud logging read` calls.
+  - `roles/run.viewer`, `roles/container.viewer` (GKE), `roles/compute.viewer` (GCE / Cloud Load Balancing), `roles/cloudsql.viewer`, `roles/redis.viewer`, `roles/cloudfunctions.viewer`, `roles/pubsub.viewer`, `roles/cloudtasks.viewer`, `roles/dataflow.viewer`, `roles/bigquery.dataViewer`, `roles/storage.objectViewer` (scoped to specific buckets).
+- **Never use `roles/editor`, `roles/owner`, or any `*Admin` role** for read-only investigation.
+
+**Mutations are flagged inline.** Most commands here are read-only. A few change state (e.g., `gcloud compute url-maps invalidate-cdn-cache` for CDN invalidation, anything in the form `gcloud * create|update|delete|restart|drain`). Mutations are labeled explicitly where they appear. **Never run a mutation without explicit team approval and an elevated role.**
+
+**Cost awareness:** Cloud Monitoring `time-series list` and Cloud Logging `read` incur small per-call and per-GB-scanned charges. Prefer narrow time windows and log filters. BigQuery `query` charges apply to the `bq` calls.
+
+---
+
 ## How to use this file
 
 Each section maps one GCP resource category to status/config + the four golden signals (latency / traffic / errors / saturation) where applicable. These are the CLI realization of the investigation-tree steps in the generic runbook.

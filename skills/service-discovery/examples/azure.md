@@ -4,6 +4,28 @@ Reference command templates for the `service-discovery` skill when the discovere
 
 Replace placeholders (`{app}`, `{rg}`, `{sub}`, etc.) with the values resolved in Step 2. Note that most `az` commands require either `--resource-group` explicitly or a default set via `az configure`.
 
+## Prerequisites
+
+**CLI tool:** Azure CLI (`az --version` ≥ 2.50). Some KQL / Application Insights queries require extensions — install on demand with `az extension add --name application-insights` or `az extension add --name log-analytics`.
+
+**Authentication:** `az login` (interactive user credentials), `az login --service-principal -u <app-id> -p <secret> --tenant <tenant-id>` (service principal), or a managed identity when running on Azure compute (`az login --identity`). Confirm active context before running anything: `az account show`. Subscription scope is session-wide — switch with `az account set --subscription <sub>` before working on a different subscription.
+
+**Least-privilege role — every command below is read-only.** Assign the operator:
+
+- **Baseline (simplest):** the `Reader` built-in role scoped to the resource group(s) the catalog covers. Covers ARM metadata, config, and most Monitor metrics.
+- **Additional roles commonly needed:**
+  - `Monitoring Reader` — for `az monitor metrics list` and `az monitor activity-log list` across resources outside the baseline RG scope.
+  - `Log Analytics Reader` — on each workspace the runbooks query with KQL via `az monitor log-analytics query`.
+  - `Application Insights Reader` (built-in role ID `ae349356-3a1b-4a5e-921d-050484c6347e`) — for `az monitor app-insights query`.
+  - For Key Vault metadata (not secret values): `Reader` on the vault plus the data-plane `Key Vault Reader` role.
+- **Never use `Contributor`, `Owner`, or any `*Contributor` role** for read-only investigation.
+
+**Mutations are flagged inline.** Most commands are read-only. State-changing calls (any `az * create|update|delete|restart|failover|scale`) are labeled explicitly. **Never run a mutation without explicit team approval and an elevated role.**
+
+**Cost awareness:** Log Analytics (`az monitor log-analytics query`) is billed per GB scanned — use narrow `TimeGenerated` filters. Application Insights queries follow the same model.
+
+---
+
 ## How to use this file
 
 Each section maps one Azure resource category to status/config + four golden signals (latency / traffic / errors / saturation). For Azure metrics, the `az monitor metrics list` command is the workhorse; for logs, Log Analytics (KQL) via `az monitor log-analytics query` is the equivalent of CloudWatch Logs Insights.
