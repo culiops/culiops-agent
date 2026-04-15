@@ -328,10 +328,17 @@ If approved: commit with message `Add service discovery doc for <service> (<inst
 
 ## Stack-Specific Examples
 
-For exact CLI command templates by cloud / IaC tool, see:
+For exact CLI command templates, see:
 
 - AWS: [`examples/aws.md`](examples/aws.md)
 - GCP: [`examples/gcp.md`](examples/gcp.md)
 - Azure: [`examples/azure.md`](examples/azure.md)
+- Kubernetes & Helm (any host): [`examples/kubernetes.md`](examples/kubernetes.md)
 
-The skill detects the cloud from the IaC resource types in Step 1 and points the operator at the matching example file when the runbook references a check that needs a real command. If the detected cloud doesn't have an examples file yet, the runbook reverts to generic descriptions ("check the load balancer's target health") and notes the gap.
+**Selection rule.** Cloud and Kubernetes are orthogonal axes — pick one or both:
+
+- Cloud IaC detected (`aws_*`, `google_*`, `azurerm_*`, CloudFormation, Bicep, or equivalent) → use the matching cloud file.
+- Helm charts, raw Kubernetes manifests, or Kustomize overlays detected → additionally use `examples/kubernetes.md`. This applies whether the cluster runs on-prem (kubeadm, Rancher/RKE, OpenShift, k3s, bare-metal), on a managed cloud service (EKS / GKE / AKS), or both. The cloud file covers the control-plane / node-pool / cloud-integration side; the Kubernetes file covers everything inside the cluster.
+- Neither cloud nor Kubernetes signals → revert to generic descriptions ("check the load balancer's target health") and note the gap.
+
+Each examples file has its own `## Prerequisites` section (CLI version, authentication, least-privilege role, mutation flagging, cost awareness). The runbook's `## Prerequisites` section in the written output (Step 5, section 2) must list prerequisites for **every** examples file the runbook references.
