@@ -1,0 +1,7 @@
+# Fictional tool — does not exist; only here to trigger the escape hatch.
+service: api
+cluster: my-cluster-prod
+region: us-east-1
+deploy:
+  strategy: rolling
+  service_definition: services/api.json

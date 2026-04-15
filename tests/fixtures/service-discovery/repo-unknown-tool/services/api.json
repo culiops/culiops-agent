@@ -1,0 +1,9 @@
+{
+  "service": "api",
+  "image": "registry.example.com/api:2026.04.1",
+  "replicas": 4,
+  "ports": [8080],
+  "env": {
+    "DB_URL": "postgres://api:redacted@db.example.internal:5432/api"
+  }
+}
