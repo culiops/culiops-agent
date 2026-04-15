@@ -1,0 +1,24 @@
+{
+  "serviceName": "paymentapi-svc-${MUST_ENV:ENV}",
+  "desiredCount": "${MUST_ENV:DESIRED_COUNT}",
+  "launchType": "FARGATE",
+  "platformVersion": "1.4.0",
+  "loadBalancers": [
+    {
+      "targetGroupArn": "{{ tfstate `aws_lb_target_group.paymentapi.arn` }}",
+      "containerName": "app",
+      "containerPort": 8080
+    }
+  ],
+  "networkConfiguration": {
+    "awsvpcConfiguration": {
+      "subnets": ["{{ tfstate `aws_subnet.private_a.id` }}", "{{ tfstate `aws_subnet.private_b.id` }}"],
+      "securityGroups": ["{{ tfstate `aws_security_group.paymentapi.id` }}"],
+      "assignPublicIp": "DISABLED"
+    }
+  },
+  "deploymentConfiguration": {
+    "maximumPercent": 200,
+    "minimumHealthyPercent": 100
+  }
+}

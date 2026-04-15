@@ -1,0 +1,33 @@
+{
+  "family": "paymentapi-task-${MUST_ENV:ENV}",
+  "taskRoleArn": "{{ tfstate `aws_iam_role.paymentapi_task.arn` }}",
+  "executionRoleArn": "{{ tfstate `aws_iam_role.paymentapi_exec.arn` }}",
+  "networkMode": "awsvpc",
+  "requiresCompatibilities": ["FARGATE"],
+  "cpu": "${MUST_ENV:TASK_CPU}",
+  "memory": "${MUST_ENV:TASK_MEMORY}",
+  "containerDefinitions": [
+    {
+      "name": "app",
+      "image": "{{ tfstate `aws_ecr_repository.paymentapi.repository_url` }}:${MUST_ENV:IMAGE_TAG}",
+      "essential": true,
+      "portMappings": [{"containerPort": 8080, "protocol": "tcp"}],
+      "secrets": [
+        {"name": "DB_PASSWORD", "valueFrom": "arn:aws:secretsmanager:us-east-1:111111111111:secret:paymentapi/${MUST_ENV:ENV}/db-password"},
+        {"name": "STRIPE_API_KEY", "valueFrom": "arn:aws:secretsmanager:us-east-1:111111111111:secret:paymentapi/${MUST_ENV:ENV}/stripe-api-key"}
+      ],
+      "environment": [
+        {"name": "ENV", "value": "${MUST_ENV:ENV}"},
+        {"name": "REGION", "value": "us-east-1"}
+      ],
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/paymentapi-${MUST_ENV:ENV}",
+          "awslogs-region": "us-east-1",
+          "awslogs-stream-prefix": "ecs"
+        }
+      }
+    }
+  ]
+}
