@@ -39,6 +39,22 @@ If you need logs in S3 (CloudFront access logs, ALB access logs, VPC flow logs),
 - Task details: `aws ecs describe-tasks --cluster {cluster} --tasks {task-arn}`
 - Task CPU / memory: `aws cloudwatch get-metric-statistics --namespace AWS/ECS --metric-name CPUUtilization --dimensions Name=ClusterName,Value={cluster} Name=ServiceName,Value={service} --start-time {T-1h} --end-time {now} --period 300 --statistics Average`
 
+## EKS (Elastic Kubernetes Service)
+
+Requires `kubectl` in addition to the AWS CLI. Catalog compilation needs `eks:Describe*` and `eks:List*`; in-cluster reads additionally need Kubernetes RBAC permission (e.g., a `ClusterRole` like `view` bound to the caller's IAM principal via the aws-auth ConfigMap or an EKS access entry).
+
+- Cluster status: `aws eks describe-cluster --name {cluster}`
+- Node groups: `aws eks list-nodegroups --cluster-name {cluster}` / `aws eks describe-nodegroup --cluster-name {cluster} --nodegroup-name {nodegroup}`
+- Fargate profiles (if used): `aws eks list-fargate-profiles --cluster-name {cluster}`
+- Addons: `aws eks list-addons --cluster-name {cluster}`
+- Credentials for kubectl: `aws eks update-kubeconfig --name {cluster} --region {region}`
+- Workloads (generic kubectl): `kubectl get deploy -n {namespace}` / `kubectl describe deploy/{deploy} -n {namespace}`
+- Pod status: `kubectl get pods -n {namespace} -l app={service}`
+- Pod CPU / memory: `kubectl top pods -n {namespace}` (requires metrics-server)
+- Cluster events (recent): `kubectl get events -n {namespace} --sort-by='.lastTimestamp' | tail -30`
+- Control-plane logs (if enabled): CloudWatch Logs group `/aws/eks/{cluster}/cluster` — `aws logs tail /aws/eks/{cluster}/cluster --since 15m`
+- Container Insights (if enabled): CloudWatch namespace `ContainerInsights`, metrics like `pod_cpu_utilization`, `pod_memory_utilization`, `node_cpu_utilization`
+
 ## ALB / Application Load Balancer
 
 - Target health: `aws elbv2 describe-target-health --target-group-arn {tg-arn}`
