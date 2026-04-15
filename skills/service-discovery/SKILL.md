@@ -319,7 +319,7 @@ Repo-specific placeholders (e.g., `{shard}`, `{tenant}`, `{region}`, `{role}`, `
 
 **Present and STOP.**
 
-> "Discovery doc written to `docs/service-discovery/<filename>.md`. Please review the file. Should I commit it?"
+> "Discovery doc written to `.culiops/service-discovery/<filename>.md`. Please review the file. Should I commit it?"
 
 If approved: commit with message `Add service discovery doc for <service> (<instance>)`. Do NOT commit until approved.
 
