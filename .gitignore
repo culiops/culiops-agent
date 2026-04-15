@@ -3,6 +3,7 @@ books/*
 !books/.gitkeep
 
 # Working notes meant to stay local
+/docs/
 .legacy/
 .worktrees/
 .private-journal/
