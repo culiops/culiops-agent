@@ -167,6 +167,8 @@ If a parameter cannot be resolved (file not present, registry not reachable, val
 
 **Scan the in-scope stack(s).** Use file types from Step 1's tool detection. Read every IaC file in the stack(s). Read documentation files (`README.md`, `docs/**/*.md`) inside the stack(s) to pick up author-supplied context. Skip secrets-shaped files unconditionally.
 
+**Use detector resource-extraction rules.** For each tool matched in Step 1, consult that tool's `## Resource extraction` section in its detector file. Apply the mappings to convert the tool's config keys into inventory rows. The `Type` field uses both the resolved cloud-resource equivalent (e.g., `aws_ecs_service`) AND the detector-prefixed raw type (e.g., `ecspresso/service`) so operators can see the deploy tool's role.
+
 **Extract per resource:**
 
 | Field | Meaning |
@@ -215,6 +217,7 @@ Wait for confirmation. Apply corrections and re-present until confirmed.
 - Bicep: `existing` resource declarations (same- or cross-scope, e.g. `scope: resourceGroup(...)` / `scope: subscription()`), `module` imports of other `*.bicep` files, role-assignment `principalId` references, Key Vault secret URI references (`@Microsoft.KeyVault(...)`).
 - Helm: `requirements.yaml` / `Chart.yaml` `dependencies`, ConfigMap/Secret refs, ServiceAccount + RBAC bindings.
 - Kustomize: bases, `replacements`, `patchesStrategicMerge` targets.
+- For tools matched via a detector, also consult the detector's `## Typical cross-stack dependencies` section as a hint for what kinds of upstream references to look for. The actual graph is still derived from references in code — the hints help you avoid missing common patterns.
 
 For each dependency, record: the upstream resource (or stack), the linkage (output name, exported value, registry key), and whether the linkage is hard-coded or parameterized.
 
@@ -309,7 +312,7 @@ Only after Steps 1-4 are all confirmed.
 7. `## Signal Envelopes` — per critical-path resource, the four-signals envelope and where it's measured.
 8. `## Investigation Runbooks` — one per user-visible symptom from Step 4. Trees rendered as nested lists or DOT blocks.
 9. `## Stack-Specific Tooling` — which `examples/<cloud>.md` file applies, with a 1-line note for any third-party tool the catalog references that doesn't live in `examples/` (the operator will need to ask the team).
-10. `## Assumptions and Caveats` — **mandatory**. Drift status (catalog matches code at commit X; running infra may differ — recommend drift check). Unresolved parameters (any that were skipped). Steps requiring secrets or elevated permissions. Upstream stacks marked "unknown." Anything else the operator should not be surprised by.
+10. `## Assumptions and Caveats` — **mandatory**. Drift status (catalog matches code at commit X; running infra may differ — recommend drift check). Unresolved parameters (any that were skipped). Steps requiring secrets or elevated permissions. Upstream stacks marked "unknown." Anything else the operator should not be surprised by. **Mandatory line if the escape hatch fired:** if any "teach me" or "ignore" answer was used in Step 1's "Detect unclassified deploy artifacts" sub-step, add the line: *"Tool `<X>` was not pre-known to the skill; the [stack boundary / parameter resolution / resource mapping] for this tool came from operator input during this scan and is not encoded in any detector file. Recommend contributing `tool-detectors/<X>.md`."*
 11. `## Open Questions` — anything the human said "I don't know, ask me later."
 
 **Placeholder taxonomy.** Use only the placeholders the repo actually uses, detected in Step 2. Common ones:
