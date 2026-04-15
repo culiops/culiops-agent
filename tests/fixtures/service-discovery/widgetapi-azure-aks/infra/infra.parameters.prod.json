@@ -1,0 +1,24 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "environment":         { "value": "prod" },
+    "location":            { "value": "westeurope" },
+    "vnetAddressPrefix":   { "value": "10.40.0.0/16" },
+    "aksSubnetPrefix":     { "value": "10.40.1.0/24" },
+    "dataSubnetPrefix":    { "value": "10.40.2.0/24" },
+
+    "pgSkuName":              { "value": "Standard_D4ds_v5" },
+    "pgSkuTier":              { "value": "GeneralPurpose" },
+    "pgStorageSizeGB":        { "value": 512 },
+    "pgHighAvailability":     { "value": "ZoneRedundant" },
+    "pgBackupRetentionDays":  { "value": 14 },
+    "pgCreateReadReplica":    { "value": true },
+
+    "redisSkuName":  { "value": "Premium" },
+    "redisFamily":   { "value": "P" },
+    "redisCapacity": { "value": 1 },
+
+    "serviceBusSku": { "value": "Premium" }
+  }
+}

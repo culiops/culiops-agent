@@ -1,0 +1,19 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "environment":        { "value": "prod" },
+    "location":           { "value": "westeurope" },
+    "infraResourceGroup": { "value": "widgetapi-prod-infra-rg" },
+
+    "k8sVersion":    { "value": "1.29" },
+    "nodeVmSize":    { "value": "Standard_D4s_v5" },
+    "nodeMinCount":  { "value": 3 },
+    "nodeMaxCount":  { "value": 12 },
+
+    "workloadNamespace":      { "value": "widgetapi" },
+    "workloadServiceAccount": { "value": "widgetapi" },
+
+    "afdSkuName": { "value": "Premium_AzureFrontDoor" }
+  }
+}

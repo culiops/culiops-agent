@@ -1,0 +1,19 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "environment":        { "value": "staging" },
+    "location":           { "value": "westeurope" },
+    "infraResourceGroup": { "value": "widgetapi-staging-infra-rg" },
+
+    "k8sVersion":    { "value": "1.29" },
+    "nodeVmSize":    { "value": "Standard_B2s" },
+    "nodeMinCount":  { "value": 2 },
+    "nodeMaxCount":  { "value": 4 },
+
+    "workloadNamespace":      { "value": "widgetapi" },
+    "workloadServiceAccount": { "value": "widgetapi" },
+
+    "afdSkuName": { "value": "Standard_AzureFrontDoor" }
+  }
+}

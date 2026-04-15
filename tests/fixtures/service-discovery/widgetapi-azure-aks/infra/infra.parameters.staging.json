@@ -1,0 +1,24 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "environment":         { "value": "staging" },
+    "location":            { "value": "westeurope" },
+    "vnetAddressPrefix":   { "value": "10.50.0.0/16" },
+    "aksSubnetPrefix":     { "value": "10.50.1.0/24" },
+    "dataSubnetPrefix":    { "value": "10.50.2.0/24" },
+
+    "pgSkuName":              { "value": "Standard_B2s" },
+    "pgSkuTier":              { "value": "Burstable" },
+    "pgStorageSizeGB":        { "value": 128 },
+    "pgHighAvailability":     { "value": "Disabled" },
+    "pgBackupRetentionDays":  { "value": 7 },
+    "pgCreateReadReplica":    { "value": false },
+
+    "redisSkuName":  { "value": "Standard" },
+    "redisFamily":   { "value": "C" },
+    "redisCapacity": { "value": 1 },
+
+    "serviceBusSku": { "value": "Standard" }
+  }
+}

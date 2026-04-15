@@ -1,0 +1,48 @@
+image:
+  tag: "2026.04.1-rc3"
+
+serviceAccount:
+  annotations:
+    azure.workload.identity/client-id: "66666666-7777-8888-9999-aaaaaaaaaaaa"
+    azure.workload.identity/tenant-id: "00000000-aaaa-bbbb-cccc-dddddddddddd"
+
+web:
+  replicaCount: 2
+  autoscaling:
+    minReplicas: 2
+    maxReplicas: 4
+    targetCPUUtilizationPercentage: 70
+
+worker:
+  replicaCount: 1
+
+ingress:
+  hosts:
+    - host: api.staging.widgetapi.example.com
+      paths:
+        - path: /
+          pathType: Prefix
+
+env:
+  LOG_LEVEL: debug
+  HTTP_PORT: "8080"
+  PG_HOST_PRIMARY: widgetapi-staging-pg.postgres.database.azure.com
+  PG_HOST_REPLICA: ""    # no replica in staging
+  PG_NAME: widgetapi
+  PG_USER: widgetapi
+  PG_SECRET_KV_URI: https://widgetapi-staging-kv.vault.azure.net/secrets/pg-admin-password/
+  REDIS_HOST: widgetapi-staging-cache.redis.cache.windows.net
+  REDIS_SSL_PORT: "6380"
+  UPLOADS_ACCOUNT: widgetapistaginguploads
+  UPLOADS_CONTAINER: uploads
+  SERVICE_BUS_NAMESPACE: widgetapi-staging-sb.servicebus.windows.net
+  SERVICE_BUS_QUEUE: async
+  AZURE_REGION: westeurope
+
+datadog:
+  datadog:
+    clusterName: widgetapi-staging
+    tags:
+      - "env:staging"
+      - "service:widgetapi"
+      - "cloud:azure"

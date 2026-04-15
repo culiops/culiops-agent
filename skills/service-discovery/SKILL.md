@@ -118,6 +118,7 @@ A repo can use more than one. Record everything detected.
 - Terraform: each directory containing a root module (`provider` block + `terraform { backend ... }` or `terraform { required_providers ... }` at the top, no parent module calling it). Instances of a root module are typically multiplied by per-env `*.tfvars` files (commonly `envs/<env>.tfvars` or `terraform.<env>.tfvars`) passed via `-var-file`, by Terraform workspaces, or by Terragrunt environments.
 - CloudFormation/SAM: each `template.yaml` / `template.json` is a stack.
 - Pulumi: each `Pulumi.yaml` is a project; each `Pulumi.<stack>.yaml` is one instance of it.
+- Bicep: each top-level `*.bicep` file deployed at a defined scope (resource group, subscription, management group, or tenant) is a stack. Instances are multiplied by per-env `*.parameters.<env>.json` (ARM parameter files) or `*.bicepparam` files passed via `az deployment <scope> create -p`.
 - Helm: each `Chart.yaml` is a chart; each per-environment `values-<env>.yaml` (or each deployed release) is one instance. The base `values.yaml` is the template's defaults, not an instance.
 - Kustomize: each directory containing a `kustomization.yaml` (overlay) is an instance.
 
@@ -134,6 +135,7 @@ Do NOT guess. Multi-instance repos are the norm; the wrong instance produces a w
 - Terraform: `*.tfvars` files, `TF_VAR_*` env vars, workspace name, remote backend state.
 - CloudFormation: stack `Parameters` block, `--parameter-overrides`, exports from other stacks.
 - Pulumi: `Pulumi.<stack>.yaml` config + ESC environments + secrets store.
+- Bicep: `*.parameters.<env>.json` (ARM parameter files), `.bicepparam` files, inline `az deployment ... -p key=value` overrides, and Key Vault secret URI references (`@Microsoft.KeyVault(SecretUri=...)`).
 - Helm: `values.yaml` + `values-<env>.yaml` + `--set` overrides.
 - Kustomize: overlay's patches + ConfigMap/Secret generators.
 
@@ -208,6 +210,7 @@ Wait for confirmation. Apply corrections and re-present until confirmed.
 - Terraform: `depends_on`, references between resources, `data` lookups across providers, `terraform_remote_state` lookups, module `source` references.
 - CloudFormation: `DependsOn`, `Ref`/`Fn::GetAtt` references, cross-stack `Fn::ImportValue` / `Outputs.Export`.
 - Pulumi: explicit `dependsOn`, resource references in code, `StackReference`.
+- Bicep: `existing` resource declarations (same- or cross-scope, e.g. `scope: resourceGroup(...)` / `scope: subscription()`), `module` imports of other `*.bicep` files, role-assignment `principalId` references, Key Vault secret URI references (`@Microsoft.KeyVault(...)`).
 - Helm: `requirements.yaml` / `Chart.yaml` `dependencies`, ConfigMap/Secret refs, ServiceAccount + RBAC bindings.
 - Kustomize: bases, `replacements`, `patchesStrategicMerge` targets.
 

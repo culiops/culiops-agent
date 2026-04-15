@@ -1,0 +1,51 @@
+image:
+  tag: "2026.04.1"
+
+serviceAccount:
+  annotations:
+    # From platform Bicep output `workloadIdentityClientId`.
+    azure.workload.identity/client-id: "11111111-2222-3333-4444-555555555555"
+    # Tenant ID for the subscription (required for Workload Identity).
+    azure.workload.identity/tenant-id: "00000000-aaaa-bbbb-cccc-dddddddddddd"
+
+web:
+  replicaCount: 4
+  autoscaling:
+    minReplicas: 4
+    maxReplicas: 20
+    targetCPUUtilizationPercentage: 65
+
+worker:
+  replicaCount: 3
+
+ingress:
+  hosts:
+    - host: api.widgetapi.example.com
+      paths:
+        - path: /
+          pathType: Prefix
+
+env:
+  LOG_LEVEL: info
+  HTTP_PORT: "8080"
+  # Postgres / Redis / Blob / Service Bus endpoints — from infra Bicep outputs.
+  PG_HOST_PRIMARY: widgetapi-prod-pg.postgres.database.azure.com
+  PG_HOST_REPLICA: widgetapi-prod-pg-ro.postgres.database.azure.com
+  PG_NAME: widgetapi
+  PG_USER: widgetapi
+  PG_SECRET_KV_URI: https://widgetapi-prod-kv.vault.azure.net/secrets/pg-admin-password/
+  REDIS_HOST: widgetapi-prod-cache.redis.cache.windows.net
+  REDIS_SSL_PORT: "6380"
+  UPLOADS_ACCOUNT: widgetapiproduploads
+  UPLOADS_CONTAINER: uploads
+  SERVICE_BUS_NAMESPACE: widgetapi-prod-sb.servicebus.windows.net
+  SERVICE_BUS_QUEUE: async
+  AZURE_REGION: westeurope
+
+datadog:
+  datadog:
+    clusterName: widgetapi-prod
+    tags:
+      - "env:prod"
+      - "service:widgetapi"
+      - "cloud:azure"
