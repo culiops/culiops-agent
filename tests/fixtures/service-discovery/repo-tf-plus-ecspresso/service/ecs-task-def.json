@@ -1,0 +1,17 @@
+{
+  "family": "orderapi-task-${MUST_ENV:ENV}",
+  "taskRoleArn": "{{ tfstate `output.task_role_arn` }}",
+  "executionRoleArn": "{{ tfstate `output.exec_role_arn` }}",
+  "networkMode": "awsvpc",
+  "requiresCompatibilities": ["FARGATE"],
+  "cpu": "1024",
+  "memory": "2048",
+  "containerDefinitions": [
+    {
+      "name": "app",
+      "image": "{{ tfstate `output.ecr_repo_url` }}:${MUST_ENV:IMAGE_TAG}",
+      "essential": true,
+      "portMappings": [{"containerPort": 8080}]
+    }
+  ]
+}

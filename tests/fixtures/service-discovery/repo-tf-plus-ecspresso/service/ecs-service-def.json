@@ -1,0 +1,19 @@
+{
+  "serviceName": "orderapi-svc-${MUST_ENV:ENV}",
+  "desiredCount": "${MUST_ENV:DESIRED_COUNT}",
+  "launchType": "FARGATE",
+  "loadBalancers": [
+    {
+      "targetGroupArn": "{{ tfstate `output.target_group_arn` }}",
+      "containerName": "app",
+      "containerPort": 8080
+    }
+  ],
+  "networkConfiguration": {
+    "awsvpcConfiguration": {
+      "subnets": "{{ tfstate `output.task_subnets` }}",
+      "securityGroups": ["{{ tfstate `output.task_sg_id` }}"],
+      "assignPublicIp": "DISABLED"
+    }
+  }
+}

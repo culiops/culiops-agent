@@ -1,0 +1,9 @@
+region: us-east-1
+cluster: '{{ tfstate `output.cluster_name` }}'
+service_definition: ecs-service-def.json
+task_definition: ecs-task-def.json
+
+plugins:
+  - name: tfstate
+    config:
+      url: s3://orderapi-tfstate/platform/terraform.tfstate
