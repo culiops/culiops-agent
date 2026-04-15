@@ -98,20 +98,9 @@ digraph discovery {
 
 **Inputs.** A repo path and a service name. If either is missing, ask. Detect a service name from the current working directory if the user said "discover this" without naming one.
 
-**Detect the IaC tool(s) in the repo.** Use file signatures:
+**Detect the IaC tool(s) in the repo.** At the start of Step 1, load every file under `tool-detectors/*.md`. Each detector's `## File signatures` section defines what files signal that tool. Match the repo's files against every loaded detector. Record every tool that matches — a repo can use more than one. The currently-shipped detectors are listed in [`tool-detectors/README.md`](tool-detectors/README.md).
 
-| Signal (any file matching) | Tool |
-|----------------------------|------|
-| `*.tf`, `*.tf.json`, `terraform.tfvars*`, `.terraform.lock.hcl`, `terragrunt.hcl` | Terraform / Terragrunt |
-| `Pulumi.yaml`, `Pulumi.*.yaml`, `__main__.py` + `pulumi` import, `index.ts` + `@pulumi/*` | Pulumi |
-| `*.yaml`/`*.yml` with top-level `AWSTemplateFormatVersion` or `Resources:`, `samconfig.toml`, `template.yaml` | CloudFormation / SAM |
-| `*.bicep`, `bicepconfig.json` | Bicep |
-| `Chart.yaml`, `templates/*.yaml`, `values*.yaml` | Helm |
-| `kustomization.yaml`, `kustomization.yml` | Kustomize |
-| `*.jsonnet`, `*.libsonnet` | Jsonnet (often a Terraform/k8s pre-processor — note both) |
-| `playbook.yml`/`playbook.yaml` with Ansible plays, `roles/`, `inventory*` | Ansible |
-
-A repo can use more than one. Record everything detected.
+For each matched detector, the rest of Step 1 (stack boundary detection) and Steps 2–3 (parameter resolution, resource extraction, dependency derivation) consult the corresponding sections of that detector file (`## Stack boundary`, `## Parameter sources`, `## Resource extraction`, `## Typical cross-stack dependencies`). If a detector omits a section, that dimension is unknown for the matched tool — surface the gap and ask the human.
 
 **Detect the stack layout.** A "stack" is the deploy unit:
 
