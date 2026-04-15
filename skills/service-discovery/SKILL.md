@@ -115,10 +115,10 @@ A repo can use more than one. Record everything detected.
 
 **Detect the stack layout.** A "stack" is the deploy unit:
 
-- Terraform: each directory containing a root module (`provider` block + `terraform { backend ... }` or `terraform { required_providers ... }` at the top, no parent module calling it). Workspaces and Terragrunt environments multiply a single root module across instances.
+- Terraform: each directory containing a root module (`provider` block + `terraform { backend ... }` or `terraform { required_providers ... }` at the top, no parent module calling it). Instances of a root module are typically multiplied by per-env `*.tfvars` files (commonly `envs/<env>.tfvars` or `terraform.<env>.tfvars`) passed via `-var-file`, by Terraform workspaces, or by Terragrunt environments.
 - CloudFormation/SAM: each `template.yaml` / `template.json` is a stack.
 - Pulumi: each `Pulumi.yaml` is a project; each `Pulumi.<stack>.yaml` is one instance of it.
-- Helm: each `Chart.yaml` is a chart; each `values*.yaml` (or each release) is one instance.
+- Helm: each `Chart.yaml` is a chart; each per-environment `values-<env>.yaml` (or each deployed release) is one instance. The base `values.yaml` is the template's defaults, not an instance.
 - Kustomize: each directory containing a `kustomization.yaml` (overlay) is an instance.
 
 List the stacks. Note which produce one instance (one-off) vs. many (parameterized template).

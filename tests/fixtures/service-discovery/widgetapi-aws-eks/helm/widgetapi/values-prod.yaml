@@ -1,0 +1,46 @@
+image:
+  tag: "2026.04.1"
+
+serviceAccount:
+  annotations:
+    # Filled in from platform TF output `widgetapi_workload_role_arn`.
+    eks.amazonaws.com/role-arn: arn:aws:iam::111111111111:role/widgetapi-prod-workload
+
+web:
+  replicaCount: 4
+  autoscaling:
+    minReplicas: 4
+    maxReplicas: 20
+    targetCPUUtilizationPercentage: 65
+
+worker:
+  replicaCount: 3
+
+ingress:
+  hosts:
+    - host: api.widgetapi.example.com
+      paths:
+        - path: /
+          pathType: Prefix
+
+env:
+  LOG_LEVEL: info
+  HTTP_PORT: "8080"
+  # DB / cache / bucket / queue values — filled in from infra TF outputs.
+  DB_HOST_PRIMARY: widgetapi-prod-db.cluster-abc.eu-west-1.rds.amazonaws.com
+  DB_HOST_REPLICA: widgetapi-prod-db-ro.cluster-abc.eu-west-1.rds.amazonaws.com
+  DB_NAME: widgetapi
+  DB_USER: widgetapi
+  DB_SECRET_ARN: arn:aws:secretsmanager:eu-west-1:111111111111:secret:rds!db-widgetapi-prod
+  CACHE_PRIMARY_HOST: widgetapi-prod-cache.abc.ng.0001.euw1.cache.amazonaws.com
+  CACHE_READER_HOST: widgetapi-prod-cache-ro.abc.ng.0001.euw1.cache.amazonaws.com
+  UPLOADS_BUCKET: widgetapi-prod-uploads
+  ASYNC_QUEUE_URL: https://sqs.eu-west-1.amazonaws.com/111111111111/widgetapi-prod-async
+  AWS_REGION: eu-west-1
+
+datadog:
+  datadog:
+    clusterName: widgetapi-prod
+    tags:
+      - "env:prod"
+      - "service:widgetapi"

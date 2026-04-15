@@ -1,0 +1,106 @@
+# Base defaults. Overridden per environment by values-<env>.yaml.
+
+nameOverride: ""
+fullnameOverride: ""
+
+image:
+  repository: ghcr.io/widgetco/widgetapi
+  tag: ""          # chart appVersion is used when empty
+  pullPolicy: IfNotPresent
+
+serviceAccount:
+  name: widgetapi
+  # IRSA role — supplied per-env (role ARN comes from the platform TF stack).
+  annotations: {}
+
+# The HTTP API Deployment.
+web:
+  replicaCount: 2
+
+  resources:
+    requests:
+      cpu: 200m
+      memory: 256Mi
+    limits:
+      cpu: 1000m
+      memory: 1Gi
+
+  autoscaling:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 10
+    targetCPUUtilizationPercentage: 70
+
+  podDisruptionBudget:
+    enabled: true
+    minAvailable: 1
+
+# The async worker Deployment (consumes the SQS queue).
+worker:
+  replicaCount: 1
+
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+
+  autoscaling:
+    enabled: false
+
+service:
+  type: ClusterIP
+  port: 80
+  targetPort: 8080
+
+ingress:
+  enabled: true
+  className: alb
+  annotations:
+    # The ALB itself is provisioned by Terraform; the ingress attaches a TG to it.
+    alb.ingress.kubernetes.io/scheme: internet-facing
+    alb.ingress.kubernetes.io/target-type: ip
+    alb.ingress.kubernetes.io/listen-ports: '[{"HTTPS":443}]'
+  hosts:
+    - host: ""     # set per env
+      paths:
+        - path: /
+          pathType: Prefix
+
+# Environment variables common to all envs. DB / cache / bucket / queue values
+# are filled in per env from the Terraform outputs.
+env:
+  LOG_LEVEL: info
+  HTTP_PORT: "8080"
+
+# Secret envs are loaded from a Kubernetes Secret named "widgetapi" in the
+# target namespace. That Secret is created out-of-band (e.g., External Secrets
+# Operator pulling from AWS Secrets Manager using the IRSA role).
+secretEnv:
+  enabled: true
+  secretName: widgetapi
+
+# Third-party: Datadog agent (dependency chart) and PagerDuty alerting.
+datadog:
+  enabled: true
+  targetSystem: "linux"
+  # API key supplied via a Secret named "datadog-secret" — not stored in values.
+  datadog:
+    apiKeyExistingSecret: datadog-secret
+    appKeyExistingSecret: datadog-secret
+    clusterName: ""       # set per env
+    logs:
+      enabled: true
+      containerCollectAll: true
+    apm:
+      portEnabled: true
+    processAgent:
+      enabled: true
+
+pagerduty:
+  # PagerDuty routing key is mounted via the same widgetapi Secret above,
+  # under the PAGERDUTY_ROUTING_KEY key. The service uses it to escalate
+  # critical internal errors directly to PagerDuty's Events API.
+  enabled: true

@@ -1,0 +1,44 @@
+image:
+  tag: "2026.04.1-rc3"
+
+serviceAccount:
+  annotations:
+    eks.amazonaws.com/role-arn: arn:aws:iam::222222222222:role/widgetapi-staging-workload
+
+web:
+  replicaCount: 2
+  autoscaling:
+    minReplicas: 2
+    maxReplicas: 4
+    targetCPUUtilizationPercentage: 70
+
+worker:
+  replicaCount: 1
+
+ingress:
+  hosts:
+    - host: api.staging.widgetapi.example.com
+      paths:
+        - path: /
+          pathType: Prefix
+
+env:
+  LOG_LEVEL: debug
+  HTTP_PORT: "8080"
+  DB_HOST_PRIMARY: widgetapi-staging-db.cluster-xyz.eu-west-1.rds.amazonaws.com
+  DB_HOST_REPLICA: widgetapi-staging-db-ro.cluster-xyz.eu-west-1.rds.amazonaws.com
+  DB_NAME: widgetapi
+  DB_USER: widgetapi
+  DB_SECRET_ARN: arn:aws:secretsmanager:eu-west-1:222222222222:secret:rds!db-widgetapi-staging
+  CACHE_PRIMARY_HOST: widgetapi-staging-cache.xyz.ng.0001.euw1.cache.amazonaws.com
+  CACHE_READER_HOST: widgetapi-staging-cache.xyz.ng.0001.euw1.cache.amazonaws.com
+  UPLOADS_BUCKET: widgetapi-staging-uploads
+  ASYNC_QUEUE_URL: https://sqs.eu-west-1.amazonaws.com/222222222222/widgetapi-staging-async
+  AWS_REGION: eu-west-1
+
+datadog:
+  datadog:
+    clusterName: widgetapi-staging
+    tags:
+      - "env:staging"
+      - "service:widgetapi"
