@@ -17,11 +17,32 @@ Planned (not yet shipped):
 
 ## Installation
 
-> Marketplace listing pending. Until then, install from this repo directly.
+Install via Claude Code's plugin system. From any Claude Code session:
 
-```bash
-/plugin install https://github.com/chiplonton/culiops
 ```
+/plugin marketplace add chiplonton/culiops
+/plugin install culiops@culiops
+```
+
+That's it — skills are now available. Start a new conversation and they'll activate automatically when you ask for relevant work (e.g. "discover this service's resources").
+
+To update later:
+
+```
+/plugin marketplace update culiops
+/plugin install culiops@culiops
+```
+
+To uninstall:
+
+```
+/plugin uninstall culiops@culiops
+```
+
+### Requirements
+
+- Claude Code with plugin support (see [Claude Code docs](https://code.claude.com/docs/en/plugins)).
+- For individual skills, stack-specific CLI tools (`aws`, `az`, `gcloud`, `kubectl`, `helm`, `terraform`, …) installed locally — each skill's prerequisites section tells you exactly what it needs before it will run.
 
 ## Skill Reference
 
@@ -39,9 +60,18 @@ All documents produced by any `culiops` skill are written under **`.culiops/<ski
 - **Agnostic by default.** Cloud provider, IaC tool, and ticket system are all configurable per-conversation. Stack-specific examples live in `examples/` subdirectories.
 - **Book-informed design.** Skills are designed against industry best practices (Google SRE Book, *Infrastructure as Code*, *The Phoenix Project*, etc.) — wisdom is baked in invisibly, not cited.
 
+## Repository Layout
+
+```
+.claude-plugin/     Plugin + marketplace manifests
+skills/<name>/      One directory per skill; each has SKILL.md and examples/
+tests/fixtures/     End-to-end fixtures each skill is validated against
+CHANGELOG.md        Release history
+```
+
 ## Contributing
 
-Skill design specs and implementation plans live in `docs/superpowers/`. New skills follow the methodology described in [`docs/superpowers/specs/2026-04-14-devops-sre-plugin-design.md`](docs/superpowers/specs/2026-04-14-devops-sre-plugin-design.md).
+Issues and PRs welcome. New skills should follow the same shape: a `SKILL.md` with a gated workflow, stack-specific `examples/`, and at least one end-to-end fixture under `tests/fixtures/`.
 
 ## License
 

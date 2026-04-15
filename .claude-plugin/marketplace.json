@@ -1,0 +1,12 @@
+{
+  "name": "culiops",
+  "owner": {
+    "name": "chiplonton"
+  },
+  "plugins": [
+    {
+      "name": "culiops",
+      "source": "./"
+    }
+  ]
+}
