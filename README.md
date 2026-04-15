@@ -20,7 +20,7 @@ Planned (not yet shipped):
 Install via Claude Code's plugin system. From any Claude Code session:
 
 ```
-/plugin marketplace add chiplonton/culiops-agent
+/plugin marketplace add culiops/culiops-agent
 /plugin install culiops@culiops
 ```
 

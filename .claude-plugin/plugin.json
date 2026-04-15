@@ -6,8 +6,8 @@
     "name": "chiplonton",
     "email": "chipkogi010790@gmail.com"
   },
-  "homepage": "https://github.com/chiplonton/culiops-agent",
-  "repository": "https://github.com/chiplonton/culiops-agent",
+  "homepage": "https://github.com/culiops/culiops-agent",
+  "repository": "https://github.com/culiops/culiops-agent",
   "license": "MIT",
   "keywords": [
     "devops",
