@@ -1,6 +1,6 @@
 # CuliOps
 
-DevOps / SRE / cloud / platform-engineering skills for [Claude Code](https://claude.com/claude-code), modeled after [`obra/superpowers`](https://github.com/obra/superpowers).
+DevOps / SRE / cloud / platform-engineering skills for [Claude Code](https://claude.com/claude-code).
 
 CuliOps ships skills that activate automatically when you ask Claude to do operations work — discovering a service's resources, executing infrastructure-as-code change requests, investigating incidents, and more. Skills are cloud-agnostic and IaC-agnostic by design.
 
