@@ -1,0 +1,4 @@
+*.md
+secrets/
+.git/
+node_modules/.cache/

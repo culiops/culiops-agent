@@ -1,0 +1,32 @@
+{
+  "FunctionName": "webhook-handler-{{ env `ENV` }}",
+  "Runtime": "nodejs20.x",
+  "Role": "{{ tfstate `aws_iam_role.webhook_handler.arn` }}",
+  "Handler": "index.handler",
+  "MemorySize": 512,
+  "Timeout": 30,
+  "Architectures": ["arm64"],
+  "Environment": {
+    "Variables": {
+      "ENV": "{{ env `ENV` }}",
+      "REGION": "us-east-1",
+      "HMAC_KEY_ARN": "arn:aws:secretsmanager:us-east-1:111111111111:secret:webhook-handler/{{ env `ENV` }}/hmac-key",
+      "LOG_LEVEL": "{{ env `LOG_LEVEL` }}"
+    }
+  },
+  "VpcConfig": {
+    "SubnetIds": [
+      "{{ tfstate `aws_subnet.private_a.id` }}",
+      "{{ tfstate `aws_subnet.private_b.id` }}"
+    ],
+    "SecurityGroupIds": ["{{ tfstate `aws_security_group.lambda.id` }}"]
+  },
+  "Layers": [
+    "{{ tfstate `aws_lambda_layer_version.shared_observability.arn` }}"
+  ],
+  "TracingConfig": {"Mode": "Active"},
+  "Tags": {
+    "Env": "{{ env `ENV` }}",
+    "Service": "webhook-handler"
+  }
+}
