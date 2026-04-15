@@ -16,7 +16,7 @@ A SOPS-encrypted file (`secrets/prod.enc.yaml`) sits in the repo as a regression
 
 ## Environments
 
-Two environments via `function.json` env interpolation; `lambroll deploy --envfile envs/<env>.env`.
+Two environments via `function.json` env interpolation; the operator passes `ENV=prod` (or `ENV=staging`) inline when invoking `lambroll deploy` (e.g., `ENV=prod lambroll deploy`). No env files ship in this fixture — the skill must record the env var as the parameter source and ask the operator which value to catalog against.
 
 ## Stack layout
 
