@@ -37,4 +37,15 @@ A detector may omit any non-frontmatter section if it doesn't apply (the skill t
 
 ## Shipped detectors
 
-(Updated in Task 8 once all detectors are in place.)
+| Detector | Deploys | Notes |
+|----------|---------|-------|
+| [`terraform.md`](terraform.md) | Multi-cloud and on-prem infrastructure | Covers Terragrunt-on-Terraform |
+| [`cloudformation.md`](cloudformation.md) | AWS resources | Covers AWS SAM |
+| [`pulumi.md`](pulumi.md) | Multi-cloud infrastructure (general-purpose languages) | |
+| [`bicep.md`](bicep.md) | Azure resources | Compiles to ARM |
+| [`helm.md`](helm.md) | Kubernetes resources via templated charts | |
+| [`kustomize.md`](kustomize.md) | Kubernetes resources via overlays | |
+| [`jsonnet.md`](jsonnet.md) | (preprocessor only) | Always paired with a consuming tool |
+| [`ansible.md`](ansible.md) | Cloud and on-prem via playbooks | |
+| [`ecspresso.md`](ecspresso.md) | AWS ECS services and task definitions | |
+| [`lambroll.md`](lambroll.md) | AWS Lambda functions | |
