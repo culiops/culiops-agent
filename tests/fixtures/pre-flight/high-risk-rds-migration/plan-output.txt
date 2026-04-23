@@ -1,0 +1,55 @@
+Terraform will perform the following actions:
+
+  # aws_db_instance.main will be destroyed
+  # (because aws_db_instance.main is not in configuration)
+  - resource "aws_db_instance" "main" {
+      - identifier            = "userdb-prod"
+      - engine                = "postgres"
+      - engine_version        = "14.9"
+      - instance_class        = "db.m6g.large"
+      - allocated_storage     = 100
+      - db_name               = "userdb"
+      - multi_az              = true
+      - storage_encrypted     = true
+      - vpc_security_group_ids = [
+          - "sg-0abc123",
+        ]
+    }
+
+  # aws_rds_cluster.main will be created
+  + resource "aws_rds_cluster" "main" {
+      + cluster_identifier        = "userdb-prod"
+      + engine                    = "aurora-postgresql"
+      + engine_version            = "14.9"
+      + database_name             = "userdb"
+      + backup_retention_period   = 7
+      + skip_final_snapshot       = false
+      + final_snapshot_identifier = "userdb-prod-final-20260423"
+    }
+
+  # aws_rds_cluster_instance.main will be created
+  + resource "aws_rds_cluster_instance" "main" {
+      + identifier         = "userdb-prod-instance-1"
+      + cluster_identifier = (known after apply)
+      + instance_class     = "db.r6g.large"
+      + engine             = "aurora-postgresql"
+      + monitoring_interval = 60
+    }
+
+  # aws_iam_role.aurora_monitoring will be created
+  + resource "aws_iam_role" "aurora_monitoring" {
+      + name = "userdb-prod-aurora-monitoring"
+    }
+
+  # aws_iam_role_policy_attachment.aurora_monitoring will be created
+  + resource "aws_iam_role_policy_attachment" "aurora_monitoring" {
+      + role       = "userdb-prod-aurora-monitoring"
+      + policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonRDSEnhancedMonitoringRole"
+    }
+
+  # aws_security_group_rule.db_ingress will be updated in-place
+  ~ resource "aws_security_group_rule" "db_ingress" {
+        # (no changes to attributes, but security group rule will be recreated)
+    }
+
+Plan: 4 to add, 1 to change, 1 to destroy.
