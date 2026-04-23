@@ -1,0 +1,8 @@
+region: us-east-1
+cluster: searchapi-cluster-{{ must_env `ENV` }}
+service_definition: ecs-service-def.json
+task_definition: ecs-task-def.json
+plugins:
+  - name: tfstate
+    config:
+      url: s3://searchapi-tfstate/platform/{{ must_env `ENV` }}/terraform.tfstate

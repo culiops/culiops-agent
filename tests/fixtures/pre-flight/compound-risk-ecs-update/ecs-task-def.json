@@ -1,0 +1,30 @@
+{
+  "family": "searchapi-task-{{ must_env `ENV` }}",
+  "cpu": "1024",
+  "memory": "2048",
+  "networkMode": "awsvpc",
+  "requiresCompatibilities": ["FARGATE"],
+  "executionRoleArn": "{{ tfstate `module.iam.ecs_execution_role_arn` }}",
+  "taskRoleArn": "{{ tfstate `module.iam.ecs_task_role_arn` }}",
+  "containerDefinitions": [
+    {
+      "name": "app",
+      "image": "123456789012.dkr.ecr.us-east-1.amazonaws.com/searchapi:2026.04.2",
+      "portMappings": [{"containerPort": 8080}],
+      "healthCheck": {
+        "command": ["CMD-SHELL", "curl -f http://localhost:8080/healthz || exit 1"],
+        "interval": 30,
+        "timeout": 5,
+        "retries": 3
+      },
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/searchapi-{{ must_env `ENV` }}",
+          "awslogs-region": "us-east-1",
+          "awslogs-stream-prefix": "ecs"
+        }
+      }
+    }
+  ]
+}

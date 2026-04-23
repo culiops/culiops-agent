@@ -1,0 +1,16 @@
+ecspresso diff output for searchapi-svc-prod:
+
+--- service definition
++++ service definition (proposed)
+@@ desiredCount @@
+-  "desiredCount": 4,
++  "desiredCount": 2,
+
+--- task definition
++++ task definition (proposed)
+@@ container image @@
+-  "image": "123456789012.dkr.ecr.us-east-1.amazonaws.com/searchapi:2026.04.1",
++  "image": "123456789012.dkr.ecr.us-east-1.amazonaws.com/searchapi:2026.04.2",
+@@ health check @@
+-  "command": ["CMD-SHELL", "curl -f http://localhost:8080/health || exit 1"],
++  "command": ["CMD-SHELL", "curl -f http://localhost:8080/healthz || exit 1"],

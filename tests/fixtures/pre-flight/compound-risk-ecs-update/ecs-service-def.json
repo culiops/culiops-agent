@@ -1,0 +1,19 @@
+{
+  "serviceName": "searchapi-svc-{{ must_env `ENV` }}",
+  "desiredCount": 2,
+  "launchType": "FARGATE",
+  "networkConfiguration": {
+    "awsvpcConfiguration": {
+      "subnets": ["{{ tfstate `module.vpc.private_subnet_ids[0]` }}", "{{ tfstate `module.vpc.private_subnet_ids[1]` }}"],
+      "securityGroups": ["{{ tfstate `module.sg.app_sg_id` }}"]
+    }
+  },
+  "loadBalancers": [
+    {
+      "targetGroupArn": "{{ tfstate `module.alb.target_group_arn` }}",
+      "containerName": "app",
+      "containerPort": 8080
+    }
+  ],
+  "healthCheckGracePeriodSeconds": 60
+}
