@@ -1,0 +1,26 @@
+Terraform will perform the following actions:
+
+  # aws_cloudwatch_metric_alarm.orderapi_cpu will be created
+  + resource "aws_cloudwatch_metric_alarm" "orderapi_cpu" {
+      + alarm_name          = "orderapi-prod-cpu-high"
+      + comparison_operator = "GreaterThanThreshold"
+      + evaluation_periods  = 3
+      + metric_name         = "CPUUtilization"
+      + namespace           = "AWS/ECS"
+      + period              = 300
+      + statistic           = "Average"
+      + threshold           = 80
+      + alarm_description   = "CPU utilization above 80% for orderapi prod"
+      + dimensions          = {
+          + "ClusterName" = "orderapi-cluster-prod"
+          + "ServiceName" = "orderapi-svc-prod"
+        }
+      + alarm_actions       = [
+          + "arn:aws:sns:us-east-1:123456789012:orderapi-alerts",
+        ]
+      + ok_actions          = [
+          + "arn:aws:sns:us-east-1:123456789012:orderapi-alerts",
+        ]
+    }
+
+Plan: 1 to add, 0 to change, 0 to destroy.
