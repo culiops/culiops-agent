@@ -6,6 +6,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [0.3.0] — 2026-04-23
+
+### Added
+
+- `pre-flight` skill — 10-category risk assessment framework for evaluating production actions before execution. Produces a go/no-go risk report with per-category scoring, hard/soft block gates, and actionable mitigations.
+  - `skills/pre-flight/SKILL.md`: core framework with Iron Law, 10 risk categories, 3-layer context model (L1 static / L2 human / L3 live), traffic-light scoring, multi-Yellow escalation, 7-step gated workflow, and output format.
+  - `skills/pre-flight/assessors/README.md`: extensible assessor template (same pattern as tool-detectors).
+  - `skills/pre-flight/assessors/iac-change.md`: v1 assessor for Terraform, Helm, Pulumi, CloudFormation, Bicep, ecspresso, lambroll plan/diff outputs.
+  - `skills/pre-flight/examples/{aws,gcp,azure,kubernetes}.md`: L3 live health-check query templates per cloud/platform with least-privilege guidance.
+- `tests/fixtures/pre-flight/`: three fixtures — `low-risk-cloudwatch-alarm` (all Green), `high-risk-rds-migration` (multiple Reds + hard block), `compound-risk-ecs-update` (multi-Yellow escalation to Red) — each with a recorded dry-run.
+
 ## [0.2.0] — 2026-04-15
 
 ### Added

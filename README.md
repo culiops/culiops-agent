@@ -6,14 +6,15 @@ CuliOps ships skills that activate automatically when you ask Claude to do opera
 
 ## Status
 
-`v0.1.0` — pilot release. Skills shipped:
+`v0.3.0` — pilot release. Skills shipped:
 
-- **service-discovery** — scan a service's IaC code and produce a troubleshooting-oriented inventory document (resource catalog, naming patterns, dependencies, per-alarm investigation runbooks). Works with Terraform, Pulumi, CloudFormation, Bicep, Helm/Kustomize.
+- **service-discovery** — scan a service's IaC code and produce a troubleshooting-oriented inventory document (resource catalog, naming patterns, dependencies, per-alarm investigation runbooks). Works with Terraform, Pulumi, CloudFormation, Bicep, Helm/Kustomize, ecspresso, lambroll.
+- **pre-flight** — evaluate the risk of a proposed production action (IaC change, CLI command, or agent action) across 10 categories. Produces a go/no-go risk report with per-category scoring and actionable mitigations.
 
 Planned (not yet shipped):
 
 - `iac-change-execution` — execute infrastructure tickets safely with research-plan-approve-implement workflow.
-- `incident-investigation`, `cloud-cost-analytics`, `iac-code-review` — future skills.
+- `incident-investigation`, `cloud-cost-analytics` — future skills.
 
 ## Installation
 
@@ -48,6 +49,7 @@ To uninstall:
 Each skill has its own `SKILL.md` under `skills/<name>/`:
 
 - [`skills/service-discovery/SKILL.md`](skills/service-discovery/SKILL.md)
+- [`skills/pre-flight/SKILL.md`](skills/pre-flight/SKILL.md)
 
 ## Output Convention
 

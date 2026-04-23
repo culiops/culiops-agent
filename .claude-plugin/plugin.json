@@ -1,7 +1,7 @@
 {
   "name": "culiops",
   "description": "DevOps / SRE / cloud / platform-engineering skills for Claude Code: service discovery, IaC change execution, and more — cloud-agnostic and IaC-agnostic by design.",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "author": {
     "name": "chiplonton",
     "email": "chipkogi010790@gmail.com"
@@ -16,6 +16,8 @@
     "iac",
     "terraform",
     "service-discovery",
+    "pre-flight",
+    "risk-assessment",
     "cloud",
     "skills",
     "workflows"
