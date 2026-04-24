@@ -68,34 +68,81 @@ digraph discovery {
     node [shape=box, style=rounded];
 
     input    [label="Repo path + service name\n(from user or CWD)"];
-    detect   [label="Step 1: Detect IaC tool(s),\nstack layout, target instance"];
-    gate1    [label="GATE: Human confirms\nlayout + instance", shape=diamond];
-    inventory [label="Step 2: Resolve parameters,\nbuild resource inventory\n(with naming, identifiers,\nsignal envelope, conditionals)"];
-    gate2    [label="GATE: Human confirms\ninventory", shape=diamond];
-    deps     [label="Step 3: Compute dependency\ngraph (direct + transitive,\nfrom code references)"];
-    gate3    [label="GATE: Human confirms\ndependencies", shape=diamond];
-    runbooks [label="Step 4: Build investigation-tree\nrunbooks (user symptoms first,\nupstream branch always)"];
-    gate4    [label="GATE: Human validates\nrunbooks", shape=diamond];
-    write    [label="Step 5: Write discovery doc\n+ Assumptions section\n+ commit-SHA stamp"];
-    gate5    [label="GATE: Human reviews\nfinal doc", shape=diamond];
+    detect   [label="Step 1: Detect IaC tool(s)\nor document signatures"];
+
+    subgraph cluster_iac {
+        label="IaC Path";
+        style=dashed;
+
+        gate1    [label="GATE 1: Human confirms\nlayout + instance", shape=diamond];
+        inventory [label="Step 2: Resolve parameters,\nbuild resource inventory\n(with naming, identifiers,\nsignal envelope, conditionals)"];
+        gate2    [label="GATE 2: Human confirms\ninventory", shape=diamond];
+        deps     [label="Step 3: Compute dependency\ngraph (direct + transitive,\nfrom code references)"];
+        gate3    [label="GATE 3: Human confirms\ndependencies", shape=diamond];
+        runbooks [label="Step 4: Build investigation-tree\nrunbooks (user symptoms first,\nupstream branch always)"];
+        gate4    [label="GATE 4: Human validates\nrunbooks", shape=diamond];
+        write    [label="Step 5: Write discovery doc\n+ Assumptions section\n+ commit-SHA stamp"];
+    }
+
+    subgraph cluster_real {
+        label="Real-Discovery Path";
+        style=dashed;
+
+        docroute [label="Document signatures\ndetected"];
+        gateR1   [label="GATE: Switch to\nreal-discovery mode?", shape=diamond];
+        parse    [label="Step 2R: Parse documents,\nextract resource hints\n(structured → text → image)"];
+        gateR2   [label="GATE: Confirm\nresource hints", shape=diamond];
+        context  [label="Step 3R: Resolve cloud\ncontext (probe creds,\ncross-ref with doc hints)"];
+        gateR3   [label="GATE: Confirm target\nenvironment", shape=diamond];
+        converge [label="Step 4R: Converging discovery\n(merge doc hints +\ncloud query results)"];
+        gateR4a  [label="GATE 4a: Approve\ndiscovery queries?", shape=diamond];
+        gateR4b  [label="GATE 4b: Confirm\nresource list?", shape=diamond];
+        enrich   [label="Step 5R: Detailed resource\nenrichment + runbooks"];
+        gateR5   [label="GATE: Validate\nrunbooks", shape=diamond];
+        writeR   [label="Step 6R: Write catalog\n+ confidence flags\n+ unresolved refs"];
+    }
+
+    gate5    [label="GATE 5: Human reviews\nfinal doc", shape=diamond];
     commit   [label="Commit if approved"];
 
     input -> detect;
-    detect -> gate1;
-    gate1 -> inventory [label="confirmed"];
-    gate1 -> detect    [label="corrections"];
+    detect -> gate1     [label="IaC found"];
+    detect -> docroute  [label="no IaC found"];
+
+    gate1 -> inventory  [label="confirmed"];
+    gate1 -> detect     [label="corrections"];
     inventory -> gate2;
-    gate2 -> deps      [label="confirmed"];
-    gate2 -> inventory [label="corrections"];
+    gate2 -> deps       [label="confirmed"];
+    gate2 -> inventory  [label="corrections"];
     deps -> gate3;
-    gate3 -> runbooks  [label="confirmed"];
-    gate3 -> deps      [label="corrections"];
+    gate3 -> runbooks   [label="confirmed"];
+    gate3 -> deps       [label="corrections"];
     runbooks -> gate4;
-    gate4 -> write     [label="validated"];
-    gate4 -> runbooks  [label="adjust"];
+    gate4 -> write      [label="validated"];
+    gate4 -> runbooks   [label="adjust"];
     write -> gate5;
-    gate5 -> commit    [label="approved"];
-    gate5 -> write     [label="changes requested"];
+
+    docroute -> gateR1;
+    gateR1 -> parse     [label="confirmed"];
+    parse -> gateR2;
+    gateR2 -> context   [label="confirmed"];
+    gateR2 -> parse     [label="corrections"];
+    context -> gateR3;
+    gateR3 -> converge  [label="confirmed"];
+    gateR3 -> context   [label="corrections"];
+    converge -> gateR4a;
+    gateR4a -> gateR4b  [label="approved"];
+    gateR4a -> converge [label="narrowed"];
+    gateR4b -> enrich   [label="confirmed"];
+    gateR4b -> converge [label="corrections"];
+    enrich -> gateR5;
+    gateR5 -> writeR    [label="validated"];
+    gateR5 -> enrich    [label="adjust"];
+    writeR -> gate5;
+
+    gate5 -> commit     [label="approved"];
+    gate5 -> write      [label="changes requested\n(IaC path)"];
+    gate5 -> writeR     [label="changes requested\n(real-discovery path)"];
 }
 ```
 
@@ -380,6 +427,90 @@ Wait for confirmation. Apply corrections and re-present until confirmed.
 
 ---
 
+### Step 5R: Detailed Resource Enrichment (Real-Discovery Path)
+
+*This step enriches each confirmed resource from Step 4R with detailed configuration, relationships, and health data.*
+
+**Use the same `examples/<cloud>.md` templates as the IaC path.** The enrichment queries for each resource type are identical — the difference is that real-discovery runs them against live infrastructure rather than cross-referencing with code.
+
+**Data collected per resource:**
+
+| Category | What to collect |
+|----------|----------------|
+| Configuration | Instance type/size, storage, engine version, runtime settings, scaling config |
+| Relationships | Security groups, subnets, VPC, IAM roles, attached policies, target groups |
+| Health/status | Current state, last event, active alarms, recent metrics (if accessible) |
+| Tags/metadata | All tags, creation date, last modified, ARN/resource ID |
+| Access/security | Public accessibility, encryption status, endpoint URLs, access logging |
+
+**Dependency walking.** Using the enrichment data, link confirmed resources to each other:
+
+- Security group references → which resources share security groups
+- Subnet/VPC placement → which resources are co-located
+- IAM role references → which resources share identity
+- Target group membership → which resources sit behind which load balancers
+- DNS/endpoint references → which resources connect to which
+
+Note but do not chase references that cross the service boundary (e.g., a security group rule allowing traffic from an unknown CIDR). Record these as boundary dependencies, the same way the IaC path records cross-stack references.
+
+**Report surprises.** If enrichment reveals resources that contradict document hints (e.g., a resource exists but with a different configuration than documented, or a documented relationship doesn't exist in practice), report them inline. This is informational — no gate required. The operator already confirmed the resource list at Gate 4b; surprises are noted in the catalog.
+
+**Build runbooks.** Follow the same Step 4 process as the IaC path: enumerate user-visible failure modes, build investigation-tree runbooks with upstream-first branches, validate with the operator. Real-discovery has an advantage here — live health data and actual resource configurations are available, making the signal envelopes concrete rather than code-declared.
+
+**Present all runbooks and STOP.** Wait for the operator to validate the trees, same as Step 4 in the IaC path.
+
+---
+
+### Step 6R: Write the Catalog (Real-Discovery Path)
+
+*This step produces the same catalog format as the IaC path, with additional metadata reflecting the real-discovery source.*
+
+**Output path.** Same as the IaC path: `.culiops/service-discovery/<service>[-<instance>].md`.
+
+**Stamp the catalog.** Top of the doc, with additional source metadata:
+
+```
+**Discovery source:** real-discovery
+**Discovery date:** `<YYYY-MM-DD>`
+**Cloud context:** `<provider>` / `<account-or-project>` / `<region>`
+**Documents used:** `<list of source documents from Step 2R>`
+**Target instance:** `<instance name>`
+```
+
+**Confidence flags in the catalog.** Resources carry their confidence and flag from Step 4R:
+
+- `undocumented` resources include a note in their inventory entry: *"Discovered via cloud API only — not referenced in any source document. Verify this resource belongs to this service."*
+- `documented-not-found` resources appear in a dedicated `## Unresolved References` section (not in the main inventory): *"Referenced in `<source document>` but not found in the live environment. May be decommissioned, renamed, in a different account/region, or the document may be outdated."*
+
+**All other catalog sections follow the IaC path format.** The section order from Step 5 applies:
+
+1. `## Overview` — includes "discovered via real-discovery (documents + live cloud APIs)" instead of IaC tool names.
+2. `## Prerequisites` — same structure, derived from the `examples/` files used during enrichment.
+3. `## Resource Inventory` — from Step 4R's confirmed list, enriched in Step 5R. Grouped by category.
+4. `## Naming Patterns` — detected from actual resource names rather than IaC templates.
+5. `## Identifying Dimensions` — derived from tags, naming patterns, and resource placement.
+6. `## Dependency Graph` — from Step 5R's dependency walking. Critical-path marked.
+7. `## Signal Envelopes` — from live metrics and alarm configurations discovered in Step 5R.
+8. `## Investigation Runbooks` — from Step 5R's runbook building.
+9. `## Stack-Specific Tooling` — which `examples/<cloud>.md` file applies.
+10. `## Unresolved References` — `documented-not-found` resources (real-discovery-specific section).
+11. `## Assumptions and Caveats` — **mandatory**, with real-discovery-specific caveats:
+    - *"This catalog was built from real-discovery (documents + live cloud APIs), not from infrastructure-as-code. Resources may exist that are not managed by any IaC tool."*
+    - *"Document sources may be outdated. Resources marked `documented-not-found` were referenced in documents but not found in the live environment."*
+    - *"Resources marked `undocumented` were found in the live environment but not referenced in any source document. They may belong to a different service."*
+    - *"No drift detection is possible without IaC — the catalog reflects the live state at discovery time."*
+12. `## Open Questions` — anything the operator said "I don't know, ask me later."
+
+**Present and STOP.**
+
+> "Catalog written to `.culiops/service-discovery/<filename>.md`. Please review the file.
+>
+> **GATE: Review catalog before writing? Should I commit it?**"
+
+If approved: commit with message `Add service discovery doc for <service> (<instance>)`. Do NOT commit until approved.
+
+---
+
 ### Step 3: Compute the Dependency Graph
 
 **Direct dependencies** — derive from the code:
@@ -535,3 +666,21 @@ Each examples file has its own `## Prerequisites` section (CLI version, authenti
 | Step 3: Compute dependency graph | opus | Resource inventory, code references (depends_on, data lookups, remote state, cross-stack refs), detector cross-stack hints | Dependency graph with direct/transitive deps, critical-path classification, protocol/reliability per link | Missing a critical-path dependency → runbook won't tell on-caller to check the real upstream cause |
 | Step 4: Build runbooks | opus | Inventory, dependency graph, examples/ templates, user journeys (from operator) | Per-symptom investigation decision trees with upstream-first branches | Most judgment-intensive step. Wrong runbook structure wastes incident response time. Domain expertise required |
 | Step 5: Write discovery doc | sonnet | All outputs from Steps 1-4, output format from SKILL.md, commit SHA | `.culiops/service-discovery/` document + git commit | Template assembly from validated outputs. GATE 5 catches formatting issues before finalization |
+
+### Model Routing — Real-Discovery Path
+
+| Step | Model | Inputs | Outputs | Rationale |
+|------|-------|--------|---------|-----------|
+| Step 1: Document detection | sonnet | Directory file listing, doc-detector signatures | Matched formats, routing decision | Mechanical file matching |
+| Step 2R: Structured diagram parsing | sonnet | Diagram files, doc-detector rules | Node labels, edges, groupings | XML/text extraction |
+| Step 2R: Image diagram analysis | opus | Image file (vision) | Resources, relationships with confidence | Judgment-heavy |
+| Step 2R: Text keyword extraction | sonnet | Text docs, keyword lists | Resource mentions, ARNs, regions | Pattern matching |
+| Step 2R: Hint consolidation | opus | All hints | Deduplicated hint list | Cross-referencing judgment |
+| Step 3R: Cloud context resolution | orchestrator | Cred probes, doc hints | Resolved provider/account/region | Interactive |
+| Step 4R: Broad query construction | sonnet | Cloud-discovery templates, service name | Proposed CLI commands | Template assembly |
+| Step 4R: Merge + confidence | opus | Seeds A + B | Resource list with flags | Cross-referencing |
+| Step 5R: Enrichment queries | sonnet | examples/ templates, resource list | Per-resource data | Template-driven |
+| Step 5R: Dependency analysis | opus | Enrichment results, resource list | Dependency graph | Judgment |
+| Step 5R: Runbook generation | opus | All data | Investigation trees | Safety-critical |
+| Step 6R: Catalog assembly | sonnet | All outputs | Catalog document | Template assembly |
+| All gates | orchestrator | Step outputs | Operator decisions | Interactive |
