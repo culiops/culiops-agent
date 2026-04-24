@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Chart.Name }}-config
+  labels:
+    app.kubernetes.io/name: {{ .Chart.Name }}
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
+data:
+  LOG_LEVEL: {{ .Values.config.logLevel | quote }}
+  MAX_RETRIES: {{ .Values.config.maxRetries | toString | quote }}
+  QUEUE_URL: {{ .Values.config.queueUrl | quote }}

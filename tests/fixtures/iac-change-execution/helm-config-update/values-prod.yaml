@@ -1,0 +1,20 @@
+# Prod overrides — applied on top of values.yaml
+# To change: helm upgrade notifyapi . -f values.yaml -f values-prod.yaml
+
+replicaCount: 2
+
+image:
+  tag: "v3.1.0"
+
+resources:
+  requests:
+    cpu: 250m
+    memory: 256Mi
+  limits:
+    cpu: 1000m
+    memory: 512Mi
+
+config:
+  logLevel: warn
+  maxRetries: 5
+  queueUrl: "https://sqs.ap-southeast-1.amazonaws.com/123456789012/notifyapi-prod-inbound"
