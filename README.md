@@ -6,9 +6,9 @@ CuliOps ships skills that activate automatically when you ask Claude to do opera
 
 ## Status
 
-`v0.4.0` — pilot release. Skills shipped:
+`v0.5.0` — pilot release. Skills shipped:
 
-- **service-discovery** — scan a service's IaC code and produce a troubleshooting-oriented inventory document (resource catalog, naming patterns, dependencies, per-alarm investigation runbooks). Works with Terraform, Pulumi, CloudFormation, Bicep, Helm/Kustomize, ecspresso, lambroll.
+- **service-discovery** — scan a service's IaC code — or its documentation and diagrams when no IaC exists — and produce a troubleshooting-oriented inventory document (resource catalog, naming patterns, dependencies, per-alarm investigation runbooks). IaC path works with Terraform, Pulumi, CloudFormation, Bicep, Helm/Kustomize, ecspresso, lambroll. Real-discovery path works with Draw.io, Mermaid, PlantUML diagrams, Markdown/text docs, and architecture images, verified against live cloud APIs (read-only).
 - **pre-flight** — evaluate the risk of a proposed production action (IaC change, CLI command, or agent action) across 10 categories. Produces a go/no-go risk report with per-category scoring and actionable mitigations.
 - **iac-change-execution** — execute infrastructure changes safely with research-plan-approve-implement-verify workflow. Supports PR and direct-apply paths, multi-phase changes, and integrates with service-discovery and pre-flight.
 
@@ -59,7 +59,7 @@ All documents produced by any `culiops` skill are written under **`.culiops/<ski
 ## Design Philosophy
 
 - **Iron Laws and gated workflows.** Every skill has explicit STOP gates where Claude must wait for human confirmation. No silent assumptions.
-- **Agnostic by default.** Cloud provider, IaC tool, and ticket system are all configurable per-conversation. Stack-specific examples live in `examples/` subdirectories.
+- **Agnostic by default.** Cloud provider, IaC tool, and ticket system are all configurable per-conversation. Stack-specific examples live in `examples/` subdirectories. Document formats and cloud discovery APIs are extensible via data-only additions (`doc-detectors/`, `cloud-discovery/`).
 - **Book-informed design.** Skills are designed against industry best practices (Google SRE Book, *Infrastructure as Code*, *The Phoenix Project*, etc.) — wisdom is baked in invisibly, not cited.
 - **Dynamic model routing.** Each skill's `## Model Routing` section maps workflow steps to model tiers (opus for safety-critical analysis, sonnet for mechanical steps). The orchestrating model reads these hints and dispatches subagents accordingly — reducing cost and latency without compromising safety. Production-conservative by default: only route to a cheaper model when a human gate catches errors or the step is purely mechanical.
 
@@ -67,7 +67,7 @@ All documents produced by any `culiops` skill are written under **`.culiops/<ski
 
 ```
 .claude-plugin/     Plugin + marketplace manifests
-skills/<name>/      One directory per skill; each has SKILL.md and examples/
+skills/<name>/      One directory per skill; each has SKILL.md, examples/, and data directories (tool-detectors/, doc-detectors/, cloud-discovery/, assessors/)
 tests/fixtures/     End-to-end fixtures each skill is validated against
 CHANGELOG.md        Release history
 ```
