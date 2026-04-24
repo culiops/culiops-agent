@@ -238,6 +238,148 @@ Wait for confirmation. Apply corrections and re-present until confirmed.
 
 ---
 
+### Step 2R: Document Parsing & Resource Hint Extraction (Real-Discovery Path)
+
+*This step runs instead of Step 2 when the real-discovery path is active.*
+
+**Load matched doc-detector files.** For each document format detected in Step 1, load the corresponding `doc-detectors/*.md` file. Each detector defines how to parse that format and what resource hints to extract.
+
+**Parse in reliability order.** Process documents from most to least structurally reliable:
+
+1. **Structured diagrams first** (Draw.io, Mermaid, PlantUML) — these have explicit node/edge relationships encoded in XML, YAML, or DSL syntax. Parse using the detector's extraction rules.
+2. **Text documents second** (Markdown, Confluence exports, plain text) — scan for resource mentions, ARNs, hostnames, IP ranges, region identifiers, service names, and other cloud context clues using keyword lists from the detector.
+3. **Image diagrams last** (PNG, JPEG, SVG rasterized) — these require vision analysis and are the most token-heavy and least reliable. Use vision to extract resource labels, relationship arrows, grouping boundaries, and annotations.
+
+**Extract per hint:**
+
+| Field | Meaning |
+|-------|---------|
+| Resource type | The cloud resource type mentioned or depicted (e.g., "RDS instance", "S3 bucket", "ALB") |
+| Resource name | Any specific name, identifier, or ARN mentioned |
+| Relationships | Connections to other resources shown in the document (arrows, references, "connects to" language) |
+| Cloud context | Region, account, VPC, subnet, or other placement clues |
+| Service boundary | Which service or system the resource belongs to, if the document groups resources |
+| Source document | The file and location (page, section, coordinates) where the hint was found |
+| Extraction confidence | **High** — explicitly named with identifiers in structured format. **Medium** — mentioned in text with enough context to identify. **Low** — inferred from image or ambiguous reference. |
+
+**Cloud context clues.** While extracting resource hints, collect any cloud context that helps narrow discovery in Step 3R:
+
+- AWS account IDs, region names, VPC IDs
+- GCP project IDs, region/zone names
+- Azure subscription IDs, resource group names, region names
+- Kubernetes cluster names, namespace names
+- Domain names, IP ranges, CIDR blocks
+
+**Present and STOP.**
+
+> "**Resource hints extracted from documents:**
+>
+> | # | Hint | Type | Source | Confidence |
+> |---|------|------|--------|------------|
+> | 1 | `prod-api-db` | RDS instance | `architecture.drawio` (node 14) | High |
+> | 2 | `api-cache` | ElastiCache cluster | `runbook.md` (section 3.2) | Medium |
+> | 3 | Load balancer | ALB | `infra-diagram.png` (top-center) | Low |
+>
+> **Cloud context clues:**
+> - Region: `us-east-1` (mentioned in `runbook.md`)
+> - Account: unknown
+> - VPC: `vpc-abc123` (shown in `architecture.drawio`)
+>
+> **GATE: Do these hints look accurate? Remove/add/correct any before proceeding.**"
+
+Wait for confirmation. Apply corrections and re-present until confirmed.
+
+---
+
+### Step 3R: Cloud Context Resolution (Real-Discovery Path)
+
+*This step runs instead of Step 3 when the real-discovery path is active.*
+
+**Probe local credentials.** Check what cloud credentials are configured locally:
+
+- AWS: `aws sts get-caller-identity`
+- GCP: `gcloud config get project`
+- Azure: `az account show`
+- Kubernetes: `kubectl config current-context`
+
+If no credentials are found for any provider, STOP:
+
+> "No cloud credentials found. Real-discovery requires at least one configured cloud provider (AWS, GCP, Azure) or Kubernetes context to verify resource hints against live infrastructure. Please configure credentials and retry."
+
+**Cross-reference credentials with document hints.** Compare the provider, account/project, and region from the credential probes with the cloud context clues extracted in Step 2R. Flag any mismatches — a credential pointing at `us-west-2` when documents reference `us-east-1` resources is a strong signal that the wrong profile is active.
+
+**Present and STOP.**
+
+> "**Cloud context resolution:**
+>
+> | Provider | Identity Source | Value | Doc Hint | Match? |
+> |----------|----------------|-------|----------|--------|
+> | AWS | `aws sts get-caller-identity` | Account `123456789012`, `us-east-1` | Account: unknown, Region: `us-east-1` | Region matches |
+> | Kubernetes | `kubectl config current-context` | `prod-eks-cluster` | Cluster: `prod-cluster` (from drawio) | Partial — name differs |
+>
+> **GATE: Is this the correct target environment?**"
+
+**Hard rule: zero API calls before this gate passes.** No cloud queries — not even read-only ones — are permitted until the operator confirms the cloud context. Running queries against the wrong account produces a catalog of the wrong infrastructure.
+
+**Multi-cloud.** If document hints reference multiple cloud providers, resolve each provider separately. The operator must confirm each provider's context independently.
+
+Wait for confirmation. Apply corrections and re-present until confirmed.
+
+---
+
+### Step 4R: Converging Discovery (Real-Discovery Path)
+
+*This step runs instead of Step 4 when the real-discovery path is active.*
+
+This step merges two independent discovery seeds to build a verified resource list:
+
+- **Seed A: Confirmed document hints** from Step 2R (operator-reviewed).
+- **Seed B: Cloud-discovery templates** — load matching templates from `cloud-discovery/` based on the confirmed cloud context. Each template defines broad discovery queries for a resource category.
+
+**Present proposed queries and STOP.**
+
+> "**Proposed discovery queries:**
+>
+> I'll run these read-only queries to discover resources in the confirmed environment:
+>
+> | # | Query | Scope | Source |
+> |---|-------|-------|--------|
+> | 1 | `aws ec2 describe-instances --filters Name=vpc-id,Values=vpc-abc123` | Instances in confirmed VPC | `cloud-discovery/aws-ec2.md` |
+> | 2 | `aws rds describe-db-instances` | All RDS instances in region | `cloud-discovery/aws-rds.md` |
+> | 3 | `aws elbv2 describe-load-balancers` | All ALBs in region | `cloud-discovery/aws-elbv2.md` |
+>
+> **GATE 4a: Approve these discovery queries?**"
+
+If the operator declines specific broad queries (e.g., "don't scan all RDS instances, just look for the ones in the documents"), proceed with Seed A only for those resource types. Resources discovered only via Seed A are flagged `documented-only, not verified`.
+
+**Execute approved queries.** Run each approved query and collect results. Do NOT run any query the operator did not approve.
+
+**Merge seeds and assign confidence.**
+
+| Condition | Confidence | Flag |
+|-----------|------------|------|
+| Resource found in both docs and cloud | **High** | *(none)* |
+| Resource found in docs only (not found in cloud, or query not approved) | **Low** | `documented-not-found` |
+| Resource found in cloud only (not mentioned in any document) | **Medium** | `undocumented` |
+
+**Present merged resource list and STOP.**
+
+> "**Merged resource list for `<service>`:**
+>
+> | # | Resource | Type | Source | Confidence | Flag |
+> |---|----------|------|--------|------------|------|
+> | 1 | `prod-api-db` | RDS instance | docs + cloud | High | |
+> | 2 | `api-cache` | ElastiCache cluster | docs only | Low | `documented-not-found` |
+> | 3 | `prod-api-alb` | ALB | cloud only | Medium | `undocumented` |
+>
+> **GATE 4b: Confirm this resource list before detailed discovery?**"
+
+The operator can add, remove, or reclassify resources at this gate. Resources flagged `documented-not-found` are excluded from enrichment in Step 5R but are recorded in the final catalog's Unresolved References section.
+
+Wait for confirmation. Apply corrections and re-present until confirmed.
+
+---
+
 ### Step 3: Compute the Dependency Graph
 
 **Direct dependencies** — derive from the code:
