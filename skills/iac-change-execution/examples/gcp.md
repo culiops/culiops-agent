@@ -90,8 +90,8 @@ Replace placeholders (`{cluster}`, `{service}`, `{project}`, `{region}`, `{zone}
 
 ### Cloud Monitoring — alerting policy state
 
-- List alerting policies: `gcloud alpha monitoring policies list --project {project}`
-- Specific policy details: `gcloud alpha monitoring policies describe {policy-id} --project {project}`
+- List alerting policies: `gcloud monitoring policies list --project {project}`
+- Specific policy details: `gcloud monitoring policies describe {policy-id} --project {project}`
 
 ---
 

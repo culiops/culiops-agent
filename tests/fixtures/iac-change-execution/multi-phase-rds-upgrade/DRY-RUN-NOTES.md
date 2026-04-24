@@ -14,7 +14,7 @@ Expected skill behaviour at each step. Recorded for pre-dry-run reference; "Gaps
 | Catalog signal note | Reads the note about connections alarm firing frequently at threshold=80 vs limit=100 |
 | Tool detection | Finds `main.tf`, `variables.tf` → identifies Terraform |
 | Naming pattern | Reads catalog: `paymentapi-{role}-{env}` — no inference needed |
-| Reboot requirement | Recognises `max_connections` is a dynamic parameter (`apply_method = "pending-reboot"` by default); understands a reboot is required |
+| Reboot requirement | Recognises `max_connections` is a static parameter in PostgreSQL — requires a reboot to take effect. The IaC should set `apply_method = "pending-reboot"` |
 | Alarm threshold analysis | Reads `aws_cloudwatch_metric_alarm.paymentapi_db_connections` threshold=80 vs current limit=100 (80%). Notes new limit=200 → proportional threshold=160 |
 | Direct apply flag | Operator specifies `--direct-apply` (maintenance window context); skill records execution path as direct apply |
 | tfvars location | Finds `envs/prod.tfvars` |

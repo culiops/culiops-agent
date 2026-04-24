@@ -99,6 +99,9 @@ digraph iac_change {
     phase -> record     [label="no — done"];
     record -> gate5;
     gate5 -> record     [label="changes requested"];
+    gate5 -> done       [label="confirmed"];
+
+    done [label="Complete", shape=doublecircle];
 }
 ```
 
