@@ -17,6 +17,7 @@
     "terraform",
     "service-discovery",
     "pre-flight",
+    "iac-change-execution",
     "risk-assessment",
     "cloud",
     "skills",

@@ -52,9 +52,9 @@ None.
 - No active incidents in #notifications-oncall
 - No deployment freeze active
 
-## Reuse window
+## Reuse conditions
 
-This record is valid for **72 hours** from generation time (expires: 2026-04-27T10:30Z), provided:
-1. The target change (`replicaCount: 2 → 4` in `values-prod.yaml`) has not been altered.
-2. Commit `d4e5f6g` has not been superseded by commits that touch `values-prod.yaml` or `Chart.yaml`.
-3. No incidents or deployment freezes have been declared since generation.
+This record is reusable by `iac-change-execution` (Step 4b match rule) provided:
+1. The target change covers the same service (`notifyapi`) and action type (replica scaling).
+2. The resources in the plan output are a subset of the resources assessed above.
+3. Commit `d4e5f6g` has not been superseded by commits that touch `values-prod.yaml` or `Chart.yaml`.

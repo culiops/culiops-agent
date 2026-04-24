@@ -51,49 +51,65 @@ Pre-flight: required before Phase 1 apply
 - Does NOT modify `aws_cloudwatch_metric_alarm.paymentapi_db_cpu` (CPU alarm is unrelated)
 - Phase 2 command is documented (in plan output or operator note) but not written as IaC
 
-## Step 4 — Code review gate
+## Step 4 — Execute
 
-**Expected behaviour:**
+### GATE 2: Code review
 
 - Skill surfaces the diff for operator review
 - Operator verifies: param group change + alarm threshold update; approves
 
-## Step 5 — Pre-flight
+### 4a: Generate plan output
 
-**Expected behaviour:**
+- `terraform plan -var-file=envs/prod.tfvars -out=tfplan`
+- Expected: 2 to change (param group + alarm), 0 to add, 0 to destroy
 
-- Skill invokes `pre-flight` with context: multi-phase, RDS parameter group + reboot, paymentapi, ap-southeast-1
-- Phase 1 score: likely **Amber** — modifying a live RDS parameter group, even without immediate impact, warrants caution
-- Phase 2 score: likely **Amber/Red** — reboot causes brief connection interruption; Multi-AZ limits impact but ECS tasks will see momentary errors
-- Skill reads verdict before proceeding to Phase 1 apply
-- Operator acknowledges Amber/Red risks before direct apply proceeds
+### 4b: Pre-flight gate
 
-## Step 6 — Execute (direct apply path)
+- Skill invokes `pre-flight` with context: multi-phase, RDS parameter group + reboot, paymentapi, ap-southeast-1, direct apply
+- Expected scores: Yellow on blast radius (database = shared infrastructure), Yellow on reversibility (param group change is reversible but reboot causes brief downtime), elevated risk from direct apply path
+- GATE 3: operator acknowledges Yellow/Red findings before direct apply proceeds
 
-**Phase 1:**
-```
-terraform plan -var-file=envs/prod.tfvars -out=tfplan
-terraform apply tfplan
-```
+### 4c: Execute Phase 1 (direct apply)
 
-**Gate between phases:**
-- Skill pauses; operator confirms parameter group is active (`aws rds describe-db-instances`)
-- Operator confirms maintenance window is active
+- Skill presents: `terraform apply tfplan` — GATE 4, operator approves
+- Runs apply, captures output
 
-**Phase 2:**
-```
-aws rds reboot-db-instance \
-  --db-instance-identifier paymentapi-db-prod \
-  --region ap-southeast-1
-```
+### 5a: Verify Phase 1
 
-Post-reboot validation:
-```
-aws rds describe-db-instances \
-  --db-instance-identifier paymentapi-db-prod \
-  --query 'DBInstances[0].DBParameterGroups[0].ParameterApplyStatus'
-# Expected: "in-sync"
-```
+- Re-plan: expects no changes
+- Health check: `aws rds describe-db-instances` — status `available`, parameter group status `pending-reboot`
+
+### Phase gate
+
+- "Phase 1 complete. Parameter group updated. Instance shows pending-reboot. Ready to proceed to Phase 2: reboot instance?"
+- Operator confirms
+
+### Step 3 → Step 4 (Phase 2)
+
+- Phase 2 is an operational command, not IaC — no code change needed
+- 4c: Skill presents:
+  ```
+  aws rds reboot-db-instance \
+    --db-instance-identifier paymentapi-db-prod \
+    --region ap-southeast-1
+  ```
+- GATE 4: operator approves
+
+### 5a: Verify Phase 2
+
+- Health check: `aws rds describe-db-instances` — status returns to `available`
+- Parameter apply status:
+  ```
+  aws rds describe-db-instances \
+    --db-instance-identifier paymentapi-db-prod \
+    --query 'DBInstances[0].DBParameterGroups[0].ParameterApplyStatus'
+  # Expected: "in-sync"
+  ```
+
+## Step 5b — Record
+
+- Writes execution record with both phases documented
+- GATE 5: offers to commit
 
 ## Key multi-phase tests
 

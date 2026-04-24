@@ -28,7 +28,7 @@ Replace placeholders (`{cluster}`, `{service}`, `{project}`, `{region}`, `{zone}
 - Cluster details: `gcloud container clusters describe {cluster} --region {region} --project {project}`
 - Node pool status: `gcloud container node-pools list --cluster {cluster} --region {region} --project {project}`
 - Node pool details: `gcloud container node-pools describe {node-pool} --cluster {cluster} --region {region} --project {project}`
-- Cluster version: `gcloud container clusters describe {cluster} --region {region} --query 'currentMasterVersion,currentNodeVersion' --project {project}`
+- Cluster version: `gcloud container clusters describe {cluster} --region {region} --format 'value(currentMasterVersion,currentNodeVersion)' --project {project}`
 
 ### Cloud Run — current service state
 

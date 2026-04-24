@@ -98,8 +98,8 @@ Replace placeholders (`{cluster}`, `{rg}`, `{subscription}`, `{region}`, `{serve
 
 ### Azure Monitor — alert rules and fired alerts
 
-- List alert rules for resource group: `az monitor alert list --resource-group {rg} --subscription {subscription} --output table`
-- Alert rules in fired state: `az monitor alert list --resource-group {rg} --query '[?condition.allOf[].operator]' --output table`
+- List metric alert rules: `az monitor metrics alert list --resource-group {rg} --output table`
+- List activity log alerts: `az monitor activity-log alert list --resource-group {rg} --output table`
 - Activity log (recent events for resource): `az monitor activity-log list --resource-group {rg} --start-time {T-1h} --offset 1h --output table`
 
 ---

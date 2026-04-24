@@ -70,29 +70,34 @@ resource "aws_cloudwatch_metric_alarm" "paymentapi_cpu_high" {
 - Tags match existing resources (`Service = "paymentapi"`, `Environment = var.env`)
 - Does NOT create a `plan-output.txt` — that is produced by the operator running `terraform plan`
 
-## Step 4 — Code review gate
+## Step 4 — Execute
 
-**Expected behaviour:**
+### 4a: Generate plan output
 
-- Skill surfaces the diff for operator review before proceeding
-- Operator approves (no changes requested in this dry-run)
+- Skill presents: `terraform plan -var-file=envs/prod.tfvars -out=tfplan`
+- Operator runs the command (or skill runs with approval)
+- Expected plan: 1 to add, 0 to change, 0 to destroy
 
-## Step 5 — Pre-flight
+### 4b: Pre-flight gate
 
-**Expected behaviour:**
-
-- Skill invokes `pre-flight` skill with context: Terraform, 1 resource add, CloudWatch alarm, paymentapi, ap-southeast-1
+- No existing pre-flight record — skill invokes `pre-flight` inline
+- Context: Terraform, 1 resource add, CloudWatch alarm, paymentapi, ap-southeast-1
 - Expected verdict: **Green** — alarm addition is low-risk, reversible, non-data-path
-- Skill reads the produced `.culiops/pre-flight/paymentapi-add-alarm-*.md` and confirms Green before proceeding
+- GATE 3: Green → proceed
 
-## Step 6 — Execute (PR path)
+### 4c: Execute (PR path)
 
-**Expected behaviour:**
-
-- Skill opens a GitHub PR (or prints the git commands to do so)
-- PR title: something like `feat(paymentapi): add cpu-high alarm for prod`
+- Skill presents PR action and waits for GATE 4 approval
+- Creates branch `iac-change/paymentapi-cpu-alarm`, commits, opens PR
 - PR description references the pre-flight record
+- Reports PR URL to operator
 - Skill does NOT run `terraform apply` directly
+
+## Step 5 — Verify & Record
+
+- PR path: "PR created. Pipeline will handle apply and verification."
+- Writes execution record to `.culiops/iac-change-execution/paymentapi-cpu-alarm-<timestamp>.md`
+- GATE 5: offers to commit the record
 
 ## Gaps surfaced
 

@@ -44,8 +44,8 @@ Replace placeholders (`{cluster}`, `{service}`, `{stack}`, `{region}`, `{T-1h}`,
 
 ### EC2 — current instance state
 
-- Instance details: `aws ec2 describe-instances --instance-ids {instance-id} --region {region}`
-- Instance type and state: `aws ec2 describe-instances --instance-ids {instance-id} --query 'Reservations[].Instances[].{Type:InstanceType,State:State.Name,AZ:Placement.AvailabilityZone}' --region {region}`
+- Instance details: `aws ec2 describe-instances --instance-ids {instance} --region {region}`
+- Instance type and state: `aws ec2 describe-instances --instance-ids {instance} --query 'Reservations[].Instances[].{Type:InstanceType,State:State.Name,AZ:Placement.AvailabilityZone}' --region {region}`
 
 ### ALB / Security Groups — current config
 
