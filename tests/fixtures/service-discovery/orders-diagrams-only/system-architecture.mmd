@@ -1,0 +1,22 @@
+flowchart LR
+    subgraph "GCP project: orders-prod"
+        subgraph "Cloud Run"
+            API[orders-api<br>Cloud Run Service]
+        end
+        subgraph "Data Layer"
+            DB[(orders-db<br>Cloud SQL PostgreSQL 15)]
+            Cache[(orders-cache<br>Memorystore Redis)]
+        end
+        subgraph "Async"
+            Events[orders-events<br>Pub/Sub Topic]
+        end
+        subgraph "Storage"
+            Files[orders-attachments<br>Cloud Storage]
+        end
+    end
+
+    LB[Cloud Load Balancing] --> API
+    API -->|SQL| DB
+    API -->|Redis| Cache
+    API -->|publish| Events
+    API -->|upload| Files
