@@ -1,0 +1,13 @@
+env                   = "prod"
+region                = "ap-southeast-1"
+vpc_id                = "vpc-0abc123def456"
+private_subnet_ids    = ["subnet-0a1b2c3d4e5f6a7b8", "subnet-0b2c3d4e5f6a7b8c9"]
+alb_security_group_id = "sg-0a1b2c3d4e5f6a7b8"
+execution_role_arn    = "arn:aws:iam::123456789012:role/paymentapi-prod-ecs-execution"
+task_role_arn         = "arn:aws:iam::123456789012:role/paymentapi-prod-ecs-task"
+ecr_repo              = "123456789012.dkr.ecr.ap-southeast-1.amazonaws.com/paymentapi"
+image_tag             = "v2.4.1"
+desired_count         = 3
+task_cpu              = 512
+task_memory           = 1024
+db_host               = "paymentapi-prod-db.cluster-cxyz1234abcd.ap-southeast-1.rds.amazonaws.com"
