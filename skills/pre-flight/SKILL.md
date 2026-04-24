@@ -329,3 +329,17 @@ During incident investigation, if the operator considers a mitigation action (ro
 If yes, the timing category scores as **Yellow** (caution, not block) instead of Red, and the report records "mitigation during active incident — elevated risk accepted."
 
 If no, the hard block stands.
+
+## Model Routing
+
+> These hints guide the orchestrating model on which model tier to use per step. **Rules:** (1) Production-conservative — only route to sonnet when a gate catches errors or the step is purely mechanical. (2) Escalate to opus if a sonnet subagent returns uncertain results. (3) The orchestrator may override any hint based on runtime complexity.
+
+| Step | Model | Inputs | Outputs | Rationale |
+|------|-------|--------|---------|-----------|
+| Step 1: Detect action type | sonnet | Plan output text, assessor file list | Matched assessor name, detected scope | Pattern matching against assessor triggers. GATE 1 catches misdetection before any scoring |
+| Step 2: L1 static analysis | opus | Plan output, IaC files, git log, assessor L1 rules, service-discovery catalog (if exists) | Preliminary scores for 7 categories with signal evidence per score | Safety-critical extraction. Missing a destroy/IAM-wildcard/force_new on a stateful resource flows silently into the verdict — no gate between L1 and scoring |
+| Step 3: L2 human context | orchestrator | L1 preliminary scores (to skip already-answered questions) | Answers to 7 structured questions + any assessor-specific questions | Interactive conversation with the operator — no subagent needed |
+| Step 4: L3 live signals | sonnet | Cloud/platform type, resource identifiers, examples/ file content | Raw CLI output per query | Mechanical CLI execution. Operator previews each command before it runs. Interpretation of results is deferred to Step 5 (opus) |
+| Step 5: Score | opus | L1 scores + L2 answers + L3 raw output + scoring rules | 10 category scores (Green/Yellow/Red/⚪), verdict, hard block flags, signal evidence per score | Judgment core — multi-category synthesis, hard block decisions, multi-Yellow escalation. Wrong score = false safety signal |
+| Step 6: Present report | opus | Scores + signals + assessor rationalization traps | Formatted risk report with per-finding explanation + concrete mitigations | Mitigation quality directly affects operator safety decisions. Domain expertise required |
+| Step 7: Record | sonnet | Complete report from Step 6, output format template | `.culiops/pre-flight/` record file + git commit | Template assembly from already-validated content. Content was produced and approved at GATE 2 |
