@@ -10,6 +10,21 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 - `service-discovery`, `pre-flight`: `## Model Routing` section in each SKILL.md — maps workflow steps to model tiers (opus / sonnet / orchestrator) with input/output contracts and rationale per step. Enables the orchestrating model to route mechanical steps to cheaper/faster models while keeping safety-critical analysis on opus.
 
+## [0.5.0] — 2026-04-24
+
+### Added
+
+- **`service-discovery`: real-infrastructure discovery path** — extends the skill to work when a directory has documentation and diagrams but no IaC. Activates automatically when Step 1 finds no IaC file signatures but detects document/diagram files.
+  - **Detection routing**: Step 1 now falls back to document/diagram detection when no IaC is found, automatically routing to the real-discovery workflow (Steps 2R–6R). Hybrid directories (IaC + documents) take the IaC path.
+  - **Document detectors** (`skills/service-discovery/doc-detectors/`): 5 shipped detectors — Draw.io (structured XML), Mermaid (structured text), PlantUML (structured text), Markdown/text (keyword extraction), Image (Claude vision). Data-only extensibility: add a new format by dropping a `.md` file.
+  - **Cloud discovery templates** (`skills/service-discovery/cloud-discovery/`): 4 shipped templates — AWS (Resource Groups Tagging API, AWS Config), GCP (Cloud Asset Inventory), Azure (Resource Graph), Kubernetes (kubectl label selectors). Data-only extensibility: add a new provider by dropping a `.md` file.
+  - **Converging discovery** (Step 4R): document-extracted hints and gated broad cloud queries merge into a single resource list with confidence flags (`undocumented` for cloud-only, `documented-not-found` for docs-only).
+  - **Same catalog output**: real-discovery produces identical `.culiops/service-discovery/<service>.md` catalogs, with additional source metadata and confidence flags.
+  - **6 operator gates**: one more than the IaC path (broad query approval at 4a). All read-only.
+  - **Iron Law extension**: NO WRITE API CALLS. EVER.
+  - **Model routing**: 13-row table for real-discovery steps (vision on Opus, mechanical parsing on Sonnet, gates on Orchestrator).
+- `tests/fixtures/service-discovery/`: two new fixtures — `payments-docs-only` (AWS, docs + structured diagram + image, exercises all confidence flag outcomes), `orders-diagrams-only` (GCP, Mermaid diagram only, exercises diagrams-without-text scenario) — each with a recorded dry-run.
+
 ## [0.4.0] — 2026-04-24
 
 ### Added
