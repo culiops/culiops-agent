@@ -44,6 +44,11 @@ ALL CLOUD QUERIES ARE READ-ONLY. NO EXCEPTIONS.
 | "I can skip the dependency-graph step; nothing depends on this service" | STOP — verify by tracing references in the code; absence of evidence is not evidence of absence. |
 | "I'll write the runbook section without confirmation" | STOP — runbooks must be validated against the user's actual investigation patterns. |
 | "The four golden signals don't apply to this resource type" | STOP — record the envelope as `n/a` with a reason, don't omit. |
+| "The documents are clear enough, I don't need to run cloud queries to verify" | STOP — documents may be outdated. The converging discovery approach exists because neither source is reliable alone. |
+| "I'll skip the broad discovery query gate since it's all read-only" | STOP — the operator must see and approve every query before execution. Read-only does not mean ungated. |
+| "This image diagram is too blurry to extract anything useful" | STOP — present what you can extract with `[uncertain]` markers. The operator can confirm or discard. |
+| "The credentials don't match the documents but they're probably the right account" | STOP — flag the mismatch at the Step 3R gate. Mismatched credentials → wrong account → wrong resources in catalog. |
+| "I'll run a write API to tag this untagged resource for easier discovery" | STOP — NO WRITE API CALLS. EVER. Record the resource as-is. |
 
 ## Red Flags — STOP and Follow Process
 
@@ -59,6 +64,11 @@ ALL CLOUD QUERIES ARE READ-ONLY. NO EXCEPTIONS.
 | Producing a runbook that has no "is this an upstream dependency?" branch | STOP → add the dependency-first branch. |
 | Emitting a final catalog without the "Assumptions and Caveats" section | STOP → add it. The catalog is incomplete without it. |
 | Continuing after the human says something is wrong without addressing it | STOP → fix all flagged issues before proceeding. |
+| Running cloud API queries before the operator approves the cloud context (Step 3R gate) | STOP → return to Step 3R and present credentials for approval. |
+| Running broad discovery queries before the operator approves them (Step 4R gate 4a) | STOP → return to Step 4R and present proposed queries. |
+| Using a write/mutating API call during any real-discovery step | STOP → replace with the read-only equivalent. There is no exception. |
+| Proceeding with real-discovery when IaC files are present in the directory | STOP → IaC found means IaC path. Real-discovery is the fallback, not an option. |
+| Treating vision-extracted hints as high confidence without operator confirmation | STOP → vision hints are always Low confidence. Present with `[uncertain]` markers at Step 2R gate. |
 
 ## Workflow
 
