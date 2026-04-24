@@ -60,6 +60,7 @@ All documents produced by any `culiops` skill are written under **`.culiops/<ski
 - **Iron Laws and gated workflows.** Every skill has explicit STOP gates where Claude must wait for human confirmation. No silent assumptions.
 - **Agnostic by default.** Cloud provider, IaC tool, and ticket system are all configurable per-conversation. Stack-specific examples live in `examples/` subdirectories.
 - **Book-informed design.** Skills are designed against industry best practices (Google SRE Book, *Infrastructure as Code*, *The Phoenix Project*, etc.) — wisdom is baked in invisibly, not cited.
+- **Dynamic model routing.** Each skill's `## Model Routing` section maps workflow steps to model tiers (opus for safety-critical analysis, sonnet for mechanical steps). The orchestrating model reads these hints and dispatches subagents accordingly — reducing cost and latency without compromising safety. Production-conservative by default: only route to a cheaper model when a human gate catches errors or the step is purely mechanical.
 
 ## Repository Layout
 
@@ -72,7 +73,12 @@ CHANGELOG.md        Release history
 
 ## Contributing
 
-Issues and PRs welcome. New skills should follow the same shape: a `SKILL.md` with a gated workflow, stack-specific `examples/`, and at least one end-to-end fixture under `tests/fixtures/`.
+Issues and PRs welcome. New skills should follow the same shape:
+
+- A `SKILL.md` with Iron Law, constraints, rationalization prevention, red flags, and a gated workflow.
+- A `## Model Routing` section in `SKILL.md` mapping each workflow step to a model tier (`opus` / `sonnet` / `orchestrator`) with inputs, outputs, and rationale. See existing skills for the table format. Route conservatively — if a step's error could affect safety, keep it on opus.
+- Stack-specific `examples/` with read-only CLI templates and least-privilege guidance.
+- At least one end-to-end fixture under `tests/fixtures/` with a `DRY-RUN-NOTES.md`.
 
 ## License
 
