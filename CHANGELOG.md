@@ -10,6 +10,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 - `service-discovery`, `pre-flight`: `## Model Routing` section in each SKILL.md — maps workflow steps to model tiers (opus / sonnet / orchestrator) with input/output contracts and rationale per step. Enables the orchestrating model to route mechanical steps to cheaper/faster models while keeping safety-critical analysis on opus.
 
+## [0.4.0] — 2026-04-24
+
+### Added
+
+- **`iac-change-execution`** skill — execute infrastructure changes safely with a 5-step gated workflow (research, plan, implement, execute, verify). First culiops skill that writes to infrastructure.
+  - `skills/iac-change-execution/SKILL.md`: core framework with Iron Law, 8 constraints, 5 workflow steps with 5 human gates, multi-phase change support with per-phase gates, two execution paths (PR default / direct apply escape hatch), pre-flight embedded as risk gate, output format for execution records.
+  - `skills/iac-change-execution/examples/{aws,gcp,azure,kubernetes}.md`: CLI templates covering research queries (Step 1), verification checks (Step 5), and mutation/apply commands (Step 4) per cloud/platform. Mutation commands flagged with blast radius and elevated permissions.
+- Integration with existing skills: consumes service-discovery catalogs for research, invokes pre-flight as embedded risk gate before execution, reuses recent pre-flight records when applicable.
+- `tests/fixtures/iac-change-execution/`: three fixtures — `simple-alarm-addition` (single-phase, PR path, Terraform), `multi-phase-rds-upgrade` (multi-phase, direct apply, catalog consumption), `helm-config-update` (Helm, catalog + pre-flight record reuse) — each with a recorded dry-run.
+
 ## [0.3.0] — 2026-04-23
 
 ### Added
