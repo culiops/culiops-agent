@@ -350,3 +350,15 @@ For exact CLI command templates, see:
 - Neither cloud nor Kubernetes signals → revert to generic descriptions ("check the load balancer's target health") and note the gap.
 
 Each examples file has its own `## Prerequisites` section (CLI version, authentication, least-privilege role, mutation flagging, cost awareness). The runbook's `## Prerequisites` section in the written output (Step 5, section 2) must list prerequisites for **every** examples file the runbook references.
+
+## Model Routing
+
+> These hints guide the orchestrating model on which model tier to use per step. **Rules:** (1) Production-conservative — only route to sonnet when a gate catches errors or the step is purely mechanical. (2) Escalate to opus if a sonnet subagent returns uncertain results. (3) The orchestrator may override any hint based on runtime complexity.
+
+| Step | Model | Inputs | Outputs | Rationale |
+|------|-------|--------|---------|-----------|
+| Step 1: Detect IaC tool + layout | sonnet | Repo file listing, all detector files from tool-detectors/ | Matched tools, stack boundaries, parameter sources, unclassified artifacts | Pattern matching file paths against detector signatures. GATE 1 catches misdetection |
+| Step 2: Resolve params + inventory | opus | IaC files for in-scope stacks, parameter source files, matched detector extraction rules | Resource inventory with resolved names, types, naming patterns, signal envelopes, conditionals | Wrong parameter resolution → wrong resource names in catalog → on-caller searches for nonexistent resources during incident |
+| Step 3: Compute dependency graph | opus | Resource inventory, code references (depends_on, data lookups, remote state, cross-stack refs), detector cross-stack hints | Dependency graph with direct/transitive deps, critical-path classification, protocol/reliability per link | Missing a critical-path dependency → runbook won't tell on-caller to check the real upstream cause |
+| Step 4: Build runbooks | opus | Inventory, dependency graph, examples/ templates, user journeys (from operator) | Per-symptom investigation decision trees with upstream-first branches | Most judgment-intensive step. Wrong runbook structure wastes incident response time. Domain expertise required |
+| Step 5: Write discovery doc | sonnet | All outputs from Steps 1-4, output format from SKILL.md, commit SHA | `.culiops/service-discovery/` document + git commit | Template assembly from validated outputs. GATE 5 catches formatting issues before finalization |
