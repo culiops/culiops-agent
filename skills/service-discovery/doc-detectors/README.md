@@ -44,4 +44,10 @@ The `type` field in frontmatter determines which model processes files matching 
 
 ## Shipped detectors
 
-(Updated once all detectors are in place.)
+| Detector | Format | Type | Notes |
+|----------|--------|------|-------|
+| [`drawio.md`](drawio.md) | Draw.io diagrams | structured | XML parsing, AWS/GCP/Azure shape detection |
+| [`mermaid.md`](mermaid.md) | Mermaid diagrams | structured | Text parsing, embedded-in-markdown support |
+| [`plantuml.md`](plantuml.md) | PlantUML diagrams | structured | Text parsing, stdlib include detection |
+| [`markdown.md`](markdown.md) | Text documentation | text | Keyword extraction from .md/.txt/.adoc/.rst/.docx/.html/.pdf |
+| [`image.md`](image.md) | Image diagrams | image | Claude vision, lowest reliability, highest token cost |
