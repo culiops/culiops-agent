@@ -42,4 +42,9 @@ A template may omit any non-frontmatter section if it doesn't apply (the skill t
 
 ## Shipped templates
 
-(Updated once all templates are in place.)
+| Template | Provider | Discovery API | Notes |
+|----------|----------|---------------|-------|
+| [`aws.md`](aws.md) | AWS | Resource Groups Tagging API, AWS Config | Tag/name prefix scoping |
+| [`gcp.md`](gcp.md) | GCP | Cloud Asset Inventory | Label/name/asset-type scoping |
+| [`azure.md`](azure.md) | Azure | Azure Resource Graph | Tag/name/resource-group scoping |
+| [`kubernetes.md`](kubernetes.md) | Kubernetes (any host) | kubectl + Helm | Label/namespace scoping; orthogonal to cloud provider |
