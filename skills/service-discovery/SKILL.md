@@ -15,6 +15,13 @@ NO OUT-OF-SCOPE ACTIONS WITHOUT HUMAN APPROVAL.
 ONLY READ INFRASTRUCTURE-AS-CODE AND DOCUMENTATION FILES. NEVER READ SECRETS.
 ```
 
+**Real-discovery extension (when no IaC is found):**
+
+```
+NO WRITE API CALLS. EVER.
+ALL CLOUD QUERIES ARE READ-ONLY. NO EXCEPTIONS.
+```
+
 ## Constraints (Non-Negotiable)
 
 1. **The IaC code is the source of truth.** Every claim in the catalog must trace back to a specific file and line in the repo. Do not invent resources, dependencies, or thresholds from outside knowledge of "what services usually look like." If the code does not say it, the catalog does not say it.
@@ -101,6 +108,30 @@ digraph discovery {
 **Detect the IaC tool(s) in the repo.** At the start of Step 1, load every file under `tool-detectors/*.md`. Each detector's `## File signatures` section defines what files signal that tool. Match the repo's files against every loaded detector. Record every tool that matches — a repo can use more than one. The currently-shipped detectors are listed in [`tool-detectors/README.md`](tool-detectors/README.md).
 
 For each matched detector, the rest of Step 1 (stack boundary detection) and Steps 2–3 (parameter resolution, resource extraction, dependency derivation) consult the corresponding sections of that detector file (`## Stack boundary`, `## Parameter sources`, `## Resource extraction`, `## Typical cross-stack dependencies`). If a detector omits a section, that dimension is unknown for the matched tool — surface the gap and ask the human.
+
+**If no IaC tool is detected: scan for document signatures.** When the detector pass finds zero IaC tools, do not proceed to "Detect unclassified deploy artifacts." Instead, load every file under `doc-detectors/*.md` and scan the directory for matching file signatures. Each doc-detector's `## File signatures` section defines what files signal that format.
+
+If document signatures are found, present:
+
+> "No IaC files found in this directory. However, I found documentation and diagrams that may describe the infrastructure:
+>
+> | File | Format | Detected by |
+> |------|--------|-------------|
+> | `architecture.drawio` | Draw.io diagram | `doc-detectors/drawio.md` |
+> | `runbook.md` | Markdown documentation | `doc-detectors/markdown.md` |
+> | `infra-diagram.png` | Architecture image | `doc-detectors/image.md` |
+>
+> I can switch to **real-infrastructure discovery mode** — I'll extract resource hints from these documents, then verify against live cloud APIs (read-only) to build the same service catalog.
+>
+> **GATE: Switch to real-discovery mode? (Requires cloud credentials configured locally.)**"
+
+If the operator confirms, proceed to **Step 2R** (Document Parsing). If the operator declines, STOP.
+
+If neither IaC tools nor document signatures are found, STOP:
+
+> "No IaC files, documents, or diagrams found in this directory. I need at least one of: infrastructure-as-code files, architecture documents, or architecture diagrams to begin discovery."
+
+**Hybrid directories (IaC + documents):** If IaC files are found, the skill takes the IaC path regardless of whether documents are also present. Supplementing IaC discovery with document hints is out of scope for this version.
 
 **Detect unclassified deploy artifacts.** After running the detector pass, scan the repo for files matching deploy-shape patterns (`*.yml`, `*.yaml`, `*.toml`, `*.json`) that were NOT attributed to any loaded detector. **Apply the secrets-exclusion rule first (Constraint 5) — exclude any file whose path matches secrets-shaped patterns (`*.enc.*`, `*.secret.*`, `secrets/`, `.env*`, `*.pem`, `*.key`, `id_rsa*`, `vault/`) before evaluating deploy-shape.** A file is "deploy-shaped" if its top level contains keys from this list: `service:`, `services:`, `cluster:`, `function:`, `functions:`, `task_definition:`, `app:`, `apps:`, `deploy:`, `provider:`, `runtime:`, `image:`, OR if any value contains an `arn:`, `gs://`, or `projects/<id>/...` reference.
 
