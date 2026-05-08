@@ -28,7 +28,7 @@ NO SAVINGS CLAIM WITHOUT A LABELLED SOURCE.
 5. **Catalog-or-tag for attribution mode.** Attribution mode refuses to run without either a service-discovery catalog or an operator-confirmed tag convention.
 6. **Source-labelled savings claims.** Every dollar figure in the remediation list carries `source` (`compute-optimizer` / `gcp-recommender` / `azure-advisor` / `line-item-computation`) and `confidence` (`high` / `medium` / `low`). No bare claims.
 7. **Cloud-native APIs only in v1.** No third-party FinOps tools. No warehouse/billing-export queries. Deferred to v2 via the `examples/` extension pattern.
-8. **All output in `.culiops/cloud-cost-investigate/`.** Single directory, single file per investigation, named `<scope-slug>-<mode>-<YYYYMMDD-HHmm>.md` (service name in attribution mode; account/subscription/project/cluster identifier in anomaly and waste modes). Same convention as other skills.
+8. **All output in `.culiops/cloud-cost-investigate/`.** Single directory, single file per investigation, named `<scope-slug>-<mode>-<YYYYMMDD-HHmm>.md` (service name in attribution mode; slugified account/subscription/project/cluster identifier — alias preferred, ID acceptable — in anomaly and waste modes). Same convention as other skills.
 9. **Stop on query failure.** Auth errors, rate limits, service unavailability halt the investigation and surface to the operator. The skill does not silently skip and produce a partial report disguised as complete.
 10. **No auto-remediation handoff.** Even if a remediation fits perfectly into `iac-change-execution`, the skill stops at the report. Operator triggers the next skill explicitly.
 
@@ -63,7 +63,7 @@ NO SAVINGS CLAIM WITHOUT A LABELLED SOURCE.
 
 ## Workflow
 
-Fixed pipeline with mode-specific middle (Approach C). One branch point at Step 2.
+Fixed pipeline with mode-specific middle (Steps 2 and 4 branch per mode; Steps 1, 3, and 5 are shared). One branch point at Step 2.
 
 ```dot
 digraph cost_investigate {
@@ -84,6 +84,7 @@ digraph cost_investigate {
     gate3    [label="GATE 3: Operator\napproves drill-down batch", shape=diamond];
     report   [label="Step 5: Compose report\n+ remediation list"];
     gate4    [label="GATE 4: Operator\napproves report\n(commit / revise)", shape=diamond];
+    done     [label="Done", shape=doublecircle];
 
     input -> detect;
     detect -> gate1;
@@ -105,6 +106,7 @@ digraph cost_investigate {
     gate3 -> report       [label="declined"];
     report -> gate4;
     gate4 -> report       [label="revise"];
+    gate4 -> done         [label="approved"];
 }
 ```
 
@@ -182,7 +184,7 @@ Typical batch:
 
 ### Step 3 — Execute approved queries (shared mechanics)
 
-Run the approved batch. Each query's raw output captured to a buffer for the report. If a query fails (auth, rate limit, service unavailable), skill stops and reports the failure — does not silently skip.
+Run the approved batch. Each query's raw output captured to a buffer for the report. If a query fails (auth, rate limit, service unavailable), skill stops and reports the failure — does not silently skip. The buffer is the verbatim raw output retained for the report's `## Queries run` section, so the operator can audit exactly what was fetched.
 
 ### Step 4 — Analyze (mode-specific)
 
@@ -218,7 +220,7 @@ After analysis, the skill checks: did any finding need a query we didn't run (e.
 
 ### Step 5 — Compose report + remediation list (shared)
 
-Write to `.culiops/cloud-cost-investigate/<scope-slug>-<mode>-<YYYYMMDD-HHmm>.md`. The `<scope-slug>` is the service name in attribution mode and the account/subscription/project/cluster identifier in anomaly and waste modes:
+Write to `.culiops/cloud-cost-investigate/<scope-slug>-<mode>-<YYYYMMDD-HHmm>.md`. The `<scope-slug>` is the service name in attribution mode and the slugified account/subscription/project/cluster identifier — alias preferred, ID acceptable — in anomaly and waste modes:
 
 ````markdown
 **Cloud cost investigation**
