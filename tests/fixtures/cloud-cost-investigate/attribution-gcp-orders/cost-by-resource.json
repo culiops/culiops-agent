@@ -1,0 +1,95 @@
+{
+  "rows": [
+    {
+      "resource_name": "orders-api",
+      "resource_global_name": "//run.googleapis.com/projects/acme-prod/locations/us-central1/services/orders-api",
+      "resource_type": "Cloud Run",
+      "service_description": "Cloud Run",
+      "labels_service": "orders",
+      "cost": 680.42,
+      "currency": "USD",
+      "catalog_match": true
+    },
+    {
+      "resource_name": "orders-worker",
+      "resource_global_name": "//run.googleapis.com/projects/acme-prod/locations/us-central1/services/orders-worker",
+      "resource_type": "Cloud Run",
+      "service_description": "Cloud Run",
+      "labels_service": "orders",
+      "cost": 420.17,
+      "currency": "USD",
+      "catalog_match": true
+    },
+    {
+      "resource_name": "orders-prod-db",
+      "resource_global_name": "//sqladmin.googleapis.com/projects/acme-prod/instances/orders-prod-db",
+      "resource_type": "Cloud SQL",
+      "service_description": "Cloud SQL",
+      "labels_service": "orders",
+      "cost": 890.55,
+      "currency": "USD",
+      "catalog_match": true
+    },
+    {
+      "resource_name": "orders-events",
+      "resource_global_name": "//storage.googleapis.com/projects/_/buckets/orders-events",
+      "resource_type": "Cloud Storage",
+      "service_description": "Cloud Storage",
+      "labels_service": "orders",
+      "cost": 240.33,
+      "currency": "USD",
+      "catalog_match": true
+    },
+    {
+      "resource_name": "orders-archives",
+      "resource_global_name": "//storage.googleapis.com/projects/_/buckets/orders-archives",
+      "resource_type": "Cloud Storage",
+      "service_description": "Cloud Storage",
+      "labels_service": "orders",
+      "cost": 185.09,
+      "currency": "USD",
+      "catalog_match": true
+    },
+    {
+      "resource_name": "orders.events",
+      "resource_global_name": "//pubsub.googleapis.com/projects/acme-prod/topics/orders.events",
+      "resource_type": "Cloud Pub/Sub",
+      "service_description": "Cloud Pub/Sub",
+      "labels_service": "orders",
+      "cost": 310.74,
+      "currency": "USD",
+      "catalog_match": true
+    },
+    {
+      "resource_name": "orders-fulfillment",
+      "resource_global_name": "//cloudtasks.googleapis.com/projects/acme-prod/locations/us-central1/queues/orders-fulfillment",
+      "resource_type": "Cloud Tasks",
+      "service_description": "Cloud Tasks",
+      "labels_service": "orders",
+      "cost": 122.02,
+      "currency": "USD",
+      "catalog_match": true
+    },
+    {
+      "resource_name": "shared-nat",
+      "resource_global_name": "//compute.googleapis.com/projects/acme-prod/regions/us-central1/routers/shared-nat",
+      "resource_type": "Cloud NAT",
+      "service_description": "Compute Engine",
+      "labels_service": "shared-infrastructure",
+      "cost": 87.15,
+      "currency": "USD",
+      "catalog_match": false,
+      "flag": "context-cost — this resource is not in the orders service catalog; it is shared infrastructure. EXCLUDED from orders service total."
+    }
+  ],
+  "month": "2026-04",
+  "schema": "acme-prod.billing_export.gcp_billing_export_v1_ACME_PROD_BILLING, filtered WHERE labels.service = 'orders' OR resource.global_name IN (known-catalog-resource-names), grouped by resource.global_name",
+  "query_note": "Resource-level query uses resource.global_name as the grouping key. The shared-nat row appears because it shares the same VPC as the orders service and its costs are partially labeled with the project; the skill must cross-reference the catalog to exclude it.",
+  "catalog_resources_found": 7,
+  "catalog_resources_missing": ["orders-dev-db"],
+  "context_cost_resources": ["shared-nat"],
+  "sum_catalog_resources": 2849.32,
+  "label_total_2026_04": 2847.32,
+  "rounding_discrepancy": 2.00,
+  "note": "orders-dev-db was deleted on 2026-04-22; no billing rows exist for this resource in the 2026-04 export. The skill must flag it as 'untraced — deleted or de-provisioned within billing period; verify'."
+}
