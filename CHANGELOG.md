@@ -8,6 +8,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Added
 
+- **`cloud-cost-investigate`** skill — read-only cloud cost investigation in three modes (anomaly, waste, attribution) producing a `.culiops/cloud-cost-investigate/` report with prioritized remediation list and source-labelled savings estimates.
+  - `skills/cloud-cost-investigate/SKILL.md`: core framework with Iron Law (no mutations / per-batch query approval / source-labelled savings), 5-step gated workflow with mode-specific middle, 4 human gates, 10 constraints, output format.
+  - `skills/cloud-cost-investigate/examples/{aws,gcp,azure,kubernetes}.md`: read-only command templates per cloud/platform covering each workflow step. AWS Cost Explorer per-call charges itemized; Compute Optimizer / GCP Recommender / Azure Advisor / OpenCost integration documented.
+  - Integration with existing skills: optionally consumes `service-discovery` catalogs; required catalog (or operator-confirmed tag convention) for attribution mode. Does not invoke pre-flight (read-only). Does not feed iac-change-execution automatically.
+- `tests/fixtures/cloud-cost-investigate/`: three fixtures — `anomaly-aws-bill-spike` (AWS, anomaly mode, untagged ML compute fleet drives bill spike), `waste-aws-account` (AWS, waste mode, CO + resource-state + utilization with dedup), `attribution-gcp-orders` (GCP, attribution mode, catalog consumption + untraced/context flagging) — each with a recorded dry-run.
 - `service-discovery`, `pre-flight`: `## Model Routing` section in each SKILL.md — maps workflow steps to model tiers (opus / sonnet / orchestrator) with input/output contracts and rationale per step. Enables the orchestrating model to route mechanical steps to cheaper/faster models while keeping safety-critical analysis on opus.
 
 ## [0.5.0] — 2026-04-24

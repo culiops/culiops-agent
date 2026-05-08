@@ -11,10 +11,11 @@ CuliOps ships skills that activate automatically when you ask Claude to do opera
 - **service-discovery** — scan a service's IaC code — or its documentation and diagrams when no IaC exists — and produce a troubleshooting-oriented inventory document (resource catalog, naming patterns, dependencies, per-alarm investigation runbooks). IaC path works with Terraform, Pulumi, CloudFormation, Bicep, Helm/Kustomize, ecspresso, lambroll. Real-discovery path works with Draw.io, Mermaid, PlantUML diagrams, Markdown/text docs, and architecture images, verified against live cloud APIs (read-only).
 - **pre-flight** — evaluate the risk of a proposed production action (IaC change, CLI command, or agent action) across 10 categories. Produces a go/no-go risk report with per-category scoring and actionable mitigations.
 - **iac-change-execution** — execute infrastructure changes safely with research-plan-approve-implement-verify workflow. Supports PR and direct-apply paths, multi-phase changes, and integrates with service-discovery and pre-flight.
+- **cloud-cost-investigate** — read-only cloud cost investigation in three modes (anomaly, waste, attribution). Produces a report with prioritized remediation list and source-labelled savings estimates. Works with AWS (Cost Explorer + Compute Optimizer), GCP (Cloud Billing + Recommender), Azure (Cost Management + Advisor), and Kubernetes (OpenCost / Kubecost).
 
 Planned (not yet shipped):
 
-- `incident-investigation`, `cloud-cost-analytics` — future skills.
+- `incident-investigation` — future skill.
 
 ## Installation
 
@@ -51,6 +52,7 @@ Each skill has its own `SKILL.md` under `skills/<name>/`:
 - [`skills/service-discovery/SKILL.md`](skills/service-discovery/SKILL.md)
 - [`skills/pre-flight/SKILL.md`](skills/pre-flight/SKILL.md)
 - [`skills/iac-change-execution/SKILL.md`](skills/iac-change-execution/SKILL.md)
+- [`skills/cloud-cost-investigate/SKILL.md`](skills/cloud-cost-investigate/SKILL.md)
 
 ## Output Convention
 

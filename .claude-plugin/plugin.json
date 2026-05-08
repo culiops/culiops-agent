@@ -1,6 +1,6 @@
 {
   "name": "culiops",
-  "description": "DevOps / SRE / cloud / platform-engineering skills for Claude Code: service discovery, IaC change execution, and more — cloud-agnostic and IaC-agnostic by design.",
+  "description": "DevOps / SRE / cloud / platform-engineering skills for Claude Code: service discovery, IaC change execution, cloud cost investigation, and more — cloud-agnostic and IaC-agnostic by design.",
   "version": "0.5.0",
   "author": {
     "name": "chiplonton",
@@ -18,7 +18,10 @@
     "service-discovery",
     "pre-flight",
     "iac-change-execution",
+    "cloud-cost-investigate",
     "risk-assessment",
+    "finops",
+    "cost-optimization",
     "cloud",
     "skills",
     "workflows"
