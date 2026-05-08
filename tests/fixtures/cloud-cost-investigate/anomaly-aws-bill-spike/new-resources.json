@@ -1,0 +1,210 @@
+{
+  "Reservations": [
+    {
+      "ReservationId": "r-0a1b2c3d4e5f60001",
+      "OwnerId": "123456789012",
+      "Groups": [],
+      "Instances": [
+        {
+          "InstanceId": "i-0a3f7d92c84e61b05",
+          "InstanceType": "p3.8xlarge",
+          "LaunchTime": "2026-04-26T14:32:11.000Z",
+          "State": {
+            "Code": 16,
+            "Name": "running"
+          },
+          "Placement": {
+            "AvailabilityZone": "us-east-1a",
+            "Tenancy": "default"
+          },
+          "SubnetId": "subnet-0abc123400000001",
+          "VpcId": "vpc-0abc123400000001",
+          "PrivateIpAddress": "10.0.1.14",
+          "PublicIpAddress": "3.218.42.105",
+          "ImageId": "ami-0abcdef1234567890",
+          "KeyName": "ml-team-keypair",
+          "Tags": [
+            {
+              "Key": "Environment",
+              "Value": "staging"
+            }
+          ]
+        },
+        {
+          "InstanceId": "i-0b4e8a03d95f72c16",
+          "InstanceType": "p3.8xlarge",
+          "LaunchTime": "2026-04-26T14:35:47.000Z",
+          "State": {
+            "Code": 16,
+            "Name": "running"
+          },
+          "Placement": {
+            "AvailabilityZone": "us-east-1b",
+            "Tenancy": "default"
+          },
+          "SubnetId": "subnet-0abc123400000002",
+          "VpcId": "vpc-0abc123400000001",
+          "PrivateIpAddress": "10.0.2.27",
+          "PublicIpAddress": "3.218.43.116",
+          "ImageId": "ami-0abcdef1234567890",
+          "KeyName": "ml-team-keypair",
+          "Tags": [
+            {
+              "Key": "Environment",
+              "Value": "staging"
+            }
+          ]
+        },
+        {
+          "InstanceId": "i-0c5fa914e06b83d27",
+          "InstanceType": "p3.8xlarge",
+          "LaunchTime": "2026-04-26T14:38:22.000Z",
+          "State": {
+            "Code": 16,
+            "Name": "running"
+          },
+          "Placement": {
+            "AvailabilityZone": "us-east-1c",
+            "Tenancy": "default"
+          },
+          "SubnetId": "subnet-0abc123400000003",
+          "VpcId": "vpc-0abc123400000001",
+          "PrivateIpAddress": "10.0.3.41",
+          "PublicIpAddress": "54.91.12.78",
+          "ImageId": "ami-0abcdef1234567890",
+          "KeyName": "ml-team-keypair",
+          "Tags": [
+            {
+              "Key": "Environment",
+              "Value": "staging"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "ReservationId": "r-0b2c3d4e5f6a70002",
+      "OwnerId": "123456789012",
+      "Groups": [],
+      "Instances": [
+        {
+          "InstanceId": "i-0d60c25f17894e38a",
+          "InstanceType": "p3.8xlarge",
+          "LaunchTime": "2026-04-27T09:14:55.000Z",
+          "State": {
+            "Code": 16,
+            "Name": "running"
+          },
+          "Placement": {
+            "AvailabilityZone": "us-east-1a",
+            "Tenancy": "default"
+          },
+          "SubnetId": "subnet-0abc123400000001",
+          "VpcId": "vpc-0abc123400000001",
+          "PrivateIpAddress": "10.0.1.52",
+          "PublicIpAddress": "3.218.44.127",
+          "ImageId": "ami-0abcdef1234567890",
+          "KeyName": "ml-team-keypair",
+          "Tags": []
+        },
+        {
+          "InstanceId": "i-0e71d3628050f49b2",
+          "InstanceType": "p3.8xlarge",
+          "LaunchTime": "2026-04-27T09:17:33.000Z",
+          "State": {
+            "Code": 16,
+            "Name": "running"
+          },
+          "Placement": {
+            "AvailabilityZone": "us-east-1b",
+            "Tenancy": "default"
+          },
+          "SubnetId": "subnet-0abc123400000002",
+          "VpcId": "vpc-0abc123400000001",
+          "PrivateIpAddress": "10.0.2.68",
+          "PublicIpAddress": "54.91.13.89",
+          "ImageId": "ami-0abcdef1234567890",
+          "KeyName": "ml-team-keypair",
+          "Tags": []
+        },
+        {
+          "InstanceId": "i-0f82e4739116a50c3",
+          "InstanceType": "p3.8xlarge",
+          "LaunchTime": "2026-04-27T09:21:08.000Z",
+          "State": {
+            "Code": 16,
+            "Name": "running"
+          },
+          "Placement": {
+            "AvailabilityZone": "us-east-1c",
+            "Tenancy": "default"
+          },
+          "SubnetId": "subnet-0abc123400000003",
+          "VpcId": "vpc-0abc123400000001",
+          "PrivateIpAddress": "10.0.3.83",
+          "PublicIpAddress": "3.218.45.140",
+          "ImageId": "ami-0abcdef1234567890",
+          "KeyName": "ml-team-keypair",
+          "Tags": []
+        }
+      ]
+    },
+    {
+      "ReservationId": "r-0c3d4e5f6a7b80003",
+      "OwnerId": "123456789012",
+      "Groups": [],
+      "Instances": [
+        {
+          "InstanceId": "i-09a3f58140b27c61d",
+          "InstanceType": "p3.8xlarge",
+          "LaunchTime": "2026-04-28T16:44:19.000Z",
+          "State": {
+            "Code": 16,
+            "Name": "running"
+          },
+          "Placement": {
+            "AvailabilityZone": "us-east-1a",
+            "Tenancy": "default"
+          },
+          "SubnetId": "subnet-0abc123400000001",
+          "VpcId": "vpc-0abc123400000001",
+          "PrivateIpAddress": "10.0.1.97",
+          "PublicIpAddress": "54.91.14.152",
+          "ImageId": "ami-0abcdef1234567890",
+          "KeyName": "ml-team-keypair",
+          "Tags": [
+            {
+              "Key": "Environment",
+              "Value": "staging"
+            }
+          ]
+        },
+        {
+          "InstanceId": "i-00b4169a51c38d72e",
+          "InstanceType": "p3.8xlarge",
+          "LaunchTime": "2026-04-28T16:47:44.000Z",
+          "State": {
+            "Code": 16,
+            "Name": "running"
+          },
+          "Placement": {
+            "AvailabilityZone": "us-east-1b",
+            "Tenancy": "default"
+          },
+          "SubnetId": "subnet-0abc123400000002",
+          "VpcId": "vpc-0abc123400000001",
+          "PrivateIpAddress": "10.0.2.113",
+          "PublicIpAddress": "3.218.46.163",
+          "ImageId": "ami-0abcdef1234567890",
+          "KeyName": "ml-team-keypair",
+          "Tags": [
+            {
+              "Key": "Environment",
+              "Value": "staging"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
