@@ -1,0 +1,658 @@
+{
+  "Snapshots": [
+    {
+      "SnapshotId": "snap-2c80a3b1799d",
+      "VolumeId": "vol-0aaaa0001bbbb0001",
+      "VolumeSize": 500,
+      "State": "completed",
+      "StartTime": "2025-03-24T00:00:00.000Z",
+      "Description": "nightly-backup",
+      "OwnerId": "123456789012",
+      "Encrypted": true,
+      "Progress": "100%",
+      "Tags": []
+    },
+    {
+      "SnapshotId": "snap-2a3dbc8960a9",
+      "VolumeId": "vol-0aaaa0003bbbb0003",
+      "VolumeSize": 400,
+      "State": "completed",
+      "StartTime": "2025-06-09T00:00:00.000Z",
+      "Description": "Created by AWS-VMImport",
+      "OwnerId": "123456789012",
+      "Encrypted": true,
+      "Progress": "100%",
+      "Tags": []
+    },
+    {
+      "SnapshotId": "snap-4b8f37f8a88b",
+      "VolumeId": "vol-0aaaa0001bbbb0001",
+      "VolumeSize": 400,
+      "State": "completed",
+      "StartTime": "2025-06-24T00:00:00.000Z",
+      "Description": "adhoc-snapshot",
+      "OwnerId": "123456789012",
+      "Encrypted": false,
+      "Progress": "100%",
+      "Tags": []
+    },
+    {
+      "SnapshotId": "snap-7b658b8148f6",
+      "VolumeId": "vol-0dddd0001eeee0001",
+      "VolumeSize": 350,
+      "State": "completed",
+      "StartTime": "2025-08-21T00:00:00.000Z",
+      "Description": "migration-backup",
+      "OwnerId": "123456789012",
+      "Encrypted": true,
+      "Progress": "100%",
+      "Tags": []
+    },
+    {
+      "SnapshotId": "snap-de4ac241330b",
+      "VolumeId": "vol-0aaaa0006bbbb0006",
+      "VolumeSize": 300,
+      "State": "completed",
+      "StartTime": "2025-04-15T00:00:00.000Z",
+      "Description": "pre-deploy-snapshot",
+      "OwnerId": "123456789012",
+      "Encrypted": true,
+      "Progress": "100%",
+      "Tags": []
+    },
+    {
+      "SnapshotId": "snap-662bc37459ee",
+      "VolumeId": "vol-0aaaa0004bbbb0004",
+      "VolumeSize": 300,
+      "State": "completed",
+      "StartTime": "2026-02-19T00:00:00.000Z",
+      "Description": "pre-deploy-snapshot",
+      "OwnerId": "123456789012",
+      "Encrypted": true,
+      "Progress": "100%",
+      "Tags": []
+    },
+    {
+      "SnapshotId": "snap-53b79a8dca03",
+      "VolumeId": "vol-0aaaa0002bbbb0002",
+      "VolumeSize": 250,
+      "State": "completed",
+      "StartTime": "2025-03-30T00:00:00.000Z",
+      "Description": "Created by AWS-VMImport",
+      "OwnerId": "123456789012",
+      "Encrypted": true,
+      "Progress": "100%",
+      "Tags": []
+    },
+    {
+      "SnapshotId": "snap-9d52142c3fe8",
+      "VolumeId": "vol-0dddd0003eeee0003",
+      "VolumeSize": 250,
+      "State": "completed",
+      "StartTime": "2025-02-07T00:00:00.000Z",
+      "Description": "migration-backup",
+      "OwnerId": "123456789012",
+      "Encrypted": true,
+      "Progress": "100%",
+      "Tags": [
+        {
+          "Key": "Name",
+          "Value": "backup-20250207"
+        }
+      ]
+    },
+    {
+      "SnapshotId": "snap-413993cd59bf",
+      "VolumeId": "vol-0aaaa0003bbbb0003",
+      "VolumeSize": 250,
+      "State": "completed",
+      "StartTime": "2026-03-15T00:00:00.000Z",
+      "Description": "migration-backup",
+      "OwnerId": "123456789012",
+      "Encrypted": true,
+      "Progress": "100%",
+      "Tags": [
+        {
+          "Key": "Name",
+          "Value": "backup-20260315"
+        }
+      ]
+    },
+    {
+      "SnapshotId": "snap-246dfc377a4c",
+      "VolumeId": "vol-0dddd0001eeee0001",
+      "VolumeSize": 200,
+      "State": "completed",
+      "StartTime": "2025-01-19T00:00:00.000Z",
+      "Description": "pre-deploy-snapshot",
+      "OwnerId": "123456789012",
+      "Encrypted": true,
+      "Progress": "100%",
+      "Tags": []
+    },
+    {
+      "SnapshotId": "snap-e588a2bc372f",
+      "VolumeId": "vol-0dddd0005eeee0005",
+      "VolumeSize": 200,
+      "State": "completed",
+      "StartTime": "2026-01-14T00:00:00.000Z",
+      "Description": "nightly-backup",
+      "OwnerId": "123456789012",
+      "Encrypted": false,
+      "Progress": "100%",
+      "Tags": []
+    },
+    {
+      "SnapshotId": "snap-c3aa4458a885",
+      "VolumeId": "vol-0aaaa0003bbbb0003",
+      "VolumeSize": 200,
+      "State": "completed",
+      "StartTime": "2025-05-31T00:00:00.000Z",
+      "Description": "",
+      "OwnerId": "123456789012",
+      "Encrypted": false,
+      "Progress": "100%",
+      "Tags": [
+        {
+          "Key": "Name",
+          "Value": "backup-20250531"
+        }
+      ]
+    },
+    {
+      "SnapshotId": "snap-39d43eabedcb",
+      "VolumeId": "vol-0dddd0008eeee0008",
+      "VolumeSize": 200,
+      "State": "completed",
+      "StartTime": "2025-09-25T00:00:00.000Z",
+      "Description": "adhoc-snapshot",
+      "OwnerId": "123456789012",
+      "Encrypted": false,
+      "Progress": "100%",
+      "Tags": []
+    },
+    {
+      "SnapshotId": "snap-48388e944239",
+      "VolumeId": "vol-0dddd0004eeee0004",
+      "VolumeSize": 150,
+      "State": "completed",
+      "StartTime": "2025-01-31T00:00:00.000Z",
+      "Description": "Created by AWS-VMImport",
+      "OwnerId": "123456789012",
+      "Encrypted": true,
+      "Progress": "100%",
+      "Tags": [
+        {
+          "Key": "Name",
+          "Value": "backup-20250131"
+        }
+      ]
+    },
+    {
+      "SnapshotId": "snap-1837d261a7ab",
+      "VolumeId": "vol-0dddd0004eeee0004",
+      "VolumeSize": 150,
+      "State": "completed",
+      "StartTime": "2025-09-14T00:00:00.000Z",
+      "Description": "nightly-backup",
+      "OwnerId": "123456789012",
+      "Encrypted": false,
+      "Progress": "100%",
+      "Tags": []
+    },
+    {
+      "SnapshotId": "snap-c7c9e059a0ee",
+      "VolumeId": "vol-0dddd0004eeee0004",
+      "VolumeSize": 150,
+      "State": "completed",
+      "StartTime": "2025-12-20T00:00:00.000Z",
+      "Description": "manual-backup",
+      "OwnerId": "123456789012",
+      "Encrypted": false,
+      "Progress": "100%",
+      "Tags": [
+        {
+          "Key": "Name",
+          "Value": "backup-20251220"
+        }
+      ]
+    },
+    {
+      "SnapshotId": "snap-3493757750a9",
+      "VolumeId": "vol-0dddd0002eeee0002",
+      "VolumeSize": 150,
+      "State": "completed",
+      "StartTime": "2026-01-26T00:00:00.000Z",
+      "Description": "",
+      "OwnerId": "123456789012",
+      "Encrypted": false,
+      "Progress": "100%",
+      "Tags": []
+    },
+    {
+      "SnapshotId": "snap-cf3c434308bc",
+      "VolumeId": "vol-0dddd0007eeee0007",
+      "VolumeSize": 150,
+      "State": "completed",
+      "StartTime": "2025-01-03T00:00:00.000Z",
+      "Description": "pre-deploy-snapshot",
+      "OwnerId": "123456789012",
+      "Encrypted": true,
+      "Progress": "100%",
+      "Tags": []
+    },
+    {
+      "SnapshotId": "snap-92702369b584",
+      "VolumeId": "vol-0dddd0009eeee0009",
+      "VolumeSize": 100,
+      "State": "completed",
+      "StartTime": "2026-02-20T00:00:00.000Z",
+      "Description": "migration-backup",
+      "OwnerId": "123456789012",
+      "Encrypted": true,
+      "Progress": "100%",
+      "Tags": [
+        {
+          "Key": "Name",
+          "Value": "backup-20260220"
+        }
+      ]
+    },
+    {
+      "SnapshotId": "snap-b0a027209bdf",
+      "VolumeId": "vol-0aaaa0006bbbb0006",
+      "VolumeSize": 100,
+      "State": "completed",
+      "StartTime": "2025-02-26T00:00:00.000Z",
+      "Description": "",
+      "OwnerId": "123456789012",
+      "Encrypted": true,
+      "Progress": "100%",
+      "Tags": [
+        {
+          "Key": "Name",
+          "Value": "backup-20250226"
+        }
+      ]
+    },
+    {
+      "SnapshotId": "snap-71b162801c45",
+      "VolumeId": "vol-0dddd0008eeee0008",
+      "VolumeSize": 100,
+      "State": "completed",
+      "StartTime": "2025-07-11T00:00:00.000Z",
+      "Description": "",
+      "OwnerId": "123456789012",
+      "Encrypted": true,
+      "Progress": "100%",
+      "Tags": []
+    },
+    {
+      "SnapshotId": "snap-c881ae270da7",
+      "VolumeId": "vol-0aaaa0004bbbb0004",
+      "VolumeSize": 100,
+      "State": "completed",
+      "StartTime": "2025-04-23T00:00:00.000Z",
+      "Description": "migration-backup",
+      "OwnerId": "123456789012",
+      "Encrypted": true,
+      "Progress": "100%",
+      "Tags": [
+        {
+          "Key": "Name",
+          "Value": "backup-20250423"
+        }
+      ]
+    },
+    {
+      "SnapshotId": "snap-b416c4c2e2e3",
+      "VolumeId": "vol-0dddd0004eeee0004",
+      "VolumeSize": 100,
+      "State": "completed",
+      "StartTime": "2026-02-09T00:00:00.000Z",
+      "Description": "nightly-backup",
+      "OwnerId": "123456789012",
+      "Encrypted": true,
+      "Progress": "100%",
+      "Tags": []
+    },
+    {
+      "SnapshotId": "snap-f037b8db0672",
+      "VolumeId": "vol-0dddd0002eeee0002",
+      "VolumeSize": 100,
+      "State": "completed",
+      "StartTime": "2024-11-26T00:00:00.000Z",
+      "Description": "nightly-backup",
+      "OwnerId": "123456789012",
+      "Encrypted": false,
+      "Progress": "100%",
+      "Tags": []
+    },
+    {
+      "SnapshotId": "snap-2b3de9a1fa6f",
+      "VolumeId": "vol-0dddd0003eeee0003",
+      "VolumeSize": 80,
+      "State": "completed",
+      "StartTime": "2025-02-01T00:00:00.000Z",
+      "Description": "",
+      "OwnerId": "123456789012",
+      "Encrypted": true,
+      "Progress": "100%",
+      "Tags": [
+        {
+          "Key": "Name",
+          "Value": "backup-20250201"
+        }
+      ]
+    },
+    {
+      "SnapshotId": "snap-6fb82720797d",
+      "VolumeId": "vol-0aaaa0006bbbb0006",
+      "VolumeSize": 80,
+      "State": "completed",
+      "StartTime": "2025-07-05T00:00:00.000Z",
+      "Description": "",
+      "OwnerId": "123456789012",
+      "Encrypted": true,
+      "Progress": "100%",
+      "Tags": [
+        {
+          "Key": "Name",
+          "Value": "backup-20250705"
+        }
+      ]
+    },
+    {
+      "SnapshotId": "snap-62fb99546eb4",
+      "VolumeId": "vol-0dddd0009eeee0009",
+      "VolumeSize": 80,
+      "State": "completed",
+      "StartTime": "2026-03-29T00:00:00.000Z",
+      "Description": "pre-deploy-snapshot",
+      "OwnerId": "123456789012",
+      "Encrypted": true,
+      "Progress": "100%",
+      "Tags": []
+    },
+    {
+      "SnapshotId": "snap-1ed43d4cbf37",
+      "VolumeId": "vol-0dddd0001eeee0001",
+      "VolumeSize": 80,
+      "State": "completed",
+      "StartTime": "2025-01-13T00:00:00.000Z",
+      "Description": "Created by AWS-VMImport",
+      "OwnerId": "123456789012",
+      "Encrypted": true,
+      "Progress": "100%",
+      "Tags": []
+    },
+    {
+      "SnapshotId": "snap-8c69bb5e4bcf",
+      "VolumeId": "vol-0aaaa0003bbbb0003",
+      "VolumeSize": 80,
+      "State": "completed",
+      "StartTime": "2024-11-23T00:00:00.000Z",
+      "Description": "migration-backup",
+      "OwnerId": "123456789012",
+      "Encrypted": true,
+      "Progress": "100%",
+      "Tags": [
+        {
+          "Key": "Name",
+          "Value": "backup-20241123"
+        }
+      ]
+    },
+    {
+      "SnapshotId": "snap-b8e520de435d",
+      "VolumeId": "vol-0dddd0009eeee0009",
+      "VolumeSize": 60,
+      "State": "completed",
+      "StartTime": "2024-12-09T00:00:00.000Z",
+      "Description": "pre-deploy-snapshot",
+      "OwnerId": "123456789012",
+      "Encrypted": false,
+      "Progress": "100%",
+      "Tags": []
+    },
+    {
+      "SnapshotId": "snap-ab49df57c59a",
+      "VolumeId": "vol-0dddd0007eeee0007",
+      "VolumeSize": 60,
+      "State": "completed",
+      "StartTime": "2024-11-30T00:00:00.000Z",
+      "Description": "",
+      "OwnerId": "123456789012",
+      "Encrypted": false,
+      "Progress": "100%",
+      "Tags": []
+    },
+    {
+      "SnapshotId": "snap-437eb09b2a5c",
+      "VolumeId": "vol-0dddd0003eeee0003",
+      "VolumeSize": 60,
+      "State": "completed",
+      "StartTime": "2025-09-15T00:00:00.000Z",
+      "Description": "adhoc-snapshot",
+      "OwnerId": "123456789012",
+      "Encrypted": true,
+      "Progress": "100%",
+      "Tags": [
+        {
+          "Key": "Name",
+          "Value": "backup-20250915"
+        }
+      ]
+    },
+    {
+      "SnapshotId": "snap-f64d702753a1",
+      "VolumeId": "vol-0dddd0008eeee0008",
+      "VolumeSize": 60,
+      "State": "completed",
+      "StartTime": "2026-02-05T00:00:00.000Z",
+      "Description": "Created by AWS-VMImport",
+      "OwnerId": "123456789012",
+      "Encrypted": true,
+      "Progress": "100%",
+      "Tags": []
+    },
+    {
+      "SnapshotId": "snap-a69b05628059",
+      "VolumeId": "vol-0dddd0001eeee0001",
+      "VolumeSize": 60,
+      "State": "completed",
+      "StartTime": "2025-06-10T00:00:00.000Z",
+      "Description": "Created by AWS-VMImport",
+      "OwnerId": "123456789012",
+      "Encrypted": false,
+      "Progress": "100%",
+      "Tags": []
+    },
+    {
+      "SnapshotId": "snap-1f12a18ff6b6",
+      "VolumeId": "vol-0dddd0001eeee0001",
+      "VolumeSize": 50,
+      "State": "completed",
+      "StartTime": "2026-03-04T00:00:00.000Z",
+      "Description": "migration-backup",
+      "OwnerId": "123456789012",
+      "Encrypted": true,
+      "Progress": "100%",
+      "Tags": [
+        {
+          "Key": "Name",
+          "Value": "backup-20260304"
+        }
+      ]
+    },
+    {
+      "SnapshotId": "snap-939f1223b513",
+      "VolumeId": "vol-0dddd0001eeee0001",
+      "VolumeSize": 50,
+      "State": "completed",
+      "StartTime": "2025-11-16T00:00:00.000Z",
+      "Description": "nightly-backup",
+      "OwnerId": "123456789012",
+      "Encrypted": false,
+      "Progress": "100%",
+      "Tags": [
+        {
+          "Key": "Name",
+          "Value": "backup-20251116"
+        }
+      ]
+    },
+    {
+      "SnapshotId": "snap-c92d21df306f",
+      "VolumeId": "vol-0dddd0009eeee0009",
+      "VolumeSize": 50,
+      "State": "completed",
+      "StartTime": "2025-12-04T00:00:00.000Z",
+      "Description": "migration-backup",
+      "OwnerId": "123456789012",
+      "Encrypted": true,
+      "Progress": "100%",
+      "Tags": [
+        {
+          "Key": "Name",
+          "Value": "backup-20251204"
+        }
+      ]
+    },
+    {
+      "SnapshotId": "snap-282530beb45f",
+      "VolumeId": "vol-0aaaa0004bbbb0004",
+      "VolumeSize": 50,
+      "State": "completed",
+      "StartTime": "2025-05-05T00:00:00.000Z",
+      "Description": "manual-backup",
+      "OwnerId": "123456789012",
+      "Encrypted": true,
+      "Progress": "100%",
+      "Tags": []
+    },
+    {
+      "SnapshotId": "snap-ed24778eedb3",
+      "VolumeId": "vol-0aaaa0002bbbb0002",
+      "VolumeSize": 50,
+      "State": "completed",
+      "StartTime": "2025-04-28T00:00:00.000Z",
+      "Description": "adhoc-snapshot",
+      "OwnerId": "123456789012",
+      "Encrypted": true,
+      "Progress": "100%",
+      "Tags": [
+        {
+          "Key": "Name",
+          "Value": "backup-20250428"
+        }
+      ]
+    },
+    {
+      "SnapshotId": "snap-77120f844fef",
+      "VolumeId": "vol-0dddd0004eeee0004",
+      "VolumeSize": 40,
+      "State": "completed",
+      "StartTime": "2025-02-22T00:00:00.000Z",
+      "Description": "nightly-backup",
+      "OwnerId": "123456789012",
+      "Encrypted": true,
+      "Progress": "100%",
+      "Tags": [
+        {
+          "Key": "Name",
+          "Value": "backup-20250222"
+        }
+      ]
+    },
+    {
+      "SnapshotId": "snap-994a30b187ef",
+      "VolumeId": "vol-0dddd0008eeee0008",
+      "VolumeSize": 40,
+      "State": "completed",
+      "StartTime": "2026-01-26T00:00:00.000Z",
+      "Description": "pre-deploy-snapshot",
+      "OwnerId": "123456789012",
+      "Encrypted": true,
+      "Progress": "100%",
+      "Tags": []
+    },
+    {
+      "SnapshotId": "snap-efde3ff350bf",
+      "VolumeId": "vol-0aaaa0003bbbb0003",
+      "VolumeSize": 40,
+      "State": "completed",
+      "StartTime": "2025-08-24T00:00:00.000Z",
+      "Description": "migration-backup",
+      "OwnerId": "123456789012",
+      "Encrypted": false,
+      "Progress": "100%",
+      "Tags": [
+        {
+          "Key": "Name",
+          "Value": "backup-20250824"
+        }
+      ]
+    },
+    {
+      "SnapshotId": "snap-1cf319108be5",
+      "VolumeId": "vol-0aaaa0001bbbb0001",
+      "VolumeSize": 40,
+      "State": "completed",
+      "StartTime": "2024-11-27T00:00:00.000Z",
+      "Description": "migration-backup",
+      "OwnerId": "123456789012",
+      "Encrypted": true,
+      "Progress": "100%",
+      "Tags": []
+    },
+    {
+      "SnapshotId": "snap-780a2a935d62",
+      "VolumeId": "vol-0dddd0009eeee0009",
+      "VolumeSize": 30,
+      "State": "completed",
+      "StartTime": "2025-08-04T00:00:00.000Z",
+      "Description": "manual-backup",
+      "OwnerId": "123456789012",
+      "Encrypted": true,
+      "Progress": "100%",
+      "Tags": []
+    },
+    {
+      "SnapshotId": "snap-71042a25a888",
+      "VolumeId": "vol-0aaaa0001bbbb0001",
+      "VolumeSize": 30,
+      "State": "completed",
+      "StartTime": "2024-11-19T00:00:00.000Z",
+      "Description": "migration-backup",
+      "OwnerId": "123456789012",
+      "Encrypted": true,
+      "Progress": "100%",
+      "Tags": []
+    },
+    {
+      "SnapshotId": "snap-7c4a490617f2",
+      "VolumeId": "vol-0dddd0009eeee0009",
+      "VolumeSize": 20,
+      "State": "completed",
+      "StartTime": "2026-01-18T00:00:00.000Z",
+      "Description": "nightly-backup",
+      "OwnerId": "123456789012",
+      "Encrypted": true,
+      "Progress": "100%",
+      "Tags": []
+    },
+    {
+      "SnapshotId": "snap-cc59944528c0",
+      "VolumeId": "vol-0aaaa0002bbbb0002",
+      "VolumeSize": 10,
+      "State": "completed",
+      "StartTime": "2025-03-21T00:00:00.000Z",
+      "Description": "Created by AWS-VMImport",
+      "OwnerId": "123456789012",
+      "Encrypted": false,
+      "Progress": "100%",
+      "Tags": []
+    }
+  ]
+}

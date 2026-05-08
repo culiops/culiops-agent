@@ -1,0 +1,195 @@
+{
+  "instanceRecommendations": [
+    {
+      "instanceArn": "arn:aws:ec2:us-east-1:123456789012:instance/i-0aaaa1111bbbb2222",
+      "accountId": "123456789012",
+      "instanceName": "prod-api-worker-01",
+      "currentInstanceType": "m5.4xlarge",
+      "finding": "OVER_PROVISIONED",
+      "findingReasonCodes": ["CPUUnderprovisioned"],
+      "utilizationMetrics": [
+        {
+          "name": "CPU_UTILIZATION_PERCENTAGE",
+          "statistic": "MAXIMUM",
+          "value": 14.2
+        },
+        {
+          "name": "CPU_UTILIZATION_PERCENTAGE",
+          "statistic": "AVERAGE",
+          "value": 3.8
+        }
+      ],
+      "lookBackPeriodInDays": 14,
+      "recommendationOptions": [
+        {
+          "instanceType": "m5.2xlarge",
+          "projectedUtilizationMetrics": [
+            {
+              "name": "CPU_UTILIZATION_PERCENTAGE",
+              "statistic": "MAXIMUM",
+              "value": 28.4
+            }
+          ],
+          "rank": 1,
+          "savingsOpportunity": {
+            "savingsOpportunityPercentage": 50.0,
+            "estimatedMonthlySavings": {
+              "currency": "USD",
+              "value": 280.0
+            }
+          },
+          "performanceRisk": 1
+        }
+      ],
+      "recommendationSources": [
+        {
+          "recommendationSourceArn": "arn:aws:ec2:us-east-1:123456789012:instance/i-0aaaa1111bbbb2222",
+          "recommendationSourceType": "Ec2Instance"
+        }
+      ],
+      "lastRefreshTimestamp": "2026-05-07T10:00:00.000Z"
+    },
+    {
+      "instanceArn": "arn:aws:ec2:us-east-1:123456789012:instance/i-0bbbb3333cccc4444",
+      "accountId": "123456789012",
+      "instanceName": "prod-api-worker-02",
+      "currentInstanceType": "m5.2xlarge",
+      "finding": "OVER_PROVISIONED",
+      "findingReasonCodes": ["CPUUnderprovisioned"],
+      "utilizationMetrics": [
+        {
+          "name": "CPU_UTILIZATION_PERCENTAGE",
+          "statistic": "MAXIMUM",
+          "value": 12.8
+        },
+        {
+          "name": "CPU_UTILIZATION_PERCENTAGE",
+          "statistic": "AVERAGE",
+          "value": 4.1
+        }
+      ],
+      "lookBackPeriodInDays": 14,
+      "recommendationOptions": [
+        {
+          "instanceType": "m5.xlarge",
+          "projectedUtilizationMetrics": [
+            {
+              "name": "CPU_UTILIZATION_PERCENTAGE",
+              "statistic": "MAXIMUM",
+              "value": 25.6
+            }
+          ],
+          "rank": 1,
+          "savingsOpportunity": {
+            "savingsOpportunityPercentage": 50.0,
+            "estimatedMonthlySavings": {
+              "currency": "USD",
+              "value": 140.0
+            }
+          },
+          "performanceRisk": 1
+        }
+      ],
+      "recommendationSources": [
+        {
+          "recommendationSourceArn": "arn:aws:ec2:us-east-1:123456789012:instance/i-0bbbb3333cccc4444",
+          "recommendationSourceType": "Ec2Instance"
+        }
+      ],
+      "lastRefreshTimestamp": "2026-05-07T10:00:00.000Z"
+    },
+    {
+      "instanceArn": "arn:aws:ec2:us-east-1:123456789012:instance/i-0cccc5555dddd6666",
+      "accountId": "123456789012",
+      "instanceName": "prod-batch-runner-01",
+      "currentInstanceType": "m5.xlarge",
+      "finding": "OVER_PROVISIONED",
+      "findingReasonCodes": ["CPUUnderprovisioned"],
+      "utilizationMetrics": [
+        {
+          "name": "CPU_UTILIZATION_PERCENTAGE",
+          "statistic": "MAXIMUM",
+          "value": 8.1
+        },
+        {
+          "name": "CPU_UTILIZATION_PERCENTAGE",
+          "statistic": "AVERAGE",
+          "value": 2.6
+        }
+      ],
+      "lookBackPeriodInDays": 14,
+      "recommendationOptions": [
+        {
+          "instanceType": "m5.large",
+          "projectedUtilizationMetrics": [
+            {
+              "name": "CPU_UTILIZATION_PERCENTAGE",
+              "statistic": "MAXIMUM",
+              "value": 16.2
+            }
+          ],
+          "rank": 1,
+          "savingsOpportunity": {
+            "savingsOpportunityPercentage": 50.0,
+            "estimatedMonthlySavings": {
+              "currency": "USD",
+              "value": 70.0
+            }
+          },
+          "performanceRisk": 1
+        }
+      ],
+      "recommendationSources": [
+        {
+          "recommendationSourceArn": "arn:aws:ec2:us-east-1:123456789012:instance/i-0cccc5555dddd6666",
+          "recommendationSourceType": "Ec2Instance"
+        }
+      ],
+      "lastRefreshTimestamp": "2026-05-07T10:00:00.000Z"
+    }
+  ],
+  "volumeRecommendations": [
+    {
+      "volumeArn": "arn:aws:ec2:us-east-1:123456789012:volume/vol-0xxxx1234abcd5678",
+      "accountId": "123456789012",
+      "currentConfiguration": {
+        "volumeType": "gp3",
+        "volumeSize": 1000,
+        "volumeBaselineIOPS": 3000,
+        "volumeBurstIOPS": 3000,
+        "volumeBurstThroughput": 125
+      },
+      "finding": "OVER_PROVISIONED",
+      "findingReasonCodes": ["VolumeUnderprovisioned"],
+      "utilizationMetrics": [
+        {
+          "name": "VOLUME_BYTES_USED",
+          "statistic": "MAXIMUM",
+          "value": 214748364800
+        }
+      ],
+      "lookBackPeriodInDays": 14,
+      "volumeRecommendationOptions": [
+        {
+          "configuration": {
+            "volumeType": "gp3",
+            "volumeSize": 250,
+            "volumeBaselineIOPS": 3000,
+            "volumeBurstIOPS": 3000,
+            "volumeBurstThroughput": 125
+          },
+          "rank": 1,
+          "savingsOpportunity": {
+            "savingsOpportunityPercentage": 75.0,
+            "estimatedMonthlySavings": {
+              "currency": "USD",
+              "value": 48.0
+            }
+          },
+          "performanceRisk": 0
+        }
+      ],
+      "lastRefreshTimestamp": "2026-05-07T10:00:00.000Z"
+    }
+  ]
+}

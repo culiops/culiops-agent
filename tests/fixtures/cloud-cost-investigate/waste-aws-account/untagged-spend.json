@@ -1,0 +1,51 @@
+{
+  "ResultsByTime": [
+    {
+      "TimePeriod": {
+        "Start": "2026-04-01",
+        "End": "2026-05-01"
+      },
+      "Total": {},
+      "Groups": [
+        {
+          "Keys": [
+            "Service$",
+            "Amazon Elastic Compute Cloud - Compute"
+          ],
+          "Metrics": {
+            "UnblendedCost": {
+              "Amount": "5200.00",
+              "Unit": "USD"
+            }
+          }
+        },
+        {
+          "Keys": [
+            "Service$",
+            "Amazon Elastic Block Store"
+          ],
+          "Metrics": {
+            "UnblendedCost": {
+              "Amount": "1800.00",
+              "Unit": "USD"
+            }
+          }
+        },
+        {
+          "Keys": [
+            "Service$",
+            "Amazon Simple Storage Service"
+          ],
+          "Metrics": {
+            "UnblendedCost": {
+              "Amount": "1000.00",
+              "Unit": "USD"
+            }
+          }
+        }
+      ],
+      "Estimated": false
+    }
+  ],
+  "DimensionValueAttributes": []
+}

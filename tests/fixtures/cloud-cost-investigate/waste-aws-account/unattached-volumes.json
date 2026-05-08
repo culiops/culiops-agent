@@ -1,0 +1,162 @@
+{
+  "Volumes": [
+    {
+      "VolumeId": "vol-0xxxx1234abcd5678",
+      "VolumeType": "gp3",
+      "Size": 1000,
+      "State": "available",
+      "AvailabilityZone": "us-east-1a",
+      "CreateTime": "2025-09-12T00:00:00.000Z",
+      "Encrypted": true,
+      "Iops": 3000,
+      "Throughput": 125,
+      "Tags": [
+        {"Key": "Name", "Value": "prod-data-scratch-01"}
+      ]
+    },
+    {
+      "VolumeId": "vol-0aaaa0001bbbb0001",
+      "VolumeType": "gp3",
+      "Size": 500,
+      "State": "available",
+      "AvailabilityZone": "us-east-1b",
+      "CreateTime": "2025-08-03T14:22:00.000Z",
+      "Encrypted": true,
+      "Iops": 3000,
+      "Throughput": 125,
+      "Tags": [
+        {"Key": "Name", "Value": "prod-data-scratch-02"}
+      ]
+    },
+    {
+      "VolumeId": "vol-0aaaa0002bbbb0002",
+      "VolumeType": "gp3",
+      "Size": 400,
+      "State": "available",
+      "AvailabilityZone": "us-east-1c",
+      "CreateTime": "2025-10-17T08:45:00.000Z",
+      "Encrypted": true,
+      "Iops": 3000,
+      "Throughput": 125,
+      "Tags": []
+    },
+    {
+      "VolumeId": "vol-0aaaa0003bbbb0003",
+      "VolumeType": "gp3",
+      "Size": 300,
+      "State": "available",
+      "AvailabilityZone": "us-east-1a",
+      "CreateTime": "2025-07-29T16:10:00.000Z",
+      "Encrypted": false,
+      "Iops": 3000,
+      "Throughput": 125,
+      "Tags": [
+        {"Key": "Name", "Value": "staging-import-vol-03"}
+      ]
+    },
+    {
+      "VolumeId": "vol-0aaaa0004bbbb0004",
+      "VolumeType": "gp3",
+      "Size": 250,
+      "State": "available",
+      "AvailabilityZone": "us-east-1b",
+      "CreateTime": "2025-11-05T11:30:00.000Z",
+      "Encrypted": true,
+      "Iops": 3000,
+      "Throughput": 125,
+      "Tags": []
+    },
+    {
+      "VolumeId": "vol-0aaaa0005bbbb0005",
+      "VolumeType": "gp3",
+      "Size": 200,
+      "State": "available",
+      "AvailabilityZone": "us-east-1c",
+      "CreateTime": "2025-12-20T09:00:00.000Z",
+      "Encrypted": true,
+      "Iops": 3000,
+      "Throughput": 125,
+      "Tags": [
+        {"Key": "Name", "Value": "old-migration-vol-05"}
+      ]
+    },
+    {
+      "VolumeId": "vol-0aaaa0006bbbb0006",
+      "VolumeType": "gp3",
+      "Size": 200,
+      "State": "available",
+      "AvailabilityZone": "us-east-1a",
+      "CreateTime": "2026-01-14T07:15:00.000Z",
+      "Encrypted": false,
+      "Iops": 3000,
+      "Throughput": 125,
+      "Tags": []
+    },
+    {
+      "VolumeId": "vol-0aaaa0007bbbb0007",
+      "VolumeType": "gp3",
+      "Size": 150,
+      "State": "available",
+      "AvailabilityZone": "us-east-1b",
+      "CreateTime": "2025-06-11T18:40:00.000Z",
+      "Encrypted": true,
+      "Iops": 3000,
+      "Throughput": 125,
+      "Tags": [
+        {"Key": "Name", "Value": "dev-test-vol-07"}
+      ]
+    },
+    {
+      "VolumeId": "vol-0aaaa0008bbbb0008",
+      "VolumeType": "gp3",
+      "Size": 100,
+      "State": "available",
+      "AvailabilityZone": "us-east-1c",
+      "CreateTime": "2026-02-28T12:00:00.000Z",
+      "Encrypted": true,
+      "Iops": 3000,
+      "Throughput": 125,
+      "Tags": []
+    },
+    {
+      "VolumeId": "vol-0aaaa0009bbbb0009",
+      "VolumeType": "gp3",
+      "Size": 100,
+      "State": "available",
+      "AvailabilityZone": "us-east-1a",
+      "CreateTime": "2025-05-19T03:22:00.000Z",
+      "Encrypted": false,
+      "Iops": 3000,
+      "Throughput": 125,
+      "Tags": [
+        {"Key": "Name", "Value": "old-etl-scratch-09"}
+      ]
+    },
+    {
+      "VolumeId": "vol-0aaaa000abbbb000a",
+      "VolumeType": "gp3",
+      "Size": 50,
+      "State": "available",
+      "AvailabilityZone": "us-east-1b",
+      "CreateTime": "2026-03-15T20:05:00.000Z",
+      "Encrypted": true,
+      "Iops": 3000,
+      "Throughput": 125,
+      "Tags": []
+    },
+    {
+      "VolumeId": "vol-0aaaa000bbbbb000b",
+      "VolumeType": "gp3",
+      "Size": 50,
+      "State": "available",
+      "AvailabilityZone": "us-east-1c",
+      "CreateTime": "2025-04-08T06:55:00.000Z",
+      "Encrypted": true,
+      "Iops": 3000,
+      "Throughput": 125,
+      "Tags": [
+        {"Key": "Name", "Value": "ci-runner-tmp-11"}
+      ]
+    }
+  ]
+}
