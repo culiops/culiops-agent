@@ -156,3 +156,87 @@ Verbal "yes" without seeing the five fields is not approval.
 2. **All outputs traceable.** Every claim cites which API call + timestamp produced it.
 3. **Read-only IAM.** Reference policy in `examples/iam-policy-readonly.json`. No write actions. CE and Resource Explorer APIs don't support resource-level ARN restrictions, so `Resource: "*"` is the AWS-imposed minimum — documented explicitly so the operator is not surprised.
 4. **Time windows are explicit.** Cost = 30d; CloudTrail = 90d; CloudWatch = 14d hourly + 24h at 5min; Resource Explorer = point-in-time. The output doc states these prominently.
+
+## Workflow & Gates
+
+Six gates, none optional, each requires explicit operator confirmation.
+
+```
+Gate 1: Scoping        → confirm service name, scoping primitive, account, region, intent
+Gate 2: Capability     → detect which sources are available; operator confirms capability matrix
+Gate 3: Query plan     → show every API call with params, time window, estimated cost; approve plan
+Gate 4: Source-by-source execution → per source: run → show raw results → operator OK → next source
+Gate 5: Synthesis      → present runtime-profile draft; operator reviews, iterates, approves
+Gate 6: Write          → save .culiops/runtime-trace/<service>-runtime-profile.md + audit sidecars
+```
+
+### Step 1 — Scoping (Gate 1)
+
+Skill prompts for, and the operator supplies:
+
+- **Service name** (free text, used in output filename).
+- **AWS account ID** and **primary region**.
+- **Scoping primitive** — at least one of:
+  - tag key/value (e.g., `service=payments`)
+  - list of resource ARNs
+  - "the resource set from this service-discovery catalog at `<path>`"
+- **Intent category** (structured choice): one of `takeover` / `drift-check` / `post-incident` / `pre-cost-opt` / `other`. Used by future tooling to filter/aggregate runtime-profile docs.
+- **Intent context** (free text, mandatory): "Why are you running this?" — e.g., "Service takeover from Team Foo, scheduled for 2026-06-15." Appears verbatim in the output doc's "How to read this document" block.
+- **Intended audience** (free text): who will read the output — e.g., "Incoming on-call rotation for the payments service."
+- **Optional:** override default time windows; pass `--redact` flag (consumed at Gate 6).
+
+**Hard stop** if no scoping primitive is supplied. The skill refuses to run "find me everything in the account" mode — it has no way to attribute cost or events to a specific service.
+
+### Step 2 — Capability detection (Gate 2)
+
+Read-only probes:
+
+- `cloudtrail:DescribeTrails` + `cloudtrail:GetTrailStatus` — is logging on? in which regions?
+- `resource-explorer-2:ListIndexes` — is Resource Explorer configured? where's the aggregator index?
+- `ce:GetCostAndUsage` with a tiny test query (one day, one dimension) — does the principal have Cost Explorer perms? is Cost Explorer enabled?
+- `cloudwatch:ListMetrics` with `MaxResults=1` — does the principal have CloudWatch read perms?
+
+Output: a capability matrix shown to the operator:
+
+| Source | Available? | Action |
+|---|---|---|
+| Cost Explorer | ✓ / ✗ | will run / will skip / will fail without IAM change |
+| CloudTrail | ✓ / ✗ | will run / will skip with gap recorded |
+| CloudWatch | ✓ / ✗ | will run / will skip / will fail without IAM change |
+| Resource Explorer | ✓ / ✗ | will run / will skip with gap recorded |
+
+Operator confirms the matrix. If a critical source is unavailable, operator can abort and fix the prerequisite (enable CloudTrail logging, configure Resource Explorer, attach broader IAM perms) before re-running. **The skill does not perform these fixes.**
+
+### Step 3 — Query plan (Gate 3)
+
+Skill prints the full execution plan as a markdown table. Example:
+
+| # | Source | API call | Params (summary) | Time window | Est. cost | IAM perm |
+|---|---|---|---|---|---|---|
+| 1 | Cost Explorer | `ce:GetCostAndUsage` | GROUP BY SERVICE | 30d | $0.01 | `ce:GetCostAndUsage` |
+| 2 | Cost Explorer | `ce:GetCostAndUsage` | GROUP BY USAGE_TYPE | 30d | $0.01 | `ce:GetCostAndUsage` |
+| 3 | CloudTrail | `cloudtrail:LookupEvents` | filter=ResourceName, 5 ARNs | 90d | free | `cloudtrail:LookupEvents` |
+| 4 | CloudWatch | `cloudwatch:GetMetricData` | 12 resources × 5 metrics = 60 metrics, hourly | 14d | $0.0006 | `cloudwatch:GetMetricData` |
+| 5 | Resource Explorer | `resource-explorer-2:Search` | filter=tag:owner=team-x | n/a | free | `resource-explorer-2:Search` |
+
+**Total estimated cost:** $X.XX (must be ≤ $1.00 hard cap).
+
+Operator approves the entire plan (or edits and re-confirms). If the estimate exceeds $1.00, the skill **refuses** to proceed — operator must reduce scope or explicitly raise the cap with documented justification (recorded in the audit trail).
+
+### Step 4 — Source-by-source execution (Gate 4)
+
+Each source runs as a discrete block. After each block:
+
+1. Skill prints the raw API response (truncated to relevant fields, with full payload cached to the audit sidecar at `.culiops/runtime-trace/<service>-audit/<call-id>.json`).
+2. Skill prints its derived rows for the output doc.
+3. Skill updates the running cost total and compares to the estimate.
+4. Operator responds: "looks right, continue" / "this is wrong, here's why" / "stop here."
+
+Gate 4 is **per-source**, not per-API-call. Approving "run all Cost Explorer queries" is one approval; approving "run the 60 CloudWatch metrics" is one approval. More granular control adds friction without proportionate safety gain.
+
+**Triggers that pause execution mid-Gate-4:**
+
+- Running actual cost crosses $0.25 → soft-warning pause (Iron Law).
+- Running actual cost would exceed $1.00 on the next call → abort (Iron Law).
+- Actuals exceed estimate by >2× on any source → pause and ask before continuing.
+- Any API failure (AccessDenied, throttling, unexpected error) → stop and report. **No silent retries.** Operator decides: fix and re-run, skip the source, or abort.
