@@ -95,3 +95,68 @@ not approval. (Same pattern as runtime-trace and service-discovery.)
 | "The operator approved the execution plan at Step 1.5; I'll run all delegated steps without re-confirming" | STOP — the plan approval authorizes *what* will be proposed at each step, not the steps themselves. Each delegated step still re-prints the exact invocation and gets approval. |
 | "I'll generate a runbook section from the runtime profile's idle-suspect callout" | STOP — `service-takeover` does not generate runbooks. Runbook items go in the interview as questions; if no runbook exists, the readiness scorecard flags the gap. |
 | "The handoff package is large, I'll symlink the catalog instead of copying" | STOP — package must be self-contained. Copy, never symlink. |
+
+## Workflow & Gates
+
+Eight gates, none optional, each requires explicit operator confirmation.
+
+```
+Gate 1:   Intake                 → scoping primitives, intent, audience, available materials
+Gate 1.5: Information audit      → inventory have/need, propose action per gap, approve plan
+Gate 2:   Diagram extraction     → delegate to service-discovery (real-discovery mode, images)
+Gate 3:   Live discovery         → delegate to service-discovery (real-discovery mode, AWS CLI)
+Gate 4:   Runtime profile        → delegate to runtime-trace
+Gate 5:   Interview              → emit questionnaire; operator fills async; skill ingests
+Gate 6:   Readiness scorecard    → auto-mark from artifacts + operator overrides on gaps
+Gate 7:   Handoff package        → assemble README + snapshots + interview + scorecard
+                                    (the final write step; package is committed-or-not by operator)
+```
+
+### Step 1 — Intake (Gate 1)
+
+Skill prompts for and the operator supplies:
+
+- **Service name** (free text, used in output directory).
+- **AWS account ID** + **primary region**.
+- **Intent category** (structured): `takeover` is the default and primary use case. Other categories (`drift-check`, `post-incident`, `pre-cost-opt`) are valid invocation triggers but produce a leaner output (smaller scorecard, no full interview).
+- **Intent context** (free text, mandatory): why this run, when the handoff is scheduled, who it's for.
+- **Available materials**: which inputs the operator already has:
+  - Diagram images (paths)
+  - IaC repo (path, if any — usually none in takeover scenarios)
+  - Existing `service-discovery` catalog (path, if any)
+  - Existing `runtime-trace` runtime profile (path, if any)
+  - Outgoing team contact info (free text, for the interview header)
+- **Outgoing team** (free text): which team is handing off, primary contact person.
+- **Incoming team** (free text): who the receiver is — appears in the handoff README.
+
+If the operator is re-invoking on an existing `<service>` (state file exists at `.culiops/service-takeover/<service>/state.md`), the skill reads the state file first and resumes from the current step. Re-invocation skips intake fields that were captured in the initial run unless the operator explicitly resets them.
+
+### Step 1.5 — Information audit + execution plan (Gate 1.5)
+
+The new gate, sitting between intake and the first delegated step. Without this gate, the orchestrator would blindly run sibling skills even when their artifacts already exist or when targeted CLI commands would suffice.
+
+Skill produces `.culiops/service-takeover/<service>/execution-plan.md` with a table:
+
+| Need | What we have | Gap | Proposed action | Cost | Approval |
+|---|---|---|---|---|---|
+| Architecture understanding | 2 diagram PNGs at `<path>` | — | none — proceed to Step 2 | $0 | auto |
+| Resource enumeration from IaC | none | full | none — IaC unavailable; will use real-discovery in Step 3 | $0 | auto |
+| Live resource enumeration | none | full | run `service-discovery` real-discovery mode | $0 (read-only) | needed |
+| Cross-region inventory | none | full | covered by runtime-trace (Resource Explorer) | $0 | covered |
+| Activity baseline | none | full | run `runtime-trace` | ~$0.05 | needed |
+| CloudTrail availability | unknown | unknown | run `aws cloudtrail describe-trails --region us-east-1` to probe | $0 | needed |
+| Tag scoping | tag `service=payments` supplied | — | proceed | $0 | auto |
+| Existing service-discovery catalog | none | full | covered above | — | — |
+| Existing runtime-trace profile | none | full | covered above | — | — |
+
+**Action types the orchestrator may propose:**
+
+1. **Run a sibling skill** — full invocation, operator runs the sibling, brings the artifact path back. Skill prints the exact invocation string.
+2. **Run a targeted CLI command** — specific read-only AWS CLI calls when the gap is small enough that a full sibling run is overkill (e.g., one capability probe). Skill emits the exact `aws` command; operator pastes the output back; skill ingests.
+3. **Manual operator input** — for tribal-knowledge gaps no CLI can fill (e.g., "who owns this service today?"). Captured in the interview questionnaire.
+4. **Accept the gap** — explicitly mark unavailable; the readiness scorecard flags it.
+5. **Use existing artifact** — sub-options: use as-is / use with thin-verify re-scan / fresh re-run. Old artifact renamed with timestamp suffix on re-run (never deleted).
+
+The operator approves the plan as a whole. Once approved, the plan becomes the authoritative source for what will happen at Steps 2–4. Operator can return to this gate later (re-invocation re-prints the plan) if priorities change.
+
+**Auto-approval rule:** rows tagged `auto` proceed without explicit confirmation because they represent "we already have this; no action." Rows tagged `needed` require approval. Rows tagged `covered` are auto-approved as a side effect of approving their covering row.
