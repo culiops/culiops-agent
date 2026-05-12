@@ -369,3 +369,60 @@ Gate sign-offs: operator name + approval timestamps per gate.
 - **No charts, no images.** Markdown tables only. Doc is grep-able, PR-diffable, committable.
 - **No recommendations.** The skill describes what is, not what should change. Recommendations belong to humans or to downstream skills (`cloud-cost-investigate`, future `service-takeover`).
 - **Strictly internal by default.** No automatic redaction in the primary doc. Operator who needs to share externally passes `--redact` at Gate 1, which causes Gate 6 to also emit a `<service>-runtime-profile.redacted.md` with rules described under Gate 6.
+
+## Skill Structure
+
+```
+skills/runtime-trace/
+├── SKILL.md                    ← this file
+├── examples/
+│   ├── aws/
+│   │   ├── lambda.md           ← per-resource CloudWatch metric set
+│   │   ├── ecs-service.md
+│   │   ├── alb.md
+│   │   ├── rds-instance.md
+│   │   ├── sqs-queue.md
+│   │   └── apigw-rest.md
+│   └── iam-policy-readonly.json
+```
+
+Extending support to a new resource type = add one markdown file under `examples/aws/`. No code change needed.
+
+Fixtures for testing live under `tests/fixtures/runtime-trace/<scenario>/`. Each fixture exercises one scenario end-to-end. See "Testing" below.
+
+## Testing
+
+Three layers, ordered by build effort:
+
+1. **Fixture-driven dry-runs.** Each scenario under `tests/fixtures/runtime-trace/<name>/` includes:
+   - `input.md` — scoping primitive, intent category, intent context, expected gate transitions.
+   - `mock-api-responses/` — canned JSON responses for each API call the skill would make.
+   - `expected-output.md` — the runtime-profile doc the skill should produce.
+   - `DRY-RUN-NOTES.md` — simulated execution: which gates fire, which sources run, where the operator approves vs. aborts.
+
+   A reviewer or implementing agent can step through the fixture inputs and validate the skill produces `expected-output.md`. Diff-based golden testing.
+
+2. **Live smoke test in a sandbox account.** Optional, run manually before each release. Against a small known service in a personal AWS sandbox, run the skill end-to-end. Verify the doc reads correctly and total cost is under $0.10. Not in CI (costs money + requires creds).
+
+3. **Negative-case fixtures.** Explicitly covered:
+   - `cloudtrail-disabled` — CloudTrail logging off; source skipped, gap recorded.
+   - `resource-explorer-missing` — Resource Explorer not configured; source skipped, gap recorded.
+   - `cost-cap-exceeded` — Gate 3 plan exceeds $1.00; skill refuses to proceed.
+
+## Versioning
+
+- Skill version is in this file's frontmatter (`runtime-trace-version: <x.y.z>` matches the culiops plugin's release tag).
+- Output doc schema version (`runtime-profile-schema: 1`) at the top of every emitted profile. Bumped only on breaking changes to the markdown structure. Enables future tools (or a future `service-takeover` skill) to parse runtime-profile docs deterministically.
+
+## Out of Scope for v1
+
+Documented explicitly so a future maintainer doesn't accidentally extend the skill into these areas without a fresh design pass:
+
+- **Cost investigation** (anomaly hunting, waste analysis, savings recommendations) — that's `cloud-cost-investigate`.
+- **Log scans** — VPC Flow Logs, ALB access logs, CloudFront / WAF logs. Athena scans are pay-per-TB. If demand emerges, build a separate `log-trace` skill.
+- **X-Ray / OpenTelemetry traces** — useful when instrumented but rarely available in takeover scenarios.
+- **AWS Config history** — overlaps with CloudTrail for our purposes.
+- **Multi-cloud** — GCP/Azure equivalents exist but each is a separate `examples/<cloud>/` build-out and a separate IAM-perms tier.
+- **IaC generation / state import** — even when the runtime profile reveals untracked resources, this skill does not generate Terraform/CDK.
+- **Service-takeover orchestration** — the broader takeover workflow (interview, readiness checklist, handoff package) is a separate skill built on top of `runtime-trace` later.
+- **Compute Optimizer / Trusted Advisor** — they provide optimization recommendations, which crosses into `cloud-cost-investigate` territory.
