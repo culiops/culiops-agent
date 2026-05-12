@@ -108,3 +108,51 @@ Verbal "yes" without seeing the five fields is not approval.
 | CloudWatch GetMetricData | $0.01 / 1,000 metrics | 200 metrics/run | $0.002 |
 | Resource Explorer | free | — | $0.00 |
 | **Total worst case** | | | **~$0.16** |
+
+## The Four Data Sources
+
+### a. Cost Explorer — the spend oracle
+
+- **APIs:** `ce:GetCostAndUsage` (primary), `ce:GetDimensionValues` (for value discovery), `ce:GetTags` (when tag scoping is supplied).
+- **Query shape:** `GROUP BY DIMENSION=SERVICE` and `GROUP BY DIMENSION=USAGE_TYPE`, time range last 30 days, monthly granularity. Optional second pass with `GROUP BY TAG=<key>` when a tag scoping primitive is supplied.
+- **Why:** Bills don't lie. Surfaces services that diagrams and tags omit. Catches stealth dependencies (NAT Gateway data transfer, KMS, Secrets Manager, Route 53 health checks, CloudWatch Logs ingest).
+- **Cost:** $0.01 per API call. Skill budgets ≤10 calls per run → under $0.10 typical.
+- **Output contribution:** "Spend share by service" table; "services billing but absent from diagram/catalog" callout.
+- **Edge case:** Cost Explorer must be enabled in the account (free, but opt-in for new accounts). If disabled, skill stops at Gate 2 with a clear message.
+
+### b. CloudTrail LookupEvents — the control-plane log
+
+- **APIs:** `cloudtrail:LookupEvents` (primary), `cloudtrail:GetTrailStatus` and `cloudtrail:DescribeTrails` (for capability detection).
+- **Query shape:** `LookupAttributes` filtered by `ResourceName` (when an ARN list is the scoping primitive) or `EventSource` (when service inventory is derived from source a). Time window: last 90 days (LookupEvents AWS-imposed max).
+- **Why:** Reveals who actually touches this service — IAM principals (roles, users, federated identities), deploy events, cross-account access, recent config drift. Catches "the deploy goes through this CI role nobody mentioned."
+- **Cost:** Free for management events, last 90 days. `LookupEvents` returns management events only — data events (e.g., S3 object-level reads, Lambda invokes) are not queryable via this API and are out of scope for v1.
+- **Output contribution:** "Top API actions by event count" table; "principals touching this service" table (ARN, principal type, last-seen, event count); "notable change events" timeline; "principals not in any known runbook" callout.
+- **Edge cases:**
+  - CloudTrail logging disabled → source skipped, gap recorded in output.
+  - 90-day cap is documented as an explicit limitation in the output doc. Anything older requires Athena over CloudTrail's S3 archive, which is out-of-scope (Tier 2).
+
+### c. CloudWatch GetMetricData — the activity baseline (targeted)
+
+- **APIs:** `cloudwatch:GetMetricData` (primary), `cloudwatch:ListMetrics` (for capability detection).
+- **Query shape:** **targeted only** — runs only against resources surfaced by source (a) or supplied as scoping primitives. Per-resource metric sets defined in `examples/aws/<resource-type>.md` files. Time range: last 14 days hourly for headline charts, last 24 hours at 5-minute granularity for "current shape." Skill caps total metrics per run at 200.
+- **Per-resource metric sets (v1 coverage; extensible):** see `examples/aws/lambda.md`, `examples/aws/ecs-service.md`, `examples/aws/alb.md`, `examples/aws/rds-instance.md`, `examples/aws/sqs-queue.md`, `examples/aws/apigw-rest.md`.
+- **Why:** Four-golden-signals visibility per resource. Identifies idle suspects (near-zero activity) and peak hours.
+- **Cost:** $0.01 per 1,000 metrics. With the 200-metric cap, max $0.002 per run.
+- **Output contribution:** Per-resource four-golden-signals table; peak-hour callout; idle-suspect callout.
+- **Uncovered resource types:** If a resource surfaces that has no `examples/aws/<resource-type>.md` file, record "metrics not collected — resource type not yet supported" as a gap in the output doc. Do not infer defaults.
+
+### i. Resource Explorer — the cross-region inventory
+
+- **APIs:** `resource-explorer-2:Search` (primary), `resource-explorer-2:ListIndexes` and `resource-explorer-2:ListViews` (for capability detection).
+- **Query shape:** `Search` with a filter expression derived from the scoping primitive (tag, service name, region). Aggregated view across all regions where Resource Explorer is indexed.
+- **Why:** Catches resources tagged for the service but living outside the assumed primary region. The classic "we forgot we have a Lambda in us-west-2."
+- **Cost:** Free.
+- **Output contribution:** "Resources by region" table; "resources outside the assumed primary region" callout.
+- **Edge case:** If Resource Explorer is not configured in the account, source is skipped with a "known gap — recommend enabling Resource Explorer (free, see AWS docs) and re-running" note. Enabling Resource Explorer is **not** something the skill does — that's an out-of-scope write action.
+
+### Cross-cutting rules for all four sources
+
+1. **Every query shown and approved before execution.** Gate 3 prints the full plan. Gate 4 prints per-source results before moving on.
+2. **All outputs traceable.** Every claim cites which API call + timestamp produced it.
+3. **Read-only IAM.** Reference policy in `examples/iam-policy-readonly.json`. No write actions. CE and Resource Explorer APIs don't support resource-level ARN restrictions, so `Resource: "*"` is the AWS-imposed minimum — documented explicitly so the operator is not surprised.
+4. **Time windows are explicit.** Cost = 30d; CloudTrail = 90d; CloudWatch = 14d hourly + 24h at 5min; Resource Explorer = point-in-time. The output doc states these prominently.
