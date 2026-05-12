@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Added
+
+- **runtime-trace skill** — produces a self-contained AWS runtime profile of a service by querying Cost Explorer (spend), CloudTrail LookupEvents (control-plane events, 90d), CloudWatch GetMetricData (activity baselines, targeted, 200-metric cap), and Resource Explorer (cross-region inventory). Six-gate workflow, $1.00 hard cost cap, $0.25 soft warning, every claim traceable to an API call with JSON sidecars for full reproducibility. Useful for service takeovers (no docs, no IaC), drift checks, post-incident retrospectives, and pre-cost-optimization baselining. Five fixtures cover positive paths (basic / multi-region drift) and negative paths (CloudTrail disabled / Resource Explorer missing / cost-cap exceeded).
+
 ## [0.6.0] — 2026-05-12
 
 ### Added

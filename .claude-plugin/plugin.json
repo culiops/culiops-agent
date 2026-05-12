@@ -19,9 +19,12 @@
     "pre-flight",
     "iac-change-execution",
     "cloud-cost-investigate",
+    "runtime-trace",
     "risk-assessment",
     "finops",
     "cost-optimization",
+    "observability",
+    "service-takeover",
     "cloud",
     "skills",
     "workflows"
