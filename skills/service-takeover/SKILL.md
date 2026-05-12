@@ -160,3 +160,35 @@ Skill produces `.culiops/service-takeover/<service>/execution-plan.md` with a ta
 The operator approves the plan as a whole. Once approved, the plan becomes the authoritative source for what will happen at Steps 2–4. Operator can return to this gate later (re-invocation re-prints the plan) if priorities change.
 
 **Auto-approval rule:** rows tagged `auto` proceed without explicit confirmation because they represent "we already have this; no action." Rows tagged `needed` require approval. Rows tagged `covered` are auto-approved as a side effect of approving their covering row.
+
+### Step 2 — Diagram extraction (Gate 2)
+
+If the execution plan included diagram extraction:
+
+1. Skill prints the exact `service-discovery` invocation, including all flags and the expected scoping primitive.
+2. Operator runs `service-discovery` in real-discovery mode against the supplied diagrams.
+3. When complete, operator provides the catalog path back to `service-takeover`.
+4. Skill validates the path exists and is a `service-discovery` catalog (checks for required frontmatter).
+5. Skill copies the catalog into the takeover directory as a snapshot: `.culiops/service-takeover/<service>/service-catalog.md` (the snapshot is read-only afterwards).
+6. State file updated.
+
+If existing-artifact branch was selected at Step 1.5, this step verifies the artifact path and snapshots it (with optional thin re-scan if "verify" was chosen).
+
+### Step 3 — Live resource discovery (Gate 3)
+
+If the execution plan included live discovery (almost always true in takeover scenarios):
+
+1. Skill prints the exact `service-discovery` invocation for the live-discovery pass (typically distinct from the diagram pass — different inputs, same tool).
+2. Operator runs it.
+3. Skill validates and snapshots the live-discovery catalog (may be merged with the diagram catalog by `service-discovery` itself; orchestrator does not merge).
+4. State file updated.
+
+Some takeover scenarios skip Step 2 (no diagrams supplied) and go straight to Step 3. Some skip Step 3 (offline catalog already exists). Both are valid paths through the orchestrator.
+
+### Step 4 — Runtime profile (Gate 4)
+
+1. Skill prints the exact `runtime-trace` invocation with the agreed scoping primitive, intent category (always `takeover` when invoked from this skill unless operator overrode at Step 1), and the `--redact` flag IF the operator indicated the handoff package may be shared externally.
+2. Operator runs `runtime-trace` end-to-end (which has its own 6 gates).
+3. When complete, operator provides the runtime-profile path back.
+4. Skill snapshots `<service>-runtime-profile.md` into the takeover directory.
+5. State file updated.
