@@ -1,0 +1,44 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "CostExplorerReadOnly",
+      "Effect": "Allow",
+      "Action": [
+        "ce:GetCostAndUsage",
+        "ce:GetDimensionValues",
+        "ce:GetTags"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "CloudTrailLookupReadOnly",
+      "Effect": "Allow",
+      "Action": [
+        "cloudtrail:LookupEvents",
+        "cloudtrail:GetTrailStatus",
+        "cloudtrail:DescribeTrails"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "CloudWatchReadOnly",
+      "Effect": "Allow",
+      "Action": [
+        "cloudwatch:GetMetricData",
+        "cloudwatch:ListMetrics"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "ResourceExplorerReadOnly",
+      "Effect": "Allow",
+      "Action": [
+        "resource-explorer-2:Search",
+        "resource-explorer-2:ListIndexes",
+        "resource-explorer-2:ListViews"
+      ],
+      "Resource": "*"
+    }
+  ]
+}
