@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [0.6.0] — 2026-05-12
+
 ### Added
 
 - **`cloud-cost-investigate`** skill — read-only cloud cost investigation in three modes (anomaly, waste, attribution) producing a `.culiops/cloud-cost-investigate/` report with prioritized remediation list and source-labelled savings estimates.

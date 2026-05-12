@@ -6,7 +6,7 @@ CuliOps ships skills that activate automatically when you ask Claude to do opera
 
 ## Status
 
-`v0.5.0` — pilot release. Skills shipped:
+`v0.6.0` — pilot release. Skills shipped:
 
 - **service-discovery** — scan a service's IaC code — or its documentation and diagrams when no IaC exists — and produce a troubleshooting-oriented inventory document (resource catalog, naming patterns, dependencies, per-alarm investigation runbooks). IaC path works with Terraform, Pulumi, CloudFormation, Bicep, Helm/Kustomize, ecspresso, lambroll. Real-discovery path works with Draw.io, Mermaid, PlantUML diagrams, Markdown/text docs, and architecture images, verified against live cloud APIs (read-only).
 - **pre-flight** — evaluate the risk of a proposed production action (IaC change, CLI command, or agent action) across 10 categories. Produces a go/no-go risk report with per-category scoring and actionable mitigations.
