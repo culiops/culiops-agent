@@ -1,0 +1,109 @@
+# Execution Plan — payments
+
+**Run:** payments, account 123456789012, region us-east-1
+**Operator:** arn:aws:iam::123456789012:user/alice
+**Generated:** 2026-05-12T14:08:30Z
+**Intent:** takeover from Pay Team, scheduled for 2026-06-15
+
+---
+
+## What we have
+
+| Source | State | Path | Age |
+|---|---|---|---|
+| Diagram images | provided | `~/handoff/payments-arch.png`, `~/handoff/payments-flows.png` | n/a |
+| IaC repo | none | — | — |
+| AWS credentials | configured | env vars present | live |
+| service-discovery catalog | none | — | — |
+| runtime-trace profile | none | — | — |
+| Tag scoping primitive | `service=payments` | provided by operator | n/a |
+
+---
+
+## Capability probe results
+
+| Probe | Result |
+|---|---|
+| AWS access | ✓ alice verified in account 123456789012 |
+| CloudTrail | ✓ available, ManagementEvents enabled in us-east-1 |
+| Resource Explorer | ✓ view configured in us-east-1 |
+| Cost Explorer | ✗ DENIED — ce:* blocked by corporate IAM policy in account 123456789012 |
+
+---
+
+## IAM gap — operator decision (recorded at 2026-05-12T14:07:30Z)
+
+**Gap:** Cost Explorer access (`ce:*`) denied in account 123456789012 by corporate IAM policy.
+
+**Impact:** Step 4 (runtime-trace) relies on Cost Explorer for spend attribution and activity baseline. Without it, runtime-profile.md cannot be produced. Scorecard items 7-9 (Runtime category) and items 2, 5 (deploy role and cross-region footprint) cannot be auto-evidenced.
+
+**Options presented:**
+1. Escalate IAM — request `ce:*` read access from IAM admin and re-run capability probe before proceeding.
+2. Proceed without runtime data — skip Step 4; accept that Runtime scorecard category will be unresolved; verdict will be not-ready until gap is addressed.
+3. Abort takeover — halt now; resume after IAM is resolved.
+
+**Operator selection:** Option 2 — proceed without runtime data.
+
+**Recorded by:** alice at 2026-05-12T14:08:00Z
+
+---
+
+## What we need (per planned step)
+
+| Need | Source | Gap | Proposed action | Cost | Approval |
+|---|---|---|---|---|---|
+| Architecture understanding (Step 2) | diagram images | none | proceed with `service-discovery` diagram extraction (image mode) | $0 | auto (diagrams present) |
+| Resource enumeration from IaC | IaC repo | full | not applicable — IaC unavailable; real-discovery fills this | $0 | covered by Step 3 |
+| Live resource enumeration (Step 3) | AWS APIs | full | run `service-discovery` real-discovery mode against account 123456789012 in us-east-1 | $0 (read-only) | **needed** |
+| Cross-region inventory | Resource Explorer | none | would be covered by runtime-trace Step 4 (RE available) — Step 4 skipped per operator | $0 | **Step 4 skipped — unresolved** |
+| Activity baseline + control-plane events (Step 4) | CloudWatch + CloudTrail + CE | full — CE blocked | **SKIPPED — operator accepted IAM gap at Gate 1.5** | — | skipped (operator choice, 2026-05-12T14:08:00Z) |
+| CloudTrail availability | CloudTrail API | resolved | probe confirmed ManagementEvents enabled | $0 | resolved |
+| Resource Explorer availability | RE API | resolved | probe confirmed view configured | $0 | resolved |
+| Tribal knowledge (Step 5) | Outgoing team (Pay Team) | full | emit questionnaire; share with Pay Team via Slack | $0 | proceeds at Step 5 |
+| Readiness assessment (Step 6) | All prior artifacts | partial (no runtime profile) | auto-mark from available artifacts; Runtime items 7-9 left as ?; items 2 and 5 left as ? | $0 | proceeds at Step 6 |
+| Handoff package (Step 7) | All prior artifacts | partial | assemble README + snapshots; reflect skipped step in all outputs | $0 | proceeds at Step 7 |
+
+---
+
+## Proposed invocations
+
+### For Step 2 (diagram extraction) — to run after this plan is approved
+
+```
+Invoke service-discovery with:
+  - mode: real-discovery (image mode)
+  - inputs: ~/handoff/payments-arch.png, ~/handoff/payments-flows.png
+  - scoping: tag service=payments
+  - output: .culiops/service-discovery/payments-diagrams-catalog.md
+```
+
+### For Step 3 (live discovery) — to run after Step 2
+
+```
+Invoke service-discovery with:
+  - mode: real-discovery
+  - inputs: AWS live APIs (account 123456789012, region us-east-1)
+  - scoping: tag service=payments
+  - output: .culiops/service-discovery/payments-live-catalog.md (merge with diagrams catalog)
+```
+
+### For Step 4 (runtime profile) — SKIPPED
+
+```
+Step 4 skipped per operator decision at Gate 1.5.
+Reason: ce:* IAM denied; operator chose to proceed without runtime data.
+To address: request ce:GetCostAndUsage and ce:GetCostForecast on account 123456789012,
+then re-run service-takeover from Step 4.
+```
+
+---
+
+## Approval block
+
+Operator approves this plan by responding "plan approved" or by editing the proposed actions and re-confirming. Until then, no sibling skill is invoked and no CLI command is emitted.
+
+**Approval status:** approved (with IAM gap acknowledged)
+
+**Approval timestamp:** 2026-05-12T14:10:00Z
+
+**Operator notes:** "Proceed without runtime data. I'll escalate IAM separately after handoff date is confirmed. Share questionnaire with Bob (bob@example.com) at Step 5."

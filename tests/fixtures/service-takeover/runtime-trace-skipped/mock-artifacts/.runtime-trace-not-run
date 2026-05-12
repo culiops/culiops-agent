@@ -1,0 +1,1 @@
+Step 4 (runtime-trace) was intentionally skipped: operator accepted IAM gap at Gate 1.5 (ce:* denied in account 123456789012 by corporate policy) rather than escalating for access.
