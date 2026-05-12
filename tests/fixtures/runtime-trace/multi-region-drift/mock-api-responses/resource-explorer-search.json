@@ -1,0 +1,11 @@
+{
+  "Count": {"TotalResources": 6, "Complete": true},
+  "Resources": [
+    {"Arn": "arn:aws:lambda:us-east-1:123456789012:function:payments-charge", "Region": "us-east-1", "ResourceType": "lambda:function"},
+    {"Arn": "arn:aws:lambda:us-east-1:123456789012:function:payments-cleanup", "Region": "us-east-1", "ResourceType": "lambda:function"},
+    {"Arn": "arn:aws:lambda:us-east-1:123456789012:function:payments-refund", "Region": "us-east-1", "ResourceType": "lambda:function"},
+    {"Arn": "arn:aws:sqs:us-east-1:123456789012:payments-retry-queue", "Region": "us-east-1", "ResourceType": "sqs:queue"},
+    {"Arn": "arn:aws:dynamodb:us-east-1:123456789012:table/payments-idempotency", "Region": "us-east-1", "ResourceType": "dynamodb:table"},
+    {"Arn": "arn:aws:lambda:us-west-2:123456789012:function:payments-archive", "Region": "us-west-2", "ResourceType": "lambda:function"}
+  ]
+}
