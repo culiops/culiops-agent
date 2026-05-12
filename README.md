@@ -13,6 +13,7 @@ CuliOps ships skills that activate automatically when you ask Claude to do opera
 - **iac-change-execution** — execute infrastructure changes safely with research-plan-approve-implement-verify workflow. Supports PR and direct-apply paths, multi-phase changes, and integrates with service-discovery and pre-flight.
 - **cloud-cost-investigate** — read-only cloud cost investigation in three modes (anomaly, waste, attribution). Produces a report with prioritized remediation list and source-labelled savings estimates. Works with AWS (Cost Explorer + Compute Optimizer), GCP (Cloud Billing + Recommender), Azure (Cost Management + Advisor), and Kubernetes (OpenCost / Kubecost).
 - **runtime-trace** — produce a self-contained AWS runtime profile of a service (spend, control-plane events, activity baselines, cross-region inventory) from four cheap read-only APIs. $1 cost cap, six gates, every claim traceable. Useful for service takeovers, drift checks, post-incident retrospectives, pre-cost-opt baselining.
+- **service-takeover** — orchestrate AWS service handoffs from another team when there's no documentation, no IaC, and only diagrams. Eight gates spanning intake, audit, discovery (delegated to service-discovery), runtime profile (delegated to runtime-trace), tribal-knowledge interview, PRR-style readiness scorecard, handoff package assembly. Self-contained output at `.culiops/service-takeover/<service>/`. Resumable across multi-day takeovers.
 
 Planned (not yet shipped):
 
@@ -55,6 +56,7 @@ Each skill has its own `SKILL.md` under `skills/<name>/`:
 - [`skills/iac-change-execution/SKILL.md`](skills/iac-change-execution/SKILL.md)
 - [`skills/cloud-cost-investigate/SKILL.md`](skills/cloud-cost-investigate/SKILL.md)
 - [`skills/runtime-trace/SKILL.md`](skills/runtime-trace/SKILL.md)
+- [`skills/service-takeover/SKILL.md`](skills/service-takeover/SKILL.md)
 
 ## Output Convention
 
