@@ -68,3 +68,30 @@ not approval. (Same pattern as runtime-trace and service-discovery.)
 - Law 2 (no programmatic invocation): the orchestrator prints the exact sibling-skill invocation as instruction text for the operator. The operator runs the sibling skill, the operator confirms the artifact path, the orchestrator resumes. There is no "auto" path.
 - Law 3 (evidence-backed): the readiness scorecard's value is the evidence trail. Every ✓ / ✗ either auto-marks from a cited artifact line, auto-marks from a cited interview-questionnaire answer, or carries an explicit `[manual]` flag with a one-line operator note.
 - Law 4 (resumability): the orchestrator always reads `state.md` before proposing actions. It never re-runs completed steps without operator confirmation.
+
+## Constraints (Non-Negotiable)
+
+1. **Artifacts are the source of truth.** Every readiness item, every handoff-package claim, every action in the audit trail must trace to either: (a) a prior-step artifact (catalog, runtime profile, interview), (b) an operator's explicit manual mark, or (c) an out-of-scope acknowledgement.
+2. **No assumptions.** When an artifact is missing, the relevant readiness items are marked `?` (unknown), not auto-passed.
+3. **Strict scope per run.** One service, one AWS account, one primary region. Multi-account is out-of-scope for the v1 orchestrator (sibling skills handle their own per-run scope).
+4. **No secrets, ever.** Inherited from `service-discovery` and `runtime-trace` — secret-shaped values are never read from any source. The interview questionnaire records *references* to secrets (where they live, who owns them), never values.
+5. **Read-only IAM only.** No IAM policy is required by `service-takeover` itself beyond what sibling skills require. The skill never asks for write perms.
+6. **Operator confirmation at every gate.** Eight gates (matching the eight steps). None are optional.
+7. **Sibling skill artifacts are consumed read-only.** `service-takeover` never modifies the catalog or runtime profile — it reads them, snapshots them into the handoff package, and cites them.
+8. **Out-of-scope actions require five-field approval.** Same pattern as `runtime-trace`.
+9. **Evidence citations in the readiness scorecard.** Every auto-marked item carries a `[evidence: <path>:<line>]` citation. No bare ✓ or ✗ without provenance.
+
+## Rationalization Prevention
+
+| Thought | Reality |
+|---|---|
+| "service-discovery already ran in this repo, I'll just use the catalog without asking" | STOP — Step 1.5 checks the catalog's timestamp and presents the operator with use/verify/re-run. Auto-consumption without explicit confirmation is forbidden. |
+| "I'll just invoke runtime-trace directly from this skill, it'll be faster" | STOP — programmatic sibling invocation is forbidden by the Iron Law. Print the invocation, wait for the operator. |
+| "The interview section on SLOs is empty, I'll mark it 'no SLOs defined'" | STOP — empty means unknown, not negative. Mark `?` and surface as an open question. |
+| "This readiness item is obviously true; I'll auto-pass it without citation" | STOP — every auto-mark requires an evidence citation. If no citation exists, the item is `[manual]`. |
+| "The catalog says no alerting; the runtime profile doesn't disagree; I'll auto-fail the alerting items" | STOP — absence of evidence is not evidence. Mark `?` and ask the operator. |
+| "The operator said 'continue' earlier; I'll skip the next gate" | STOP — each gate is its own confirmation. Earlier "yes" never carries forward. |
+| "This out-of-region resource isn't in scope, I'll filter it out" | STOP — every Resource Explorer finding makes it into the handoff. Filtering creates blind spots. |
+| "The operator approved the execution plan at Step 1.5; I'll run all delegated steps without re-confirming" | STOP — the plan approval authorizes *what* will be proposed at each step, not the steps themselves. Each delegated step still re-prints the exact invocation and gets approval. |
+| "I'll generate a runbook section from the runtime profile's idle-suspect callout" | STOP — `service-takeover` does not generate runbooks. Runbook items go in the interview as questions; if no runbook exists, the readiness scorecard flags the gap. |
+| "The handoff package is large, I'll symlink the catalog instead of copying" | STOP — package must be self-contained. Copy, never symlink. |
