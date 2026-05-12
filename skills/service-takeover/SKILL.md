@@ -394,3 +394,75 @@ For each gate approval, each delegated-skill instruction issued, each CLI comman
 After writing all files, the skill prints:
 
 > Handoff package complete at `.culiops/service-takeover/<service>/`. To make this part of the receiving team's repo, commit the directory. The skill does NOT auto-commit. Recommended commit message: `service-takeover: handoff package for <service> from <outgoing-team>`.
+
+## Resumability — operational model
+
+Re-invoking `service-takeover` on an existing `<service>` (state file exists):
+
+1. Skill reads `state.md` first.
+2. Prints current state: which steps are `done`, `in_progress`, `pending`.
+3. Asks operator: resume from current step, jump to a specific step, or restart entirely (restart preserves prior artifacts with timestamp suffixes — never deletes).
+4. From the chosen step, runs the normal gate flow.
+
+This means a takeover can span weeks. Day 1: intake, audit, run service-discovery. Day 4: come back, run runtime-trace. Day 10: emit interview questionnaire. Day 14: ingest filled interview, run readiness, assemble package.
+
+The skill never silently picks up where it left off — operator always confirms the resume point.
+
+## Skill Structure
+
+```
+skills/service-takeover/
+├── SKILL.md                              ← main skill definition; References + workflow-to-standards mapping at top
+├── templates/
+│   ├── interview-questionnaire.md        ← v1 questionnaire template (9 sections)
+│   ├── readiness-scorecard-baseline.md   ← 25-item baseline checklist with auto-mark rules
+│   └── handoff-readme-template.md        ← README.md template for the handoff package
+└── examples/
+    ├── execution-plan-example.md         ← example Step 1.5 output
+    └── auto-mark-rules.md                ← per-item auto-mark logic reference
+```
+
+No `examples/aws/` directory — `service-takeover` doesn't have per-resource definitions of its own. Resource type coverage is inherited from `service-discovery` (cloud-agnostic) and `runtime-trace` (per-AWS-resource).
+
+Fixtures for testing live under `tests/fixtures/service-takeover/<scenario>/`. See Testing below.
+
+## Testing
+
+Three layers, ordered by build effort:
+
+1. **Fixture-driven dry-runs.** Each scenario under `tests/fixtures/service-takeover/<name>/` includes:
+   - `input.md` — intake values + available materials.
+   - `mock-artifacts/` — simulated outputs from sibling skills (a fake `service-discovery` catalog, a fake `runtime-trace` profile).
+   - `filled-interview.md` — a filled-in questionnaire.
+   - `expected-handoff/` — expected contents of the final handoff package directory.
+   - `DRY-RUN-NOTES.md` — gate-by-gate simulated execution trace.
+
+2. **Live smoke test against a real personal-sandbox service.** Optional, manual, pre-release. Costs sibling skills' costs (under $0.10).
+
+3. **Negative-case fixtures:**
+   - `partial-interview` — operator chose to proceed despite empty SLO/DR sections; verify readiness scorecard correctly marks them as ✗ or ?.
+   - `no-diagrams` — Step 2 skipped because no diagrams supplied; Step 3 still runs.
+   - `existing-stale-catalog` — execution plan offers verify path; operator chooses re-run; old catalog preserved with timestamp.
+   - `runtime-trace-skipped` — operator chose to skip runtime-trace (e.g., account doesn't allow it); scorecard's Runtime category goes to ?.
+   - `interactive-resume` — Day 1 stops at Step 3; Day 7 re-invokes; state file resumes from Step 4.
+
+## Versioning
+
+- Skill version in this file's frontmatter (`service-takeover-version`).
+- `state.md` carries the skill version at the top of its frontmatter, stamped at run start.
+- Handoff package's `README.md` declares `handoff-package-schema: 1` at the top. Bumped only on breaking structural changes (e.g., renaming `readiness-scorecard.md` to a different filename, or restructuring the README sections such that downstream parsers break).
+- Snapshots retain the source artifact's own schema version in their frontmatter — `service-catalog.md` keeps `service-discovery-schema: <N>`, `runtime-profile.md` keeps `runtime-profile-schema: 1`. The orchestrator never rewrites snapshot frontmatter.
+
+## Out of Scope for v1
+
+Documented explicitly so future maintainers don't extend the skill into these areas without a fresh design pass:
+
+- **Programmatic sibling-skill invocation.** Skill orchestrates the operator, not other skills.
+- **Cost recommendations.** Downstream `cloud-cost-investigate`, operator-invoked.
+- **IaC generation / state import.**
+- **Multi-cloud.** AWS-only for v1.
+- **Multi-account.** Single account per run.
+- **Auto-commit.** Operator decides.
+- **Sign-off automation.** Skill produces evidence; the "done" judgment is the operator's.
+- **Custom auto-mark rules.** v1 ships fixed rules. If a team needs different rules, they fork the template; the skill does not load arbitrary user-supplied rule files.
+- **Real-time interview** (interactive chat-based Q&A with the operator typing answers). The interview is async by design — the source is the outgoing team, not the operator.
