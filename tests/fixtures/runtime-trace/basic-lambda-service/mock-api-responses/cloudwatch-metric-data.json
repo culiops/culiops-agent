@@ -1,0 +1,32 @@
+{
+  "MetricDataResults": [
+    {
+      "Id": "m1",
+      "Label": "payments-charge Invocations",
+      "Timestamps": ["2026-04-28T00:00:00Z", "2026-05-05T00:00:00Z", "2026-05-12T00:00:00Z"],
+      "Values": [142000, 158000, 149000],
+      "StatusCode": "Complete"
+    },
+    {
+      "Id": "m2",
+      "Label": "payments-charge Errors",
+      "Timestamps": ["2026-04-28T00:00:00Z", "2026-05-05T00:00:00Z", "2026-05-12T00:00:00Z"],
+      "Values": [12, 18, 9],
+      "StatusCode": "Complete"
+    },
+    {
+      "Id": "m3",
+      "Label": "payments-cleanup Invocations",
+      "Timestamps": ["2026-04-28T00:00:00Z", "2026-05-05T00:00:00Z", "2026-05-12T00:00:00Z"],
+      "Values": [0, 0, 0],
+      "StatusCode": "Complete"
+    },
+    {
+      "Id": "m4",
+      "Label": "payments-refund Invocations",
+      "Timestamps": ["2026-04-28T00:00:00Z", "2026-05-05T00:00:00Z", "2026-05-12T00:00:00Z"],
+      "Values": [3200, 2980, 3110],
+      "StatusCode": "Complete"
+    }
+  ]
+}

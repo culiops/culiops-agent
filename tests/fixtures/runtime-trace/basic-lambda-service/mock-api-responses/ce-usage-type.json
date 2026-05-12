@@ -1,0 +1,19 @@
+{
+  "GroupDefinitions": [
+    {"Type": "DIMENSION", "Key": "USAGE_TYPE"}
+  ],
+  "ResultsByTime": [
+    {
+      "TimePeriod": {"Start": "2026-04-01", "End": "2026-05-01"},
+      "Total": {},
+      "Groups": [
+        {"Keys": ["USE1-NatGateway-Bytes"], "Metrics": {"UnblendedCost": {"Amount": "24.88", "Unit": "USD"}}},
+        {"Keys": ["USE1-Lambda-GB-Second"], "Metrics": {"UnblendedCost": {"Amount": "12.04", "Unit": "USD"}}},
+        {"Keys": ["USE1-Lambda-Request"], "Metrics": {"UnblendedCost": {"Amount": "6.38", "Unit": "USD"}}},
+        {"Keys": ["USE1-DataProcessing-Bytes"], "Metrics": {"UnblendedCost": {"Amount": "2.43", "Unit": "USD"}}},
+        {"Keys": ["USE1-CW-Ingest-Bytes"], "Metrics": {"UnblendedCost": {"Amount": "8.61", "Unit": "USD"}}}
+      ],
+      "Estimated": false
+    }
+  ]
+}

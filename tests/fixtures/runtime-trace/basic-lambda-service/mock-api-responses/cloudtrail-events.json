@@ -1,0 +1,30 @@
+{
+  "Events": [
+    {
+      "EventId": "1a2b3c4d-1111-2222-3333-444455556666",
+      "EventName": "UpdateFunctionCode",
+      "EventTime": "2026-05-09T14:22:18Z",
+      "Username": "PaymentsDeployRole",
+      "Resources": [
+        {"ResourceType": "AWS::Lambda::Function", "ResourceName": "payments-charge"}
+      ],
+      "CloudTrailEvent": "{\"userIdentity\":{\"type\":\"AssumedRole\",\"arn\":\"arn:aws:sts::123456789012:assumed-role/PaymentsDeployRole/ci-runner-44\",\"sessionContext\":{\"sessionIssuer\":{\"arn\":\"arn:aws:iam::123456789012:role/PaymentsDeployRole\"}}},\"eventSource\":\"lambda.amazonaws.com\"}"
+    },
+    {
+      "EventId": "2b3c4d5e-2222-3333-4444-555566667777",
+      "EventName": "UpdateFunctionConfiguration",
+      "EventTime": "2026-05-09T14:22:25Z",
+      "Username": "PaymentsDeployRole",
+      "Resources": [{"ResourceType": "AWS::Lambda::Function", "ResourceName": "payments-charge"}],
+      "CloudTrailEvent": "{\"userIdentity\":{\"type\":\"AssumedRole\",\"arn\":\"arn:aws:sts::123456789012:assumed-role/PaymentsDeployRole/ci-runner-44\"},\"eventSource\":\"lambda.amazonaws.com\"}"
+    },
+    {
+      "EventId": "3c4d5e6f-3333-4444-5555-666677778888",
+      "EventName": "GetFunction",
+      "EventTime": "2026-05-10T09:14:02Z",
+      "Username": "alice",
+      "Resources": [{"ResourceType": "AWS::Lambda::Function", "ResourceName": "payments-charge"}],
+      "CloudTrailEvent": "{\"userIdentity\":{\"type\":\"IAMUser\",\"arn\":\"arn:aws:iam::123456789012:user/alice\"},\"eventSource\":\"lambda.amazonaws.com\"}"
+    }
+  ]
+}

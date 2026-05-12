@@ -1,0 +1,20 @@
+{
+  "GroupDefinitions": [
+    {"Type": "DIMENSION", "Key": "SERVICE"}
+  ],
+  "ResultsByTime": [
+    {
+      "TimePeriod": {"Start": "2026-04-01", "End": "2026-05-01"},
+      "Total": {},
+      "Groups": [
+        {"Keys": ["AWS Lambda"], "Metrics": {"UnblendedCost": {"Amount": "18.42", "Unit": "USD"}}},
+        {"Keys": ["Amazon CloudWatch"], "Metrics": {"UnblendedCost": {"Amount": "11.07", "Unit": "USD"}}},
+        {"Keys": ["Amazon DynamoDB"], "Metrics": {"UnblendedCost": {"Amount": "4.18", "Unit": "USD"}}},
+        {"Keys": ["Amazon Simple Queue Service"], "Metrics": {"UnblendedCost": {"Amount": "0.42", "Unit": "USD"}}},
+        {"Keys": ["EC2 - Other"], "Metrics": {"UnblendedCost": {"Amount": "27.31", "Unit": "USD"}}}
+      ],
+      "Estimated": false
+    }
+  ],
+  "DimensionValueAttributes": []
+}
