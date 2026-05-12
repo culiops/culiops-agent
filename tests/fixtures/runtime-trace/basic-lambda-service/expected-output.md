@@ -45,7 +45,7 @@ Total cost of this run: $0.022 (cap was $1.00).
 
 *Auto-generated from sections below. Verify against tables before consuming.*
 
-- Top spend: NAT Gateway data transfer ($24.88/mo, ~38% of bill) — not in the original diagram.
+- Top spend: NAT Gateway data transfer ($24.88/mo, ~41% of bill) — not in the original diagram.
 - DynamoDB is in scope ($4.18/mo) — not in the original diagram.
 - Two IAM principals touched the service in last 90d: a deploy role (CI) and one engineer (read-only console).
 - `payments-cleanup` Lambda is idle (zero invocations in 14d) — candidate for sunset.
@@ -57,11 +57,13 @@ Total cost of this run: $0.022 (cap was $1.00).
 
 | Service | Monthly cost (USD) | Share |
 |---|---|---|
-| EC2 - Other (NAT, data transfer) | 27.31 | 42% |
-| AWS Lambda | 18.42 | 28% |
-| Amazon CloudWatch | 11.07 | 17% |
-| Amazon DynamoDB | 4.18 | 6% |
+| EC2 - Other (NAT, data transfer) | 27.31 | 44% |
+| AWS Lambda | 18.42 | 30% |
+| Amazon CloudWatch | 11.07 | 18% |
+| Amazon DynamoDB | 4.18 | 7% |
 | Amazon SQS | 0.42 | <1% |
+
+*Total: $61.40/mo.*
 
 **Services billing but absent from diagram:** Amazon DynamoDB, EC2 - Other (NAT Gateway).
 

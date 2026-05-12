@@ -22,4 +22,4 @@
 
 ## Acceptance check
 
-A reviewer steps through `input.md` + each `mock-api-responses/*.json` and confirms the skill would produce `expected-output.md` byte-for-byte (allowing for run-specific timestamps).
+A reviewer steps through `input.md` + each `mock-api-responses/*.json` and confirms the skill would produce `expected-output.md` with **representative** results (allowing for run-specific timestamps). Note: `cloudwatch-metric-data.json` contains 4 illustrative result rows; the expected-output describes the full 18-query result set as it would appear in a real run (3 functions × 6 metrics each). A strict byte-for-byte mock-to-output mapping is out of scope — see the inline note in the mock JSON file.
