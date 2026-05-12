@@ -192,3 +192,205 @@ Some takeover scenarios skip Step 2 (no diagrams supplied) and go straight to St
 3. When complete, operator provides the runtime-profile path back.
 4. Skill snapshots `<service>-runtime-profile.md` into the takeover directory.
 5. State file updated.
+
+### Step 5 — Outgoing-team interview (Gate 5)
+
+Doc-driven async interview. The skill emits a structured questionnaire markdown; the operator (and/or the outgoing team) fills it in offline; the skill ingests the filled version.
+
+#### 5a — Emit questionnaire
+
+Skill creates `.culiops/service-takeover/<service>/interview-questionnaire.md` from a v1 template covering eleven sections:
+
+1. **Service overview** — name, business purpose, criticality tier, age, why it exists.
+2. **People & ownership** — current owners, on-call schedule, escalation contacts, related teams.
+3. **SLOs / SLIs** — defined? measured? error budget tracked? where are dashboards?
+4. **Deploy process** — how does code/config reach prod? deploy frequency? rollback procedure? deploy permissions?
+5. **Alerting & on-call** — what's monitored? who pages? known noisy alerts? **link to top runbooks if any exist.**
+6. **Runbooks & incidents** — list of existing runbooks (paths/links), incidents in last 12 months, post-mortems if any.
+7. **Known landmines** — fragile components, "do not touch on Friday" things, undocumented quirks.
+8. **Dependencies** — upstream callers (with contacts), downstream services (with SLAs/contracts), external APIs and their owners.
+9. **Secrets & credentials** — where are secrets stored, who owns rotation, what services have access (references only, never values).
+10. **Compliance, data & disaster recovery** — PII handling, data retention policy, backup strategy and last test date, DR plan and RTO/RPO, regulatory constraints (SOC2 / HIPAA / GDPR if applicable).
+11. **Roadmap & open work** — pending changes, in-flight projects, known tech debt, deprecation plans.
+
+Each section has prefilled probing questions with empty answer slots and an explicit `_To be filled in: ___` marker. The questionnaire header includes the outgoing-team contact info, the handoff date, and a one-paragraph context explaining what the interview is for (so the outgoing team can fill it in async without a meeting).
+
+#### 5b — Ingest filled questionnaire
+
+When the operator has the filled-in questionnaire, they return to `service-takeover` and tell it "interview ready at `<path>`" (default path is the emit location, but operator can supply a different path if they renamed/moved it).
+
+Skill ingests:
+
+1. Parses the markdown by section headings.
+2. For each section, classifies completion: `complete` (all probing questions have non-trivial answers), `partial` (some answers missing or marked `unknown`/`TBD`), `empty` (no answers).
+3. Records completion status to `state.md`.
+4. Surfaces partial/empty sections to the operator as a summary table. Operator decides per-section: accept-as-is (will surface in readiness scorecard as gaps) or return-to-outgoing-team (operator goes back to step 5a and re-emits with the current partial answers preserved).
+5. Snapshots the filled questionnaire into the takeover directory (the file IS already in the takeover directory by convention, so this is effectively just a state marker).
+
+The skill never asks for follow-up answers itself — the source of this knowledge is the outgoing team, not the operator typing in chat.
+
+### Step 6 — Readiness scorecard (Gate 6)
+
+Auto-mark from prior artifacts; operator overrides on gaps. The output is `.culiops/service-takeover/<service>/readiness-scorecard.md`.
+
+#### Baseline checklist — 25 items across 8 categories
+
+| Category | Items |
+|---|---|
+| **Access** | (1) operator has IAM read in target account; (2) deploy role identified; (3) console+CLI access verified |
+| **Inventory** | (4) resources enumerated; (5) cross-region footprint known; (6) secrets/credentials references catalogued |
+| **Runtime** | (7) activity baseline captured; (8) deploy events history captured; (9) principals touching service enumerated |
+| **Alerting** | (10) critical metrics have alarms; (11) on-call rotation configured; (12) paging path verified |
+| **Runbooks** | (13) top-5 symptom→action runbooks exist; (14) recent incidents documented |
+| **Deploy & Rollback** | (15) CI/CD access; (16) deploy process documented; (17) rollback path documented; (18) deploy frequency known (DORA) |
+| **Dependencies** | (19) upstream callers identified; (20) downstream services identified; (21) external API ownership known |
+| **Compliance** | (22) PII handling known; (23) data retention policy known; (24) backup strategy verified; (25) DR plan exists |
+
+#### Auto-marking rules
+
+Each item is marked **✓** (pass), **✗** (fail), or **?** (unknown) with an evidence citation:
+
+- **Items 1–3 (Access):** Auto-mark ✓ if Step 1.5's execution plan recorded successful AWS access; otherwise ?.
+- **Items 4–6 (Inventory):** Auto-mark from `service-catalog.md`. Item 4 ✓ if catalog has ≥1 resource. Item 5 ✓ if catalog includes cross-region data from runtime-trace's Resource Explorer pass. Item 6 ✓ if catalog has a secrets-references section (per `service-discovery`'s spec — secrets are recorded as refs, never values).
+- **Items 7–9 (Runtime):** Auto-mark from `runtime-profile.md`. Item 7 ✓ if runtime profile has the Activity Baselines section with at least one resource. Item 8 ✓ if Control-Plane Activity has at least one event. Item 9 ✓ if "principals touching this service" table has at least one row.
+- **Items 10–25 (Alerting through Compliance):** Auto-mark from `interview-questionnaire.md` filled sections. Each item has a designated questionnaire section; if the section's answers contain affirmative responses to specific probing questions, auto-mark ✓. If section is partial or empty, mark `?` and prompt operator. If section explicitly states "no runbooks exist" / "no DR plan" / etc., auto-mark ✗.
+
+Items that cannot be auto-marked from any artifact stay `?` and require operator manual mark with a one-line note (`[manual]` flag). Examples: "rollback path tested in last 90 days" — no artifact can prove this; operator must attest.
+
+#### Output structure
+
+```markdown
+# Readiness Scorecard — <service>
+
+## Verdict
+- Overall: <ready / not-ready / partial> based on category-level pass rates.
+- Critical gaps: <list of ✗ or ? items in high-criticality categories>.
+
+## Per-category summary
+| Category | Pass | Fail | Unknown | Verdict |
+|---|---|---|---|---|
+
+## Per-item detail
+For each of 25 items:
+| # | Item | Mark | Evidence | Operator note |
+|---|---|---|---|---|
+
+## Open questions (auto-extracted from ? items)
+- (e.g., "Rollback path: not yet verified — operator to test before sign-off")
+
+## Manual override log
+- For each ? → ✓ or ✗ override by operator, record: timestamp, item #, note.
+```
+
+#### Optional extras
+
+Operator may supply `.culiops/service-takeover/<service>/extra-checklist.md` with additional items, parsed and merged into the scorecard alongside the baseline. The baseline file is never modified by extras — they coexist as a separate section in the output ("Operator-supplied extras").
+
+### Step 7 — Handoff package (Gate 7)
+
+The final assembly step. Outputs:
+
+```
+.culiops/service-takeover/<service>/
+├── README.md                       ← the handoff summary (TL;DR + index + open questions)
+├── state.md                         ← workflow state (which steps ran, when, paths, gate sign-offs)
+├── execution-plan.md                ← Step 1.5 output (the audit + plan + operator approval)
+├── service-catalog.md               ← COPY (snapshot) of the service-discovery catalog
+├── runtime-profile.md               ← COPY (snapshot) of the runtime-trace profile
+├── interview-questionnaire.md       ← filled-in interview (Step 5)
+├── readiness-scorecard.md           ← Step 6 output
+└── open-questions.md                ← consolidated open questions across all artifacts
+```
+
+#### `README.md` — the handoff front door
+
+Self-contained 1–2 page summary; the receiving team should be able to read just this file and know what to do next.
+
+```markdown
+# Service Takeover — <service>
+
+## TL;DR
+- Handoff date: <date>
+- From: <outgoing team>
+- To: <incoming team>
+- Readiness verdict: <ready / not-ready / partial>
+- Top 5 open questions:
+  1. ...
+
+## What this package contains
+- service-catalog.md — what resources exist
+- runtime-profile.md — what's actually running, billing, and being called
+- interview-questionnaire.md — tribal knowledge from <outgoing team>
+- readiness-scorecard.md — Production Readiness Review results
+- open-questions.md — every unresolved item, prioritized
+
+## First-day actions for <incoming team>
+- Read readiness-scorecard.md verdict and gaps
+- Schedule follow-up with <outgoing-team contact> on top 3 open questions
+- Verify console + CLI access in account <id>
+- Subscribe to existing alerts (see runbook section of catalog)
+
+## Standards this package follows
+- Production Readiness Review (PRR) — SRE book Ch. 32
+- Four golden signals — SRE book Ch. 6
+- ITIL 4 Service Transition framework
+- AWS Well-Architected Operational Excellence pillar
+```
+
+#### `open-questions.md` — consolidated cross-artifact
+
+Every "open question" callout across the catalog, runtime profile, interview, and scorecard, deduplicated and prioritized:
+
+```markdown
+# Open Questions — <service>
+
+## High priority (blocks operational readiness)
+- (from readiness scorecard) Rollback path not verified — operator to test.
+- (from runtime profile) Deploy role `arn:...` is shared with which other services?
+- (from interview, partial) DR plan section empty — needs outgoing-team follow-up.
+
+## Medium priority (clarifies operational understanding)
+- ...
+
+## Low priority (nice to know)
+- ...
+```
+
+#### `state.md` — workflow record
+
+Maintained throughout the run, finalized at Gate 7:
+
+```markdown
+# Service Takeover State — <service>
+
+## Run identity
+- Service: <name>
+- Account: <id>, region: <region>
+- Operator: <IAM principal>
+- Initiated: <timestamp>
+- Last updated: <timestamp>
+
+## Step status
+| Step | Status | Started | Completed | Artifact | Gate approval |
+|---|---|---|---|---|---|
+| 1   | done | <ts> | <ts> | — | <operator>, <ts> |
+| 1.5 | done | <ts> | <ts> | execution-plan.md | <operator>, <ts> |
+| 2   | done | <ts> | <ts> | service-catalog.md (snapshot) | <operator>, <ts> |
+...
+
+## Audit trail
+For each gate approval, each delegated-skill instruction issued, each CLI command emitted:
+- Timestamp, action, operator confirmation.
+```
+
+#### Versioning
+
+- `service-takeover-version: <x.y.z>` in `state.md` frontmatter.
+- `handoff-package-schema: 1` at the top of `README.md` (bumped on breaking structural changes).
+- Each snapshot retains the source artifact's schema version in its own frontmatter (we copy the file as-is, so the catalog snapshot keeps `service-discovery-schema: N`, the runtime profile snapshot keeps `runtime-profile-schema: 1`).
+
+#### Reminder
+
+After writing all files, the skill prints:
+
+> Handoff package complete at `.culiops/service-takeover/<service>/`. To make this part of the receiving team's repo, commit the directory. The skill does NOT auto-commit. Recommended commit message: `service-takeover: handoff package for <service> from <outgoing-team>`.
