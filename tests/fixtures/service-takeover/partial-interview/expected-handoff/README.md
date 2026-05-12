@@ -80,7 +80,7 @@ This package was assembled by the `service-takeover` skill (culiops plugin, vers
 4. **Live discovery** — delegated to `service-discovery` (real-discovery, AWS CLI).
 5. **Runtime profile** — delegated to `runtime-trace`.
 6. **Interview** — emitted questionnaire, ingested partial version from Pay Team. Operator selected "accept as-is" at Gate 5 rather than returning to outgoing team for completion.
-7. **Readiness scorecard** — auto-marked 18 items from prior artifacts; operator manually confirmed 2 items; 4 Compliance items auto-marked ✗ (Section 10 empty); 1 item marked ? (incidents empty).
+7. **Readiness scorecard** — auto-marked 18 items from prior artifacts; operator manually confirmed 2 items; 5 items marked `?` (4 Compliance items from empty Section 10 + 1 incidents item from empty Section 6 sub-fields). Per Iron Law, absence of evidence is `?` not `✗`.
 8. **Handoff package** — assembled this directory.
 
 To reproduce this package, see `state.md` for the gate sign-offs and `execution-plan.md` for the actions taken.

@@ -440,10 +440,9 @@ Three layers, ordered by build effort:
 2. **Live smoke test against a real personal-sandbox service.** Optional, manual, pre-release. Costs sibling skills' costs (under $0.10).
 
 3. **Negative-case fixtures:**
-   - `partial-interview` — operator chose to proceed despite empty SLO/DR sections; verify readiness scorecard correctly marks them as ✗ or ?.
-   - `no-diagrams` — Step 2 skipped because no diagrams supplied; Step 3 still runs.
+   - `partial-interview` — operator chose to proceed despite empty SLO/DR sections; verify readiness scorecard correctly marks them as `?`.
    - `existing-stale-catalog` — execution plan offers verify path; operator chooses re-run; old catalog preserved with timestamp.
-   - `runtime-trace-skipped` — operator chose to skip runtime-trace (e.g., account doesn't allow it); scorecard's Runtime category goes to ?.
+   - `runtime-trace-skipped` — operator chose to skip runtime-trace (e.g., account doesn't allow it); scorecard's Runtime category goes to `?`.
    - `interactive-resume` — Day 1 stops at Step 3; Day 7 re-invokes; state file resumes from Step 4.
 
 ## Versioning

@@ -26,10 +26,10 @@ verdict: not-ready
 | Runbooks | 13-14 | 1 | 0 | 1 | 0 |
 | Deploy & Rollback | 15-18 | 4 | 0 | 0 | 0 |
 | Dependencies | 19-21 | 3 | 0 | 0 | 0 |
-| Compliance | 22-25 | 0 | 4 | 0 | 0 |
-| **Total** | **25** | **18** | **4** | **1** | **2** |
+| Compliance | 22-25 | 0 | 0 | 4 | 0 |
+| **Total** | **25** | **18** | **0** | **5** | **2** |
 
-Verdict: **not-ready** — Compliance category 0/4 passing. Section 10 of the interview was left empty by the outgoing team; the skill correctly does not auto-pass items without evidence.
+Verdict: **not-ready** — Compliance category 0/4 passing (all four items unresolved due to empty Section 10 of the interview). Per the Iron Law, absence of evidence is `?` not `✗`; the skill correctly does not auto-fail items without explicit negative answers. The receiving team must follow up with the outgoing team to resolve.
 
 ---
 
@@ -187,29 +187,29 @@ Verdict: **not-ready** — Compliance category 0/4 passing. Section 10 of the in
 
 ## Category: Compliance (items 22–25)
 
-### Item 22 — PII handling known ✗
+### Item 22 — PII handling known ?
 
-- **Mark:** ✗ (auto — evidence absent)
+- **Mark:** ? (auto — evidence absent; rule says `? if empty`)
 - **Evidence:** [evidence: filled-interview.md → Section 10 → PII handling — empty (`_To be filled in: ___`). Section 10 was not filled by outgoing team.]
-- **Notes:** PII handling is a critical compliance item. Without this, the incoming team cannot confirm data protection obligations or GDPR/PCI scope. This must be resolved before takeover sign-off.
+- **Notes:** PII handling is a critical compliance item. Without this answer the incoming team cannot confirm data-protection obligations or GDPR/PCI scope. Must be resolved before takeover sign-off — high-priority open question.
 
-### Item 23 — Data retention policy known ✗
+### Item 23 — Data retention policy known ?
 
-- **Mark:** ✗ (auto — evidence absent)
+- **Mark:** ? (auto — evidence absent; rule says `? if empty`)
 - **Evidence:** [evidence: filled-interview.md → Section 10 → Data retention policy — empty (`_To be filled in: ___`). Section 10 was not filled by outgoing team.]
-- **Notes:** Retention policy determines TTL configuration and legal hold obligations. Cannot confirm compliance without this. High priority open question.
+- **Notes:** Retention policy determines TTL configuration and legal-hold obligations. Cannot confirm compliance without this answer. High-priority open question.
 
-### Item 24 — Backup strategy verified ✗
+### Item 24 — Backup strategy verified ?
 
-- **Mark:** ✗ (auto — evidence absent)
+- **Mark:** ? (auto — evidence absent; rule's `✗ if no backup strategy` applies only when interview explicitly states "no backup strategy", not when the section is empty. Empty section is absence-of-evidence, per Iron Law `?`.)
 - **Evidence:** [evidence: filled-interview.md → Section 10 → Backup strategy — empty (`_To be filled in: ___`). Section 10 was not filled by outgoing team.]
-- **Notes:** Backup configuration (PITR, snapshots) and last restore test date are unknown. Cannot confirm RPO targets are met. High priority open question.
+- **Notes:** Backup configuration (PITR, snapshots) and last restore test date are unknown. Cannot confirm RPO targets are met. High-priority open question.
 
-### Item 25 — DR plan exists ✗
+### Item 25 — DR plan exists ?
 
-- **Mark:** ✗ (auto — evidence absent)
+- **Mark:** ? (auto — evidence absent; rule's `✗ if 'no DR plan'` applies only to explicit denial, not empty section. Empty is `?`.)
 - **Evidence:** [evidence: filled-interview.md → Section 10 → Disaster recovery plan — empty (`_To be filled in: ___`). Section 10 was not filled by outgoing team.]
-- **Notes:** RTO and RPO are undocumented. Failover region unknown. DR runbook URL unknown. Cannot confirm disaster recovery readiness. High priority open question.
+- **Notes:** RTO and RPO are undocumented. Failover region unknown. DR runbook URL unknown. Cannot confirm disaster-recovery readiness. High-priority open question.
 
 ---
 
