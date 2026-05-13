@@ -4,6 +4,16 @@ All notable changes to the `culiops` plugin will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.7.1] — 2026-05-13
+
+### Changed
+
+- **runtime-trace SKILL.md polish from v0.7.0 live smoke test.** No functional regressions; three documentation heuristics added to make real-world findings more actionable:
+  - **Cost Explorer (Section 2a) — tag-allocation heuristic:** when a tag-filtered query returns $0.00 spend but matching resources exist, the skill now surfaces a TL;DR alert recommending Billing-console activation of the tag as a cost-allocation tag, rather than silently treating the zero as a real attribution.
+  - **CloudTrail (Section 2b) — ResourceName filter format note:** clarifies that `LookupAttributes` requires the simple resource name (e.g., `paymentservice`), not the cluster-prefixed composite (e.g., `culishop-lab-paymentservice`). Smoke test surfaced this as the difference between "0 events" and "7 events" on the same resource.
+  - **CloudWatch (Section 2c) — coverage heuristic:** when a metric returns fewer than 50% of expected datapoints, the skill now surfaces a Gap distinguishing intermittent operation from partial Container Insights configuration.
+- **runtime-trace Testing section** — added a note that JSON sidecar emission (Gate 6) is verified by fixture but not yet exercised in a fully agent-driven live invocation; flag for next end-to-end run.
+
 ## [0.7.0] — 2026-05-13
 
 ### Added

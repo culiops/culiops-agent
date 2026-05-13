@@ -118,12 +118,14 @@ Verbal "yes" without seeing the five fields is not approval.
 - **Why:** Bills don't lie. Surfaces services that diagrams and tags omit. Catches stealth dependencies (NAT Gateway data transfer, KMS, Secrets Manager, Route 53 health checks, CloudWatch Logs ingest).
 - **Cost:** $0.01 per API call. Skill budgets ≤10 calls per run → under $0.10 typical.
 - **Output contribution:** "Spend share by service" table; "services billing but absent from diagram/catalog" callout.
+- **Tag-allocation heuristic:** If a tag-filtered query (`Tag={<key>: [<value>]}`) returns $0.00 but resources matching the tag exist (verified via `resourcegroupstaggingapi:GetResources` or Resource Explorer), surface a TL;DR alert: *"likely cost-allocation tags not activated in Billing — recommend activating `<tag-key>` as a cost-allocation tag and re-running."* Tags exist on the resource but only flow into Cost Explorer after explicit Billing-console activation; missing this step is a common cause of opaque attribution.
 - **Edge case:** Cost Explorer must be enabled in the account (free, but opt-in for new accounts). If disabled, skill stops at Gate 2 with a clear message.
 
 ### b. CloudTrail LookupEvents — the control-plane log
 
 - **APIs:** `cloudtrail:LookupEvents` (primary), `cloudtrail:GetTrailStatus` and `cloudtrail:DescribeTrails` (for capability detection).
 - **Query shape:** `LookupAttributes` filtered by `ResourceName` (when an ARN list is the scoping primitive) or `EventSource` (when service inventory is derived from source a). Time window: last 90 days (LookupEvents AWS-imposed max).
+- **ResourceName filter format:** Use the **simple resource name** — the trailing element of the resource ARN (e.g., `paymentservice`), **not** a cluster-prefixed or composite identifier (e.g., NOT `culishop-lab-paymentservice`). CloudTrail records the resource name as the AWS service emitted it; ECS services record only their `ServiceName` dimension. If a filter returns zero events when the resource is known to exist, retry with the trailing-element form before assuming the resource has no events.
 - **Why:** Reveals who actually touches this service — IAM principals (roles, users, federated identities), deploy events, cross-account access, recent config drift. Catches "the deploy goes through this CI role nobody mentioned."
 - **Cost:** Free for management events, last 90 days. `LookupEvents` returns management events only — data events (e.g., S3 object-level reads, Lambda invokes) are not queryable via this API and are out of scope for v1.
 - **Output contribution:** "Top API actions by event count" table; "principals touching this service" table (ARN, principal type, last-seen, event count); "notable change events" timeline; "principals not in any known runbook" callout.
@@ -139,6 +141,7 @@ Verbal "yes" without seeing the five fields is not approval.
 - **Why:** Four-golden-signals visibility per resource. Identifies idle suspects (near-zero activity) and peak hours.
 - **Cost:** $0.01 per 1,000 metrics. With the 200-metric cap, max $0.002 per run.
 - **Output contribution:** Per-resource four-golden-signals table; peak-hour callout; idle-suspect callout.
+- **Coverage heuristic:** If a metric returns fewer than 50% of expected datapoints (e.g., fewer than 168 datapoints over a 14-day hourly window, or fewer than 12 over a 24-hour 5-minute slice), surface as a Gap with text: *"metric coverage <N>% — either intermittent service operation or partial Container Insights / metric publisher configuration."* Distinguish coverage-from-emission (something didn't publish) versus coverage-from-activity (service was idle). Operator decides which interpretation applies.
 - **Uncovered resource types:** If a resource surfaces that has no `examples/aws/<resource-type>.md` file, record "metrics not collected — resource type not yet supported" as a gap in the output doc. Do not infer defaults.
 
 ### i. Resource Explorer — the cross-region inventory
@@ -402,7 +405,7 @@ Three layers, ordered by build effort:
 
    A reviewer or implementing agent can step through the fixture inputs and validate the skill produces `expected-output.md`. Diff-based golden testing.
 
-2. **Live smoke test in a sandbox account.** Optional, run manually before each release. Against a small known service in a personal AWS sandbox, run the skill end-to-end. Verify the doc reads correctly and total cost is under $0.10. Not in CI (costs money + requires creds).
+2. **Live smoke test in a sandbox account.** Optional, run manually before each release. Against a small known service in a personal AWS sandbox, run the skill end-to-end. Verify the doc reads correctly and total cost is under $0.10. Not in CI (costs money + requires creds). **Note:** the v0.7.0 smoke test was driven manually by a human operator; automated JSON sidecar emission (Gate 6) is verified by fixture but has not yet been exercised in a fully-automated live skill invocation — verify on the next end-to-end agent-driven run.
 
 3. **Negative-case fixtures.** Explicitly covered:
    - `cloudtrail-disabled` — CloudTrail logging off; source skipped, gap recorded.
