@@ -1,0 +1,20 @@
+{
+  "Snapshots": [
+    {
+      "SnapshotId": "snap-0abcdef0123456789",
+      "VolumeId": "vol-0xxxxxxxxxxxxxxx1",
+      "State": "completed",
+      "VolumeSize": 200,
+      "StartTime": "2026-05-13T03:00:00.000Z",
+      "Progress": "100%",
+      "OwnerId": "123456789012",
+      "Description": "weekly-backup",
+      "Encrypted": true,
+      "StorageTier": "standard",
+      "Tags": [
+        {"Key": "Environment", "Value": "prod"},
+        {"Key": "Schedule", "Value": "weekly"}
+      ]
+    }
+  ]
+}

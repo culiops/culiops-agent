@@ -1,0 +1,10 @@
+{
+  "Error": {
+    "Code": "NoSuchLifecycleConfiguration",
+    "Message": "The lifecycle configuration does not exist"
+  },
+  "ResponseMetadata": {
+    "RequestId": "EXAMPLE123456789",
+    "HTTPStatusCode": 404
+  }
+}

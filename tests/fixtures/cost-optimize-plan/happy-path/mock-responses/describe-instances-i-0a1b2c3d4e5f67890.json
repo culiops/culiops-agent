@@ -1,0 +1,32 @@
+{
+  "Reservations": [
+    {
+      "ReservationId": "r-0fedcba9876543210",
+      "OwnerId": "123456789012",
+      "Instances": [
+        {
+          "InstanceId": "i-0a1b2c3d4e5f67890",
+          "InstanceType": "m5.4xlarge",
+          "State": {"Code": 16, "Name": "running"},
+          "LaunchTime": "2025-12-01T14:22:18.000Z",
+          "Placement": {
+            "AvailabilityZone": "ap-southeast-1a",
+            "Tenancy": "default"
+          },
+          "PrivateIpAddress": "10.0.1.45",
+          "VpcId": "vpc-0abc123def456789a",
+          "SubnetId": "subnet-0abc123def456789a",
+          "Architecture": "x86_64",
+          "RootDeviceType": "ebs",
+          "Monitoring": {"State": "enabled"},
+          "Tags": [
+            {"Key": "Name", "Value": "prod-api"},
+            {"Key": "Service", "Value": "payments"},
+            {"Key": "Environment", "Value": "prod"},
+            {"Key": "Team", "Value": "platform"}
+          ]
+        }
+      ]
+    }
+  ]
+}

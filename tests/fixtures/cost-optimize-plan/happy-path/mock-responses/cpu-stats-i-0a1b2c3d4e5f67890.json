@@ -1,0 +1,19 @@
+{
+  "Label": "CPUUtilization",
+  "Datapoints": [
+    {"Timestamp": "2026-05-14T00:00:00.000Z", "Average": 3.8, "Maximum": 11.2, "Unit": "Percent"},
+    {"Timestamp": "2026-05-15T00:00:00.000Z", "Average": 4.1, "Maximum": 12.4, "Unit": "Percent"},
+    {"Timestamp": "2026-05-16T00:00:00.000Z", "Average": 3.6, "Maximum": 10.8, "Unit": "Percent"},
+    {"Timestamp": "2026-05-17T00:00:00.000Z", "Average": 4.3, "Maximum": 13.1, "Unit": "Percent"},
+    {"Timestamp": "2026-05-18T00:00:00.000Z", "Average": 3.9, "Maximum": 11.7, "Unit": "Percent"},
+    {"Timestamp": "2026-05-19T00:00:00.000Z", "Average": 4.0, "Maximum": 11.5, "Unit": "Percent"},
+    {"Timestamp": "2026-05-20T00:00:00.000Z", "Average": 3.7, "Maximum": 10.3, "Unit": "Percent"},
+    {"Timestamp": "2026-05-21T00:00:00.000Z", "Average": 4.2, "Maximum": 12.6, "Unit": "Percent"},
+    {"Timestamp": "2026-05-22T00:00:00.000Z", "Average": 4.5, "Maximum": 13.8, "Unit": "Percent"},
+    {"Timestamp": "2026-05-23T00:00:00.000Z", "Average": 3.8, "Maximum": 11.0, "Unit": "Percent"},
+    {"Timestamp": "2026-05-24T00:00:00.000Z", "Average": 4.1, "Maximum": 12.1, "Unit": "Percent"},
+    {"Timestamp": "2026-05-25T00:00:00.000Z", "Average": 3.9, "Maximum": 11.9, "Unit": "Percent"},
+    {"Timestamp": "2026-05-26T00:00:00.000Z", "Average": 4.4, "Maximum": 13.2, "Unit": "Percent"},
+    {"Timestamp": "2026-05-27T00:00:00.000Z", "Average": 4.0, "Maximum": 12.0, "Unit": "Percent"}
+  ]
+}

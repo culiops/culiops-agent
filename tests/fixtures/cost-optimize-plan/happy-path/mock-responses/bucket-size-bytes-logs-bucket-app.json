@@ -1,0 +1,11 @@
+{
+  "Label": "BucketSizeBytes",
+  "Datapoints": [
+    {
+      "Timestamp": "2026-05-27T00:00:00.000Z",
+      "Average": 4621440819200.0,
+      "Unit": "Bytes",
+      "StorageType": "StandardStorage"
+    }
+  ]
+}

@@ -1,0 +1,65 @@
+{
+  "instanceRecommendations": [
+    {
+      "instanceArn": "arn:aws:ec2:ap-southeast-1:123456789012:instance/i-0a1b2c3d4e5f67890",
+      "accountId": "123456789012",
+      "instanceName": "prod-api",
+      "currentInstanceType": "m5.4xlarge",
+      "finding": "OVER_PROVISIONED",
+      "findingReasonCodes": ["CPUUnderprovisioned"],
+      "utilizationMetrics": [
+        {
+          "name": "CPU",
+          "statistic": "AVERAGE",
+          "value": 4.02
+        },
+        {
+          "name": "CPU",
+          "statistic": "MAXIMUM",
+          "value": 12.34
+        },
+        {
+          "name": "MEMORY",
+          "statistic": "AVERAGE",
+          "value": 18.7
+        }
+      ],
+      "lookBackPeriodInDays": 14.0,
+      "recommendationOptions": [
+        {
+          "instanceType": "m5.2xlarge",
+          "projectedUtilizationMetrics": [
+            {
+              "name": "CPU",
+              "statistic": "AVERAGE",
+              "value": 8.04
+            },
+            {
+              "name": "CPU",
+              "statistic": "MAXIMUM",
+              "value": 24.68
+            }
+          ],
+          "platformDifferences": [],
+          "performanceRisk": 1.0,
+          "rank": 1,
+          "savingsOpportunity": {
+            "savingsOpportunityPercentage": 50.0,
+            "estimatedMonthlySavings": {
+              "currency": "USD",
+              "value": 280.0
+            }
+          }
+        }
+      ],
+      "recommendationSources": [
+        {
+          "recommendationSourceArn": "arn:aws:ec2:ap-southeast-1:123456789012:instance/i-0a1b2c3d4e5f67890",
+          "recommendationSourceType": "Ec2Instance"
+        }
+      ],
+      "lastRefreshTimestamp": "2026-05-28T06:00:00.000Z"
+    }
+  ],
+  "errors": []
+}

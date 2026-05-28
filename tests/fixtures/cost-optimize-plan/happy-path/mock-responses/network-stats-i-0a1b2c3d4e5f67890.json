@@ -1,0 +1,19 @@
+{
+  "Label": "NetworkIn",
+  "Datapoints": [
+    {"Timestamp": "2026-05-14T00:00:00.000Z", "Sum": 52428800, "Unit": "Bytes"},
+    {"Timestamp": "2026-05-15T00:00:00.000Z", "Sum": 61865984, "Unit": "Bytes"},
+    {"Timestamp": "2026-05-16T00:00:00.000Z", "Sum": 48234496, "Unit": "Bytes"},
+    {"Timestamp": "2026-05-17T00:00:00.000Z", "Sum": 67108864, "Unit": "Bytes"},
+    {"Timestamp": "2026-05-18T00:00:00.000Z", "Sum": 55574528, "Unit": "Bytes"},
+    {"Timestamp": "2026-05-19T00:00:00.000Z", "Sum": 58720256, "Unit": "Bytes"},
+    {"Timestamp": "2026-05-20T00:00:00.000Z", "Sum": 44040192, "Unit": "Bytes"},
+    {"Timestamp": "2026-05-21T00:00:00.000Z", "Sum": 63963136, "Unit": "Bytes"},
+    {"Timestamp": "2026-05-22T00:00:00.000Z", "Sum": 70254592, "Unit": "Bytes"},
+    {"Timestamp": "2026-05-23T00:00:00.000Z", "Sum": 51380224, "Unit": "Bytes"},
+    {"Timestamp": "2026-05-24T00:00:00.000Z", "Sum": 59768832, "Unit": "Bytes"},
+    {"Timestamp": "2026-05-25T00:00:00.000Z", "Sum": 54525952, "Unit": "Bytes"},
+    {"Timestamp": "2026-05-26T00:00:00.000Z", "Sum": 68157440, "Unit": "Bytes"},
+    {"Timestamp": "2026-05-27T00:00:00.000Z", "Sum": 57671680, "Unit": "Bytes"}
+  ]
+}
