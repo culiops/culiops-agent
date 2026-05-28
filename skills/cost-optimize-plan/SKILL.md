@@ -166,3 +166,154 @@ Render the markdown using the output template (Section "Output Format" to be add
 ### GATE 3 — Plan review
 
 Operator reviews drafted plan, approves to commit, or requests revisions (e.g., "bump item #5 from 🟡 to 🔴 — that EIP is allowlisted in our partner's firewall, recreating loses the IP"). On approve, skill commits the plan file (only the plan — no other changes).
+
+## Triage Model
+
+Four dimensions per item. Each scores 🟢 / 🟡 / 🔴 / ⚪ (unknown). Tier assignment is a deterministic rule over the four scores — no LLM judgment in the rule, only in interpreting evidence against thresholds.
+
+### Dimension 1 — Reversibility *(from playbook + IaC context)*
+
+| Score | Condition |
+|-------|-----------|
+| 🟢 | Reversible config change (resize down, lifecycle policy add, tag add). Undone by re-applying old IaC. |
+| 🟡 | Recoverable within retention window (snapshotted delete, versioned bucket delete with versioning history). |
+| 🔴 | Irreversible (un-versioned delete, NAT GW destroy, schema drop, key rotation). |
+
+Source: playbook's `Reversibility classification` section. Hardcoded in the playbook, not LLM-inferred.
+
+### Dimension 2 — Blast radius *(from IaC + catalog if present)*
+
+| Score | Condition |
+|-------|-----------|
+| 🟢 | Single resource, no shared-namespace impact. |
+| 🟡 | Touches a shared name (S3 bucket name, DNS, IAM role), or referenced by ≤1 other resource. |
+| 🔴 | Referenced by ≥2 other resources, or touches load balancer / VPC / shared DB / DNS zone. |
+| ⚪ | No catalog and resource type unclear — score as if 🟡 (conservative). |
+
+Source: playbook's `Blast radius classification` default, optionally widened by catalog lookup.
+
+### Dimension 3 — Evidence of no-use *(from verification queries — the heart of this skill)*
+
+| Score | Condition |
+|-------|-----------|
+| 🟢 | All `🟢 Threshold` rows from the playbook's evidence table pass. |
+| 🟡 | Some thresholds pass, some return ⚪ unknown (query rate-limited, IAM denied, data missing). No 🚫 triggers. |
+| 🚫 | Any `🚫 Trigger` row matched — evidence of active use found. |
+| ⚪ | Verification queries failed entirely (auth error, throttling). |
+
+Only dimension that can independently force 🚫.
+
+### Dimension 4 — Dependency footprint *(from catalog if present, IaC otherwise)*
+
+| Score | Condition |
+|-------|-----------|
+| 🟢 | No catalog references; not referenced by IaC `data` blocks elsewhere. |
+| 🟡 | Referenced by 1–2 IaC consumers or 1 catalog entry. |
+| 🔴 | Referenced by ≥3 IaC consumers or marked critical-path in catalog. |
+| ⚪ | No catalog and no IaC scan possible. |
+
+Source: `grep` over IaC tree for resource name/ARN/ID; catalog lookup if `.culiops/service-discovery/` exists.
+
+### Tier assignment rules
+
+Apply in order — first match wins:
+
+1. **🚫 Do not act** ← Evidence is 🚫.
+2. **🔴 Risky** ← Reversibility is 🔴 OR Blast radius is 🔴 OR Dependency is 🔴 OR Evidence is ⚪. (Note: ⚪ on Reversibility / Blast / Dependency is treated as 🟡-equivalent — does not force 🔴. Only ⚪ on Evidence triggers 🔴.)
+3. **🟡 Coordinated** ← any dimension is 🟡 (including ⚪ on Dimensions 1, 2, or 4), no 🔴 / 🚫 / Evidence-⚪ anywhere.
+4. **🟢 Fast win** ← all four dimensions 🟢.
+
+### Worked examples
+
+| Item | Reversibility | Blast | Evidence | Dependency | → Tier |
+|------|---------------|-------|----------|------------|--------|
+| Delete vol-xxx unattached EBS, $48/mo | 🔴 irreversible | 🟢 | 🟢 detached 90d | 🟢 | **🔴 Risky** (irreversible) |
+| Add lifecycle policy on logs-bucket, $200/mo | 🟢 reversible | 🟢 | 🟢 (policy-only) | 🟢 | **🟢 Fast win** |
+| Delete S3 bucket logs-2019, $400/mo | 🔴 | 🟡 namespace | 🟢 0 events 90d | 🟢 | **🔴 Risky** |
+| Same, but CloudTrail shows 1247 GetObject in 30d | 🔴 | 🟡 | 🚫 | 🟢 | **🚫 Do not act** |
+| Rightsize prod-api m5.4xl → m5.2xl, $280/mo | 🟢 | 🟡 ALB target | 🟢 CPU 4% 14d | 🟡 1 consumer | **🟡 Coordinated** |
+
+### Ordering hints
+
+Detected mechanically, not LLM-inferred:
+
+- **Snapshot-before-delete:** If item N is `delete <resource>` and playbook recommends snapshotting → emit "do snapshot step before #N" as callout. Not a hard sequence.
+- **Same-resource-conflict:** If two items target the same resource → emit "do #X before #Y" to avoid second invalidating first.
+- **Catalog-dependency edges:** If item N deletes resource R, and item M operates on a resource that depends on R per catalog → "do #M before #N".
+
+Within a tier, sort by savings $ descending.
+
+## Output Format
+
+Plan file: `.culiops/cost-optimize-plan/<scope-slug>-<YYYYMMDD-HHmm>.md`. Scope-slug matches the upstream report's slug, so investigation and plan sit next to each other in different `.culiops/` subdirs.
+
+`````markdown
+````markdown
+**Cost optimization plan**
+**Upstream report:** .culiops/cloud-cost-investigate/<...>.md
+**Mode of upstream:** waste | anomaly | attribution
+**Scope:** <account/subscription/project/cluster>
+**Catalog used:** <path or 'none'>
+**Date:** <YYYY-MM-DD HH:mm>
+**Items considered:** <N>   **Savings floor:** $<X>/mo
+**Cloud:** <aws|gcp|azure|kubernetes>
+
+## Scoping decisions
+<what was confirmed at GATE 1>
+
+## Verification queries run
+| # | Item | API | IAM | Status | Evidence captured |
+|---|------|-----|-----|--------|-------------------|
+| 1 | Delete vol-xxxxx | ec2:DescribeVolumes | ec2:Describe* | ok | state=available since 2026-02-14 |
+| 2 | Delete logs-2019 | cloudtrail:LookupEvents | cloudtrail:LookupEvents | ok | 0 GetObject in 90d |
+
+## Plan summary
+| Tier | Count | Total est. savings |
+|------|-------|--------------------|
+| 🟢 Fast wins | 3 | $312/mo |
+| 🟡 Coordinated | 5 | $1,840/mo |
+| 🔴 Risky | 2 | $448/mo |
+| 🚫 Do not act | 1 | ($400/mo — evidence of use) |
+| ❔ Manual review | 4 | $260/mo |
+
+## 🟢 Fast wins
+| # | Action | Resource | Savings | Reversibility | Blast | Evidence | Dependency | Source | Rollback |
+|---|--------|----------|---------|---------------|-------|----------|------------|--------|----------|
+| 1 | Add lifecycle policy 90→Glacier | logs-bucket-app | $200/mo | 🟢 | 🟢 | 🟢 | 🟢 | gcp-recommender (high) | Remove policy via IaC revert |
+
+> Ordering hint: none — items independent.
+
+## 🟡 Coordinated
+| # | Action | Resource | Savings | Reversibility | Blast | Evidence | Dependency | Source | Rollback |
+|---|--------|----------|---------|---------------|-------|----------|------------|--------|----------|
+| 4 | Rightsize prod-api m5.4xl→m5.2xl | i-yyyyy | $280/mo | 🟢 | 🟡 ALB target | 🟢 CPU 4% 14d | 🟡 1 consumer | compute-optimizer (medium) | Re-apply old IaC |
+
+> Ordering hint: do #4 outside peak hours (catalog: peak = 14:00–16:00 UTC).
+
+## 🔴 Risky
+| # | Action | Resource | Savings | Reversibility | Blast | Evidence | Dependency | Source | Rollback |
+|---|--------|----------|---------|---------------|-------|----------|------------|--------|----------|
+| 9 | Delete vol-xxxxx unattached EBS | vol-xxxxx | $48/mo | 🔴 | 🟢 | 🟢 detached 90d | 🟢 | line-item (high) | Snapshot first; restore from snapshot |
+| 10 | Delete bucket logs-2019 | logs-2019 | $400/mo | 🔴 | 🟡 namespace | 🟢 0 events 90d | 🟢 | line-item (high) | None — versioning not enabled |
+
+> Ordering hint: take snapshot before #9.
+
+## 🚫 Do not act
+| # | Action | Resource | Savings claimed | Disqualifying evidence |
+|---|--------|----------|-----------------|------------------------|
+| 11 | Delete bucket logs-active | logs-active | $400/mo | cloudtrail:LookupEvents → 1,247 GetObject in last 30d (last: 2026-05-27 14:32 UTC) |
+
+## ❔ Manual review required (no playbook in v1)
+| # | Action | Resource | Savings | Source | Confidence | Reason |
+|---|--------|----------|---------|--------|------------|--------|
+| 14 | Delete Lambda fn idle-worker | idle-worker | $35/mo | gcp-recommender | medium | No `delete-lambda` playbook in v1 |
+
+## Gaps
+- Verification query #7 failed (IAM denied iam:SimulatePrincipalPolicy for logs-2019). Dimension 4 scored ⚪. Operator may grant the perm and re-run.
+
+## Next steps (informational)
+- Operator picks an item, opens `iac-change-execution`, references this plan path + item #.
+- iac-change-execution will write the IaC, then call pre-flight for full risk clearance before apply.
+- Manual review items: triage by hand or wait for v1.1 playbooks.
+````
+`````
