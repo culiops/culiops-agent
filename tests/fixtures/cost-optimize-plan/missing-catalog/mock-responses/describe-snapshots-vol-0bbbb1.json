@@ -1,0 +1,18 @@
+{
+  "Snapshots": [
+    {
+      "SnapshotId": "snap-0cccc2def3456789a",
+      "VolumeId": "vol-0bbbb1",
+      "State": "completed",
+      "StartTime": "2026-05-08T02:00:00.000Z",
+      "Progress": "100%",
+      "VolumeSize": 200,
+      "Description": "weekly-backup",
+      "Encrypted": true,
+      "Tags": [
+        {"Key": "Environment", "Value": "staging"},
+        {"Key": "CreatedBy", "Value": "backup-automation"}
+      ]
+    }
+  ]
+}

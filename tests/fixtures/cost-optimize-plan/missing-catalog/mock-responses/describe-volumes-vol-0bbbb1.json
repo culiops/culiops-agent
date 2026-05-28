@@ -1,0 +1,21 @@
+{
+  "Volumes": [
+    {
+      "VolumeId": "vol-0bbbb1",
+      "State": "available",
+      "Size": 200,
+      "VolumeType": "gp3",
+      "AvailabilityZone": "us-east-1a",
+      "CreateTime": "2025-09-01T08:12:00.000Z",
+      "Encrypted": true,
+      "Iops": 3000,
+      "Throughput": 125,
+      "MultiAttachEnabled": false,
+      "Attachments": [],
+      "Tags": [
+        {"Key": "Environment", "Value": "staging"},
+        {"Key": "Service", "Value": "data-pipeline"}
+      ]
+    }
+  ]
+}
