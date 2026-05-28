@@ -43,7 +43,7 @@ aws sts get-caller-identity --output json
 | Playbook | Action | Resource type |
 |----------|--------|---------------|
 | `aws/delete-unattached-ebs.md` | delete | EBS volume |
-| `aws/delete-orphaned-snapshot.md` | delete | EBS / RDS snapshot |
+| `aws/delete-orphaned-snapshot.md` | delete | EBS snapshot |
 | `aws/delete-idle-elastic-ip.md` | delete | Elastic IP |
 | `aws/delete-idle-ec2.md` | delete | EC2 instance |
 | `aws/delete-s3-bucket.md` | delete | S3 bucket |
@@ -52,4 +52,4 @@ aws sts get-caller-identity --output json
 | `aws/rightsize-rds.md` | rightsize | RDS instance |
 | `aws/lifecycle-s3.md` | lifecycle-policy | S3 bucket |
 
-Unsupported in v1 (graceful degradation → `❔ Manual review required`): NAT Gateway, Lambda delete, DynamoDB rightsize, EKS nodegroup rightsize, GCP, Azure, Kubernetes.
+Unsupported in v1 (graceful degradation → `❔ Manual review required`): NAT Gateway, Lambda delete, RDS snapshot delete, DynamoDB rightsize, EKS nodegroup rightsize, GCP, Azure, Kubernetes.
