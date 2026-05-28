@@ -1,0 +1,7 @@
+{
+  "__error__": true,
+  "code": "AccessDeniedException",
+  "message": "User: arn:aws:iam::123456789012:user/ops is not authorized to perform: cloudtrail:LookupEvents on resource: arn:aws:cloudtrail:ap-southeast-1:123456789012:trail/* because no identity-based policy allows the cloudtrail:LookupEvents action",
+  "requestId": "abc12345-6789-abcd-ef01-234567890abc",
+  "_note": "This is a fixture convention to represent an AWS SDK error. Real boto3 would raise botocore.exceptions.ClientError; AWS CLI would print AccessDenied to stderr."
+}

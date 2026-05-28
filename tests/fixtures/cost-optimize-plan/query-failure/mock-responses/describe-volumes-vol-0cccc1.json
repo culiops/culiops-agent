@@ -1,0 +1,21 @@
+{
+  "Volumes": [
+    {
+      "VolumeId": "vol-0cccc1",
+      "State": "available",
+      "Size": 40,
+      "VolumeType": "gp3",
+      "AvailabilityZone": "ap-southeast-1a",
+      "CreateTime": "2025-11-04T08:17:42.000Z",
+      "Encrypted": false,
+      "Iops": 3000,
+      "Throughput": 125,
+      "MultiAttachEnabled": false,
+      "Attachments": [],
+      "Tags": [
+        {"Key": "Environment", "Value": "prod"},
+        {"Key": "CreatedBy", "Value": "terraform"}
+      ]
+    }
+  ]
+}
