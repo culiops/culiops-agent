@@ -59,3 +59,110 @@ NO HANDOFF TO EXECUTION — OPERATOR DRIVES.
 | Upstream report's savings number looks wrong | STOP — out of scope. Flag in `Gaps` section and continue. |
 | Operator asks to chain directly into `iac-change-execution` | STOP — plan terminus is GATE 3. Operator opens execution skill manually. |
 | Multi-cloud upstream report (multiple `**Cloud:**` headers) | STOP — abort at GATE 1 with `multi-cloud-report-unsupported`. |
+
+## Workflow
+
+Fixed pipeline with three operator gates. Mirrors `cloud-cost-investigate`'s shape (scope → batch → review) with one fewer gate — no drill-down loop because verification is a single batch by design.
+
+```dot
+digraph cost_optimize_plan {
+    rankdir=TB;
+    node [shape=box, style=rounded];
+
+    input    [label="Input: path to\ncloud-cost-investigate report"];
+    load     [label="Step 1: Load & Parse\n(extract remediation table,\ndetect cloud, apply floor)"];
+    gate1    [label="GATE 1: Operator\nconfirms scope + floor", shape=diamond];
+    plan_q   [label="Step 2: Plan Verification\nBatch (per-item playbook lookup,\ndedupe, IAM + cost itemized)"];
+    gate2    [label="GATE 2: Operator\napproves verification batch", shape=diamond];
+    exec     [label="Step 3: Execute Verification\n(read-only queries,\nstop on any failure)"];
+    triage   [label="Step 4: Triage\n(score 4 dimensions, assign tier,\ndetect ordering hints)"];
+    compose  [label="Step 5: Compose Plan\n(tier groups, evidence,\nrollback, gaps)"];
+    gate3    [label="GATE 3: Operator\napproves plan\n(commit / revise)", shape=diamond];
+    done     [label="Done", shape=doublecircle];
+
+    input -> load;
+    load -> gate1;
+    gate1 -> plan_q    [label="approved"];
+    gate1 -> load      [label="corrections"];
+    plan_q -> gate2;
+    gate2 -> exec      [label="approved"];
+    gate2 -> plan_q    [label="trim / change floor"];
+    exec -> triage;
+    triage -> compose;
+    compose -> gate3;
+    gate3 -> compose   [label="revise"];
+    gate3 -> done      [label="approved"];
+}
+```
+
+### Step 1 — Load & Parse (shared)
+
+Read the upstream report and establish scope.
+
+1. Read upstream report file (operator provides path).
+2. Parse the `## Remediation list (prioritized)` table → list of items.
+3. Read header for `**Cloud:**` (single-cloud required), `**Scope:**`, time-range, mode.
+4. Look up catalog: `.culiops/service-discovery/` directory (optional). If present, parse for dependency lookup later.
+5. Apply optional savings floor (default $5/mo, matching upstream). Items below the floor go to a "filtered (below floor)" appendix in the plan.
+6. Present scoping summary to operator (see GATE 1 below).
+
+### GATE 1 — Scope
+
+Operator confirms or corrects.
+
+> **Cost optimization plan scoping summary:**
+>
+> **Upstream report:** `<path>`
+> **Mode:** waste | anomaly | attribution (from upstream)
+> **Cloud:** aws (single — mixed-cloud upstream reports are unsupported and abort with `multi-cloud-report-unsupported`)
+> **Scope:** `<account/subscription/project/cluster>`
+> **Time range:** `<from> → <to>`
+> **Catalog:** `<.culiops/service-discovery/ path or 'none — Dimension 4 conservative scoring'>`
+> **Items considered:** N (above $X/mo floor) / M filtered (below floor)
+>
+> **Confirm to proceed to verification planning.**
+
+### Step 2 — Plan Verification Batch
+
+For each item, look up playbook by `(cloud, action, resource_type)`. Derive `action` from the upstream remediation's verb (e.g., "Delete unattached EBS volume" → action=delete) and `resource_type` from resource ID format (e.g., `vol-*` → ebs-volume).
+
+Items with no matching playbook go to `manual-review-required` queue (skipped from the batch, surfaced in final plan).
+
+For items with a matching playbook: collect required queries, dedupe across items (e.g., shared route53 sweep), aggregate IAM perms list, sum estimated API costs.
+
+Present batch as:
+
+| # | Item | API | Scope | IAM | Est. cost | Why |
+|---|------|-----|-------|-----|-----------|-----|
+| 1 | Delete vol-xxxxx | ec2:DescribeVolumes | vol-xxxxx | ec2:Describe* | $0 | confirm state=available, age |
+| 2 | Delete logs-2019 | cloudtrail:LookupEvents | logs-2019, 90d | cloudtrail:LookupEvents | $1.20 | confirm no GetObject/PutObject |
+| ... | ... | ... | ... | ... | ... | ... |
+
+Plus footer with total API cost, consolidated IAM perms list, manual-review count.
+
+### GATE 2 — Verification batch
+
+Operator approves, trims (drops specific queries or items), or changes the savings floor (loops back to Step 1).
+
+If batch is empty (e.g., all items routed to manual-review), skill skips Step 3 and goes straight to compose-plan with a manual-review-only output. Note: this case is non-zero — fixture `no-playbook` exercises it.
+
+### Step 3 — Execute Verification (shared mechanics)
+
+Run the approved batch. Each query's raw output captured for the plan's `## Verification queries run` section. If a query fails (auth, rate limit, service unavailable), skill stops and reports — does NOT silently skip and does NOT auto-retry. Surfaces to operator with the failure reason and a suggested fix (e.g., "grant `cloudtrail:LookupEvents` and re-run, or trim item #N from batch").
+
+### Step 4 — Triage
+
+For each item, score the 4 dimensions per the rules in `## Triage Model` (Section to be added in Task 8 — at this point, the reader will see a forward reference; acceptable). Tier assignment is deterministic (no LLM judgment in the rule).
+
+Detect ordering hints mechanically:
+- **Snapshot-before-delete:** if an item is a delete-EBS or delete-EC2 and playbook recommends snapshotting first, emit a hint.
+- **Same-resource conflict:** if two items target the same resource, emit "do #X before #Y".
+- **Catalog dependency edges:** if item N deletes resource R, and another item M operates on a resource depending on R per catalog, emit "do #M before #N".
+
+### Step 5 — Compose Plan
+
+Render the markdown using the output template (Section "Output Format" to be added in Task 8). Write to `.culiops/cost-optimize-plan/<scope-slug>-<YYYYMMDD-HHmm>.md` only AFTER GATE 3 approval.
+
+### GATE 3 — Plan review
+
+Operator reviews drafted plan, approves to commit, or requests revisions (e.g., "bump item #5 from 🟡 to 🔴 — that EIP is allowlisted in our partner's firewall, recreating loses the IP"). On approve, skill commits the plan file (only the plan — no other changes).
