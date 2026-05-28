@@ -1,0 +1,6 @@
+{
+  "Error": {
+    "Code": "ReplicationConfigurationNotFoundError",
+    "Message": "The replication configuration was not found"
+  }
+}

@@ -1,0 +1,61 @@
+{
+  "_note": "1247 events total in last 30d, 5 representative samples shown for fixture brevity. EventsCount is a fixture convention — not a real AWS SDK response field.",
+  "EventsCount": 1247,
+  "Events": [
+    {
+      "EventTime": "2026-05-27T14:32:18.000Z",
+      "EventName": "GetObject",
+      "Resources": [
+        {
+          "ResourceName": "bucket-logs-active",
+          "ResourceType": "AWS::S3::Object"
+        }
+      ],
+      "Username": "AssumedRole/lambda-export-fn/abc123"
+    },
+    {
+      "EventTime": "2026-05-26T09:14:52.000Z",
+      "EventName": "GetObject",
+      "Resources": [
+        {
+          "ResourceName": "bucket-logs-active",
+          "ResourceType": "AWS::S3::Object"
+        }
+      ],
+      "Username": "AssumedRole/lambda-export-fn/def456"
+    },
+    {
+      "EventTime": "2026-05-20T22:07:33.000Z",
+      "EventName": "GetObject",
+      "Resources": [
+        {
+          "ResourceName": "bucket-logs-active",
+          "ResourceType": "AWS::S3::Object"
+        }
+      ],
+      "Username": "AssumedRole/lambda-export-fn/ghi789"
+    },
+    {
+      "EventTime": "2026-05-10T11:45:09.000Z",
+      "EventName": "GetObject",
+      "Resources": [
+        {
+          "ResourceName": "bucket-logs-active",
+          "ResourceType": "AWS::S3::Object"
+        }
+      ],
+      "Username": "AssumedRole/lambda-export-fn/jkl012"
+    },
+    {
+      "EventTime": "2026-04-29T03:58:44.000Z",
+      "EventName": "GetObject",
+      "Resources": [
+        {
+          "ResourceName": "bucket-logs-active",
+          "ResourceType": "AWS::S3::Object"
+        }
+      ],
+      "Username": "AssumedRole/lambda-export-fn/mno345"
+    }
+  ]
+}
