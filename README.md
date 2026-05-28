@@ -6,12 +6,13 @@ CuliOps ships skills that activate automatically when you ask Claude to do opera
 
 ## Status
 
-`v0.6.0` — pilot release. Skills shipped:
+`v0.8.0` — Skills shipped:
 
 - **service-discovery** — scan a service's IaC code — or its documentation and diagrams when no IaC exists — and produce a troubleshooting-oriented inventory document (resource catalog, naming patterns, dependencies, per-alarm investigation runbooks). IaC path works with Terraform, Pulumi, CloudFormation, Bicep, Helm/Kustomize, ecspresso, lambroll. Real-discovery path works with Draw.io, Mermaid, PlantUML diagrams, Markdown/text docs, and architecture images, verified against live cloud APIs (read-only).
 - **pre-flight** — evaluate the risk of a proposed production action (IaC change, CLI command, or agent action) across 10 categories. Produces a go/no-go risk report with per-category scoring and actionable mitigations.
 - **iac-change-execution** — execute infrastructure changes safely with research-plan-approve-implement-verify workflow. Supports PR and direct-apply paths, multi-phase changes, and integrates with service-discovery and pre-flight.
 - **cloud-cost-investigate** — read-only cloud cost investigation in three modes (anomaly, waste, attribution). Produces a report with prioritized remediation list and source-labelled savings estimates. Works with AWS (Cost Explorer + Compute Optimizer), GCP (Cloud Billing + Recommender), Azure (Cost Management + Advisor), and Kubernetes (OpenCost / Kubecost).
+- **cost-optimize-plan** — reads a `cloud-cost-investigate` report and produces a tiered, verified execution plan. Per-action safety verification ("no GetObject in 90d, no DNS pointing at it, no IAM principals with active usage") and four-dimension triage (reversibility, blast radius, evidence, dependency) assigns each item to 🟢 Fast win / 🟡 Coordinated / 🔴 Risky / 🚫 Do not act / ❔ Manual review. Read-only. Sits between cloud-cost-investigate (input) and iac-change-execution (downstream); no automation handoff — operator drives. AWS-only in v1 (9 playbooks: 6 delete, 2 rightsize, 1 lifecycle); GCP / Azure / Kubernetes deferred to v1.1+.
 - **runtime-trace** — produce a self-contained AWS runtime profile of a service (spend, control-plane events, activity baselines, cross-region inventory) from four cheap read-only APIs. $1 cost cap, six gates, every claim traceable. Useful for service takeovers, drift checks, post-incident retrospectives, pre-cost-opt baselining.
 - **service-takeover** — orchestrate AWS service handoffs from another team when there's no documentation, no IaC, and only diagrams. Eight gates spanning intake, audit, discovery (delegated to service-discovery), runtime profile (delegated to runtime-trace), tribal-knowledge interview, PRR-style readiness scorecard, handoff package assembly. Self-contained output at `.culiops/service-takeover/<service>/`. Resumable across multi-day takeovers.
 
@@ -55,6 +56,7 @@ Each skill has its own `SKILL.md` under `skills/<name>/`:
 - [`skills/pre-flight/SKILL.md`](skills/pre-flight/SKILL.md)
 - [`skills/iac-change-execution/SKILL.md`](skills/iac-change-execution/SKILL.md)
 - [`skills/cloud-cost-investigate/SKILL.md`](skills/cloud-cost-investigate/SKILL.md)
+- [`skills/cost-optimize-plan/SKILL.md`](skills/cost-optimize-plan/SKILL.md)
 - [`skills/runtime-trace/SKILL.md`](skills/runtime-trace/SKILL.md)
 - [`skills/service-takeover/SKILL.md`](skills/service-takeover/SKILL.md)
 

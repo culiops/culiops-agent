@@ -4,6 +4,23 @@ All notable changes to the `culiops` plugin will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.8.0] — 2026-05-28
+
+### Added
+
+- **`cost-optimize-plan`** skill — read-only triage layer that turns a `cloud-cost-investigate` report into a tiered, verified execution plan. Per-(cloud, action, resource-type) playbooks define verification queries; four-dimension triage (reversibility, blast radius, evidence of no-use, dependency footprint) assigns each item to 🟢 Fast win / 🟡 Coordinated / 🔴 Risky / 🚫 Do not act tiers, plus ❔ Manual review for uncovered types. Sits between `cloud-cost-investigate` (input) and `iac-change-execution` (downstream); no automation handoff — operator drives.
+  - `skills/cost-optimize-plan/SKILL.md`: 3-gate workflow (scope → verification batch → plan review), Iron Law (no mutations / no tier without evidence / no execution handoff), 10 constraints, output format with five tier sections, model routing (Opus at Step 4 where judgment matters; haiku/sonnet elsewhere).
+  - `skills/cost-optimize-plan/examples/aws.md`: AWS preamble — CLI versions, baseline read-only IAM (`ReadOnlyAccess`), API costs to itemize at GATE 2, throttling notes.
+  - `skills/cost-optimize-plan/examples/aws/`: 9 v1 playbooks — `delete-unattached-ebs`, `delete-orphaned-snapshot`, `delete-idle-elastic-ip`, `delete-idle-ec2`, `delete-s3-bucket`, `delete-unused-load-balancer`, `rightsize-ec2`, `rightsize-rds`, `lifecycle-s3`. Each playbook hard-codes its reversibility and blast-radius defaults (not LLM-inferred).
+  - `tests/fixtures/cost-optimize-plan/`: 5 fixtures — `happy-path` (3 tiers exercised), `verification-fail` (🚫 triggered by CloudTrail evidence), `no-playbook` (Lambda → ❔ manual review), `missing-catalog` (Dimension 4 ⚪ → 🟡 conservative per tier-rule disambiguation), `query-failure` (IAM denial mid-batch → skill abort with no partial plan committed).
+- Integration with existing skills: consumes `cloud-cost-investigate` reports as primary input; optionally consumes `service-discovery` catalogs for Dimension 4 (dependency footprint). Does not invoke pre-flight directly (no IaC diff at this point); per-item evidence vocabulary (Reversibility / Blast Radius / Dependencies) is designed to map onto pre-flight categories #2 / #1 / #4 for downstream re-use. Does not feed `iac-change-execution` automatically — operator opens execution skill manually with plan path + item #.
+
+### Deferred to v1.1+
+
+- GCP / Azure / Kubernetes playbooks.
+- AWS NAT Gateway, Lambda delete, DynamoDB rightsize, EKS nodegroup playbooks.
+- Bulk-execute mode for 🟢 fast wins; plan re-run / dedupe against prior actions; cross-cloud reports.
+
 ## [0.7.1] — 2026-05-13
 
 ### Changed
