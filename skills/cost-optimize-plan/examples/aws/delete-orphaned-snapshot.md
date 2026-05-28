@@ -11,14 +11,12 @@ applies_when: action == "delete" AND resource matches "snap-*"
 - `ec2:DescribeSnapshots`
 - `ec2:DescribeVolumes`
 - `ec2:DescribeImages`
-- `rds:DescribeDBSnapshots`
 
 ## Queries
 
 1. `aws ec2 describe-snapshots --snapshot-ids <snap-id>` — confirms snapshot state and source `VolumeId`.
 2. `aws ec2 describe-volumes --volume-ids <volume-id>` — confirms whether the source volume still exists (orphan check).
 3. `aws ec2 describe-images --filters Name=block-device-mapping.snapshot-id,Values=<snap-id>` — checks whether any AMI references this snapshot in its `BlockDeviceMappings`.
-4. (Optional, opt-in at GATE 2) `aws rds describe-db-snapshots --db-snapshot-identifier <snap-id>` — for RDS-sourced snapshots, confirms RDS instance status.
 
 ## Evidence thresholds
 

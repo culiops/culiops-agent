@@ -21,6 +21,8 @@ applies_when: action == "delete" AND resource matches "i-*"
 
 ## Evidence thresholds
 
+> Note: for `stopped` instances, CPU/Network metric rows return no datapoints — the `State.Name` row alone is sufficient evidence.
+
 | Signal | 🟢 Threshold | 🚫 Trigger |
 |--------|--------------|------------|
 | 14d average CPU utilization | < 2% | ≥ 50% on any day |
