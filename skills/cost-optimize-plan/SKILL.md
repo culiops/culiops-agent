@@ -317,3 +317,82 @@ Plan file: `.culiops/cost-optimize-plan/<scope-slug>-<YYYYMMDD-HHmm>.md`. Scope-
 - Manual review items: triage by hand or wait for v1.1 playbooks.
 ````
 `````
+
+## Model Routing
+
+| Step | Model | Inputs | Outputs | Why |
+|------|-------|--------|---------|-----|
+| Step 1: Load & parse | haiku | upstream report markdown | remediation list | Mechanical text extraction. Cheap. |
+| Step 2: Plan verification batch | sonnet | items + playbooks | query batch + consolidated IAM | Pattern-matching items to playbooks, dedupe queries — not deep judgment. |
+| Step 3: Execute verification | haiku | approved batch | raw query outputs | Calls read-only APIs, captures output verbatim. |
+| Step 4: Triage | opus | evidence + rules + catalog | tier + ordering hints per item | Rules deterministic but interpreting evidence against thresholds and detecting cross-item edges is judgment-heavy. |
+| Step 5: Compose plan | sonnet | triaged list + gaps | plan markdown | Templated writing, predictable structure. |
+
+Opus only where judgment matters (Step 4). The expensive step is the one that actually decides tiers and ordering — exactly where you want the strongest model. Matches the two-pass philosophy used elsewhere in `culiops` (e.g., `cloud-cost-investigate`).
+
+## Cross-Skill Integration
+
+```text
+              cloud-cost-investigate
+              (produces report)
+                      │
+                      ▼ report path
+              ┌───────────────────┐
+              │ cost-optimize-plan│  ← this skill
+              │ (triages report)  │
+              └─────────┬─────────┘
+                        │ plan path + item #
+                        ▼
+              iac-change-execution
+              (writes IaC for one item)
+                        │
+                        ▼ plan/diff
+                   pre-flight
+              (full 10-cat risk gate)
+                        │
+                        ▼
+                      apply
+```
+
+- **Upstream: `cloud-cost-investigate`** — hard input dependency. Plan file references the upstream report path in its header. Savings/source/confidence copied verbatim — never recomputed. If the upstream report is missing a Remediation list table → skill aborts at GATE 1 with `report-format-invalid`. No reverse handoff (skill never calls cloud-cost-investigate to fetch fresher data; runs against the report it was given).
+- **Sibling: `service-discovery`** — optional input. Used for Dimension 4 (dependency footprint) lookups by grepping `.culiops/service-discovery/<service>.md` for resource references. Catalog absence → Dimension 4 scores ⚪ for items where IaC scan also can't resolve. Per the Triage Model tier rules, ⚪ on Dimension 4 is treated as 🟡-equivalent, so missing catalog conservatively bumps items toward 🟡 rather than 🟢.
+- **Downstream: `iac-change-execution`** — no automation. Plan's `Next steps` section tells operator to open `iac-change-execution` and pass the plan path + item number. `iac-change-execution`'s Research step can reference the plan for context, but the IaC plan and pre-flight clearance are still mandatory — this skill's tier badge does NOT short-circuit any of that.
+- **Downstream (transitively): `pre-flight`** — never invoked directly by this skill (no IaC diff exists yet). The plan's per-item evidence rows are designed to be re-usable inputs for pre-flight when `iac-change-execution` later calls it — same vocabulary (Reversibility, Blast Radius, Dependencies) maps to pre-flight categories #2, #1, #4.
+
+## Testing
+
+The skill is documentation, not code — there is no automated test runner. Each fixture under `tests/fixtures/cost-optimize-plan/<scenario>/` is reviewed manually against its `DRY-RUN-NOTES.md`: a reviewer walks the fixture inputs through the skill workflow and confirms gate transitions, verification batch shape, triage outcomes, and final plan match the documented expectations.
+
+### v1 fixtures (positive + negative paths)
+
+| Fixture | Path | What it exercises |
+|---------|------|-------------------|
+| `happy-path` | `tests/fixtures/cost-optimize-plan/happy-path/` | 3-item report, one each: 🟢 / 🟡 / 🔴 tier. All playbooks present, all queries succeed. |
+| `verification-fail` | `tests/fixtures/cost-optimize-plan/verification-fail/` | S3 delete recommendation; CloudTrail shows active access → lands in 🚫 Do not act. |
+| `no-playbook` | `tests/fixtures/cost-optimize-plan/no-playbook/` | Lambda delete (no v1 playbook) → lands in ❔ Manual review with reason. |
+| `missing-catalog` | `tests/fixtures/cost-optimize-plan/missing-catalog/` | No `.culiops/service-discovery/` → Dimension 4 scores ⚪ → items conservatively bumped to 🟡. |
+| `query-failure` | `tests/fixtures/cost-optimize-plan/query-failure/` | IAM denial mid-batch → skill aborts, surfaces failure, no partial plan committed. |
+
+### Live smoke test (deferred to release-time)
+
+Live AWS smoke against a real `cloud-cost-investigate` report. Deferred to the v0.8 release, matching the v0.7.1 / runtime-trace pattern.
+
+## Versioning + scope
+
+**v1 (this version):**
+
+- AWS only.
+- 9 playbooks: 6 delete, 2 rightsize, 1 lifecycle.
+- Single-cloud-per-report (multi-cloud upstream reports rejected with `multi-cloud-report-unsupported`).
+- One report per run.
+- 4 actionable tiers (🟢 / 🟡 / 🔴 / 🚫) + ❔ manual-review section for uncovered (action, resource_type) combinations.
+
+**Deferred to v1.1+ (named explicitly so gaps are visible):**
+
+- GCP playbooks (idle VM, unattached disk, idle IP).
+- Azure playbooks (Advisor-driven rightsize, idle resources).
+- Kubernetes playbooks (OpenCost-driven workload rightsize).
+- AWS: NAT Gateway delete, Lambda delete, DynamoDB rightsize, EKS nodegroup rightsize.
+- Bulk-execute mode for 🟢 fast wins (currently strict one-item-at-a-time via iac-change-execution).
+- Plan re-run / refresh with dedup against prior actions.
+- Cross-cloud reports.
