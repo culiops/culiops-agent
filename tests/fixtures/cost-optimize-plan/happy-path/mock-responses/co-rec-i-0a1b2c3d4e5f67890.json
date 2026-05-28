@@ -6,7 +6,7 @@
       "instanceName": "prod-api",
       "currentInstanceType": "m5.4xlarge",
       "finding": "OVER_PROVISIONED",
-      "findingReasonCodes": ["CPUUnderprovisioned"],
+      "findingReasonCodes": ["CPUOverprovisioned"],
       "utilizationMetrics": [
         {
           "name": "CPU",

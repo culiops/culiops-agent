@@ -37,7 +37,7 @@ Compute Optimizer has been active for 29 days and has 1 EC2 recommendation above
 
 | Instance | Current type | Recommended type | Projected savings | Avg CPU (14d) | Max CPU (14d) |
 |----------|-------------|-----------------|-------------------|---------------|---------------|
-| i-0a1b2c3d4e5f67890 (prod-api) | m5.4xlarge | m5.2xlarge | $280/mo | 4% | 12% |
+| i-0a1b2c3d4e5f67890 (prod-api) | m5.4xlarge | m5.2xlarge | $280/mo | 4% | 13.8% |
 
 ### Unattached EBS volumes
 
@@ -63,7 +63,7 @@ Compute Optimizer has been active for 29 days and has 1 EC2 recommendation above
 
 | # | Action | Resource(s) | Est. savings | Source | Confidence | Evidence |
 |---|--------|-------------|--------------|--------|------------|----------|
-| 1 | Rightsize prod-api from m5.4xlarge to m5.2xlarge | i-0a1b2c3d4e5f67890 | $280/mo | compute-optimizer | medium | CO recommendation; 14d avg CPU 4%, max 12% |
+| 1 | Rightsize prod-api from m5.4xlarge to m5.2xlarge | i-0a1b2c3d4e5f67890 | $280/mo | compute-optimizer | medium | CO recommendation; 14d avg CPU 4%, max 13.8% |
 | 2 | Add S3 lifecycle policy (StandardStorage → Glacier after 90 days) | logs-bucket-app | $200/mo | line-item-computation | high | 4.2 TB StandardStorage; ~3.8 TB estimated >90d aged; no existing lifecycle policy or Intelligent-Tiering |
 | 3 | Delete unattached EBS volume | vol-0xxxxxxxxxxxxxxx1 | $48/mo | line-item-computation | high | state=available since 2026-02-14; no attachments; 200 GB gp3 |
 
