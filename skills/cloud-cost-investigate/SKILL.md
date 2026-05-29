@@ -19,6 +19,33 @@ NO SAVINGS CLAIM WITHOUT A LABELLED SOURCE.
 - Law 2: Every batch of cloud queries is shown to the operator and approved before execution. Per-batch (not per-query) to keep friction reasonable, but the batch is itemized with API costs and IAM permissions called out.
 - Law 3: Every dollar figure in the remediation list is tagged with its source (`compute-optimizer`, `gcp-recommender`, `azure-advisor`, `line-item-computation`) and confidence (`high` / `medium` / `low`). No bare "save $X" claims.
 
+## Guiding principles
+
+Two principles govern how waste evidence is read and how savings are claimed. They sit above the per-mode query plans — apply them when designing the batch, when scoring confidence, and when labelling savings.
+
+### Principle 1 — Verify activity, not attachment
+
+Evidence of no-use measures **activity**, never **attachment**. These are different dimensions and must never be conflated:
+
+- **Activity:** observed throughput — request / invocation / transaction counts, read or processing volume, access-log hits, query counts over a representative window.
+- **Attachment:** a consumer, reference, policy, route, binding, or dependent configured against the resource. Attachment answers "what breaks if I remove this," NOT "is this being used."
+
+Rules:
+1. A dependent being enabled / connected / configured / attached is **not** evidence of use. Declared config ≠ runtime behavior. Confirm with an activity metric over a representative window.
+2. The inverse holds: a resource being un-attached is **not** automatic evidence of no-use unless the resource type has no activity dimension (e.g., unattached EBS volume, unallocated Elastic IP — these cost money regardless). For anything with a usage signal (DB, queue, stream, bucket, function), require activity data.
+3. **Discount keep-alive noise.** Heartbeats, health checks, warm-up schedules, monitoring probes, liveness pings, and automatic retries all produce activity that masks idleness. Their tell is a uniform, periodic, workload-independent cadence. Identify and subtract synthetic traffic before judging a resource idle.
+4. Candidates whose only evidence is attachment state (or absence of it, for a resource type with an activity dimension) are capped at `confidence: low` and labelled `activity-unverified` in the report.
+
+**Rationalization stopper:** "Something is attached / enabled, so it's in use" — and the inverse "nothing's attached, so it's waste" — both STOP. Attachment ≠ activity for any resource with a usage signal. Verify actual throughput.
+
+### Principle 2 — Verify the cost-change direction before claiming a saving
+
+Every savings claim involving a pricing-mode or tier change must compute the delta from **real pricing × the resource's actual utilization profile**, not from the direction of the switch. Usage-based / elastic / on-demand pricing carries a per-unit premium that can *exceed* a small fixed / reserved footprint at low utilization. The cheaper mode flips with the shape of the workload.
+
+This applies whether the candidate came from a cloud recommender or from line-item computation. Recommender output is treated as `confidence: medium` until the math is re-checked against observed usage; bare recommender numbers without a utilization-anchored computation are not promoted to `confidence: high`.
+
+**Rationalization stopper:** "Switching mode / tier will be cheaper" → STOP. Compute the delta from real pricing × real utilization first; the premium may run the other way.
+
 ## Constraints (Non-Negotiable)
 
 1. **Read-only.** No mutations of any kind. Not even tagging fixes, even if they would "improve future investigations".
@@ -43,6 +70,9 @@ NO SAVINGS CLAIM WITHOUT A LABELLED SOURCE.
 | "The operator already approved one batch, the next batch is similar, I'll just run it" | STOP — per-batch approval is non-negotiable. Drill-down is its own gate. |
 | "Bill went from $50K to $80K — I'll declare ML team caused it because they always do" | STOP — driver claims need evidence in the queries run. No priors. |
 | "Untagged resources are obviously waste — flag them" | STOP — untagged ≠ waste. Flag as "untagged spend, $X/mo, owner unknown" — operator decides. |
+| "Nothing's attached / referenced — it's waste" | STOP — attachment ≠ activity. For any resource type with a usage signal (DB, queue, stream, bucket, function), require an activity-window check before claiming no-use. |
+| "Health-check / heartbeat traffic shows hits — it's in use" | STOP — keep-alive noise has a uniform, periodic, workload-independent cadence. Identify and subtract synthetic traffic before judging activity. |
+| "Switching from reserved to on-demand (or vice-versa) will save $X" | STOP — never assume direction. Compute delta from observed utilization × real pricing for both modes. The premium may run the other way at this utilization. |
 | "Org-wide scope would give a better picture — I'll just go org-wide" | STOP — scope escalation requires operator opt-in. Never silent. |
 | "I'll skip listing IAM permissions, the operator obviously has admin" | STOP — least-privilege is the user's expectation. Always list. |
 | "This finding needs a metrics query — I'll batch it in with the original batch" | STOP — original batch is approved as-is. Drill-down is GATE 3. |
@@ -156,7 +186,7 @@ Typical batch:
 1. **Cloud-native recommenders.** AWS Compute Optimizer rightsizing recommendations, GCP Recommender (idle VMs, unattached disks, idle IPs), Azure Advisor cost recommendations. These come pre-scored with savings estimates.
 2. **Resource-state sweeps.** Unattached EBS volumes / unattached GCP disks / orphaned managed disks; orphaned snapshots older than 30d; unused Elastic IPs / unused public IPs; load balancers with no recent traffic; S3 buckets / GCS buckets / Azure containers without lifecycle policies.
 3. **Untagged spend.** Cost grouped by tag presence — surfaces resources without service/owner/env tags.
-4. **(Optional) Utilization metrics** for instances/databases — last 14d CPU, memory, network. Used to flag candidates for rightsizing not already in the recommender output.
+4. **Utilization metrics** for instances / databases / queues / streams / functions — last 14d CPU, memory, network, request count, invocation count, throughput. **Required (not optional)** for any rightsize or idle-resource candidate per Principle 1. Resources with no activity dimension (unattached EBS, unallocated EIP, orphaned snapshots) are exempt — attachment state alone is sufficient evidence for those types.
 
 #### Step 2C — Attribution mode query plan
 
@@ -200,6 +230,8 @@ Run the approved batch. Each query's raw output captured to a buffer for the rep
 
 - Merge cloud recommender output with resource-state sweep findings (deduplicate — Compute Optimizer may already cover what we'd compute manually).
 - For each candidate: estimated monthly savings (from recommender or computed from line item), source label, confidence.
+- **Apply Principle 1 confidence cap.** Any candidate whose only no-use evidence is attachment state (and whose resource type has an activity dimension — DB, queue, stream, bucket, function) is capped at `confidence: low` and labelled `activity-unverified` in the Evidence column. Operator may approve a drill-down batch at GATE 3 to fetch the missing activity data and promote confidence.
+- **Apply Principle 2 cost-direction check.** Any candidate whose savings come from a pricing-mode / tier change (reserved ↔ on-demand, provisioned ↔ serverless, hot ↔ cold storage tier) must include a delta computed from observed utilization × real pricing for both modes. Without that math, cap at `confidence: low` and label `direction-unverified`.
 - Filter: drop candidates below a threshold (default $5/mo) to reduce noise; operator can adjust at GATE 4.
 - Group by remediation type: delete / rightsize / archive / lifecycle-policy / tag.
 - Output: prioritized waste list with per-candidate evidence.
