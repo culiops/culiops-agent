@@ -4,6 +4,44 @@ All notable changes to the `culiops` plugin will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.0] — 2026-05-29
+
+### Added
+
+- **Two cross-cutting principles codified in both cost skills** — surfaced from real-case use of `cost-optimize-plan` after v0.8 shipped. Both principles override naive triage shortcuts that pass casual review but produce wrong recommendations.
+  - **Principle 1: Verify activity, not attachment.** Evidence of no-use measures *work happening on a resource* (throughput, request / invocation / transaction counts) — never the resources, consumers, policies, or routes configured against it (attachment). Attachment answers "what breaks if I remove this," not "is this in use." Includes the inverse rule (a resource being unattached is not automatic evidence of no-use unless the resource type has no activity dimension — unattached EBS / EIP / orphaned snapshots are exempt). Discounts keep-alive noise (heartbeats, health checks, warm-up probes, provisioned-concurrency pings) by identifying uniform / periodic / workload-independent cadence.
+  - **Principle 2: Verify the cost-change direction.** Every savings claim involving a pricing-mode or tier change (provisioned ↔ on-demand, reserved ↔ on-demand, hot ↔ cold tier) must compute the delta from observed throughput × real pricing for both modes. The cheaper mode flips with workload shape — steady → provisioned, spiky / low-baseline → on-demand. Bare "switch mode to save" claims are rejected.
+- **`cost-optimize-plan` SKILL.md additions:**
+  - New `## Triage Model` → `### Guiding principles` subsection above Dimension 1, carrying both principles with their rules and rationalization stoppers. Dimension references made explicit (Activity → D3 input; Attachment → D2 + D4 input).
+- **`cost-optimize-plan` AWS playbook coverage expanded from 9 to 15:**
+  - `delete-nat-gateway.md`: activity = `BytesOutToDestination` / `BytesInFromDestination` 14d; ladder fallback names VPC endpoints for AWS-service-destined traffic.
+  - `delete-lambda.md`: activity = 30d `Invocations` (subtract `ProvisionedConcurrencyInvocations` keep-warm noise); event source mappings + EventBridge rules scored as attachment (D2). Ladder fallback: memory rightsize.
+  - `rightsize-dynamodb.md`: full Principle 2 cost-direction computation required for any provisioned ↔ on-demand mode-switch claim (one switch per 24h); throttles → 🚫 trigger. GSI capacities scored independently.
+  - `rightsize-eks-nodegroup.md`: activity = node CPU/memory + scheduled pod requests (Container Insights + kubectl); subtract daemonset baseline before judging idle. Spot conversion noted as reliability tradeoff (not Principle 2 territory).
+  - `delete-kinesis-stream.md`: aggressive ladder push — deregister EFO consumers → shard reduce → retention reduce → mode switch (Principle 2 math) → delete. Registered EFO consumers + Lambda mappings + Firehose sources scored as attachment.
+  - `rightsize-kinesis-stream.md`: three composable levers (shard-count reduce / retention reduce / mode switch). Per-lever reversibility classification (lever-b retention reduction is 🔴 because records older than new period are immediately deleted). Full Principle 2 cost-direction math for lever-c.
+- **`cloud-cost-investigate` SKILL.md additions:**
+  - New `## Guiding principles` section between `## Iron Law` and `## Constraints` carrying both principles with rules + rationalization stoppers.
+  - Step 2B utilization metrics promoted from *Optional* to **Required (not optional)** for any rightsize / idle-resource candidate whose resource type has an activity dimension. Unattached EBS / EIP / orphaned snapshots explicitly exempted (no activity dimension).
+  - Step 4B waste analysis: two new rules cap candidates at `confidence: low` and label `activity-unverified` (Principle 1) or `direction-unverified` (Principle 2) when those checks are missing. Operator can promote via GATE 3 drill-down.
+  - Rationalization Prevention table extended with three rows: "nothing attached → waste" (and inverse "attached → in use"); "heartbeat traffic → in use" (keep-alive noise); "switching mode → cheaper" (assumed cost direction).
+- **`cloud-cost-investigate` AWS examples extended:**
+  - 5 new resource-state sweep patterns in Step 2B: NAT Gateway, Lambda functions, DynamoDB tables, EKS managed nodegroups, Kinesis Data Streams. Each pattern explicitly labels attachment vs activity per Principle 1.
+  - "Optional — utilization metrics" renamed to "Utilization metrics (required for activity verification)" matching the SKILL.md promotion. 5 new activity query examples added (one per new resource type) with throttle / keep-alive carve-outs inline.
+  - Trailing Principle 2 reminder for DynamoDB and Kinesis mode-switch math (fetch live pricing via `aws pricing get-products`).
+- **`tests/fixtures/cost-optimize-plan/principles-check/`**: new 2-item fixture exercising both principles end-to-end. Item #1: Lambda function with 2 attached EventBridge rules but zero 30d invocations → 🟡 Coordinated (Principle 1 prevented incorrect 🚫). Item #2: DynamoDB mode-switch claim with `direction-unverified` upstream label → 🚫 Do not act with recomputed cost-direction math visible in the plan. Validates the new playbooks (`delete-lambda.md`, `rightsize-dynamodb.md`) and both principle disciplines.
+
+### Changed
+
+- **`cost-optimize-plan` v1 scope:** playbook count `9 → 15` (9 delete + 5 rightsize + 1 lifecycle). v1.1+ deferred line for AWS collapsed to a generic "additional resource types added on demand" — every previously-named AWS deferral (NAT Gateway, Lambda, DynamoDB, EKS nodegroup, Kinesis) is now shipped.
+- **`tests/fixtures/cost-optimize-plan/no-playbook/`**: swapped the no-playbook scenario from Lambda delete (now covered by `delete-lambda.md`) to Aurora cluster delete (still uncovered in v1). Same scenario shape — single-item upstream report routed to ❔ Manual review with a populated reason column containing a manual-verification checklist (90d activity, Secrets Manager / SSM endpoint references, replicas + Global Database, final-snapshot guidance). History note added so future contributors know why the resource type was swapped.
+
+### Deferred to v1.1+
+
+- GCP / Azure / Kubernetes playbooks (unchanged from v0.8).
+- Bulk-execute mode for 🟢 fast wins; plan re-run / dedupe against prior actions; cross-cloud reports (unchanged from v0.8).
+- AWS additional resource types beyond the 15 in v1 — added on demand from real-case use, same as the v1 set.
+
 ## [0.8.0] — 2026-05-28
 
 ### Added
