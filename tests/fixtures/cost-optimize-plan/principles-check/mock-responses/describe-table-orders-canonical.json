@@ -1,0 +1,27 @@
+{
+  "Table": {
+    "TableName": "orders-canonical",
+    "TableArn": "arn:aws:dynamodb:ap-southeast-1:123456789012:table/orders-canonical",
+    "TableSizeBytes": 84293847295,
+    "ItemCount": 142589013,
+    "TableStatus": "ACTIVE",
+    "CreationDateTime": "2024-08-12T03:18:42.000+0000",
+    "BillingModeSummary": {
+      "BillingMode": "PROVISIONED",
+      "LastUpdateToPayPerRequestDateTime": null
+    },
+    "ProvisionedThroughput": {
+      "ReadCapacityUnits": 200,
+      "WriteCapacityUnits": 100,
+      "NumberOfDecreasesToday": 0
+    },
+    "GlobalSecondaryIndexes": [
+      {
+        "IndexName": "customer-id-index",
+        "IndexStatus": "ACTIVE",
+        "ProvisionedThroughput": {"ReadCapacityUnits": 50, "WriteCapacityUnits": 25},
+        "ItemCount": 142589013
+      }
+    ]
+  }
+}

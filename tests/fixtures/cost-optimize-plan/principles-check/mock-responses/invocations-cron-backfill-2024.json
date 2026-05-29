@@ -1,0 +1,13 @@
+{
+  "_note": "30d daily Lambda.Invocations for cron-backfill-2024 — all datapoints show 0 (function not invoked). Window: 2026-04-29 to 2026-05-29.",
+  "Label": "Invocations",
+  "Datapoints": [
+    {"Timestamp": "2026-04-29T00:00:00Z", "Sum": 0.0, "Unit": "Count"},
+    {"Timestamp": "2026-04-30T00:00:00Z", "Sum": 0.0, "Unit": "Count"},
+    {"Timestamp": "2026-05-01T00:00:00Z", "Sum": 0.0, "Unit": "Count"},
+    {"Timestamp": "2026-05-15T00:00:00Z", "Sum": 0.0, "Unit": "Count"},
+    {"Timestamp": "2026-05-28T00:00:00Z", "Sum": 0.0, "Unit": "Count"},
+    {"Timestamp": "2026-05-29T00:00:00Z", "Sum": 0.0, "Unit": "Count"}
+  ],
+  "_truncated_for_brevity": "Full 30d window has 30 datapoints, all Sum=0. Abbreviated above to head + sample + tail."
+}

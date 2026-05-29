@@ -1,0 +1,17 @@
+{
+  "_note": "14d hourly ConsumedWriteCapacityUnits for orders-canonical (base table). Sustained ~68 WCU consumed vs 100 WCU provisioned ≈ 68% utilization. Similar steady shape to RCU.",
+  "Label": "ConsumedWriteCapacityUnits",
+  "_summary": {
+    "p99_hourly_sum": 262800,
+    "p99_hourly_per_second_equivalent": 73,
+    "average_hourly_per_second_equivalent": 68,
+    "p99_to_avg_ratio": 1.07,
+    "provisioned_per_second": 100,
+    "utilization_pct_at_p99": 73
+  },
+  "Datapoints": [
+    {"Timestamp": "2026-05-29T13:00:00Z", "Sum": 244800.0, "Maximum": 71.0, "Unit": "Count"},
+    {"Timestamp": "2026-05-15T18:00:00Z", "Sum": 252000.0, "Maximum": 73.0, "Unit": "Count"}
+  ],
+  "_truncated_for_brevity": "Full 14d window has 336 hourly datapoints."
+}

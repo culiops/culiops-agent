@@ -1,0 +1,24 @@
+{
+  "Configuration": {
+    "FunctionName": "cron-backfill-2024",
+    "FunctionArn": "arn:aws:lambda:ap-southeast-1:123456789012:function:cron-backfill-2024",
+    "Runtime": "python3.11",
+    "Role": "arn:aws:iam::123456789012:role/lambda-cron-backfill-2024-role",
+    "Handler": "main.handler",
+    "CodeSize": 184234,
+    "Description": "Daily backfill for legacy orders pipeline. Deprecated 2026-02-15 per ADR-2026-014; kept warm until migration validation completes.",
+    "Timeout": 900,
+    "MemorySize": 1024,
+    "LastModified": "2026-02-14T08:42:18.000+0000",
+    "CodeSha256": "kqz3x9mFhCv5L7nRpY8sJq2eH4tGwM1bA9oXfZ6dV4U=",
+    "Version": "$LATEST",
+    "PackageType": "Zip",
+    "Architectures": ["x86_64"]
+  },
+  "Tags": {
+    "Service": "orders-legacy",
+    "Owner": "platform-team",
+    "ManagedBy": "terraform",
+    "TerraformModule": "terraform/lambda/cron-backfill-2024"
+  }
+}

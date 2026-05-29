@@ -1,0 +1,7 @@
+{
+  "_note": "EventBridge rules that target this Lambda function — both rules ENABLED but Invocations metric still 0 across 30d. This is the Principle 1 demonstration: the rules are ATTACHMENT (blast radius input) — they say 'something would break if deleted' — they are NOT activity. The actual activity dimension is Invocations, which is zero. Skill must NOT bump Evidence to 🚫 based on these rule attachments.",
+  "RuleNames": [
+    "legacy-backfill-daily-cron",
+    "legacy-backfill-weekly-cleanup"
+  ]
+}

@@ -1,0 +1,4 @@
+{
+  "_note": "Lambda event source mappings for cron-backfill-2024 — empty. EventBridge rules are NOT event source mappings; they invoke Lambda via a permission grant + rule target. Surfaced separately below via events:ListRulesByTarget.",
+  "EventSourceMappings": []
+}

@@ -1,0 +1,8 @@
+{
+  "_note": "Provisioned concurrency config for cron-backfill-2024:$LATEST — 2 units allocated. This is the source of the $35/mo cost despite zero invocations. The keep-warm pings from AWS to maintain provisioned concurrency do NOT count as Invocations (they show up as ProvisionedConcurrencyInvocations only when an INVOKE actually arrives — which it doesn't, since invocations are zero). No keep-warm noise to subtract here; the function is genuinely idle.",
+  "RequestedProvisionedConcurrentExecutions": 2,
+  "AvailableProvisionedConcurrentExecutions": 2,
+  "AllocatedProvisionedConcurrentExecutions": 2,
+  "Status": "READY",
+  "LastModified": "2026-02-14T08:42:18.000+0000"
+}

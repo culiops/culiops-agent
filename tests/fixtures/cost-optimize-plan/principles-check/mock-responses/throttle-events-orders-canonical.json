@@ -1,0 +1,5 @@
+{
+  "_note": "14d ReadThrottleEvents + WriteThrottleEvents (Sum) for orders-canonical. Both zero — no throttling at current 70% utilization, so this table is NOT under-provisioned. Mode-switch decision is purely cost-driven, not capacity-driven.",
+  "ReadThrottleEvents": {"Datapoints": [], "Sum": 0},
+  "WriteThrottleEvents": {"Datapoints": [], "Sum": 0}
+}

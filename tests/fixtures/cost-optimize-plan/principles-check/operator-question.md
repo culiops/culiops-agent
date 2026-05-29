@@ -1,0 +1,1 @@
+Triage the cost report at .culiops/cloud-cost-investigate/acme-prod-waste-mixed-20260529-1430.md and build me an execution plan. Use the Principle 1 (activity ≠ attachment) and Principle 2 (verify cost-change direction) guardrails when scoring evidence.

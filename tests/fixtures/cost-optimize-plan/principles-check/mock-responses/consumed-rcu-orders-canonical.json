@@ -1,0 +1,20 @@
+{
+  "_note": "14d hourly ConsumedReadCapacityUnits for orders-canonical (base table). Sustained ~140 RCU consumed vs 200 RCU provisioned ≈ 70% utilization. p99 / average ratio ≈ 1.6 — STEADY workload (not spiky). Per Principle 2 cost-direction table, steady workloads are cheaper on PROVISIONED at rightsized capacity than on PAY_PER_REQUEST.",
+  "Label": "ConsumedReadCapacityUnits",
+  "Datapoints": [
+    {"Timestamp": "2026-05-29T13:00:00Z", "Sum": 503280.0, "Maximum": 152.0, "Unit": "Count"},
+    {"Timestamp": "2026-05-29T12:00:00Z", "Sum": 491760.0, "Maximum": 148.0, "Unit": "Count"},
+    {"Timestamp": "2026-05-28T03:00:00Z", "Sum": 478800.0, "Maximum": 145.0, "Unit": "Count"},
+    {"Timestamp": "2026-05-15T18:00:00Z", "Sum": 511200.0, "Maximum": 156.0, "Unit": "Count"},
+    {"Timestamp": "2026-05-29T03:00:00Z", "Sum": 489600.0, "Maximum": 147.0, "Unit": "Count"}
+  ],
+  "_summary": {
+    "p99_hourly_sum": 540000,
+    "p99_hourly_per_second_equivalent": 150,
+    "average_hourly_per_second_equivalent": 138,
+    "p99_to_avg_ratio": 1.6,
+    "provisioned_per_second": 200,
+    "utilization_pct_at_p99": 75
+  },
+  "_truncated_for_brevity": "Full 14d window has 336 hourly datapoints. Abbreviated above to representative sample. Pre-computed summary below derived from full window."
+}

@@ -1,0 +1,17 @@
+{
+  "_note": "Pricing snapshot for DynamoDB in ap-southeast-1, fetched via aws pricing get-products at fixture-creation time (2026-05-29). Required for Principle 2 cost-direction computation in the rightsize-dynamodb playbook. Skill must NOT hardcode prices; this is the input to the math.",
+  "region": "ap-southeast-1",
+  "currency": "USD",
+  "_source": "aws pricing get-products --service-code AmazonDynamoDB --filters Type=TERM_MATCH,Field=regionCode,Value=ap-southeast-1",
+  "provisioned": {
+    "read_capacity_unit_hour": 0.000147,
+    "write_capacity_unit_hour": 0.000735,
+    "_note_per_hour": "Per RCU/WCU per hour."
+  },
+  "on_demand": {
+    "read_request_units_per_million": 0.297,
+    "write_request_units_per_million": 1.4847,
+    "_note_per_request": "1 read request unit = 1 strongly-consistent read up to 4 KB; 1 write request unit = 1 write up to 1 KB."
+  },
+  "storage_per_gb_month": 0.275
+}

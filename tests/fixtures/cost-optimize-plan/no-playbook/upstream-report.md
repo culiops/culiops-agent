@@ -8,50 +8,54 @@
 
 ## Question
 
-Run a waste audit on our AWS prod account (ap-southeast-1). Are there any Lambda functions we can delete?
+Run a waste audit on our AWS prod account (ap-southeast-1). Are there any RDS / Aurora clusters we can decommission?
 
 ## Scoping decisions
 
-- Mode: waste (operator confirmed "delete" intent targeting Lambda).
+- Mode: waste (operator confirmed "delete" intent targeting RDS / Aurora).
 - Scope: account 123456789012 (acme-prod), single account, region ap-southeast-1.
 - Time range: 30d rolling (2026-04-28 → 2026-05-28).
 - Savings floor: $5/mo.
-- Untagged spend: not flagged (all resources carry required tags in this account).
+- Untagged spend: not flagged (all clusters carry required tags in this account).
 
 ## Queries run
 
 | # | API | Scope | IAM | Status | Notes |
 |---|-----|-------|-----|--------|-------|
-| 1 | lambda:ListFunctions | ap-southeast-1 | lambda:ListFunctions | ok | 14 functions enumerated |
-| 2 | cloudwatch:GetMetricStatistics (Lambda.Invocations, 30d) | per-function | cloudwatch:GetMetricStatistics | ok | idle-worker: 0 invocations in 30d |
-| 3 | ce:GetCostAndUsage (Lambda line items) | account / 30d | ce:GetCostAndUsage | ok | idle-worker accruing $35/mo in provisioned-concurrency charges despite 0 invocations |
+| 1 | rds:DescribeDBClusters | ap-southeast-1 | rds:DescribeDBClusters | ok | 4 Aurora clusters enumerated |
+| 2 | cloudwatch:GetMetricStatistics (RDS.DatabaseConnections, 30d) | per-cluster | cloudwatch:GetMetricStatistics | ok | legacy-orders-aurora: 0 connections in 30d |
+| 3 | cloudwatch:GetMetricStatistics (RDS.SelectThroughput + DMLThroughput, 30d) | per-cluster | cloudwatch:GetMetricStatistics | ok | legacy-orders-aurora: 0 query activity in 30d |
+| 4 | ce:GetCostAndUsage (RDS line items) | account / 30d | ce:GetCostAndUsage | ok | legacy-orders-aurora accruing $420/mo across 2 db.r6g.large instances |
 
 ## Findings
 
-### Idle Lambda functions (0 invocations in 30d)
+### Idle Aurora clusters (0 connections + 0 query activity in 30d)
 
-1 function with zero invocations in the last 30 days and non-trivial provisioned-concurrency cost.
+1 cluster with zero database connections and zero query throughput in the last 30 days.
 
-| Function | Runtime | Last invocation | Provisioned concurrency | Est. monthly cost |
-|----------|---------|----------------|------------------------|-------------------|
-| idle-worker | python3.11 | >30d ago (no CloudWatch data point in window) | 2 units | $35/mo |
+| Cluster | Engine | Writer + Reader | Last connection | Est. monthly cost |
+|---------|--------|-----------------|-----------------|-------------------|
+| legacy-orders-aurora | aurora-mysql 8.0.mysql_aurora.3.04.0 | 1 writer + 1 reader (db.r6g.large each) | >30d ago (no datapoint in window) | $420/mo |
 
-The function carries 2 provisioned-concurrency units configured. It has not been invoked in at least 30 days. The $35/mo charge is entirely attributable to provisioned concurrency — the function would cost ~$0 if invocations remain at zero without provisioned concurrency, or $0 if deleted.
+The cluster has not received any database connections in at least 30 days. The $420/mo charge is composed of $0.29/hr × 2 instances × 730 hr = $423.40/mo for instance-hours, plus storage and IO at near-zero usage. The cluster's tag `Service=orders-legacy` aligns with a service the catalog flags as "deprecated 2026-03-01" — operator should confirm decommissioning is intended.
 
 ## Remediation list (prioritized)
 
 | # | Action | Resource(s) | Est. savings | Source | Confidence | Evidence |
 |---|--------|-------------|--------------|--------|------------|----------|
-| 1 | Delete Lambda function idle-worker | arn:aws:lambda:ap-southeast-1:123456789012:function:idle-worker | $35/mo | line-item-computation | medium | 0 invocations in last 30d per CloudWatch Lambda.Invocations metric |
+| 1 | Delete Aurora cluster legacy-orders-aurora | arn:aws:rds:ap-southeast-1:123456789012:cluster:legacy-orders-aurora | $420/mo | line-item-computation | medium | 0 DatabaseConnections + 0 SelectThroughput + 0 DMLThroughput in last 30d per CloudWatch RDS metrics |
 
-**Total estimated savings:** $35/mo (medium-confidence)
+**Total estimated savings:** $420/mo (medium-confidence)
 
 ## Gaps
 
-- Invocation history checked for 30d window only; function may have legitimate seasonal usage patterns outside this window.
-- EventBridge rules, API Gateway integrations, and other event-source mappings not checked by this waste audit — dependency verification requires operator review.
+- Connection / query history checked for 30d window only; cluster may have legitimate seasonal usage patterns outside this window (e.g., quarterly report jobs).
+- Read replicas and cross-region replication relationships not enumerated by this waste audit — dependency verification requires operator review.
+- Application secrets in AWS Secrets Manager / SSM Parameter Store referencing the cluster endpoint not scanned by this waste audit.
 
 ## Next steps (informational)
 
-- Verify no active event sources trigger the function before deleting.
-- Delete idle-worker via `iac-change-execution` once dependencies are confirmed clear.
+- Verify no application is configured to connect to the cluster endpoint (Secrets Manager sweep, ECS task definitions, Lambda environment variables).
+- Confirm no read-replica chain or cross-region replication targets the cluster.
+- Take a final cluster snapshot before deletion if the data may be needed for compliance retrieval.
+- Delete legacy-orders-aurora via `iac-change-execution` once dependencies are confirmed clear.
