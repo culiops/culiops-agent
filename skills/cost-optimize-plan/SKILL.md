@@ -171,6 +171,39 @@ Operator reviews drafted plan, approves to commit, or requests revisions (e.g., 
 
 Four dimensions per item. Each scores 🟢 / 🟡 / 🔴 / ⚪ (unknown). Tier assignment is a deterministic rule over the four scores — no LLM judgment in the rule, only in interpreting evidence against thresholds.
 
+### Guiding principles
+
+Two principles govern how evidence is read and how remediations are chosen. They sit above the dimension scoring rules — apply them first, then score.
+
+#### Principle 1 — Verify activity, not attachment
+
+Evidence of no-use measures **activity**, never **attachment**. These are different dimensions and must never be conflated:
+
+- **Activity** (Dimension 3 input): observed throughput — request / invocation / transaction counts, read or processing volume, access-log hits, query counts over a representative window.
+- **Attachment** (Dimensions 2 + 4 input): a consumer, reference, policy, route, binding, or dependent configured against the resource. Attachment answers "what breaks if I remove this," NOT "is this being used."
+
+Rules:
+1. A dependent being enabled / connected / configured / attached is **not** evidence of use. Declared config ≠ runtime behavior. Confirm with an activity metric.
+2. **Discount keep-alive noise.** Heartbeats, health checks, warm-up schedules, monitoring probes, liveness pings, and automatic retries all produce activity that masks idleness. Their tell is a uniform, periodic, workload-independent cadence. Identify and subtract synthetic traffic before judging a resource idle.
+3. Every attachment / reference signal belongs in blast-radius or dependency-footprint scoring, never in evidence-of-no-use scoring.
+
+**Rationalization stopper:** "Something is attached / enabled, so it's in use" → STOP. Attachment ≠ activity. Verify actual throughput before assigning use.
+
+#### Principle 2 — Prefer the cheapest reversible remediation; verify the cost-change direction
+
+Deletion is the last lever, not the default. Walk a remediation ladder from least to most destructive and stop at the first reversible option that yields material savings:
+
+```
+resize / downgrade capacity  →  pause / schedule / stop  →  reduce retention / lifecycle  →  delete
+```
+
+Rules:
+1. For every remediation blocked by risk (can't safely delete — irreversible, or too high blast radius), check whether a **reversible downgrade** captures partial savings while keeping the resource and its wiring intact. A blocked delete must surface that fallback, not dead-end at 🔴 / 🚫.
+2. **Never assume a pricing-mode or tier change reduces cost — verify the direction and magnitude against real pricing at the resource's actual utilization.** Usage-based / elastic / on-demand pricing carries a per-unit premium that can *exceed* a small fixed / reserved footprint at low utilization. The cheaper mode flips with the shape of the workload, so the saving must be computed from the observed usage profile, not assumed from the direction of the switch.
+3. Reversibility is itself a saving multiplier: a reversible change can be applied on weaker evidence (cheap to undo); an irreversible one demands stronger proof.
+
+**Rationalization stopper:** "Switching mode / tier will be cheaper" → STOP. Compute the delta from real pricing × real utilization first; the premium may run the other way.
+
 ### Dimension 1 — Reversibility *(from playbook + IaC context)*
 
 | Score | Condition |
@@ -382,7 +415,7 @@ Live AWS smoke against a real `cloud-cost-investigate` report. Deferred to the v
 **v1 (this version):**
 
 - AWS only.
-- 9 playbooks: 6 delete, 2 rightsize, 1 lifecycle.
+- 15 playbooks: 9 delete (EC2, EIP, snapshot, S3, EBS, LB, NAT Gateway, Lambda, Kinesis stream), 5 rightsize (EC2, RDS, DynamoDB, EKS nodegroup, Kinesis stream), 1 lifecycle (S3).
 - Single-cloud-per-report (multi-cloud upstream reports rejected with `multi-cloud-report-unsupported`).
 - One report per run.
 - 4 actionable tiers (🟢 / 🟡 / 🔴 / 🚫) + ❔ manual-review section for uncovered (action, resource_type) combinations.
@@ -392,7 +425,7 @@ Live AWS smoke against a real `cloud-cost-investigate` report. Deferred to the v
 - GCP playbooks (idle VM, unattached disk, idle IP).
 - Azure playbooks (Advisor-driven rightsize, idle resources).
 - Kubernetes playbooks (OpenCost-driven workload rightsize).
-- AWS: NAT Gateway delete, Lambda delete, DynamoDB rightsize, EKS nodegroup rightsize.
+- AWS additional resource types beyond the 14 in v1 (added on demand from real-case use, same as the v1 set).
 - Bulk-execute mode for 🟢 fast wins (currently strict one-item-at-a-time via iac-change-execution).
 - Plan re-run / refresh with dedup against prior actions.
 - Cross-cloud reports.
