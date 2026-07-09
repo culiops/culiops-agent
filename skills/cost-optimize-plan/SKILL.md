@@ -53,6 +53,8 @@ NO HANDOFF TO EXECUTION — OPERATOR DRIVES.
 |----------|------------|
 | About to call any non-`Get`/`Describe`/`List`/`Lookup`/`Simulate` API | STOP — read-only. The skill never calls write APIs. |
 | Upstream report has no `Remediation list` table | STOP — abort at GATE 1 with `report-format-invalid`. |
+| Upstream report `Date:` is > 14 days old | STOP — prompt a re-run of cloud-cost-investigate; stale utilization / pricing invalidates triage. Proceed only if operator confirms. |
+| About to score a load balancer "idle" on RequestCount alone | STOP — check Route53 aliases, listeners, and target health first. Live DNS + healthy targets = wired serving path, never 🟢. |
 | An item's `(cloud, action, resource_type)` has no matching playbook in `examples/<cloud>/` | Park in `❔ Manual review required` section. Do NOT invent verification queries. |
 | Verification query returns rate-limited / throttled | STOP the batch; surface to operator. No partial plan. |
 | Operator says "skip verification on item #N — I know it's safe" | STOP — verification is per-batch and applies to all actionable items. Operator can drop the item from scope, not skip its verification. |
@@ -103,9 +105,10 @@ Read the upstream report and establish scope.
 1. Read upstream report file (operator provides path).
 2. Parse the `## Remediation list (prioritized)` table → list of items.
 3. Read header for `**Cloud:**` (single-cloud required), `**Scope:**`, time-range, mode.
-4. Look up catalog: `.culiops/service-discovery/` directory (optional). If present, parse for dependency lookup later.
-5. Apply optional savings floor (default $5/mo, matching upstream). Items below the floor go to a "filtered (below floor)" appendix in the plan.
-6. Present scoping summary to operator (see GATE 1 below).
+4. **Check upstream report freshness.** Read the report's `**Date:**` header. If it is older than 14 days, warn the operator: "This cloud-cost-investigate report is `<N>` days old — utilization and pricing may have shifted. Re-run the investigation before triaging?" Proceed only on explicit operator confirmation; note the staleness in the plan's Scoping decisions.
+5. Look up catalog: `.culiops/service-discovery/` directory (optional). If present, parse for dependency lookup later.
+6. Apply optional savings floor (default $5/mo, matching upstream). Items below the floor go to a "filtered (below floor)" appendix in the plan.
+7. Present scoping summary to operator (see GATE 1 below).
 
 ### GATE 1 — Scope
 
@@ -252,6 +255,8 @@ Source: playbook's `Reversibility classification` section. Hardcoded in the play
 
 Source: playbook's `Blast radius classification` default, optionally widened by catalog lookup.
 
+**Load balancers are never scored on RequestCount alone.** Before scoring an LB's blast radius or evidence, check Route53 alias records pointing at it, its listeners, and target-group health. An LB with ~0 requests but live DNS and healthy targets is wired into a serving path — score blast 🔴 and evidence 🚫-leaning, never 🟢. RequestCount alone would greenlight a breaking change.
+
 ### Dimension 3 — Evidence of no-use *(from verification queries — the heart of this skill)*
 
 | Score | Condition |
@@ -274,7 +279,7 @@ Only dimension that can independently force 🚫.
 | 🔴 | Referenced by ≥3 IaC consumers or marked critical-path in catalog. |
 | ⚪ | No catalog and no IaC scan possible. |
 
-Source: `grep` over IaC tree for resource name/ARN/ID; catalog lookup if `.culiops/service-discovery/` exists.
+Source: `grep` over IaC tree for resource name/ARN/ID; catalog lookup if `.culiops/service-discovery/` exists. For load balancers, Route53 aliases and target health count as dependencies even when RequestCount is ~0.
 
 ### Tier assignment rules
 
@@ -325,6 +330,8 @@ Detected mechanically, not LLM-inferred:
 - **Snapshot-before-delete:** If item N is `delete <resource>` and playbook recommends snapshotting → emit "do snapshot step before #N" as callout. Not a hard sequence.
 - **Same-resource-conflict:** If two items target the same resource → emit "do #X before #Y" to avoid second invalidating first.
 - **Catalog-dependency edges:** If item N deletes resource R, and item M operates on a resource that depends on R per catalog → "do #M before #N".
+
+**Surface mechanical execution limits during triage.** Some remediations can't be done in one API call and must be staged — flag the shape before execution. Example: Kinesis `UpdateShardCount` cannot drop below half the current count per call, so "resize 8 → 1 shard" is four staged halvings (8→4→2→1), not one step. Note the staging (rounds, per-round limit) in the item's rollback / execution note so the rollout shape is known upfront.
 
 Within a tier, sort by savings $ descending.
 

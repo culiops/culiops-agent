@@ -22,12 +22,12 @@ Each lever has independent thresholds, but they compose: a typical recommendatio
 
 1. `aws kinesis describe-stream-summary --stream-name <name>` — captures `StreamMode` (`PROVISIONED` or `ON_DEMAND`), `OpenShardCount`, `RetentionPeriodHours`, `EnhancedMonitoring`.
 2. `aws kinesis list-shards --stream-name <name> --query 'Shards[].[ShardId,SequenceNumberRange.EndingSequenceNumber]'` — closed-but-retained shards count toward retention storage but not active capacity.
-3. `aws cloudwatch get-metric-statistics --namespace AWS/Kinesis --metric-name IncomingRecords --dimensions Name=StreamName,Value=<name> --start-time <now-14d> --end-time <now> --period 3600 --statistics Sum,Maximum` — 14d producer activity, hourly p99 used for shard-sizing math.
-4. `aws cloudwatch get-metric-statistics --namespace AWS/Kinesis --metric-name IncomingBytes --dimensions Name=StreamName,Value=<name> --start-time <now-14d> --end-time <now> --period 3600 --statistics Sum,Maximum` — bytes-side activity (1 MB/s/shard is the hard limit).
-5. `aws cloudwatch get-metric-statistics --namespace AWS/Kinesis --metric-name GetRecords.Records --dimensions Name=StreamName,Value=<name> --start-time <now-14d> --end-time <now> --period 3600 --statistics Sum,Maximum` — consumer activity (2 MB/s/shard read limit).
-6. `aws cloudwatch get-metric-statistics --namespace AWS/Kinesis --metric-name WriteProvisionedThroughputExceeded --dimensions Name=StreamName,Value=<name> --start-time <now-14d> --end-time <now> --period 3600 --statistics Sum` — throttles → **🚫 trigger for shard-reduction**.
-7. `aws cloudwatch get-metric-statistics --namespace AWS/Kinesis --metric-name ReadProvisionedThroughputExceeded --dimensions Name=StreamName,Value=<name> --start-time <now-14d> --end-time <now> --period 3600 --statistics Sum` — read-side throttles → **🚫 trigger for shard-reduction**.
-8. `aws cloudwatch get-metric-statistics --namespace AWS/Kinesis --metric-name GetRecords.IteratorAgeMilliseconds --dimensions Name=StreamName,Value=<name> --start-time <now-14d> --end-time <now> --period 60 --extended-statistics p99` — high p99 iterator age indicates consumers reading old data. **🚫 trigger for retention reduction** if p99 age > 75% of current retention window.
+3. `aws cloudwatch get-metric-statistics --namespace AWS/Kinesis --metric-name IncomingRecords --dimensions Name=StreamName,Value=<name> --start-time <now-30d> --end-time <now> --period 3600 --statistics Sum,Maximum` — 30d producer activity, hourly p99 used for shard-sizing math.
+4. `aws cloudwatch get-metric-statistics --namespace AWS/Kinesis --metric-name IncomingBytes --dimensions Name=StreamName,Value=<name> --start-time <now-30d> --end-time <now> --period 3600 --statistics Sum,Maximum` — bytes-side activity (1 MB/s/shard is the hard limit).
+5. `aws cloudwatch get-metric-statistics --namespace AWS/Kinesis --metric-name GetRecords.Records --dimensions Name=StreamName,Value=<name> --start-time <now-30d> --end-time <now> --period 3600 --statistics Sum,Maximum` — consumer activity (2 MB/s/shard read limit).
+6. `aws cloudwatch get-metric-statistics --namespace AWS/Kinesis --metric-name WriteProvisionedThroughputExceeded --dimensions Name=StreamName,Value=<name> --start-time <now-30d> --end-time <now> --period 3600 --statistics Sum` — throttles → **🚫 trigger for shard-reduction**.
+7. `aws cloudwatch get-metric-statistics --namespace AWS/Kinesis --metric-name ReadProvisionedThroughputExceeded --dimensions Name=StreamName,Value=<name> --start-time <now-30d> --end-time <now> --period 3600 --statistics Sum` — read-side throttles → **🚫 trigger for shard-reduction**.
+8. `aws cloudwatch get-metric-statistics --namespace AWS/Kinesis --metric-name GetRecords.IteratorAgeMilliseconds --dimensions Name=StreamName,Value=<name> --start-time <now-30d> --end-time <now> --period 60 --extended-statistics p99` — high p99 iterator age indicates consumers reading old data. **🚫 trigger for retention reduction** if p99 age > 75% of current retention window.
 9. `aws kinesis list-stream-consumers --stream-arn <arn>` — EFO consumers paying $0.015/consumer-shard-hour even at zero reads. Surfaced for the operator; deregistration handled in `delete-kinesis-stream.md` rollback ladder.
 
 ## Evidence thresholds — lever (a): reduce `OpenShardCount`
@@ -36,12 +36,14 @@ Applies only when `StreamMode == PROVISIONED`. Compute the minimum required shar
 
 | Signal | 🟢 Threshold (safe to reduce) | 🚫 Trigger (do not reduce) |
 |--------|-------------------------------|-------------------------------|
-| 14d p99 hourly `IncomingBytes` / `OpenShardCount` | ≤ 40% of 3.6 GB/hr/shard | ≥ 80% — at risk of write throttling |
-| 14d p99 hourly `GetRecords.Records` / `OpenShardCount` / 2 | ≤ 40% of 3.6 M records/hr/shard (read limit is 2× write) | ≥ 80% — at risk of read throttling |
-| 14d `WriteProvisionedThroughputExceeded` (Sum) | `0` | ≥ 1 — already throttling |
-| 14d `ReadProvisionedThroughputExceeded` (Sum) | `0` | ≥ 1 |
+| 30d p99 hourly `IncomingBytes` / `OpenShardCount` | ≤ 40% of 3.6 GB/hr/shard | ≥ 80% — at risk of write throttling |
+| 30d p99 hourly `GetRecords.Records` / `OpenShardCount` / 2 | ≤ 40% of 3.6 M records/hr/shard (read limit is 2× write) | ≥ 80% — at risk of read throttling |
+| 30d `WriteProvisionedThroughputExceeded` (Sum) | `0` | ≥ 1 — already throttling |
+| 30d `ReadProvisionedThroughputExceeded` (Sum) | `0` | ≥ 1 |
 
 Reducing shard count uses `aws kinesis update-shard-count --target-shard-count <N> --scaling-type UNIFORM_SCALING` — splits/merges shards; closed shards retain data for the retention window so consumer offsets are preserved.
+
+**Mechanical execution limit (surface during triage).** `UpdateShardCount` cannot drop below half the current open shard count per call. A large reduction is therefore staged over multiple rounds — e.g. 8 → 1 shard is four halvings (8→4→2→1), not one step, each round settling before the next. Note the staging (rounds + per-round ×0.5 limit) in the item's execution/rollback note so the rollout shape is known before `iac-change-execution` runs it.
 
 ## Evidence thresholds — lever (b): reduce `RetentionPeriodHours`
 
@@ -49,7 +51,7 @@ Extended retention costs apply above 24h: $0.02/shard-hour (provisioned) or per-
 
 | Signal | 🟢 Threshold (safe to reduce) | 🚫 Trigger (do not reduce) |
 |--------|-------------------------------|-------------------------------|
-| 14d p99 `GetRecords.IteratorAgeMilliseconds` | ≤ 25% of current retention window (consumers far ahead) | ≥ 75% — consumers regularly read old data; reduction would drop in-flight records |
+| 30d p99 `GetRecords.IteratorAgeMilliseconds` | ≤ 25% of current retention window (consumers far ahead) | ≥ 75% — consumers regularly read old data; reduction would drop in-flight records |
 | Catalog-documented retention requirement (compliance, replay window) | none stricter than proposed | requires ≥ current retention — do not reduce |
 | Backup / archive stream consuming this stream (Firehose → S3) | present and current per Firehose `DeliveryToS3.Success` ≥ 99% | absent or failing — retention is the only durability buffer; do not reduce |
 
@@ -61,14 +63,14 @@ This is the textbook Principle 2 case. **Never assume direction.** One mode swit
 
 Compute steps (mandatory before recommending the switch):
 
-1. Sum 14d `IncomingBytes` per hour. Compute p99 and average.
+1. Sum 30d `IncomingBytes` per hour. Compute p99 and average.
 2. Compute current cost for both modes at the observed throughput:
    - **Provisioned:** `shards × $0.015/hr × 730 + retention_hours_above_24 × shards × $0.02/hr × 730 + PUT_payload_units × $0.014/1M`
    - **On-demand:** `IncomingBytes_GB × $0.04 + GetRecords_GB × $0.04 + IncomingBytes_GB × records_per_GB × $0.0000001 + retention_GB_hours × $0.10`
 3. Fetch pricing live via `aws pricing get-products --service-code AmazonKinesis` rather than hardcoding (regional variance).
 4. Result must be `$X/mo current → $Y/mo proposed (Z% savings)` with input numbers cited.
 
-| Workload shape (from Queries 3-5 over 14d) | Cheaper mode | Why |
+| Workload shape (from Queries 3-5 over 30d) | Cheaper mode | Why |
 |--------------------------------------------|--------------|-----|
 | Steady high throughput (p99 / average bytes ratio ≤ 2.0, all shards utilized > 30%) | **provisioned** at rightsized count | On-demand's per-GB premium accumulates against the per-shard-hour cost. |
 | Spiky (p99 / average > 5.0, sustained low baseline < 10% utilization) | **on-demand** | Provisioned ceiling paid 24/7 dominates; per-GB premium only applies during real spikes. |
