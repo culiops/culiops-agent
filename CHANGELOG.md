@@ -4,6 +4,22 @@ All notable changes to the `culiops` plugin will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.10.0] — 2026-07-09
+
+### Cost skills — OPS-9169 field principles
+
+Field lessons from a real cost-optimization engagement (pricing-engine staging), folded into the existing Principle framework across the four cost skills.
+
+- **Principle 3 (all cost skills): scale the verification window to the action's destructiveness.** idle→resize needs ≥30d, idle→delete 60–180d, at hourly granularity, inspecting the temporal distribution (a single historical burst ≠ steady low use). Replaces the flat 14-day default — the waste sweep is now 30d and delete-candidates pull 60–180d at drill-down; all AWS playbook evidence windows re-tiered accordingly.
+- **Principle 4 (all cost skills): cost from the bill, attribute to the metered dimension.** Bill-derived effective rates over list price (new `bill-derived` label); attribute cost to what is actually metered, not the trigger; classify recurring vs residual/self-clearing charges (don't chase a self-clearing line).
+- **Principle 1 sharpened:** a delete requires two independent signals — activity=none AND attachment-understood; neither substitutes for the other.
+- **Principle 2 extended:** model the transition cost of a mode/tier change, not just the endpoints (a switch can raise cost before it pays off).
+- **cost-optimize-plan:** new **🔵 Requires owner confirmation** tier (with a dev-note artifact) for idle-ambiguous resources — streams, caches, idle LBs, scheduled pipelines — where metrics prove no traffic but only an owner can confirm decommissioned vs paused/seasonal; upstream report-freshness gate; mandatory load-balancer dependency checks (Route53 aliases + listeners + target health, not RequestCount alone); mechanical execution-limit surfacing (e.g. Kinesis `UpdateShardCount` staged halving).
+- **cloud-cost-investigate:** database rightsize now checks the binding constraint (freeable memory, connections), not CPU by default.
+- **iac-change-execution:** mandatory pre-import resource-ownership check (guards the CloudFormation/Serverless dual-ownership drift trap); delete playbooks enumerate the full resource bundle (NAT→EIP+route, LB→listeners/target-groups/DNS); documented `ignore_changes = all` import-to-manage-legacy pattern.
+- **pre-flight:** EIP/IP-release external-allowlist check-item (irreversible if a partner firewall allowlists the address); "0 errors" is not "healthy/unused".
+- **Fixtures:** new `cost-optimize-plan/window-and-tier-check` (Principle 3 window flip + 🔵 tier + dev-note); extended `cloud-cost-investigate/waste-aws-account` (binding constraint, residual charge, bill-derived rate).
+
 ## [0.9.0] — 2026-05-29
 
 ### Added
