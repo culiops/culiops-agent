@@ -62,6 +62,8 @@ Detect destructive or irreversible actions in the plan:
 - `destroy` / `replace` on stateless resources (compute, networking rules) → **Yellow: recreatable but may cause downtime**
 - `update in-place` → **Green: previous state recoverable via re-apply of old code**
 
+**External allowlist check (IP / EIP / NAT / egress-address release).** Any `destroy` / `release` of a public IP — `aws_eip`, an EIP association, a NAT gateway (which releases its EIP), or any change that frees a public egress address — is **irreversible if a partner or external system has allowlisted that IP** in a firewall. A released EIP returns to the AWS pool; you cannot get the same address back. Before scoring this Green, confirm no external reliance: check egress history over ≥ 6 months (0 egress ⇒ no external caller depends on the source IP) and ask the operator whether any partner allowlists this address. Treat unknown as a **hard-block (Red)** until confirmed — the cost of a wrong release is a broken partner integration with no rollback.
+
 Check rollback mechanisms:
 - Git history: is the previous version of these files in version control? (always yes for IaC repos)
 - Terraform: can `terraform apply` with the previous commit restore state? (yes for updates, no for destroys of stateful resources)
@@ -184,3 +186,5 @@ When the operator opts into L3, run these from `examples/<cloud>.md`:
 | "This is a rollback, so it's inherently safe" | STOP — rollbacks can fail, can conflict with data changes that happened after the original deploy, or can roll back to a state that no longer works with current dependencies. Score normally. |
 | "The same change worked in staging" | STOP — staging doesn't have production traffic, production data, or production dependencies. Production risk is independent. |
 | "This is just a config change, not infrastructure" | STOP — config changes cause more outages than infrastructure changes. Evaluate the same 10 categories. |
+| "The resource shows 0 errors, so it's healthy and needed" | STOP — 0 errors ≠ used or necessary. A resource can run error-free and still be pure waste (an idle poller). Judge resource health on useful activity, not just the absence of failures. |
+| "Releasing this Elastic IP is safe, nothing internal uses it" | STOP — a partner firewall may allowlist the public IP. Release is irreversible. Run the external-allowlist check (≥ 6mo zero egress + operator confirmation) before scoring Green. |
