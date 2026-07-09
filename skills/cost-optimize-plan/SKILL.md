@@ -1,6 +1,6 @@
 ---
 name: cost-optimize-plan
-description: Use when the operator wants to turn a cloud-cost-investigate report into an actionable, tiered execution plan. Triggers include phrases like "triage the cost report", "which of these cost recommendations are safe to act on", "plan the rollout for these savings", "build an action plan from the waste audit". Read-only; produces a four-tier plan (fast-win / coordinated / risky / do-not-act) with per-action safety verification evidence and rollback notes. Sits between cloud-cost-investigate (input) and iac-change-execution (downstream). v1 supports AWS only — GCP / Azure / Kubernetes playbooks deferred to v1.1+.
+description: Use when the operator wants to turn a cloud-cost-investigate report into an actionable, tiered execution plan. Triggers include phrases like "triage the cost report", "which of these cost recommendations are safe to act on", "plan the rollout for these savings", "build an action plan from the waste audit". Read-only; produces a five-tier plan (fast-win / coordinated / requires-owner-confirmation / risky / do-not-act) with per-action safety verification evidence and rollback notes. Sits between cloud-cost-investigate (input) and iac-change-execution (downstream). v1 supports AWS only — GCP / Azure / Kubernetes playbooks deferred to v1.1+.
 ---
 
 # Cost Optimize Plan
@@ -45,6 +45,7 @@ NO HANDOFF TO EXECUTION — OPERATOR DRIVES.
 | "Upstream report's savings number looks wrong, I'll recompute" | STOP — that's `cloud-cost-investigate`'s job. Flag and stop. |
 | "Operator says they know that S3 bucket is dead, skip the CloudTrail check" | STOP — operator certainty is not evidence. Run the query or park as manual-review-required. |
 | "Catalog is missing for this account — score Dependency dimension as 🟢 (no consumers found = no consumers exist)" | STOP — missing catalog ≠ no dependencies. Score as ⚪ and bump tier conservatively. |
+| "Metrics say 0 traffic on this stream — mark it 🟢 and delete" | STOP — streams / caches / idle-LBs / pipelines are idle-ambiguous. 0 traffic ≠ decommissioned. Route to 🔵 and emit an owner dev-note. |
 
 ## Red Flags — STOP and Follow Process
 
@@ -262,6 +263,8 @@ Source: playbook's `Blast radius classification` default, optionally widened by 
 
 Only dimension that can independently force 🚫.
 
+**Idle-ambiguous resource class.** Some resource types read idle on throughput yet metrics cannot distinguish *decommissioned* from *paused / seasonal* — only an owner can. These are: streams and queues with no throughput but live wiring (Kinesis, SQS); caches with zero hits but live connections (Redis, DAX); load balancers with no requests but healthy backends and live DNS; and scheduled / observer pipelines whose schedule is not usage. A delete against an idle-ambiguous resource, even with Evidence 🟢 over an adequate window, routes to the 🔵 tier (below) rather than 🟢 / 🟡.
+
 ### Dimension 4 — Dependency footprint *(from catalog if present, IaC otherwise)*
 
 | Score | Condition |
@@ -278,9 +281,10 @@ Source: `grep` over IaC tree for resource name/ARN/ID; catalog lookup if `.culio
 Apply in order — first match wins:
 
 1. **🚫 Do not act** ← Evidence is 🚫.
-2. **🔴 Risky** ← Reversibility is 🔴 OR Blast radius is 🔴 OR Dependency is 🔴 OR Evidence is ⚪. (Note: ⚪ on Reversibility / Blast / Dependency is treated as 🟡-equivalent — does not force 🔴. Only ⚪ on Evidence triggers 🔴.)
-3. **🟡 Coordinated** ← any dimension is 🟡 (including ⚪ on Dimensions 1, 2, or 4), no 🔴 / 🚫 / Evidence-⚪ anywhere.
-4. **🟢 Fast win** ← all four dimensions 🟢.
+2. **🔵 Requires owner confirmation** ← Evidence is 🟢 AND the resource is in the idle-ambiguous class (Dimension 3) AND the action is a delete / decommission AND it is not otherwise forced to 🔴 by irreversibility or blast radius. A 🔵 item is not a fast win and not a hard block — it is a delete that only an owner can green-light.
+3. **🔴 Risky** ← Reversibility is 🔴 OR Blast radius is 🔴 OR Dependency is 🔴 OR Evidence is ⚪. (Note: ⚪ on Reversibility / Blast / Dependency is treated as 🟡-equivalent — does not force 🔴. Only ⚪ on Evidence triggers 🔴.)
+4. **🟡 Coordinated** ← any dimension is 🟡 (including ⚪ on Dimensions 1, 2, or 4), no 🔴 / 🚫 / 🔵 / Evidence-⚪ anywhere.
+5. **🟢 Fast win** ← all four dimensions 🟢 and not idle-ambiguous.
 
 ### Worked examples
 
@@ -291,6 +295,28 @@ Apply in order — first match wins:
 | Delete S3 bucket logs-2019, $400/mo | 🔴 | 🟡 namespace | 🟢 0 events 90d | 🟢 | **🔴 Risky** |
 | Same, but CloudTrail shows 1247 GetObject in 30d | 🔴 | 🟡 | 🚫 | 🟢 | **🚫 Do not act** |
 | Rightsize prod-api m5.4xl → m5.2xl, $280/mo | 🟢 | 🟡 ALB target | 🟢 CPU 4% 14d | 🟡 1 consumer | **🟡 Coordinated** |
+| Delete orders-ingest Kinesis stream, $180/mo | 🟢 (re-provisionable) | 🟡 (2 consumers wired) | 🟢 0 records 90d | 🟡 | **🔵 Requires owner confirmation** (idle-ambiguous: idle stream, live wiring — owner must confirm decommissioned vs paused) |
+
+### Owner-confirmation dev-note
+
+Each 🔵 item emits a dev-note at `.culiops/cost-optimize-plan/dev-notes/<resource-slug>.md` so the operator can route one question to the resource owner:
+
+````markdown
+# Owner confirmation needed — <resource id>
+
+**Resource:** <type / id / region>
+**Proposed action:** delete / decommission (est. saving <$X/mo>, source <label>)
+**Why it needs you:** metrics show no activity over <window>, but this resource type can be idle while *paused or seasonal*. Only you can confirm it is decommissioned, not paused.
+
+**Evidence gathered**
+- Activity: <throughput signal, window, granularity>
+- Attachment: <who is still wired to it>
+- Temporal distribution: <steady-idle vs one historical burst>
+
+**The one question:** Is <resource> decommissioned (safe to delete), or paused / seasonal (keep)?
+
+**Reversible fallback if unsure:** <downgrade / reduce-retention option that captures partial savings without deleting>
+````
 
 ### Ordering hints
 
@@ -331,6 +357,7 @@ Plan file: `.culiops/cost-optimize-plan/<scope-slug>-<YYYYMMDD-HHmm>.md`. Scope-
 |------|-------|--------------------|
 | 🟢 Fast wins | 3 | $312/mo |
 | 🟡 Coordinated | 5 | $1,840/mo |
+| 🔵 Requires owner confirmation | 2 | $360/mo (pending confirmation) |
 | 🔴 Risky | 2 | $448/mo |
 | 🚫 Do not act | 1 | ($400/mo — evidence of use) |
 | ❔ Manual review | 4 | $260/mo |
@@ -348,6 +375,13 @@ Plan file: `.culiops/cost-optimize-plan/<scope-slug>-<YYYYMMDD-HHmm>.md`. Scope-
 | 4 | Rightsize prod-api m5.4xl→m5.2xl | i-yyyyy | $280/mo | 🟢 | 🟡 ALB target | 🟢 CPU 4% 14d | 🟡 1 consumer | compute-optimizer (medium) | Re-apply old IaC |
 
 > Ordering hint: do #4 outside peak hours (catalog: peak = 14:00–16:00 UTC).
+
+## 🔵 Requires owner confirmation
+| # | Action | Resource | Savings | Reversibility | Blast | Evidence | Dependency | Source | Dev-note |
+|---|--------|----------|---------|---------------|-------|----------|------------|--------|----------|
+| 6 | Delete Kinesis stream orders-ingest | orders-ingest | $180/mo | 🟢 | 🟡 2 consumers | 🟢 0 records 90d | 🟡 | line-item (high) | `.culiops/cost-optimize-plan/dev-notes/orders-ingest.md` |
+
+> Idle-ambiguous: 0 throughput over 90d but 2 consumers still wired. Owner must confirm decommissioned vs paused/seasonal before delete. Reversible fallback: reduce retention 168h→24h.
 
 ## 🔴 Risky
 | # | Action | Resource | Savings | Reversibility | Blast | Evidence | Dependency | Source | Rollback |
@@ -444,7 +478,7 @@ Live AWS smoke against a real `cloud-cost-investigate` report. Deferred to the v
 - 15 playbooks: 9 delete (EC2, EIP, snapshot, S3, EBS, LB, NAT Gateway, Lambda, Kinesis stream), 5 rightsize (EC2, RDS, DynamoDB, EKS nodegroup, Kinesis stream), 1 lifecycle (S3).
 - Single-cloud-per-report (multi-cloud upstream reports rejected with `multi-cloud-report-unsupported`).
 - One report per run.
-- 4 actionable tiers (🟢 / 🟡 / 🔴 / 🚫) + ❔ manual-review section for uncovered (action, resource_type) combinations.
+- 5 actionable tiers (🟢 / 🟡 / 🔵 / 🔴 / 🚫) + ❔ manual-review section for uncovered (action, resource_type) combinations.
 
 **Deferred to v1.1+ (named explicitly so gaps are visible):**
 
