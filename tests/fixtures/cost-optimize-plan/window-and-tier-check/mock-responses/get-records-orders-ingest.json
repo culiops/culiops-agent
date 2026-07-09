@@ -1,0 +1,10 @@
+{
+  "_note": "90d hourly Kinesis.GetRecords.Records for orders-ingest — 0 across the window. No consumer is actually reading, despite 2 registered EFO consumers (attachment ≠ activity, Principle 1).",
+  "_window": "2026-04-10 to 2026-07-09 (90d hourly)",
+  "Label": "GetRecords.Records",
+  "Datapoints": [
+    {"Timestamp": "2026-04-10T00:00:00Z", "Sum": 0.0, "Unit": "Count"},
+    {"Timestamp": "2026-07-09T00:00:00Z", "Sum": 0.0, "Unit": "Count"}
+  ],
+  "_truncated_for_brevity": "All hourly datapoints Sum=0 across the 90d window."
+}

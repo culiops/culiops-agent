@@ -1,0 +1,1 @@
+Triage the cost report at .culiops/cloud-cost-investigate/acme-prod-waste-mixed-20260709-0900.md and build me an execution plan. Apply the Principle 3 (scale the verification window to the action) and the 🔵 owner-confirmation tier when scoring evidence — a couple of these delete candidates were flagged on a short window and one is an idle-but-wired stream.

@@ -1,0 +1,8 @@
+{
+  "_note": "Bucket is non-empty; most-recent object modified within the year. Confirms it is a live archive, not an abandoned empty bucket.",
+  "Contents": [
+    {"Key": "2023/q4-summary.parquet", "LastModified": "2026-07-01T00:03:00Z", "Size": 48213004}
+  ],
+  "KeyCount": 1,
+  "_full_bucket": "1,204 objects, ~180 GB total (source of the $60/mo storage line)."
+}

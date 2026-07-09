@@ -1,0 +1,12 @@
+{
+  "_note": "90d hourly Kinesis.IncomingRecords for orders-ingest — genuinely 0 across the full delete-appropriate window (Principle 3 satisfied: idle over 60-180d, hourly granularity, no historical burst anywhere). Producers are idle.",
+  "_window": "2026-04-10 to 2026-07-09 (90d, hourly = ~2160 datapoints)",
+  "Label": "IncomingRecords",
+  "Datapoints": [
+    {"Timestamp": "2026-04-10T00:00:00Z", "Sum": 0.0, "Unit": "Count"},
+    {"Timestamp": "2026-05-20T13:00:00Z", "Sum": 0.0, "Unit": "Count"},
+    {"Timestamp": "2026-06-30T07:00:00Z", "Sum": 0.0, "Unit": "Count"},
+    {"Timestamp": "2026-07-09T00:00:00Z", "Sum": 0.0, "Unit": "Count"}
+  ],
+  "_truncated_for_brevity": "All ~2160 hourly datapoints Sum=0 across the entire 90d window. No burst anywhere in the temporal distribution."
+}

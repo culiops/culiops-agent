@@ -1,0 +1,15 @@
+{
+  "_note": "90d CloudTrail LookupEvents for GetObject on archive-exports-2023 (a data-event trail IS configured). Principle 3: the 14d upstream window read 0, but the 60-180d delete window reveals steady low access — 214 GetObject events spread across the 90d, NOT a single historical burst. This flips the item off delete.",
+  "_window": "2026-04-10 to 2026-07-09 (90d)",
+  "_data_event_trail_configured": true,
+  "_total_getobject_events_90d": 214,
+  "_temporal_distribution": "roughly 2-3 events/day spread across the full 90d — steady low access, not one burst",
+  "Events": [
+    {"EventTime": "2026-04-11T02:14:00Z", "EventName": "GetObject", "Username": "svc-report-exporter", "Resources": [{"ResourceName": "archive-exports-2023/2023/q1-summary.parquet"}]},
+    {"EventTime": "2026-05-03T09:41:00Z", "EventName": "GetObject", "Username": "svc-report-exporter", "Resources": [{"ResourceName": "archive-exports-2023/2023/q2-summary.parquet"}]},
+    {"EventTime": "2026-06-01T00:05:00Z", "EventName": "GetObject", "Username": "svc-monthly-close", "Resources": [{"ResourceName": "archive-exports-2023/2023/q3-summary.parquet"}]},
+    {"EventTime": "2026-07-01T00:04:00Z", "EventName": "GetObject", "Username": "svc-monthly-close", "Resources": [{"ResourceName": "archive-exports-2023/2023/q4-summary.parquet"}]},
+    {"EventTime": "2026-07-08T18:22:00Z", "EventName": "GetObject", "Username": "svc-report-exporter", "Resources": [{"ResourceName": "archive-exports-2023/2023/index.json"}]}
+  ],
+  "_truncated_for_brevity": "5 representative events shown; full 90d window has 214 GetObject events distributed across the period (last: 2026-07-08 18:22 UTC, one day before the audit)."
+}

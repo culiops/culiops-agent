@@ -1,0 +1,12 @@
+{
+  "_note": "1 Lambda event-source mapping wired to orders-ingest — another ATTACHMENT signal (Dimension 2 blast radius), not activity. Reinforces idle-ambiguous: the wiring is live even though throughput is zero.",
+  "EventSourceMappings": [
+    {
+      "UUID": "a1b2c3d4-0000-0000-0000-000000000001",
+      "EventSourceArn": "arn:aws:kinesis:ap-southeast-1:123456789012:stream/orders-ingest",
+      "FunctionArn": "arn:aws:lambda:ap-southeast-1:123456789012:function:orders-projector",
+      "State": "Enabled",
+      "LastProcessingResult": "No records processed"
+    }
+  ]
+}

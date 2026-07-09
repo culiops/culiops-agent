@@ -286,7 +286,7 @@ Source: `grep` over IaC tree for resource name/ARN/ID; catalog lookup if `.culio
 Apply in order — first match wins:
 
 1. **🚫 Do not act** ← Evidence is 🚫.
-2. **🔵 Requires owner confirmation** ← Evidence is 🟢 AND the resource is in the idle-ambiguous class (Dimension 3) AND the action is a delete / decommission AND it is not otherwise forced to 🔴 by irreversibility or blast radius. A 🔵 item is not a fast win and not a hard block — it is a delete that only an owner can green-light.
+2. **🔵 Requires owner confirmation** ← Evidence is 🟢 AND the resource is in the idle-ambiguous class (Dimension 3) AND the action is a delete / decommission. This takes precedence over 🔴 / 🟡 / 🟢: an idle-ambiguous delete cannot be justified *at all* until an owner confirms decommissioned-vs-paused, so the owner gate comes first — and these deletes are typically irreversible (🔴), which is exactly why confirmation is needed, not a reason to reroute. Reversibility and blast-radius scores are still recorded and shown (they inform the eventual `iac-change-execution` and the dev-note), but they do not move the item out of 🔵. A 🔵 item is not a fast win and not a hard block — it is a delete that only an owner can green-light.
 3. **🔴 Risky** ← Reversibility is 🔴 OR Blast radius is 🔴 OR Dependency is 🔴 OR Evidence is ⚪. (Note: ⚪ on Reversibility / Blast / Dependency is treated as 🟡-equivalent — does not force 🔴. Only ⚪ on Evidence triggers 🔴.)
 4. **🟡 Coordinated** ← any dimension is 🟡 (including ⚪ on Dimensions 1, 2, or 4), no 🔴 / 🚫 / 🔵 / Evidence-⚪ anywhere.
 5. **🟢 Fast win** ← all four dimensions 🟢 and not idle-ambiguous.
@@ -300,7 +300,7 @@ Apply in order — first match wins:
 | Delete S3 bucket logs-2019, $400/mo | 🔴 | 🟡 namespace | 🟢 0 events 90d | 🟢 | **🔴 Risky** |
 | Same, but CloudTrail shows 1247 GetObject in 30d | 🔴 | 🟡 | 🚫 | 🟢 | **🚫 Do not act** |
 | Rightsize prod-api m5.4xl → m5.2xl, $280/mo | 🟢 | 🟡 ALB target | 🟢 CPU 4% 14d | 🟡 1 consumer | **🟡 Coordinated** |
-| Delete orders-ingest Kinesis stream, $180/mo | 🟢 (re-provisionable) | 🟡 (2 consumers wired) | 🟢 0 records 90d | 🟡 | **🔵 Requires owner confirmation** (idle-ambiguous: idle stream, live wiring — owner must confirm decommissioned vs paused) |
+| Delete orders-ingest Kinesis stream, $180/mo | 🔴 (re-create → new ARN) | 🟡 (2 consumers wired) | 🟢 0 records 90d | 🟡 | **🔵 Requires owner confirmation** (idle-ambiguous: idle stream, live wiring — owner must confirm decommissioned vs paused; 🔴 reversibility does not preempt 🔵) |
 
 ### Owner-confirmation dev-note
 
@@ -386,7 +386,7 @@ Plan file: `.culiops/cost-optimize-plan/<scope-slug>-<YYYYMMDD-HHmm>.md`. Scope-
 ## 🔵 Requires owner confirmation
 | # | Action | Resource | Savings | Reversibility | Blast | Evidence | Dependency | Source | Dev-note |
 |---|--------|----------|---------|---------------|-------|----------|------------|--------|----------|
-| 6 | Delete Kinesis stream orders-ingest | orders-ingest | $180/mo | 🟢 | 🟡 2 consumers | 🟢 0 records 90d | 🟡 | line-item (high) | `.culiops/cost-optimize-plan/dev-notes/orders-ingest.md` |
+| 6 | Delete Kinesis stream orders-ingest | orders-ingest | $180/mo | 🔴 re-create → new ARN | 🟡 2 consumers | 🟢 0 records 90d | 🟡 | line-item (high) | `.culiops/cost-optimize-plan/dev-notes/orders-ingest.md` |
 
 > Idle-ambiguous: 0 throughput over 90d but 2 consumers still wired. Owner must confirm decommissioned vs paused/seasonal before delete. Reversible fallback: reduce retention 168h→24h.
 

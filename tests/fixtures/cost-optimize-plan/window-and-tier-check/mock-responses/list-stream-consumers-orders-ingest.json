@@ -1,0 +1,7 @@
+{
+  "_note": "2 registered EFO consumers — ATTACHMENT signals (Principle 1), NOT activity. They pay $0.015/consumer-shard-hour even at zero reads. Crucially: these live consumers make orders-ingest idle-AMBIGUOUS — metrics say idle, but wiring is live, so decommissioned-vs-paused can only be confirmed by an owner. This is the 🔵 trigger.",
+  "Consumers": [
+    {"ConsumerName": "fraud-scoring-efo", "ConsumerARN": "arn:aws:kinesis:ap-southeast-1:123456789012:stream/orders-ingest/consumer/fraud-scoring-efo:1700000000", "ConsumerStatus": "ACTIVE"},
+    {"ConsumerName": "analytics-mirror-efo", "ConsumerARN": "arn:aws:kinesis:ap-southeast-1:123456789012:stream/orders-ingest/consumer/analytics-mirror-efo:1700000001", "ConsumerStatus": "ACTIVE"}
+  ]
+}
