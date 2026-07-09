@@ -133,12 +133,12 @@ gcloud storage buckets list --format='value(name,lifecycle_config)'
 ### Optional — utilization metrics via Cloud Monitoring
 
 ```bash
-# Last 14 days average CPU for a specific instance (MQL)
+# Last 30 days average CPU for a specific instance (MQL)
 gcloud monitoring query --project=<project> --query='
   fetch gce_instance
   | metric "compute.googleapis.com/instance/cpu/utilization"
   | filter resource.instance_id == "<instance-id>"
-  | within 14d | every 1d | mean'
+  | within 30d | every 1d | mean'
 ```
 
 **IAM:** `roles/monitoring.viewer`.

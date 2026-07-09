@@ -299,7 +299,7 @@ Apply in order — first match wins:
 | Add lifecycle policy on logs-bucket, $200/mo | 🟢 reversible | 🟢 | 🟢 (policy-only) | 🟢 | **🟢 Fast win** |
 | Delete S3 bucket logs-2019, $400/mo | 🔴 | 🟡 namespace | 🟢 0 events 90d | 🟢 | **🔴 Risky** |
 | Same, but CloudTrail shows 1247 GetObject in 30d | 🔴 | 🟡 | 🚫 | 🟢 | **🚫 Do not act** |
-| Rightsize prod-api m5.4xl → m5.2xl, $280/mo | 🟢 | 🟡 ALB target | 🟢 CPU 4% 14d | 🟡 1 consumer | **🟡 Coordinated** |
+| Rightsize prod-api m5.4xl → m5.2xl, $280/mo | 🟢 | 🟡 ALB target | 🟢 CPU 4% 30d | 🟡 1 consumer | **🟡 Coordinated** |
 | Delete orders-ingest Kinesis stream, $180/mo | 🔴 (re-create → new ARN) | 🟡 (2 consumers wired) | 🟢 0 records 90d | 🟡 | **🔵 Requires owner confirmation** (idle-ambiguous: idle stream, live wiring — owner must confirm decommissioned vs paused; 🔴 reversibility does not preempt 🔵) |
 
 ### Owner-confirmation dev-note
@@ -379,7 +379,7 @@ Plan file: `.culiops/cost-optimize-plan/<scope-slug>-<YYYYMMDD-HHmm>.md`. Scope-
 ## 🟡 Coordinated
 | # | Action | Resource | Savings | Reversibility | Blast | Evidence | Dependency | Source | Rollback |
 |---|--------|----------|---------|---------------|-------|----------|------------|--------|----------|
-| 4 | Rightsize prod-api m5.4xl→m5.2xl | i-yyyyy | $280/mo | 🟢 | 🟡 ALB target | 🟢 CPU 4% 14d | 🟡 1 consumer | compute-optimizer (medium) | Re-apply old IaC |
+| 4 | Rightsize prod-api m5.4xl→m5.2xl | i-yyyyy | $280/mo | 🟢 | 🟡 ALB target | 🟢 CPU 4% 30d | 🟡 1 consumer | compute-optimizer (medium) | Re-apply old IaC |
 
 > Ordering hint: do #4 outside peak hours (catalog: peak = 14:00–16:00 UTC).
 

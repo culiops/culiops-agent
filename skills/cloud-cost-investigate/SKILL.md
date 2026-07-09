@@ -307,7 +307,7 @@ Write to `.culiops/cloud-cost-investigate/<scope-slug>-<mode>-<YYYYMMDD-HHmm>.md
 | # | Action | Resource(s) | Est. savings | Source | Confidence | Evidence |
 |---|--------|-------------|--------------|--------|------------|----------|
 | 1 | Delete unattached EBS volume | vol-xxxxx | $48/mo | line-item-computation | high | volume.state=available since 2026-02-14 |
-| 2 | Rightsize prod-api from m5.4xl → m5.2xl | i-yyyyy | $280/mo | compute-optimizer | medium | CO recommendation, 14d avg CPU 4% |
+| 2 | Rightsize prod-api from m5.4xl → m5.2xl | i-yyyyy | $280/mo | compute-optimizer | medium | CO recommendation, 30d avg CPU 4% |
 | ... | ... | ... | ... | ... | ... | ... |
 
 **Total estimated savings:** $X/mo (sum of high-confidence) + $Y/mo (medium) + $Z/mo (low)

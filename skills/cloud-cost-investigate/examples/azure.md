@@ -132,11 +132,11 @@ az storage account management-policy show \
 ### Optional — utilization metrics via Azure Monitor
 
 ```bash
-# Last 14 days average CPU for a specific VM
+# Last 30 days average CPU for a specific VM
 az monitor metrics list \
   --resource /subscriptions/<sub-id>/resourceGroups/<rg>/providers/Microsoft.Compute/virtualMachines/<vm-name> \
   --metric "Percentage CPU" \
-  --start-time $(date -u -d '14 days ago' +%Y-%m-%dT%H:%M:%SZ) \
+  --start-time $(date -u -d '30 days ago' +%Y-%m-%dT%H:%M:%SZ) \
   --end-time $(date -u +%Y-%m-%dT%H:%M:%SZ) \
   --interval P1D \
   --output json
