@@ -19,12 +19,12 @@ Covers two distinct rightsizing levers, which compose: (a) reduce provisioned ca
 ## Queries
 
 1. `aws dynamodb describe-table --table-name <name>` — captures `BillingMode` (`PROVISIONED` or `PAY_PER_REQUEST`), `ProvisionedThroughput.{Read,Write}CapacityUnits` (provisioned mode only), `TableSizeBytes`, `ItemCount`, `GlobalSecondaryIndexes[]` (GSI capacities are separate cost lines).
-2. `aws cloudwatch get-metric-statistics --namespace AWS/DynamoDB --metric-name ConsumedReadCapacityUnits --dimensions Name=TableName,Value=<name> --start-time <now-14d> --end-time <now> --period 3600 --statistics Sum,Maximum` — 14d hourly consumed RCU. **Activity signal.**
-3. `aws cloudwatch get-metric-statistics --namespace AWS/DynamoDB --metric-name ConsumedWriteCapacityUnits --dimensions Name=TableName,Value=<name> --start-time <now-14d> --end-time <now> --period 3600 --statistics Sum,Maximum` — 14d hourly consumed WCU.
-4. `aws cloudwatch get-metric-statistics --namespace AWS/DynamoDB --metric-name ProvisionedReadCapacityUnits --dimensions Name=TableName,Value=<name> --start-time <now-14d> --end-time <now> --period 3600 --statistics Average,Maximum` — confirms current provisioned ceiling per hour (autoscaling-aware).
-5. `aws cloudwatch get-metric-statistics --namespace AWS/DynamoDB --metric-name ProvisionedWriteCapacityUnits --dimensions Name=TableName,Value=<name> --start-time <now-14d> --end-time <now> --period 3600 --statistics Average,Maximum`
-6. `aws cloudwatch get-metric-statistics --namespace AWS/DynamoDB --metric-name ReadThrottleEvents --dimensions Name=TableName,Value=<name> --start-time <now-14d> --end-time <now> --period 3600 --statistics Sum` — throttles indicate under-provisioning; do NOT shrink a table that's throttling.
-7. `aws cloudwatch get-metric-statistics --namespace AWS/DynamoDB --metric-name WriteThrottleEvents --dimensions Name=TableName,Value=<name> --start-time <now-14d> --end-time <now> --period 3600 --statistics Sum`
+2. `aws cloudwatch get-metric-statistics --namespace AWS/DynamoDB --metric-name ConsumedReadCapacityUnits --dimensions Name=TableName,Value=<name> --start-time <now-30d> --end-time <now> --period 3600 --statistics Sum,Maximum` — 30d hourly consumed RCU. **Activity signal.**
+3. `aws cloudwatch get-metric-statistics --namespace AWS/DynamoDB --metric-name ConsumedWriteCapacityUnits --dimensions Name=TableName,Value=<name> --start-time <now-30d> --end-time <now> --period 3600 --statistics Sum,Maximum` — 30d hourly consumed WCU.
+4. `aws cloudwatch get-metric-statistics --namespace AWS/DynamoDB --metric-name ProvisionedReadCapacityUnits --dimensions Name=TableName,Value=<name> --start-time <now-30d> --end-time <now> --period 3600 --statistics Average,Maximum` — confirms current provisioned ceiling per hour (autoscaling-aware).
+5. `aws cloudwatch get-metric-statistics --namespace AWS/DynamoDB --metric-name ProvisionedWriteCapacityUnits --dimensions Name=TableName,Value=<name> --start-time <now-30d> --end-time <now> --period 3600 --statistics Average,Maximum`
+6. `aws cloudwatch get-metric-statistics --namespace AWS/DynamoDB --metric-name ReadThrottleEvents --dimensions Name=TableName,Value=<name> --start-time <now-30d> --end-time <now> --period 3600 --statistics Sum` — throttles indicate under-provisioning; do NOT shrink a table that's throttling.
+7. `aws cloudwatch get-metric-statistics --namespace AWS/DynamoDB --metric-name WriteThrottleEvents --dimensions Name=TableName,Value=<name> --start-time <now-30d> --end-time <now> --period 3600 --statistics Sum`
 8. For each GSI in Query 1: repeat Queries 2–7 with `Name=GlobalSecondaryIndexName,Value=<gsi>` — GSIs are billed independently.
 9. (Optional) `aws application-autoscaling describe-scaling-policies --service-namespace dynamodb --resource-id table/<name>` — if autoscaling is on, the "provisioned" floor/ceiling is the cost lever, not the static capacity.
 
@@ -32,10 +32,10 @@ Covers two distinct rightsizing levers, which compose: (a) reduce provisioned ca
 
 | Signal | 🟢 Threshold (safe to rightsize) | 🚫 Trigger (do not rightsize) |
 |--------|--------------------------------|--------------------------------|
-| 14d hourly p99 `ConsumedReadCapacityUnits` / `ProvisionedReadCapacityUnits` | ≤ 40% — over-provisioned | ≥ 80% sustained — at risk; rightsize-down would cause throttling |
-| 14d hourly p99 `ConsumedWriteCapacityUnits` / `ProvisionedWriteCapacityUnits` | ≤ 40% | ≥ 80% sustained |
-| 14d `ReadThrottleEvents` (Sum) | `0` | ≥ 1 — already under-provisioned, downsize would worsen |
-| 14d `WriteThrottleEvents` (Sum) | `0` | ≥ 1 |
+| 30d hourly p99 `ConsumedReadCapacityUnits` / `ProvisionedReadCapacityUnits` | ≤ 40% — over-provisioned | ≥ 80% sustained — at risk; rightsize-down would cause throttling |
+| 30d hourly p99 `ConsumedWriteCapacityUnits` / `ProvisionedWriteCapacityUnits` | ≤ 40% | ≥ 80% sustained |
+| 30d `ReadThrottleEvents` (Sum) | `0` | ≥ 1 — already under-provisioned, downsize would worsen |
+| 30d `WriteThrottleEvents` (Sum) | `0` | ≥ 1 |
 | Per-GSI capacity utilization | each GSI scored independently per rows above | any GSI throttling → 🚫 |
 | TTL configured if table has time-bounded data (per catalog) | configured | not configured AND table size growing > 10%/month — flag for retention review before rightsize |
 
@@ -51,7 +51,7 @@ This playbook's **most common trap**. Switching `PROVISIONED` ↔ `PAY_PER_REQUE
 
 Compute steps before recommending a mode switch:
 
-1. Sum 14d `Consumed{Read,Write}CapacityUnits` per hour, including all GSIs.
+1. Sum 30d `Consumed{Read,Write}CapacityUnits` per hour, including all GSIs.
 2. Multiply by current region's on-demand request pricing (per million requests; $1.25 read / $6.25 write US East at time of writing — **fetch live via `aws pricing get-products` rather than hardcoding**).
 3. Compare to current provisioned monthly cost: `provisioned_capacity × $0.00013 read-RCU-hour × 730 + same for write` (or autoscaling-floor × hours-at-floor + scaled-portions).
 4. Include GSI capacities in both sides of the equation.

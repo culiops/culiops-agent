@@ -22,9 +22,9 @@ Covers three rightsizing levers, which compose: (a) reduce `desiredSize` / `minS
 
 1. `aws eks describe-nodegroup --cluster-name <cluster> --nodegroup-name <ng>` — captures `instanceTypes[]`, `scalingConfig.{min,desired,max}Size`, `capacityType`, `amiType`, `nodegroupArn`, `resources.autoScalingGroups[]`.
 2. `aws autoscaling describe-auto-scaling-groups --auto-scaling-group-names <asg-name>` — current instances per nodegroup; cross-references EC2 instance IDs for utilization queries.
-3. For each instance in Query 2: `aws cloudwatch get-metric-statistics --namespace AWS/EC2 --metric-name CPUUtilization --dimensions Name=InstanceId,Value=<id> --start-time <now-14d> --end-time <now> --period 3600 --statistics Average,Maximum` — node-level CPU. **Activity signal — node side.**
+3. For each instance in Query 2: `aws cloudwatch get-metric-statistics --namespace AWS/EC2 --metric-name CPUUtilization --dimensions Name=InstanceId,Value=<id> --start-time <now-30d> --end-time <now> --period 3600 --statistics Average,Maximum` — node-level CPU. **Activity signal — node side.**
 4. For each instance: same `GetMetricStatistics` for `NetworkIn` / `NetworkOut` and (if CloudWatch agent installed) `mem_used_percent` — memory baseline. Score ⚪ if no memory data; do not assume.
-5. Container Insights (if enabled): `aws cloudwatch get-metric-statistics --namespace ContainerInsights --metric-name node_cpu_utilization --dimensions Name=ClusterName,Value=<cluster>,Name=NodegroupName,Value=<ng> --start-time <now-14d> --end-time <now> --period 3600 --statistics Average,Maximum` — nodegroup-aggregated CPU.
+5. Container Insights (if enabled): `aws cloudwatch get-metric-statistics --namespace ContainerInsights --metric-name node_cpu_utilization --dimensions Name=ClusterName,Value=<cluster>,Name=NodegroupName,Value=<ng> --start-time <now-30d> --end-time <now> --period 3600 --statistics Average,Maximum` — nodegroup-aggregated CPU.
 6. Container Insights: `node_memory_utilization` + `node_filesystem_utilization` for the same dimensions.
 7. Cluster-side activity (via kubectl, captured to evidence buffer): `kubectl top nodes -l eks.amazonaws.com/nodegroup=<ng>` — current actual CPU/memory in use. `kubectl get pods --all-namespaces --field-selector spec.nodeName=<each-node> -o json | jq '[.items[].spec.containers[].resources.requests | (.cpu // "0"), (.memory // "0")]'` — sum of **requested** resources per node (the scheduler's view, not actual use).
 8. (If kube-state-metrics + metrics-server present, via cluster Prometheus or `kubectl top`): `sum(kube_pod_container_resource_requests{nodegroup=<ng>}) by (resource)` vs `sum(kube_node_status_allocatable{nodegroup=<ng>}) by (resource)` — request:allocatable ratio per resource per node.
@@ -33,10 +33,10 @@ Covers three rightsizing levers, which compose: (a) reduce `desiredSize` / `minS
 
 | Signal | 🟢 Threshold (safe to rightsize down) | 🚫 Trigger (do not rightsize down) |
 |--------|--------------------------------------|--------------------------------------|
-| 14d p95 node CPU utilization | ≤ 40% | ≥ 75% — at risk of CPU pressure post-scale-down |
-| 14d p95 node memory utilization | ≤ 50% (if available) | ≥ 75% (if available); ⚪ if no memory data |
-| 14d p95 pod-request : node-allocatable (CPU) | ≤ 60% | ≥ 80% — scheduler will fail to place pods on smaller / fewer nodes |
-| 14d p95 pod-request : node-allocatable (memory) | ≤ 70% | ≥ 80% |
+| 30d p95 node CPU utilization | ≤ 40% | ≥ 75% — at risk of CPU pressure post-scale-down |
+| 30d p95 node memory utilization | ≤ 50% (if available) | ≥ 75% (if available); ⚪ if no memory data |
+| 30d p95 pod-request : node-allocatable (CPU) | ≤ 60% | ≥ 80% — scheduler will fail to place pods on smaller / fewer nodes |
+| 30d p95 pod-request : node-allocatable (memory) | ≤ 70% | ≥ 80% |
 | Pending pods (last 7d, from Container Insights `cluster_failed_node_count` proxy or kube-state-metrics) | `0` sustained | recurring — nodegroup is already capacity-constrained |
 | HPA / VPA controllers on workloads in this nodegroup | Reviewed — autoscaler-driven resize composes with manual rightsize | Active HPA scaling at peak → check peak window before fixing nodegroup size |
 
