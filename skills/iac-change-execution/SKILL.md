@@ -39,6 +39,7 @@ NO LIVE QUERIES OR MUTATIONS WITHOUT EXPLICIT OPT-IN.
 | "I can chain these apply commands together" | STOP — one command at a time, each shown and approved before execution. |
 | "The plan showed no issues, health checks aren't needed" | STOP — plan success does not equal runtime success. Offer health checks. |
 | "This phase failed but the next phase might fix it" | STOP — stop on failure. Don't proceed to the next phase hoping it resolves the problem. |
+| "The old Terraform state was retired, so this import is safe" | Verify the *current* owner, not the retired one. A resource can be retired from TF yet actively owned by CloudFormation / Serverless — import that and a stack deploy reverts you. |
 
 ## Red Flags — STOP and Follow Process
 
@@ -53,6 +54,8 @@ NO LIVE QUERIES OR MUTATIONS WITHOUT EXPLICIT OPT-IN.
 | Apply command fails | STOP → report the error, do not retry without operator direction |
 | Phase success criteria check fails | STOP → report failure, do not proceed to next phase |
 | Service-discovery catalog references resources that don't exist in the code | STOP → catalog may be stale. Flag the discrepancy, ask the operator |
+| About to `import` a resource an active CloudFormation / Serverless stack owns | STOP → dual-ownership drift trap. Have the current owner relinquish first (delete-with-retain), then import |
+| A delete plan lists only the named resource (no EIP / listeners / DNS / volumes) | STOP → enumerate the full bundle; a partial delete leaves residual cost or orphans |
 
 ## Workflow
 
@@ -119,6 +122,8 @@ digraph iac_change {
 
 **Identify gaps.** If the research leaves questions unanswered (e.g., "what's the current instance type?" when the catalog doesn't cover that resource, or "what value does this SSM parameter have?"), list the gaps and propose read-only cloud CLI commands to fill them. Each command requires operator approval before running. Consult `examples/<cloud>.md` for command templates.
 
+**Resource ownership check — mandatory before any `import`.** If the change imports an existing resource into this IaC, detect its *current* owner first: Terraform state (`terraform state list`, other workspaces), CloudFormation (`aws cloudformation describe-stack-resources`), the Serverless Framework, or another IaC tool. If the resource is owned by an *active* CFN / Serverless stack, STOP — importing it into Terraform creates a dual-ownership drift trap: the next `serverless deploy` / stack update reverts the import. Warn the operator and recommend the current owner relinquish first (remove from its stack with a retain policy), then import. Block the import until acknowledged. A retired old Terraform state is safe to import over; an active *other-tool* owner is not.
+
 **Present the research summary:**
 
 > "**Change requested:** `<description>`
@@ -145,6 +150,7 @@ This is informational, not a gate — proceed to Step 2 unless the operator corr
 **Design the change plan.** For each phase:
 - What files will be modified/created/deleted.
 - What resources will be added/changed/destroyed.
+- **For deletes, enumerate the full resource bundle.** A delete is never just the named resource — list and handle its billed / orphaned companions in the same phase: a **NAT gateway** delete must also release its Elastic IP (else the EIP keeps billing) and remove / note the now-blackholed route; a **load balancer** delete implies its listeners, target groups, and Route53 alias / DNS records; an **instance / DB** delete implies attached EBS volumes, snapshots, and ENI / reserved-IP leftovers. Partial deletes leave residual cost or dangling references.
 - Expected blast radius (from catalog dependency graph if available).
 - Rollback path for this phase (what the operator would do manually if this phase fails — informational, not automated).
 - Ordering constraints (which phases must complete before the next can start, and what verification proves the phase succeeded).

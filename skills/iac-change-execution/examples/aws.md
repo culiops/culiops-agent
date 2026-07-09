@@ -68,6 +68,14 @@ Replace placeholders (`{cluster}`, `{service}`, `{stack}`, `{region}`, `{T-1h}`,
 - Existing change sets: `aws cloudformation list-change-sets --stack-name {stack} --region {region}`
 - Drift status: `aws cloudformation describe-stack-drift-detection-status --stack-drift-detection-id {detection-id} --region {region}`
 
+### Resource ownership (before any import — who owns this resource today?)
+
+Detect the *current* owner before importing, to avoid the dual-ownership drift trap:
+- Terraform: `terraform state list | grep {resource}` (and check other workspaces/state files).
+- CloudFormation: `aws cloudformation describe-stack-resources --physical-resource-id {id} --region {region}` — if this returns a stack, the resource is CFN-owned.
+- Serverless Framework: look for a `serverless.yml` / a CFN stack named `{service}-{stage}` that includes the resource.
+- If an *active* CFN / Serverless stack owns it, STOP — have that owner relinquish (remove with a `DeletionPolicy: Retain` / equivalent) before importing into Terraform.
+
 ---
 
 ## Verification Checks (Step 5 — Read-Only)
@@ -112,6 +120,27 @@ Each command below changes cloud state. The skill presents each command to the o
 - Elevated permission required: IAM role or policy with create/update/delete rights on the specific resource types in the plan.
 - Rollback path: `terraform apply` from the previous state file snapshot, or manual revert per resource; no automated rollback.
 - Note: `tfplan` is the binary produced by `terraform plan -out=tfplan`. Never run `terraform apply` without the plan file.
+
+### Standard pattern — import-to-manage-legacy (zero-mutation)
+
+To bring an existing resource under Terraform **without changing it** — e.g. to adopt a legacy resource before managing or deleting it safely — use a config-driven `import` block plus `lifecycle { ignore_changes = all }`:
+
+```hcl
+import {
+  to = aws_kinesis_stream.legacy_orders
+  id = "orders-ingest"
+}
+
+resource "aws_kinesis_stream" "legacy_orders" {
+  name = "orders-ingest"
+  # ...minimal config to match reality...
+  lifecycle {
+    ignore_changes = all
+  }
+}
+```
+
+`terraform plan` then shows an import with **no diff** — the resource is adopted exactly as-is, no mutation. This is the standard, safe way to adopt legacy resources (verified against real retired-state imports). Drop `ignore_changes = all` only once you intend to converge config to reality. Pair with the ownership check above — never import a resource an active CFN / Serverless stack still owns.
 
 ### CloudFormation — execute change set
 
