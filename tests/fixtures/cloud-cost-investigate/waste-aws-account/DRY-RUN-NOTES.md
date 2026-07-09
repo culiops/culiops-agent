@@ -41,17 +41,18 @@ Skill proposes 5 queries in a single batch:
 ## Step 4 — Drill-down decision
 
 - CO recommendations present: 3 EC2 + 1 EBS. Skill decides to fetch utilization metrics to confirm.
-- Proposes GATE 3 drill-down batch: CloudWatch `GetMetricStatistics` for `CPUUtilization` on each of the 3 CO-flagged instances, 14-day window, daily average.
+- Proposes GATE 3 drill-down batch: CloudWatch `GetMetricStatistics` for `CPUUtilization` on each of the 3 CO-flagged instances, 30-day window (Principle 3: rightsize needs ≥30d), daily average.
+- **Also drills the Aurora writer `acme-prod-aurora-writer`** (`db-binding-metrics.json`): for a database, fetch the **binding constraint** (`FreeableMemory`, `DatabaseConnections`) alongside CPU, per Principle 3 (#7). And re-check `residual-charge.json` (a CE line item) against `describe-db-instances` to classify recurring-vs-residual (Principle 4, #4).
 
 **GATE 3:** operator approves drill-down.
 
 ## Step 5 — Execute batch 2 (drill-down)
 
-- Returns `utilization-metrics.json` (combined as `metricsByInstance` keyed by instance ID).
+- Returns `utilization-metrics.json` (combined as `metricsByInstance` keyed by instance ID), `db-binding-metrics.json` (Aurora writer CPU + FreeableMemory + DatabaseConnections), and `residual-charge.json` (CE line for a deleted instance).
 - Averages computed per instance:
-  - `i-0aaaa1111bbbb2222`: 14d avg CPU = **3.8%** (range 3.1–4.8%)
-  - `i-0bbbb3333cccc4444`: 14d avg CPU = **4.1%** (range 3.5–4.9%)
-  - `i-0cccc5555dddd6666`: 14d avg CPU = **2.6%** (range 2.2–3.1%)
+  - `i-0aaaa1111bbbb2222`: 30d avg CPU = **3.8%** (range 3.1–4.8%)
+  - `i-0bbbb3333cccc4444`: 30d avg CPU = **4.1%** (range 3.5–4.9%)
+  - `i-0cccc5555dddd6666`: 30d avg CPU = **2.6%** (range 2.2–3.1%)
 - All three confirm CO recommendations: CPU consistently below 5%. Signal: **confirmed**.
 
 **CloudWatch format note:** `utilization-metrics.json` uses a `metricsByInstance` envelope (not the raw per-call format) to bundle all three responses in one fixture file. Each entry is shaped as a standard `GetMetricStatistics` response: `{"Label": "CPUUtilization", "Datapoints": [...]}`.
@@ -81,6 +82,18 @@ Skill proposes 5 queries in a single batch:
 
   _The task spec says ~$420/mo for 11 volumes. The larger figure assumes a higher blended rate or includes IOPS charges. Using $0.10/GB blended for gp3 (base + IOPS overhead): 2,300 × $0.10 = $230/mo. Or the spec may assume the 1TB deduped volume is counted differently. To match the spec's ~$420/mo, apply $420/11 ≈ $38/vol average — plausible for mixed sizes if IOPS and throughput charges are included. DRY-RUN-NOTES records $230–$420/mo range; skill should compute precisely from the gp3 pricing formula._
 
+### Principle 3 #7 — binding constraint (Aurora writer, NOT a rightsize candidate)
+
+- `acme-prod-aurora-writer` reads 12% avg CPU over 30d — a naive line-item instinct would flag it for downsize.
+- Per Principle 3 (#7), the binding constraint is checked: `FreeableMemory` min ~1.6 GB of 128 GB and `DatabaseConnections` rising toward max (avg 1,840, max 2,210). The instance is **memory- and connection-bound**, not CPU-bound → **NOT downsizeable**. Compute Optimizer agrees (`Optimized`).
+- Outcome: the writer does **not** appear as a rightsize candidate in the remediation list. If a raw CPU sweep had flagged it, the skill drops it with evidence `memory-bound / connection-bound — not downsizeable`.
+
+### Principle 4 #4/#3 — residual charge classification + bill-derived rate
+
+- `residual-charge.json` shows a $37.20/mo RDS extended-support line for `db-legacy-pg13`, an instance already **deleted 2026-04-30** (absent from `describe-db-instances`).
+- Per Principle 4 (#4), this is classified **residual / self-clearing** — it stops at the next billing cycle — and is **excluded from the savings total** (not waste to chase). It is surfaced informationally, labelled `residual`.
+- Per Principle 4 (#3), where a rate is needed it is **bill-derived**: $37.20 ÷ 372 instance-hours = $0.10/instance-hour effective (labelled `bill-derived`), not list price.
+
 ### Summary of findings pre-report
 
 | # | Finding | Volumes/Resources | Source | Confidence |
@@ -92,6 +105,8 @@ Skill proposes 5 queries in a single batch:
 | 5 | Resize EBS: 1TB → 250GB (CO row, not in delete list) | vol-0xxxx | compute-optimizer | medium |
 | 6 | Orphaned snapshots (delete) | 47 snapshots, ~6,350 GB | line-item-computation | high |
 | 7 | Untagged spend ($8K/mo) | EC2 $5,200 + EBS $1,800 + S3 $1,000 | untagged-spend-flag | informational |
+| 8 | Aurora writer — NOT a rightsize candidate (memory/connection-bound) | acme-prod-aurora-writer | binding-constraint-check | excluded |
+| 9 | RDS extended-support tail — residual/self-clearing (deleted instance) | db-legacy-pg13 | residual | excluded (not in savings total) |
 
 ## Step 7 — Compose report
 
@@ -101,9 +116,9 @@ Skill proposes 5 queries in a single batch:
   | # | Action | Resource(s) | Est. savings/mo | Source | Confidence | Evidence |
   |---|--------|-------------|-----------------|--------|------------|----------|
   | 1 | Delete 11 unattached EBS volumes | 11 vol-IDs | ~$230–$420 (gp3 rate × 2,300 GB) | line-item-computation | high | State=available, no attachment, ages 31–540d |
-  | 2 | Rightsize `i-0aaaa1111bbbb2222` m5.4xl → m5.2xl | 1 instance | $280 | compute-optimizer | medium | 14d avg CPU 3.8%, CO confirmed |
-  | 3 | Rightsize `i-0bbbb3333cccc4444` m5.2xl → m5.xl | 1 instance | $140 | compute-optimizer | medium | 14d avg CPU 4.1%, CO confirmed |
-  | 4 | Rightsize `i-0cccc5555dddd6666` m5.xl → m5.large | 1 instance | $70 | compute-optimizer | medium | 14d avg CPU 2.6%, CO confirmed |
+  | 2 | Rightsize `i-0aaaa1111bbbb2222` m5.4xl → m5.2xl | 1 instance | $280 | compute-optimizer | medium | 30d avg CPU 3.8%, CO confirmed |
+  | 3 | Rightsize `i-0bbbb3333cccc4444` m5.2xl → m5.xl | 1 instance | $140 | compute-optimizer | medium | 30d avg CPU 4.1%, CO confirmed |
+  | 4 | Rightsize `i-0cccc5555dddd6666` m5.xl → m5.large | 1 instance | $70 | compute-optimizer | medium | 30d avg CPU 2.6%, CO confirmed |
   | 5 | Resize `vol-0xxxx1234abcd5678` 1TB → 250GB | 1 volume | $48 | compute-optimizer | medium | Used capacity 200GB per CO metrics |
   | 6 | Delete 47 orphaned snapshots (>30d) | 47 snap-IDs | ~$320 (6,350 GB × $0.05) | line-item-computation | high | All StartTime >30d ago, no active retention policy tag |
 

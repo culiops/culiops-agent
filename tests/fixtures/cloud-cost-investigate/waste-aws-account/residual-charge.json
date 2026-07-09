@@ -1,0 +1,21 @@
+{
+  "_note": "Cost Explorer line item for RDS extended support on db-legacy-pg13 — an instance that was ALREADY DELETED on 2026-04-30. Principle 4 (#4): this is a residual / self-clearing charge, not recurring waste to chase. It stops on its own at the next billing cycle. Must be classified 'residual' and EXCLUDED from the savings total. Also demonstrates Principle 4 (#3) bill-derived rate: effective $/unit is derived from usage qty / cost, not list price.",
+  "resultsByTime": [
+    {
+      "timePeriod": {"Start": "2026-05-01", "End": "2026-06-01"},
+      "groups": [
+        {
+          "keys": ["Amazon RDS", "RDS:PostgreSQL-ExtendedSupport"],
+          "metrics": {
+            "UnblendedCost": {"Amount": "37.20", "Unit": "USD"},
+            "UsageQuantity": {"Amount": "372", "Unit": "instance-hours"}
+          },
+          "_resource": "db-legacy-pg13",
+          "_instance_state": "DELETED 2026-04-30 — no longer exists in describe-db-instances",
+          "_classification": "residual / self-clearing (extended-support tail for a deleted instance)",
+          "_bill_derived_rate": "37.20 USD / 372 instance-hours = $0.10/instance-hour effective (bill-derived, not list price)"
+        }
+      ]
+    }
+  ]
+}
