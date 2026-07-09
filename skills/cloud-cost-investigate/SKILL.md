@@ -99,6 +99,7 @@ Every cost and savings figure must be derived from what is actually billed, and 
 | "Nothing's attached / referenced — it's waste" | STOP — attachment ≠ activity. For any resource type with a usage signal (DB, queue, stream, bucket, function), require an activity-window check before claiming no-use. |
 | "Health-check / heartbeat traffic shows hits — it's in use" | STOP — keep-alive noise has a uniform, periodic, workload-independent cadence. Identify and subtract synthetic traffic before judging activity. |
 | "Switching from reserved to on-demand (or vice-versa) will save $X" | STOP — never assume direction. Compute delta from observed utilization × real pricing for both modes. The premium may run the other way at this utilization. |
+| "CPU is only 12% — this DB can be downsized" | STOP — databases are usually memory- or connection-bound. Check freeable memory and connection count over the window before calling it downsizeable. |
 | "Org-wide scope would give a better picture — I'll just go org-wide" | STOP — scope escalation requires operator opt-in. Never silent. |
 | "I'll skip listing IAM permissions, the operator obviously has admin" | STOP — least-privilege is the user's expectation. Always list. |
 | "This finding needs a metrics query — I'll batch it in with the original batch" | STOP — original batch is approved as-is. Drill-down is GATE 3. |
@@ -177,7 +178,7 @@ digraph cost_investigate {
 3. **Set scope.** Default: the operator's currently-authenticated single account/subscription/project/cluster. If they want org-wide, they say so and the skill switches to consolidated billing / org billing account / management group / multi-cluster.
 4. **Set time range.** Defaults per mode:
    - Anomaly: last 30d vs. previous 30d (or last 7d vs. previous 7d if request mentions recent).
-   - Waste: current resource state + last 14d utilization metrics.
+   - Waste: current resource state + last 30d utilization metrics for resize candidates (Principle 3); delete / decommission candidates require a 60–180d confirmation window, fetched at the Step 3 drill-down.
    - Attribution: previous complete billing month.
    Operator can override.
 5. **Look up catalog.** Check `.culiops/service-discovery/<service>.md`. Required for attribution mode unless the operator confirms a tag convention (e.g., `Service=foo` tag). Optional for the other modes.
@@ -212,7 +213,7 @@ Typical batch:
 1. **Cloud-native recommenders.** AWS Compute Optimizer rightsizing recommendations, GCP Recommender (idle VMs, unattached disks, idle IPs), Azure Advisor cost recommendations. These come pre-scored with savings estimates.
 2. **Resource-state sweeps.** Unattached EBS volumes / unattached GCP disks / orphaned managed disks; orphaned snapshots older than 30d; unused Elastic IPs / unused public IPs; load balancers with no recent traffic; S3 buckets / GCS buckets / Azure containers without lifecycle policies.
 3. **Untagged spend.** Cost grouped by tag presence — surfaces resources without service/owner/env tags.
-4. **Utilization metrics** for instances / databases / queues / streams / functions — last 14d CPU, memory, network, request count, invocation count, throughput. **Required (not optional)** for any rightsize or idle-resource candidate per Principle 1. Resources with no activity dimension (unattached EBS, unallocated EIP, orphaned snapshots) are exempt — attachment state alone is sufficient evidence for those types.
+4. **Utilization metrics** for instances / databases / queues / streams / functions — CPU, memory, network, request count, invocation count, throughput at **hourly granularity** over the Principle 3 window (≥30d for resize candidates; 60–180d for delete / decommission candidates). **Required (not optional)** for any rightsize or idle-resource candidate per Principle 1. For **database rightsize candidates, fetch the binding constraint** — freeable memory and active connection count — not CPU alone; databases are usually memory- or connection-bound, so CPU can read low on a resource that cannot be safely downsized. Resources with no activity dimension (unattached EBS, unallocated EIP, orphaned snapshots) are exempt — attachment state alone is sufficient evidence for those types.
 
 #### Step 2C — Attribution mode query plan
 
@@ -258,6 +259,7 @@ Run the approved batch. Each query's raw output captured to a buffer for the rep
 - For each candidate: estimated monthly savings (from recommender or computed from line item), source label, confidence.
 - **Apply Principle 1 confidence cap.** Any candidate whose only no-use evidence is attachment state (and whose resource type has an activity dimension — DB, queue, stream, bucket, function) is capped at `confidence: low` and labelled `activity-unverified` in the Evidence column. Operator may approve a drill-down batch at GATE 3 to fetch the missing activity data and promote confidence.
 - **Apply Principle 2 cost-direction check.** Any candidate whose savings come from a pricing-mode / tier change (reserved ↔ on-demand, provisioned ↔ serverless, hot ↔ cold storage tier) must include a delta computed from observed utilization × real pricing for both modes. Without that math, cap at `confidence: low` and label `direction-unverified`.
+- **Check the binding constraint for databases (Principle 3 window applies).** A DB rightsize recommendation is only valid if the *binding* resource (memory, connections) has headroom over ≥30d — not merely low average CPU. A writer at 12% CPU but 1.7 GB free of 16 GB with rising connections is memory-bound and not downsizeable. Where Compute Optimizer says "Optimized," trust it over a raw CPU line-item instinct.
 - Filter: drop candidates below a threshold (default $5/mo) to reduce noise; operator can adjust at GATE 4.
 - Group by remediation type: delete / rightsize / archive / lifecycle-policy / tag.
 - Output: prioritized waste list with per-candidate evidence.

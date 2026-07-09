@@ -215,6 +215,20 @@ for metric in ConsumedReadCapacityUnits ConsumedWriteCapacityUnits ProvisionedRe
 done
 # Throttle events > 0 → table is under-provisioned, NOT a rightsize candidate.
 
+# RDS / Aurora — the BINDING CONSTRAINT is memory/connections, not CPU (Principle 3).
+# CPU can read low on a DB that cannot be downsized. Pull all three over ≥30d hourly:
+for metric in CPUUtilization FreeableMemory DatabaseConnections; do
+  aws cloudwatch get-metric-statistics \
+    --namespace AWS/RDS --metric-name $metric \
+    --dimensions Name=DBInstanceIdentifier,Value=<db-id> \
+    --start-time $(date -u -d '30 days ago' +%Y-%m-%dT%H:%M:%SZ) \
+    --end-time $(date -u +%Y-%m-%dT%H:%M:%SZ) \
+    --period 3600 --statistics Average,Minimum,Maximum
+done
+# Worked case: writer at 12% avg CPU but only ~1.7 GB FreeableMemory of 16 GB and
+# rising DatabaseConnections → memory-bound, NOT downsizeable. Compute Optimizer
+# "Optimized" was right; the low-CPU line-item instinct was wrong.
+
 # EKS nodegroup — Container Insights aggregated CPU/memory (cluster-side activity)
 aws cloudwatch get-metric-statistics \
   --namespace ContainerInsights --metric-name node_cpu_utilization \
