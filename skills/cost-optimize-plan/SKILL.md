@@ -173,7 +173,7 @@ Four dimensions per item. Each scores 🟢 / 🟡 / 🔴 / ⚪ (unknown). Tier a
 
 ### Guiding principles
 
-Two principles govern how evidence is read and how remediations are chosen. They sit above the dimension scoring rules — apply them first, then score.
+Four principles govern how evidence is read and how remediations are chosen. They sit above the dimension scoring rules — apply them first, then score.
 
 #### Principle 1 — Verify activity, not attachment
 
@@ -186,6 +186,7 @@ Rules:
 1. A dependent being enabled / connected / configured / attached is **not** evidence of use. Declared config ≠ runtime behavior. Confirm with an activity metric.
 2. **Discount keep-alive noise.** Heartbeats, health checks, warm-up schedules, monitoring probes, liveness pings, and automatic retries all produce activity that masks idleness. Their tell is a uniform, periodic, workload-independent cadence. Identify and subtract synthetic traffic before judging a resource idle.
 3. Every attachment / reference signal belongs in blast-radius or dependency-footprint scoring, never in evidence-of-no-use scoring.
+4. **Two independent signals for a delete.** A delete requires BOTH signals: activity = none (throughput) AND attachment understood (dependency map). Neither substitutes for the other — "nothing attached" is not enough (it may be reachable by a path not yet mapped), and "zero throughput" is not enough (removing it can still break a wired-but-idle consumer). Produce both before recommending a delete.
 
 **Rationalization stopper:** "Something is attached / enabled, so it's in use" → STOP. Attachment ≠ activity. Verify actual throughput before assigning use.
 
@@ -202,7 +203,32 @@ Rules:
 2. **Never assume a pricing-mode or tier change reduces cost — verify the direction and magnitude against real pricing at the resource's actual utilization.** Usage-based / elastic / on-demand pricing carries a per-unit premium that can *exceed* a small fixed / reserved footprint at low utilization. The cheaper mode flips with the shape of the workload, so the saving must be computed from the observed usage profile, not assumed from the direction of the switch.
 3. Reversibility is itself a saving multiplier: a reversible change can be applied on weaker evidence (cheap to undo); an irreversible one demands stronger proof.
 
+**Model the transition, not just the endpoints.** A pricing-mode or tier change can *raise* cost during the transition before the new steady state pays off — a Kinesis stream switched on-demand → provisioned inherits a high shard count and costs more until the count is stepped down. Savings estimates for mode / tier changes must show the path (interim cost and time-to-payback), not only the start and end states.
+
 **Rationalization stopper:** "Switching mode / tier will be cheaper" → STOP. Compute the delta from real pricing × real utilization first; the premium may run the other way.
+
+#### Principle 3 — Scale the verification window to the action's destructiveness
+
+Evidence must be read over a window sized to how destructive the proposed action is. A window that is adequate for a resize is far too short to justify a delete.
+
+- **idle → resize / downgrade:** require ≥ 30 days of utilization data.
+- **idle → delete / decommission:** require 60–180 days.
+- Read at **hourly granularity**, not daily aggregate — a daily average hides bursts and idle stretches alike.
+- Inspect the **temporal distribution** of activity, not just the total. A single historical burst is not steady low use: a stream with 48 requests all inside one 2-hour window 3.5 months ago is idle now, not lightly used.
+
+A delete-candidate whose only evidence comes from a window shorter than 60 days has its Evidence dimension capped at ⚪ and labelled `window-too-short` — which forces 🔴 under the tier rule until a longer window is fetched.
+
+**Rationalization stopper:** "It read 0 over the default window — delete it" → STOP. The default window is sized for resize, not delete. Pull 60–180d at hourly granularity and read the distribution before recommending a delete.
+
+#### Principle 4 — Cost from the bill, attribute to the metered dimension
+
+Every cost and savings figure must be derived from what is actually billed, and attributed to the dimension that is actually metered.
+
+- **Bill-derived rates first.** Compute the effective $/unit from the real bill (usage quantity ÷ line-item cost) rather than list price. Label such figures `bill-derived`; list price is a fallback, labelled as such.
+- **Attribute to the metered dimension, not the trigger.** Resolve every dollar to what is billed. A schedule, rule, or event source that is itself $0 is not the cost — "$X EventBridge schedule cost" is a misattribution when 100% of the charge is the target Lambda's GB-seconds.
+- **Recurring vs residual.** Classify each charge as recurring or residual / one-off / self-clearing. A leftover line from an already-deleted resource (e.g. an extended-support charge for an instance that no longer exists) clears itself and is not a saving to chase.
+
+**Rationalization stopper:** "List price says $X, and the schedule that triggers it is the cost" → STOP. Derive the rate from the bill, and attribute it to the metered dimension.
 
 ### Dimension 1 — Reversibility *(from playbook + IaC context)*
 
