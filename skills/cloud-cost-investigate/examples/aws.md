@@ -106,7 +106,7 @@ aws s3api list-buckets --query "Buckets[].Name"
 # For each bucket: aws s3api get-bucket-lifecycle-configuration --bucket <name>
 # Buckets returning NoSuchLifecycleConfiguration are flagged.
 
-# NAT Gateways — list all, then per-NAT BytesOutToDestination 14d (activity check)
+# NAT Gateways — list all, then per-NAT BytesOutToDestination 30d (activity check)
 # Principle 1: existence + attached route tables is NOT use evidence; bytes is.
 aws ec2 describe-nat-gateways \
   --filter "Name=state,Values=available" \
@@ -171,22 +171,22 @@ Resources missing the tag appear under `key=` (empty value). The skill flags the
 **Required (not optional)** per Principle 1 for any rightsize / idle-resource candidate whose resource type has an activity dimension. Exempt only when the resource type has no activity dimension at all (unattached EBS, unallocated EIP, orphaned snapshot — attachment state alone is sufficient evidence).
 
 ```bash
-# EC2 — 14d average CPU per instance
+# EC2 — 30d average CPU per instance
 aws cloudwatch get-metric-statistics \
   --namespace AWS/EC2 --metric-name CPUUtilization \
   --dimensions Name=InstanceId,Value=<instance-id> \
-  --start-time $(date -u -d '14 days ago' +%Y-%m-%dT%H:%M:%SZ) \
+  --start-time $(date -u -d '30 days ago' +%Y-%m-%dT%H:%M:%SZ) \
   --end-time $(date -u +%Y-%m-%dT%H:%M:%SZ) \
   --period 86400 --statistics Average,Maximum
 
-# NAT Gateway — 14d egress bytes (Principle 1 activity signal)
+# NAT Gateway — 30d egress bytes (Principle 1 activity signal)
 aws cloudwatch get-metric-statistics \
   --namespace AWS/NATGateway --metric-name BytesOutToDestination \
   --dimensions Name=NatGatewayId,Value=<nat-id> \
-  --start-time $(date -u -d '14 days ago' +%Y-%m-%dT%H:%M:%SZ) \
+  --start-time $(date -u -d '30 days ago' +%Y-%m-%dT%H:%M:%SZ) \
   --end-time $(date -u +%Y-%m-%dT%H:%M:%SZ) \
   --period 86400 --statistics Sum
-# Sum == 0 over 14d → idle. Route-table attachment count is NOT this signal.
+# Sum == 0 over 30d → idle. Route-table attachment count is NOT this signal.
 
 # Lambda — 30d invocations (30d catches monthly-cron functions)
 aws cloudwatch get-metric-statistics \
@@ -203,33 +203,47 @@ aws cloudwatch get-metric-statistics \
   --end-time $(date -u +%Y-%m-%dT%H:%M:%SZ) \
   --period 86400 --statistics Sum
 
-# DynamoDB — 14d consumed vs provisioned capacity (provisioned mode)
+# DynamoDB — 30d consumed vs provisioned capacity (provisioned mode)
 # Principle 2: mode-switch savings claim requires both sides of this math.
 for metric in ConsumedReadCapacityUnits ConsumedWriteCapacityUnits ProvisionedReadCapacityUnits ProvisionedWriteCapacityUnits ReadThrottleEvents WriteThrottleEvents; do
   aws cloudwatch get-metric-statistics \
     --namespace AWS/DynamoDB --metric-name $metric \
     --dimensions Name=TableName,Value=<table-name> \
-    --start-time $(date -u -d '14 days ago' +%Y-%m-%dT%H:%M:%SZ) \
+    --start-time $(date -u -d '30 days ago' +%Y-%m-%dT%H:%M:%SZ) \
     --end-time $(date -u +%Y-%m-%dT%H:%M:%SZ) \
     --period 3600 --statistics Sum,Maximum
 done
 # Throttle events > 0 → table is under-provisioned, NOT a rightsize candidate.
 
+# RDS / Aurora — the BINDING CONSTRAINT is memory/connections, not CPU (Principle 3).
+# CPU can read low on a DB that cannot be downsized. Pull all three over ≥30d hourly:
+for metric in CPUUtilization FreeableMemory DatabaseConnections; do
+  aws cloudwatch get-metric-statistics \
+    --namespace AWS/RDS --metric-name $metric \
+    --dimensions Name=DBInstanceIdentifier,Value=<db-id> \
+    --start-time $(date -u -d '30 days ago' +%Y-%m-%dT%H:%M:%SZ) \
+    --end-time $(date -u +%Y-%m-%dT%H:%M:%SZ) \
+    --period 3600 --statistics Average,Minimum,Maximum
+done
+# Worked case: writer at 12% avg CPU but only ~1.7 GB FreeableMemory of 16 GB and
+# rising DatabaseConnections → memory-bound, NOT downsizeable. Compute Optimizer
+# "Optimized" was right; the low-CPU line-item instinct was wrong.
+
 # EKS nodegroup — Container Insights aggregated CPU/memory (cluster-side activity)
 aws cloudwatch get-metric-statistics \
   --namespace ContainerInsights --metric-name node_cpu_utilization \
   --dimensions Name=ClusterName,Value=<cluster>,Name=NodegroupName,Value=<ng> \
-  --start-time $(date -u -d '14 days ago' +%Y-%m-%dT%H:%M:%SZ) \
+  --start-time $(date -u -d '30 days ago' +%Y-%m-%dT%H:%M:%SZ) \
   --end-time $(date -u +%Y-%m-%dT%H:%M:%SZ) \
   --period 3600 --statistics Average,Maximum
 # Repeat for node_memory_utilization. Container Insights must be enabled on the cluster.
 # Subtract daemonset baseline (~5-10% CPU, ~150-300 MB memory per node) before judging idle.
 
-# Kinesis — 14d producer + consumer activity
+# Kinesis — 30d producer + consumer activity
 aws cloudwatch get-metric-statistics \
   --namespace AWS/Kinesis --metric-name IncomingRecords \
   --dimensions Name=StreamName,Value=<stream-name> \
-  --start-time $(date -u -d '14 days ago' +%Y-%m-%dT%H:%M:%SZ) \
+  --start-time $(date -u -d '30 days ago' +%Y-%m-%dT%H:%M:%SZ) \
   --end-time $(date -u +%Y-%m-%dT%H:%M:%SZ) \
   --period 3600 --statistics Sum
 # Repeat for IncomingBytes, GetRecords.Records, WriteProvisionedThroughputExceeded.

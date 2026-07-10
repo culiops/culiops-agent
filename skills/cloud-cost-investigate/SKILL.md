@@ -21,7 +21,7 @@ NO SAVINGS CLAIM WITHOUT A LABELLED SOURCE.
 
 ## Guiding principles
 
-Two principles govern how waste evidence is read and how savings are claimed. They sit above the per-mode query plans — apply them when designing the batch, when scoring confidence, and when labelling savings.
+Four principles govern how waste evidence is read and how savings are claimed. They sit above the per-mode query plans — apply them when designing the batch, when scoring confidence, and when labelling savings.
 
 ### Principle 1 — Verify activity, not attachment
 
@@ -35,6 +35,7 @@ Rules:
 2. The inverse holds: a resource being un-attached is **not** automatic evidence of no-use unless the resource type has no activity dimension (e.g., unattached EBS volume, unallocated Elastic IP — these cost money regardless). For anything with a usage signal (DB, queue, stream, bucket, function), require activity data.
 3. **Discount keep-alive noise.** Heartbeats, health checks, warm-up schedules, monitoring probes, liveness pings, and automatic retries all produce activity that masks idleness. Their tell is a uniform, periodic, workload-independent cadence. Identify and subtract synthetic traffic before judging a resource idle.
 4. Candidates whose only evidence is attachment state (or absence of it, for a resource type with an activity dimension) are capped at `confidence: low` and labelled `activity-unverified` in the report.
+5. **Two independent signals for a delete.** A delete requires BOTH signals: activity = none (throughput) AND attachment understood (dependency map). Neither substitutes for the other — "nothing attached" is not enough (it may be reachable by a path not yet mapped), and "zero throughput" is not enough (removing it can still break a wired-but-idle consumer). Produce both before recommending a delete.
 
 **Rationalization stopper:** "Something is attached / enabled, so it's in use" — and the inverse "nothing's attached, so it's waste" — both STOP. Attachment ≠ activity for any resource with a usage signal. Verify actual throughput.
 
@@ -44,7 +45,32 @@ Every savings claim involving a pricing-mode or tier change must compute the del
 
 This applies whether the candidate came from a cloud recommender or from line-item computation. Recommender output is treated as `confidence: medium` until the math is re-checked against observed usage; bare recommender numbers without a utilization-anchored computation are not promoted to `confidence: high`.
 
+**Model the transition, not just the endpoints.** A pricing-mode or tier change can *raise* cost during the transition before the new steady state pays off — a Kinesis stream switched on-demand → provisioned inherits a high shard count and costs more until the count is stepped down. Savings estimates for mode / tier changes must show the path (interim cost and time-to-payback), not only the start and end states.
+
 **Rationalization stopper:** "Switching mode / tier will be cheaper" → STOP. Compute the delta from real pricing × real utilization first; the premium may run the other way.
+
+### Principle 3 — Scale the verification window to the action's destructiveness
+
+Evidence must be read over a window sized to how destructive the proposed action is. A window that is adequate for a resize is far too short to justify a delete.
+
+- **idle → resize / downgrade:** require ≥ 30 days of utilization data.
+- **idle → delete / decommission:** require 60–180 days.
+- Read at **hourly granularity**, not daily aggregate — a daily average hides bursts and idle stretches alike.
+- Inspect the **temporal distribution** of activity, not just the total. A single historical burst is not steady low use: a stream with 48 requests all inside one 2-hour window 3.5 months ago is idle now, not lightly used.
+
+A delete-candidate whose only evidence comes from a window shorter than 60 days is capped at `confidence: low` and labelled `window-too-short`.
+
+**Rationalization stopper:** "It read 0 over the default window — delete it" → STOP. The default window is sized for resize, not delete. Pull 60–180d at hourly granularity and read the distribution before recommending a delete.
+
+### Principle 4 — Cost from the bill, attribute to the metered dimension
+
+Every cost and savings figure must be derived from what is actually billed, and attributed to the dimension that is actually metered.
+
+- **Bill-derived rates first.** Compute the effective $/unit from the real bill (usage quantity ÷ line-item cost) rather than list price. Label such figures `bill-derived`; list price is a fallback, labelled as such.
+- **Attribute to the metered dimension, not the trigger.** Resolve every dollar to what is billed. A schedule, rule, or event source that is itself $0 is not the cost — "$X EventBridge schedule cost" is a misattribution when 100% of the charge is the target Lambda's GB-seconds.
+- **Recurring vs residual.** Classify each charge as recurring or residual / one-off / self-clearing. A leftover line from an already-deleted resource (e.g. an extended-support charge for an instance that no longer exists) clears itself and is not a saving to chase.
+
+**Rationalization stopper:** "List price says $X, and the schedule that triggers it is the cost" → STOP. Derive the rate from the bill, and attribute it to the metered dimension.
 
 ## Constraints (Non-Negotiable)
 
@@ -73,6 +99,7 @@ This applies whether the candidate came from a cloud recommender or from line-it
 | "Nothing's attached / referenced — it's waste" | STOP — attachment ≠ activity. For any resource type with a usage signal (DB, queue, stream, bucket, function), require an activity-window check before claiming no-use. |
 | "Health-check / heartbeat traffic shows hits — it's in use" | STOP — keep-alive noise has a uniform, periodic, workload-independent cadence. Identify and subtract synthetic traffic before judging activity. |
 | "Switching from reserved to on-demand (or vice-versa) will save $X" | STOP — never assume direction. Compute delta from observed utilization × real pricing for both modes. The premium may run the other way at this utilization. |
+| "CPU is only 12% — this DB can be downsized" | STOP — databases are usually memory- or connection-bound. Check freeable memory and connection count over the window before calling it downsizeable. |
 | "Org-wide scope would give a better picture — I'll just go org-wide" | STOP — scope escalation requires operator opt-in. Never silent. |
 | "I'll skip listing IAM permissions, the operator obviously has admin" | STOP — least-privilege is the user's expectation. Always list. |
 | "This finding needs a metrics query — I'll batch it in with the original batch" | STOP — original batch is approved as-is. Drill-down is GATE 3. |
@@ -151,7 +178,7 @@ digraph cost_investigate {
 3. **Set scope.** Default: the operator's currently-authenticated single account/subscription/project/cluster. If they want org-wide, they say so and the skill switches to consolidated billing / org billing account / management group / multi-cluster.
 4. **Set time range.** Defaults per mode:
    - Anomaly: last 30d vs. previous 30d (or last 7d vs. previous 7d if request mentions recent).
-   - Waste: current resource state + last 14d utilization metrics.
+   - Waste: current resource state + last 30d utilization metrics for resize candidates (Principle 3); delete / decommission candidates require a 60–180d confirmation window, fetched at the Step 3 drill-down.
    - Attribution: previous complete billing month.
    Operator can override.
 5. **Look up catalog.** Check `.culiops/service-discovery/<service>.md`. Required for attribution mode unless the operator confirms a tag convention (e.g., `Service=foo` tag). Optional for the other modes.
@@ -186,7 +213,7 @@ Typical batch:
 1. **Cloud-native recommenders.** AWS Compute Optimizer rightsizing recommendations, GCP Recommender (idle VMs, unattached disks, idle IPs), Azure Advisor cost recommendations. These come pre-scored with savings estimates.
 2. **Resource-state sweeps.** Unattached EBS volumes / unattached GCP disks / orphaned managed disks; orphaned snapshots older than 30d; unused Elastic IPs / unused public IPs; load balancers with no recent traffic; S3 buckets / GCS buckets / Azure containers without lifecycle policies.
 3. **Untagged spend.** Cost grouped by tag presence — surfaces resources without service/owner/env tags.
-4. **Utilization metrics** for instances / databases / queues / streams / functions — last 14d CPU, memory, network, request count, invocation count, throughput. **Required (not optional)** for any rightsize or idle-resource candidate per Principle 1. Resources with no activity dimension (unattached EBS, unallocated EIP, orphaned snapshots) are exempt — attachment state alone is sufficient evidence for those types.
+4. **Utilization metrics** for instances / databases / queues / streams / functions — CPU, memory, network, request count, invocation count, throughput at **hourly granularity** over the Principle 3 window (≥30d for resize candidates; 60–180d for delete / decommission candidates). **Required (not optional)** for any rightsize or idle-resource candidate per Principle 1. For **database rightsize candidates, fetch the binding constraint** — freeable memory and active connection count — not CPU alone; databases are usually memory- or connection-bound, so CPU can read low on a resource that cannot be safely downsized. Resources with no activity dimension (unattached EBS, unallocated EIP, orphaned snapshots) are exempt — attachment state alone is sufficient evidence for those types.
 
 #### Step 2C — Attribution mode query plan
 
@@ -232,6 +259,7 @@ Run the approved batch. Each query's raw output captured to a buffer for the rep
 - For each candidate: estimated monthly savings (from recommender or computed from line item), source label, confidence.
 - **Apply Principle 1 confidence cap.** Any candidate whose only no-use evidence is attachment state (and whose resource type has an activity dimension — DB, queue, stream, bucket, function) is capped at `confidence: low` and labelled `activity-unverified` in the Evidence column. Operator may approve a drill-down batch at GATE 3 to fetch the missing activity data and promote confidence.
 - **Apply Principle 2 cost-direction check.** Any candidate whose savings come from a pricing-mode / tier change (reserved ↔ on-demand, provisioned ↔ serverless, hot ↔ cold storage tier) must include a delta computed from observed utilization × real pricing for both modes. Without that math, cap at `confidence: low` and label `direction-unverified`.
+- **Check the binding constraint for databases (Principle 3 window applies).** A DB rightsize recommendation is only valid if the *binding* resource (memory, connections) has headroom over ≥30d — not merely low average CPU. A writer at 12% CPU but 1.7 GB free of 16 GB with rising connections is memory-bound and not downsizeable. Where Compute Optimizer says "Optimized," trust it over a raw CPU line-item instinct.
 - Filter: drop candidates below a threshold (default $5/mo) to reduce noise; operator can adjust at GATE 4.
 - Group by remediation type: delete / rightsize / archive / lifecycle-policy / tag.
 - Output: prioritized waste list with per-candidate evidence.
@@ -279,7 +307,7 @@ Write to `.culiops/cloud-cost-investigate/<scope-slug>-<mode>-<YYYYMMDD-HHmm>.md
 | # | Action | Resource(s) | Est. savings | Source | Confidence | Evidence |
 |---|--------|-------------|--------------|--------|------------|----------|
 | 1 | Delete unattached EBS volume | vol-xxxxx | $48/mo | line-item-computation | high | volume.state=available since 2026-02-14 |
-| 2 | Rightsize prod-api from m5.4xl → m5.2xl | i-yyyyy | $280/mo | compute-optimizer | medium | CO recommendation, 14d avg CPU 4% |
+| 2 | Rightsize prod-api from m5.4xl → m5.2xl | i-yyyyy | $280/mo | compute-optimizer | medium | CO recommendation, 30d avg CPU 4% |
 | ... | ... | ... | ... | ... | ... | ... |
 
 **Total estimated savings:** $X/mo (sum of high-confidence) + $Y/mo (medium) + $Z/mo (low)

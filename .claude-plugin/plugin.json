@@ -1,7 +1,7 @@
 {
   "name": "culiops",
   "description": "DevOps / SRE / cloud / platform-engineering skills for Claude Code: service discovery, IaC change execution, cloud cost investigation, and more — cloud-agnostic and IaC-agnostic by design.",
-  "version": "0.9.0",
+  "version": "0.10.0",
   "author": {
     "name": "chiplonton",
     "email": "chipkogi010790@gmail.com"

@@ -112,6 +112,8 @@ If any query fails (no credentials, permission denied, timeout), the skill recor
 | "This change passed CI, so it's safe for production" | STOP — CI validates code correctness, not production risk. Timing, blast radius, and resource health are invisible to CI. |
 | "The same change worked fine in staging" | STOP — staging doesn't have production traffic, production data, or production dependencies. Score production risk independently. |
 | "Multiple Yellows are fine because none is Red" | STOP — check multi-Yellow escalation rule. 3+ Yellows escalate to Red. Compound risk is real. |
+| "The public IP is unused internally — safe to release" | STOP — an external partner may allowlist this public IP in their firewall. Release is irreversible. Confirm ≥ 6mo zero egress AND no partner allowlist before release. |
+| "0 errors, so the resource is healthy / needed" | STOP — error-free is not evidence of use or of necessity. An observer polling an empty queue every 30s runs 0 errors and is pure waste. Read activity / usefulness, not just the error rate. |
 
 ## Red Flags — STOP and Follow Process
 
@@ -125,6 +127,8 @@ If any query fails (no credentials, permission denied, timeout), the skill recor
 | Proceeding after operator aborts | STOP → write the record as "aborted" with reason, don't discard the assessment |
 | Producing a risk report without checking all 10 categories | STOP → every category must have a score (Green/Yellow/Red/⚪), even if most are Green |
 | Assuming a service is healthy because no one mentioned problems | STOP → resource health is an L3 signal. Without L3, score as ⚪ unknown |
+| Releasing a public IP / EIP / NAT address without an external-allowlist check | STOP → release is irreversible if a partner firewall allowlists it. Confirm ≥ 6mo zero egress and ask the operator about partner allowlists first |
+| Treating "0 errors" as "healthy and needed" | STOP → 0 errors ≠ used. Verify the resource does useful work, not merely that it isn't failing |
 
 ## Workflow
 

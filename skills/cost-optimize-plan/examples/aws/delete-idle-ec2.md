@@ -15,9 +15,9 @@ applies_when: action == "delete" AND resource matches "i-*"
 ## Queries
 
 1. `aws ec2 describe-instances --instance-ids <id>` — confirms current state, attached EBS volumes, Elastic IP associations, and tags.
-2. `aws cloudwatch get-metric-statistics --namespace AWS/EC2 --metric-name CPUUtilization --dimensions Name=InstanceId,Value=<id> --start-time <now-14d> --end-time <now> --period 86400 --statistics Average Maximum` — 14-day CPU utilization (daily granularity).
-3. `aws cloudwatch get-metric-statistics --namespace AWS/EC2 --metric-name NetworkIn --dimensions Name=InstanceId,Value=<id> --start-time <now-14d> --end-time <now> --period 86400 --statistics Sum` — 14-day inbound network traffic.
-4. `aws cloudtrail lookup-events --lookup-attributes AttributeKey=ResourceName,AttributeValue=<id> --start-time <now-14d>` — login events, `ConsoleLogin`, `StartInstances`, or `RunInstances` history.
+2. `aws cloudwatch get-metric-statistics --namespace AWS/EC2 --metric-name CPUUtilization --dimensions Name=InstanceId,Value=<id> --start-time <now-90d> --end-time <now> --period 86400 --statistics Average Maximum` — 90-day CPU utilization (daily granularity).
+3. `aws cloudwatch get-metric-statistics --namespace AWS/EC2 --metric-name NetworkIn --dimensions Name=InstanceId,Value=<id> --start-time <now-90d> --end-time <now> --period 86400 --statistics Sum` — 90-day inbound network traffic.
+4. `aws cloudtrail lookup-events --lookup-attributes AttributeKey=ResourceName,AttributeValue=<id> --start-time <now-90d>` — login events, `ConsoleLogin`, `StartInstances`, or `RunInstances` history.
 
 ## Evidence thresholds
 
@@ -25,9 +25,9 @@ applies_when: action == "delete" AND resource matches "i-*"
 
 | Signal | 🟢 Threshold | 🚫 Trigger |
 |--------|--------------|------------|
-| 14d average CPU utilization | < 2% | ≥ 50% on any day |
-| 14d daily NetworkIn | < 1 MB/day on all days | ≥ 100 MB/day on any day |
-| `ConsoleLogin` or `StartInstances` events in last 14d | none | any |
+| 90d average CPU utilization | < 2% | ≥ 50% on any day |
+| 90d daily NetworkIn | < 1 MB/day on all days | ≥ 100 MB/day on any day |
+| `ConsoleLogin` or `StartInstances` events in last 90d | none | any |
 | `Instances[0].State.Name` | `stopped` or `running` with all metrics idle | `pending` or `shutting-down` |
 
 ## Reversibility classification

@@ -1,0 +1,44 @@
+{
+  "_note": "Aurora writer acme-prod-aurora-writer (db.r6g.4xlarge, 128 GB RAM). A naive line-item instinct sees 12% avg CPU and flags it as a downsize candidate. Principle 3 (#7): the BINDING CONSTRAINT for a DB is memory/connections, not CPU. FreeableMemory sits at ~1.7 GB (of 128 GB) and DatabaseConnections is rising toward the max — the instance is memory- and connection-bound, NOT downsizeable. Compute Optimizer correctly reports 'Optimized'. Window: 30d, 2026-04-08 to 2026-05-07.",
+  "_window": "2026-04-08 to 2026-05-07 (30d)",
+  "instance": "acme-prod-aurora-writer",
+  "instanceClass": "db.r6g.4xlarge",
+  "computeOptimizerFinding": "Optimized",
+  "metrics": {
+    "CPUUtilization": {
+      "Label": "CPUUtilization",
+      "unit": "Percent",
+      "avg": 12.1,
+      "max": 24.8,
+      "_sample": [
+        {"Timestamp": "2026-04-08T00:00:00Z", "Average": 11.8},
+        {"Timestamp": "2026-04-24T00:00:00Z", "Average": 12.4},
+        {"Timestamp": "2026-05-07T00:00:00Z", "Average": 12.0}
+      ]
+    },
+    "FreeableMemory": {
+      "Label": "FreeableMemory",
+      "unit": "Bytes",
+      "min": 1717986918,
+      "avg": 2040109465,
+      "_note": "min ~1.6 GB, avg ~1.9 GB free of 128 GB total — the instance is memory-bound.",
+      "_sample": [
+        {"Timestamp": "2026-04-08T00:00:00Z", "Minimum": 2147483648},
+        {"Timestamp": "2026-04-24T00:00:00Z", "Minimum": 1825361100},
+        {"Timestamp": "2026-05-07T00:00:00Z", "Minimum": 1717986918}
+      ]
+    },
+    "DatabaseConnections": {
+      "Label": "DatabaseConnections",
+      "unit": "Count",
+      "avg": 1840,
+      "max": 2210,
+      "_note": "rising trend across the 30d window, approaching the parameter-group max_connections; connection-bound.",
+      "_sample": [
+        {"Timestamp": "2026-04-08T00:00:00Z", "Average": 1520},
+        {"Timestamp": "2026-04-24T00:00:00Z", "Average": 1790},
+        {"Timestamp": "2026-05-07T00:00:00Z", "Average": 2050}
+      ]
+    }
+  }
+}

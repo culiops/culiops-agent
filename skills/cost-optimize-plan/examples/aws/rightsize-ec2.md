@@ -17,9 +17,9 @@ applies_when: action == "rightsize" AND resource matches "i-*"
 ## Queries
 
 1. `aws ec2 describe-instances --instance-ids <id> --query 'Reservations[].Instances[].[InstanceType,LaunchTime,Tags]'` — current type and age.
-2. `aws cloudwatch get-metric-statistics --namespace AWS/EC2 --metric-name CPUUtilization --dimensions Name=InstanceId,Value=<id> --start-time <now-14d> --end-time <now> --period 86400 --statistics Average,Maximum` — 14d CPU avg + peak.
-3. `aws cloudwatch get-metric-statistics --namespace AWS/EC2 --metric-name NetworkIn --dimensions Name=InstanceId,Value=<id> --start-time <now-14d> --end-time <now> --period 86400 --statistics Average,Maximum` — network baseline (catches network-bound workloads that pin a small instance).
-4. `aws cloudwatch get-metric-statistics --namespace CWAgent --metric-name mem_used_percent --dimensions Name=InstanceId,Value=<id> --start-time <now-14d> --end-time <now> --period 86400 --statistics Average,Maximum` — memory baseline if CloudWatch agent installed. Returns no datapoints if not installed → score ⚪.
+2. `aws cloudwatch get-metric-statistics --namespace AWS/EC2 --metric-name CPUUtilization --dimensions Name=InstanceId,Value=<id> --start-time <now-30d> --end-time <now> --period 86400 --statistics Average,Maximum` — 30d CPU avg + peak.
+3. `aws cloudwatch get-metric-statistics --namespace AWS/EC2 --metric-name NetworkIn --dimensions Name=InstanceId,Value=<id> --start-time <now-30d> --end-time <now> --period 86400 --statistics Average,Maximum` — network baseline (catches network-bound workloads that pin a small instance).
+4. `aws cloudwatch get-metric-statistics --namespace CWAgent --metric-name mem_used_percent --dimensions Name=InstanceId,Value=<id> --start-time <now-30d> --end-time <now> --period 86400 --statistics Average,Maximum` — memory baseline if CloudWatch agent installed. Returns no datapoints if not installed → score ⚪.
 5. `aws compute-optimizer get-ec2-instance-recommendations --instance-arns <arn>` — if Compute Optimizer is the source of the upstream recommendation, fetch the rationale.
 6. `aws elbv2 describe-target-health --target-group-arn <each-tg>` — confirm instance is in known target groups (for blast-radius dependency count).
 
@@ -27,10 +27,10 @@ applies_when: action == "rightsize" AND resource matches "i-*"
 
 | Signal | 🟢 Threshold (safe to downsize) | 🚫 Trigger (do not downsize) |
 |--------|-------------------------------|-------------------------------|
-| 14d avg CPU | < 30% of current instance class capacity | n/a (low CPU alone is not a 🚫; high CPU is) |
-| 14d peak CPU | < 75% on recommended new class | ≥ 90% on recommended new class — at risk of saturation post-downsize |
-| 14d peak NetworkIn | < 50% of new class's bandwidth | ≥ 90% — network-bound |
-| 14d peak memory (if available) | < 75% on new class | ≥ 90% on new class |
+| 30d avg CPU | < 30% of current instance class capacity | n/a (low CPU alone is not a 🚫; high CPU is) |
+| 30d peak CPU | < 75% on recommended new class | ≥ 90% on recommended new class — at risk of saturation post-downsize |
+| 30d peak NetworkIn | < 50% of new class's bandwidth | ≥ 90% — network-bound |
+| 30d peak memory (if available) | < 75% on new class | ≥ 90% on new class |
 | Active alarms on this instance | 0 | ≥ 1 alarm in ALARM state |
 
 ## Reversibility classification

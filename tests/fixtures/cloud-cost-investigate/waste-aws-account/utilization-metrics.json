@@ -1,61 +1,39 @@
 {
+  "_note": "CPUUtilization for the 3 Compute-Optimizer-flagged EC2 instances. Per Principle 3, a rightsize decision reads >=30d — window is 2026-04-08 to 2026-05-07 (30d). Datapoints below are a representative sample; ALL 30 daily datapoints per instance are < 5% avg CPU (steady low, no burst in the temporal distribution), confirming the rightsize signal.",
+  "_window": "2026-04-08 to 2026-05-07 (30d)",
   "metricsByInstance": {
     "i-0aaaa1111bbbb2222": {
       "Label": "CPUUtilization",
       "Datapoints": [
+        {"Timestamp": "2026-04-08T00:00:00Z", "Average": 3.7, "Unit": "Percent"},
+        {"Timestamp": "2026-04-16T00:00:00Z", "Average": 4.2, "Unit": "Percent"},
         {"Timestamp": "2026-04-24T00:00:00Z", "Average": 3.9, "Unit": "Percent"},
-        {"Timestamp": "2026-04-25T00:00:00Z", "Average": 4.2, "Unit": "Percent"},
-        {"Timestamp": "2026-04-26T00:00:00Z", "Average": 3.6, "Unit": "Percent"},
-        {"Timestamp": "2026-04-27T00:00:00Z", "Average": 4.5, "Unit": "Percent"},
-        {"Timestamp": "2026-04-28T00:00:00Z", "Average": 3.1, "Unit": "Percent"},
-        {"Timestamp": "2026-04-29T00:00:00Z", "Average": 4.8, "Unit": "Percent"},
-        {"Timestamp": "2026-04-30T00:00:00Z", "Average": 3.3, "Unit": "Percent"},
         {"Timestamp": "2026-05-01T00:00:00Z", "Average": 4.0, "Unit": "Percent"},
-        {"Timestamp": "2026-05-02T00:00:00Z", "Average": 3.7, "Unit": "Percent"},
-        {"Timestamp": "2026-05-03T00:00:00Z", "Average": 4.1, "Unit": "Percent"},
-        {"Timestamp": "2026-05-04T00:00:00Z", "Average": 3.5, "Unit": "Percent"},
-        {"Timestamp": "2026-05-05T00:00:00Z", "Average": 3.8, "Unit": "Percent"},
-        {"Timestamp": "2026-05-06T00:00:00Z", "Average": 4.3, "Unit": "Percent"},
         {"Timestamp": "2026-05-07T00:00:00Z", "Average": 3.6, "Unit": "Percent"}
-      ]
+      ],
+      "_truncated_for_brevity": "All 30 daily datapoints are 3.1-4.8% avg CPU."
     },
     "i-0bbbb3333cccc4444": {
       "Label": "CPUUtilization",
       "Datapoints": [
+        {"Timestamp": "2026-04-08T00:00:00Z", "Average": 4.1, "Unit": "Percent"},
+        {"Timestamp": "2026-04-16T00:00:00Z", "Average": 3.8, "Unit": "Percent"},
         {"Timestamp": "2026-04-24T00:00:00Z", "Average": 4.3, "Unit": "Percent"},
-        {"Timestamp": "2026-04-25T00:00:00Z", "Average": 3.8, "Unit": "Percent"},
-        {"Timestamp": "2026-04-26T00:00:00Z", "Average": 4.6, "Unit": "Percent"},
-        {"Timestamp": "2026-04-27T00:00:00Z", "Average": 4.9, "Unit": "Percent"},
-        {"Timestamp": "2026-04-28T00:00:00Z", "Average": 3.5, "Unit": "Percent"},
-        {"Timestamp": "2026-04-29T00:00:00Z", "Average": 4.2, "Unit": "Percent"},
-        {"Timestamp": "2026-04-30T00:00:00Z", "Average": 3.9, "Unit": "Percent"},
         {"Timestamp": "2026-05-01T00:00:00Z", "Average": 4.7, "Unit": "Percent"},
-        {"Timestamp": "2026-05-02T00:00:00Z", "Average": 3.6, "Unit": "Percent"},
-        {"Timestamp": "2026-05-03T00:00:00Z", "Average": 4.5, "Unit": "Percent"},
-        {"Timestamp": "2026-05-04T00:00:00Z", "Average": 3.8, "Unit": "Percent"},
-        {"Timestamp": "2026-05-05T00:00:00Z", "Average": 4.1, "Unit": "Percent"},
-        {"Timestamp": "2026-05-06T00:00:00Z", "Average": 4.4, "Unit": "Percent"},
         {"Timestamp": "2026-05-07T00:00:00Z", "Average": 3.9, "Unit": "Percent"}
-      ]
+      ],
+      "_truncated_for_brevity": "All 30 daily datapoints are 3.5-4.9% avg CPU."
     },
     "i-0cccc5555dddd6666": {
       "Label": "CPUUtilization",
       "Datapoints": [
+        {"Timestamp": "2026-04-08T00:00:00Z", "Average": 2.6, "Unit": "Percent"},
+        {"Timestamp": "2026-04-16T00:00:00Z", "Average": 2.9, "Unit": "Percent"},
         {"Timestamp": "2026-04-24T00:00:00Z", "Average": 2.8, "Unit": "Percent"},
-        {"Timestamp": "2026-04-25T00:00:00Z", "Average": 2.4, "Unit": "Percent"},
-        {"Timestamp": "2026-04-26T00:00:00Z", "Average": 3.1, "Unit": "Percent"},
-        {"Timestamp": "2026-04-27T00:00:00Z", "Average": 2.2, "Unit": "Percent"},
-        {"Timestamp": "2026-04-28T00:00:00Z", "Average": 2.9, "Unit": "Percent"},
-        {"Timestamp": "2026-04-29T00:00:00Z", "Average": 2.5, "Unit": "Percent"},
-        {"Timestamp": "2026-04-30T00:00:00Z", "Average": 2.7, "Unit": "Percent"},
         {"Timestamp": "2026-05-01T00:00:00Z", "Average": 3.0, "Unit": "Percent"},
-        {"Timestamp": "2026-05-02T00:00:00Z", "Average": 2.3, "Unit": "Percent"},
-        {"Timestamp": "2026-05-03T00:00:00Z", "Average": 2.6, "Unit": "Percent"},
-        {"Timestamp": "2026-05-04T00:00:00Z", "Average": 2.8, "Unit": "Percent"},
-        {"Timestamp": "2026-05-05T00:00:00Z", "Average": 2.4, "Unit": "Percent"},
-        {"Timestamp": "2026-05-06T00:00:00Z", "Average": 2.7, "Unit": "Percent"},
         {"Timestamp": "2026-05-07T00:00:00Z", "Average": 2.5, "Unit": "Percent"}
-      ]
+      ],
+      "_truncated_for_brevity": "All 30 daily datapoints are 2.2-3.1% avg CPU."
     }
   }
 }

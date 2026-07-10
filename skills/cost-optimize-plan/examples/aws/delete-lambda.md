@@ -19,8 +19,8 @@ applies_when: action == "delete" AND resource matches "arn:aws:lambda:*:function
 ## Queries
 
 1. `aws lambda get-function --function-name <name>` — confirms exists, captures `Runtime`, `LastModified`, `CodeSha256`, `PackageType`.
-2. `aws cloudwatch get-metric-statistics --namespace AWS/Lambda --metric-name Invocations --dimensions Name=FunctionName,Value=<name> --start-time <now-30d> --end-time <now> --period 86400 --statistics Sum` — 30d invocation count. **Activity signal, Principle 1.** 30d (not 14d) because some scheduled functions run monthly.
-3. `aws cloudwatch get-metric-statistics --namespace AWS/Lambda --metric-name Invocations --dimensions Name=FunctionName,Value=<name>,Name=Resource,Value=<name>:$LATEST --start-time <now-30d> --end-time <now> --period 86400 --statistics Sum` — invocations against `$LATEST` only, isolates the unaliased path.
+2. `aws cloudwatch get-metric-statistics --namespace AWS/Lambda --metric-name Invocations --dimensions Name=FunctionName,Value=<name> --start-time <now-90d> --end-time <now> --period 86400 --statistics Sum` — 90d invocation count. **Activity signal, Principle 1.** A delete decision uses the 60–180d band (Principle 3); 90d also catches monthly-scheduled functions.
+3. `aws cloudwatch get-metric-statistics --namespace AWS/Lambda --metric-name Invocations --dimensions Name=FunctionName,Value=<name>,Name=Resource,Value=<name>:$LATEST --start-time <now-90d> --end-time <now> --period 86400 --statistics Sum` — invocations against `$LATEST` only, isolates the unaliased path.
 4. `aws lambda list-event-source-mappings --function-name <name>` — lists SQS / Kinesis / DynamoDB Streams / Kafka event sources. **Attachment signal — Dimension 2/4 input, NOT Dimension 3.** A function with 3 active event source mappings and zero `Invocations` is still idle.
 5. `aws lambda list-aliases --function-name <name>` and `aws lambda list-versions-by-function --function-name <name>` — surfaces any aliases or non-`$LATEST` versions that might be invoked by external consumers (API Gateway, CloudFront, alb integrations) not captured in event source mappings.
 6. (Conditional) `aws lambda get-provisioned-concurrency-config --function-name <name> --qualifier <each-alias-or-version>` — if any alias has provisioned concurrency configured, the operator is paying for warm capacity. Surface this in the rollback note.
@@ -30,14 +30,14 @@ applies_when: action == "delete" AND resource matches "arn:aws:lambda:*:function
 
 | Signal | 🟢 Threshold | 🚫 Trigger |
 |--------|--------------|------------|
-| 30d `Invocations` (Sum) | `0` | ≥ 1 — function ran at least once |
-| Last log stream `lastEventTimestamp` (if queried) | older than 30d OR no log streams | within 30d |
+| 90d `Invocations` (Sum) | `0` | ≥ 1 — function ran at least once |
+| Last log stream `lastEventTimestamp` (if queried) | older than 90d OR no log streams | within 90d |
 | Event source mappings | any state — **not a 🚫 trigger** (attachment ≠ activity) | n/a |
 | Provisioned concurrency configured | none | configured — flag as keep-warm cost; do not score 🚫 on this alone |
 
 **Principle 1 reminder:** event source mappings, aliases, and API Gateway integrations are **attachment**. They mean "something would break if deleted" — Dimension 2 (blast radius). They are NOT evidence of use. Score Dimension 3 on `Invocations`, full stop.
 
-**Keep-alive noise to subtract:** if provisioned concurrency is configured, the function has CloudWatch `ProvisionedConcurrencyInvocations` ≥ 0 driven by AWS keep-warm pings, not real traffic. Subtract these from `Invocations` before judging activity. If `Invocations - ProvisionedConcurrencyInvocations == 0` over 30d, the function is idle even though it appears "warm".
+**Keep-alive noise to subtract:** if provisioned concurrency is configured, the function has CloudWatch `ProvisionedConcurrencyInvocations` ≥ 0 driven by AWS keep-warm pings, not real traffic. Subtract these from `Invocations` before judging activity. If `Invocations - ProvisionedConcurrencyInvocations == 0` over 90d, the function is idle even though it appears "warm".
 
 ## Reversibility classification
 - **Default:** 🟡 if function code is committed to IaC (Terraform / CloudFormation / SAM / CDK) — redeploy restores. ~5–15 min RTO.

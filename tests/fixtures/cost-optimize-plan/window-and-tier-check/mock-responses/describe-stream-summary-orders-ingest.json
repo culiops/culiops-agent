@@ -1,0 +1,13 @@
+{
+  "_note": "orders-ingest stream metadata. PROVISIONED, 2 shards, 168h retention (source of the $180/mo).",
+  "StreamDescriptionSummary": {
+    "StreamName": "orders-ingest",
+    "StreamARN": "arn:aws:kinesis:ap-southeast-1:123456789012:stream/orders-ingest",
+    "StreamStatus": "ACTIVE",
+    "StreamModeDetails": {"StreamMode": "PROVISIONED"},
+    "OpenShardCount": 2,
+    "RetentionPeriodHours": 168,
+    "ConsumerCount": 2,
+    "EnhancedMonitoring": [{"ShardLevelMetrics": []}]
+  }
+}
