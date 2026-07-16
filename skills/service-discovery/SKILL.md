@@ -401,9 +401,9 @@ This step merges two independent discovery seeds to build a verified resource li
 >
 > | # | Query | Scope | Source |
 > |---|-------|-------|--------|
-> | 1 | `aws ec2 describe-instances --filters Name=vpc-id,Values=vpc-abc123` | Instances in confirmed VPC | `cloud-discovery/aws-ec2.md` |
-> | 2 | `aws rds describe-db-instances` | All RDS instances in region | `cloud-discovery/aws-rds.md` |
-> | 3 | `aws elbv2 describe-load-balancers` | All ALBs in region | `cloud-discovery/aws-elbv2.md` |
+> | 1 | `aws ec2 describe-instances --filters Name=vpc-id,Values=vpc-abc123` | Instances in confirmed VPC | `cloud-discovery/aws.md` |
+> | 2 | `aws rds describe-db-instances` | All RDS instances in region | `cloud-discovery/aws.md` |
+> | 3 | `aws elbv2 describe-load-balancers` | All ALBs in region | `cloud-discovery/aws.md` |
 >
 > **GATE 4a: Approve these discovery queries?**"
 

@@ -414,7 +414,7 @@ The skill never silently picks up where it left off — operator always confirms
 skills/service-takeover/
 ├── SKILL.md                              ← main skill definition; References + workflow-to-standards mapping at top
 ├── templates/
-│   ├── interview-questionnaire.md        ← v1 questionnaire template (9 sections)
+│   ├── interview-questionnaire.md        ← v1 questionnaire template (11 sections)
 │   ├── readiness-scorecard-baseline.md   ← 25-item baseline checklist with auto-mark rules
 │   └── handoff-readme-template.md        ← README.md template for the handoff package
 └── examples/
