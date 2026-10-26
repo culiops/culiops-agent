@@ -9,7 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ### Added
 
 - **pre-flight: category 11, Application compatibility.** A change can be valid on the infrastructure side and still break the application. The usual cases are removing an IAM action the app still calls, renaming an env var or config key the app still reads, and changing an endpoint, port, engine version or limit the app depends on.
-  - **Trigger.** When the plan changes such an attribute, pre-flight asks where the application source is (Q8). It then reads the source at the deployed commit SHA, looks for uses of the old contract, and records how each use fails: crash, request error, retry, logged-and-ignored or default fallback.
+  - **Reading the source.** When category 11 is triggered, pre-flight asks where the application source is (Q8), reads it at the deployed commit SHA, looks for uses of the old contract, and records how each use fails: crash, request error, retry, logged-and-ignored or default fallback.
   - **Silent failures.** When a failure is swallowed, or the health check doesn't exercise the broken path, the report says that health, error-rate and alarm signals will stay green after apply. A Green on resource health never clears category 11.
   - **Trigger is fail-closed.** Category 11 triggers on any change to a resource the app runs on, is reached through, or calls. Only attributes on a short not-app-facing list skip it: tags, dashboards, logs, backup schedules, scaling counts, IAM for humans and CI, purchase options, and alarms whose actions only notify. An alarm counts as notify-only when every SNS subscription protocol, checked live (protocols only, never endpoints), is `email`, `email-json` or `sms`. An alarm that scales, stops or reboots EC2, runs SSM automation, or reaches a Lambda, SQS or HTTP subscriber changes the system, so it is app-facing. If the protocols weren't checked, it is treated as app-facing. The table of common app-facing changes includes CDN, edge and routing (CloudFront behaviors and policies, ALB rules, API Gateway, WAF, Ingress). It is a set of examples, not the trigger list.
   - **Scoring.** Red is a soft block. A cookie-dependent response cached under a cookie-less key is also scored on security posture.
@@ -32,14 +32,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - **pre-flight:**
   - The scorecard has 11 categories.
   - Security posture scores a permission narrowing Green and leaves the breakage question to category 11.
-  - Dependency impact, cost impact and observability readiness are Green from the plan when the change only adds or edits things nothing can consume: alarms, dashboards, metric filters, with no output or export changed. Before this, an addition-only change without a service-discovery catalog could never be GREEN, and the alarm being added was itself scored as "static threshold → Yellow".
+  - Dependency impact, cost impact and observability readiness are Green from the plan when the change only adds or edits things nothing can consume: notify-only alarms, dashboards, metric filters, with no output or export changed. Before this, an addition-only change without a service-discovery catalog could never be GREEN, and the alarm being added was itself scored as "static threshold → Yellow".
   - The three existing fixtures gain a category 11 row.
+  - The record format's assessor list no longer names a `cli-command` assessor that never existed.
 
 ### Fixed
 
 - **`high-risk-rds-migration` fixture.** Security posture was scored Yellow. The destroyed instance is encrypted (`plan:13`), and the new Aurora cluster sets no `storage_encrypted`, which defaults to `false` for provisioned clusters. That is encryption removal, a hard block. The verification pass found it.
 - **`low-risk-cloudwatch-alarm` fixture.** It expected GREEN, which the rules could not produce without a catalog. With the change above it is GREEN again, and fresh eyes run on it.
-  - The record format's assessor list no longer names a `cli-command` assessor that never existed.
 
 ## [0.12.0] — 2026-10-26
 
