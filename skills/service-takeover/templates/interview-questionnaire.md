@@ -5,6 +5,8 @@ emitted-by: service-takeover
 
 # Outgoing-Team Interview — <service-name>
 
+> **Private repo only.** Record references (where a secret lives, who owns it), never values. No tokens/signed links in URLs. Prefer role/team aliases (e.g. `#payments-oncall`, `payments-oncall@example.com`) over personal phone numbers.
+
 **Outgoing team:** <team-name> (primary contact: <name> <email>)
 **Incoming team:** <team-name>
 **Handoff date:** <date>
@@ -33,11 +35,11 @@ Fill in answers under each `_To be filled in: ___` marker. Sections may be answe
 
 ## 2. People & ownership
 
-- **Current owners** — names + roles + GitHub/Slack handles.
+- **Current owners** — roles + team aliases (names optional; avoid personal phone numbers).
   _To be filled in: ___
 - **On-call schedule** — rotation tool (PagerDuty / Opsgenie / etc.), rotation cadence, current on-call.
   _To be filled in: ___
-- **Escalation contacts** — who do you call when the primary on-call doesn't answer?
+- **Escalation contacts** — who do you call when the primary on-call doesn't answer? Use role/team aliases, not personal numbers.
   _To be filled in: ___
 - **Related teams** — teams that depend on or interact with this service.
   _To be filled in: ___
@@ -50,7 +52,7 @@ Fill in answers under each `_To be filled in: ___` marker. Sections may be answe
   _To be filled in: ___
 - **Error budget tracking** — is the error budget monitored? When was it last burned?
   _To be filled in: ___
-- **Dashboards** — paths/URLs to operational dashboards.
+- **Dashboards** — paths/URLs to operational dashboards. Plain links only: no share tokens, signed or pre-authenticated URLs.
   _To be filled in: ___
 
 ## 4. Deploy process
@@ -67,21 +69,34 @@ Fill in answers under each `_To be filled in: ___` marker. Sections may be answe
   _To be filled in: ___
 - **Deploy permissions** — who can deploy? IAM role / user list.
   _To be filled in: ___
+- **Incoming team's deploy role ARN** — the exact IAM role ARN the incoming team will deploy with (e.g. `arn:aws:iam::<account-id>:role/<name>`), and whether it already has the deploy permissions above. If it doesn't exist yet, say "to be created". The skill uses this ARN to check the permission with a read-only policy simulation.
+  _To be filled in: ___
+
+### 4b — IaC & ownership
+
+- **IaC tool and repo** — which tool (Terraform / CloudFormation / CDK / other) manages this service, and which repo/path holds it. Say "none" if resources were created by hand.
+  _To be filled in: ___
+- **Terraform state** — backend (S3 bucket + key, Terraform Cloud workspace, etc.), and who holds state access (read and write). Reference only; no credentials.
+  _To be filled in: ___
+- **Other provisioning tools** — were any resources created by CloudFormation / SAM / Serverless Framework / CDK? List the stack names and which resources each owns.
+  _To be filled in: ___
+- **Kubernetes (if applicable)** — cluster and namespace(s); the RBAC the incoming team needs (roles/bindings); ServiceAccounts that use IRSA, with their role ARNs.
+  _To be filled in: ___
 
 ## 5. Alerting & on-call
 
 - **Alarms configured** — list critical alarms (CloudWatch / PagerDuty / Prometheus).
   _To be filled in: ___
-- **Paging path** — which alarms page, where, with what severity.
+- **Paging path** — which alarms page, where, with what severity. Paging-integration keys are secrets: record where they live (store + owner), never the key.
   _To be filled in: ___
 - **Known noisy alerts** — alarms that fire often but aren't actionable.
   _To be filled in: ___
-- **Top runbook links** — paths/URLs to the top 3–5 runbooks (full list goes in Section 6).
+- **Top runbook links** — paths/URLs to the top 3–5 runbooks (full list goes in Section 6). Plain links only: no tokens or signed URLs.
   _To be filled in: ___
 
 ## 6. Runbooks & incidents
 
-- **Existing runbooks** — list all known runbooks with paths/URLs and a one-line description.
+- **Existing runbooks** — list all known runbooks with paths/URLs (no tokens or signed links) and a one-line description.
   _To be filled in: ___
 - **Incidents in last 12 months** — list each incident with date, severity, root cause, postmortem link.
   _To be filled in: ___
@@ -166,6 +181,7 @@ After reading this questionnaire:
 - [ ] Read top-3 runbooks (Section 6) and the most recent postmortem.
 - [ ] Note the landmines (Section 7) — surface them in team standup before any change.
 - [ ] Map dependencies (Section 8) and introduce yourselves to upstream/downstream owners.
+- [ ] Confirm IaC repo, state access and (if any) CloudFormation stacks / Kubernetes RBAC (Section 4b).
 - [ ] Verify secret-store access (Section 9) for the incoming team's IAM identities.
 - [ ] Read compliance/DR section (Section 10) — confirm RTO/RPO are met by current infra.
 - [ ] Review roadmap (Section 11) and decide which items the new team will continue.

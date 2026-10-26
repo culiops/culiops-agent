@@ -2,82 +2,54 @@
 
 ## What this fixture validates
 
-This fixture demonstrates the skill's **graceful degradation** path: an outgoing team that fills in only 6 of 11 interview sections. Key behaviors validated:
+1. **Section classification at Gate 5:** 7 `complete`, 2 `partial`, 2 `empty` (the three places this was counted — `input.md`, this file and `state.md` — agree).
+2. **Accept-as-is** is an explicit, recorded operator decision; the skill does not ask the operator to supply the outgoing team's knowledge.
+3. **Empty is `?`, never `✗`.** Items 22-25 (Section 10 empty) and item 14 (incidents empty) are `?`. `✗` needs an explicit "no X".
+4. **Catalog facts are reflected but do not replace answers.** The catalog shows PITR and a TTL on `expires_at` for `payments-ledger`; items 23 and 24 say so in their notes and stay `?` because no retention policy, restore test or DR plan was stated.
+5. **Strict verdict `partial`:** `?` and `◐` cap the verdict; no item is `✗`, and the one conflict (item 19) is outside the not-ready categories.
+6. **Declined verification batch** is recorded (state, plan addendum, scorecard); items 10 and 15 stay `◐` with their check commands listed.
+7. Same-target check, single discovery delegation, derived-facts-only probes: as happy-path.
 
-1. **Section classification at Gate 5.** The skill classifies sections as `complete`, `partial`, or `empty` based on the presence of `_To be filled in: ___` markers. It does not assume empty sections contain valid data.
-2. **"Accept as-is" gate decision.** The operator can choose to proceed without returning the questionnaire to the outgoing team. This choice is recorded explicitly in state.md.
-3. **Evidence-based scorecard degradation.** Items auto-mark `?` (not ✓) when their source section is empty — per Iron Law, absence of evidence is unknown, not negative. The skill marks `✗` only when an interview answer explicitly states the negative (e.g., "no DR plan exists"). It does not infer or forward-fill answers.
-4. **Iron Law compliance.** The skill never asks the operator to fill in Section 10 answers. The operator is not the source of compliance/DR knowledge — the outgoing team is. Missing knowledge surfaces as open questions, not as operator prompts.
-5. **Not-ready verdict from Compliance category.** Four Compliance items unresolved (22–25 all `?`) is sufficient to produce a `not-ready` verdict regardless of the other 21 items.
-6. **Open questions populated from empty sections.** The 5 high-priority open questions map directly to Section 10 (PII, retention, backup, DR) and Section 3 (SLOs). The 3 medium-priority items map to Section 6 (incidents) and Section 11 (open issues) being empty.
+`mock-artifacts/service-catalog.md` and `mock-artifacts/runtime-profile.md` are the shared mock sibling artifacts (runtime-profile-schema 2; catalog with Owner/Live columns, `Live verification: performed`, Unattributed list, secrets as references). The mock Wiring section deliberately lists one configured caller the interview omits (role `legacy-orders-exec` may send to `payments-capture-queue`), so item 19 is a `✗ conflict` wherever both a profile and Section 8 exist. The interview has two variants: A (happy-path only: incoming role not yet permitted, 3-5 deploys/week, DR to us-west-2) and B (all others: role permitted, 5 deploys/quarter, single-region DR).
 
 ---
 
 ## Gate transitions
 
-**Gate 1 → Step 1 complete**
-Same as happy-path. Operator provides: service=payments, account 123456789012, region us-east-1, takeover intent, 2 diagram PNGs, no IaC, outgoing=Pay Team, incoming=Platform Team.
+**Gates 1, 1.5, 2, 3, 4** (14:00Z-15:05Z): as happy-path (same probes, one discovery delegation, same-target checks at 14:33Z and 15:05Z).
 
-**Gate 1.5 → Step 1.5 complete (execution plan approved)**
-Same as happy-path. All 4 capability probes pass. Execution plan identical to happy-path. Operator approves.
+**Gate 5** (15:05Z-15:45Z). Bob fills Sections 1, 2, 4 (incl. 4b), 5, 7, 8, 9. Classification: 7 complete / 2 partial (6: incidents, recurring issues, MTTR, change failure rate empty; 11: open issues empty) / 2 empty (3, 10). Options shown: return to the outgoing team / accept as-is / abort. Operator accepts as-is; recorded in `state.md`.
 
-**Gate 2 → Step 2 complete (diagram extraction)**
-Same as happy-path. Catalog snapshot at mock-artifacts/service-catalog.md.
+**Gate 6** (15:45Z-16:00Z).
+- From artifacts: items 4-9 `✓ verified`; 16, 18, 20 `✓ verified`; 19 `✗ conflict`.
+- Operator confirms the deploy role (item 2) and attests items 3, 11, 12.
+- Batch proposed (15:48Z); **declined** (15:49Z). Items 10, 15 `◐`.
+- Items 14, 22, 23, 24, 25 `?`.
+- Verdict `partial`.
 
-**Gate 3 → Step 3 complete (live discovery)**
-Same as happy-path. Catalog merged; 8 resources confirmed.
-
-**Gate 4 → Step 4 complete (runtime profile)**
-Same as happy-path. All 4 runtime-trace sources ran; profile snapshot at mock-artifacts/runtime-profile.md.
-
-**Gate 5 → Step 5 complete (interview ingested — partial)**
-Skill emits questionnaire. Bob L. fills in Sections 1, 2, 4, 5, 7, 8, 9 fully. Section 3 left entirely empty. Section 6: runbooks filled, incidents/recurring/MTTR/change-failure-rate empty. Section 10 entirely empty. Section 11: pending changes + deprecations + outlook filled, open issues empty.
-
-Skill classifies: 6 complete, 3 partial, 2 empty. Presents classification summary to operator with 3 options: (a) return to outgoing team for completion, (b) accept as-is, (c) abort.
-
-Operator selects "accept as-is". Skill records decision in state.md Gate 5 row and audit trail. Skill does NOT ask the operator to fill in any missing answers.
-
-**Gate 6 → Step 6 complete (scorecard — not-ready)**
-Skill auto-marks from artifacts:
-- Items 1-9: ✓ from service-catalog.md and runtime-profile.md (unchanged from happy-path).
-- Items 10-12: ✓ from Section 5 and Section 2 (fully completed sections).
-- Item 13: ✓ from Section 6 → runbooks sub-section (5 runbooks present).
-- Item 14: ? — Section 6 → incidents sub-section empty. Skill marks ? not ✓ (absence of data ≠ absence of incidents).
-- Items 15-18: ✓ from Section 4 (fully completed).
-- Items 19-21: ✓ from Section 8 (fully completed).
-- Items 22-25: `?` — Section 10 entirely empty. Per Iron Law, absence of evidence is unknown, not negative. Skill auto-marks `?` (not `✗` not `✓`). Evidence citation: "filled-interview.md → Section 10 — empty (`_To be filled in: ___`)". `✗` is reserved for explicit negative answers.
-
-Operator manually confirms Item 3 (console+CLI) and Item 12 (paging path) as ✓.
-
-Verdict: not-ready. 4 unresolved `?` items in Compliance category (0 of 4 passing) is sufficient. Skill does not attempt to override or soften the verdict.
-
-**Gate 7 → Step 7 complete (handoff package assembled)**
-Package assembled with same file list as happy-path. README TL;DR prominently flags `not-ready` verdict and the 5 high-priority open questions. First-day actions lead with the 5 blockers before any routine steps.
+**Gate 7** (16:00Z-16:05Z). Package: 8 files. README leads with the High items (the conflict and the two empty sections).
 
 ---
 
-## Key differences from happy-path
+## Marks
+
+11 ✓ verified, 3 ✓ attested, 5 ◐, 0 ✗, 1 ✗ conflict, 5 ?, 0 N/A (25 items).
 
 | Dimension | happy-path | partial-interview |
 |---|---|---|
-| Interview sections filled | 11/11 | 6 full + 3 partial + 2 empty |
-| Gate 5 decision | accept (full) | accept as-is (partial) |
-| Scorecard ✓ count | 23 | 18 |
-| Scorecard ✗ count | 0 | 0 |
-| Scorecard ? count | 0 | 5 |
-| Compliance category | 4/4 | 0/4 |
-| Verdict | ready | not-ready |
-| High-priority open questions | 0 | 5 |
-| Medium-priority open questions | 2 | 3 |
+| Interview sections | 11 complete | 7 complete / 2 partial / 2 empty |
+| Step 6 batch | run | declined |
+| `?` | 0 | 5 |
+| `✗` / `✗ conflict` | 1 / 3 | 0 / 1 |
+| Verdict | not-ready | partial |
 
 ---
 
 ## Acceptance check
 
-A reviewer steps through `input.md`, `mock-artifacts/`, and `filled-interview.md`, then confirms the skill would produce the contents of `expected-handoff/` with **representative** results (allowing for run-specific timestamps and operator usernames).
+- Verdict `partial` for any run with this input set (no `✗`; the conflict is in Dependencies).
+- `open-questions.md`: 3 High, 6 Medium, 2 Low; the README top 5 are all present.
+- Items 22-25 and 14 are `?` with the citation "empty (`_To be filled in: ___`)".
+- `state.md` Gate 5 row records 7 / 2 / 2 and accept-as-is.
 
-Specifically:
-- `expected-handoff/readiness-scorecard.md` verdict would be `not-ready` for any run with this input set, because Section 10 is empty and the skill correctly does not auto-pass evidence-absent compliance items.
-- `expected-handoff/open-questions.md` would have 5 high-priority items for any run where Section 10 and Section 3 are empty.
-- `expected-handoff/state.md` Gate 5 row would always record "accept as-is" decision for this fixture.
-- Items 22-25 would always be `?` (not `✗`) because empty sections are absence of evidence, not explicit negative answers. The skill reserves `✗` for explicit denials (e.g., "no DR plan exists").
+Citations in `expected-handoff/readiness-scorecard.md` are package-relative: `interview-questionnaire.md` is the snapshot of `filled-interview.md`; `service-catalog.md` and `runtime-profile.md` are the snapshots of the files under `mock-artifacts/`; `state.md` is `expected-handoff/state.md`. Line numbers refer to those files.

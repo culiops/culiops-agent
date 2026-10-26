@@ -1,101 +1,57 @@
-# Dry-Run Notes — interactive-resume fixture
+# Dry-run notes — interactive-resume
 
-## Fixture purpose
+## What this fixture validates
 
-Validates the skill's resumability across a multi-day takeover. Two separate operator sessions are simulated: Day 1 (2026-05-05) and Day 7 (2026-05-12). The fixture confirms that the skill correctly persists state between sessions, presents the current state on re-invocation, requires explicit resume confirmation from the operator, and merges audit trail entries from both sessions into the final state file.
+- State persistence across sessions (Day 1 2026-05-05, Day 7 2026-05-12), explicit resume confirmation (never silent), no intake re-entry, merged audit trail.
+- **H3 on resume:** the Day-1 catalog is 7 days old when reused. The skill offers use / verify / re-run; the operator picks use as-is; the **age is recorded** (state same-target table, plan addendum, scorecard notes on items 4 and 6). After Step 4 the profile's resolved set (8 names) is compared with the catalog inventory (8 names): no difference.
+- Timestamps are coherent: the catalog is generated and snapshotted on Day 1 (`generated-at: 2026-05-05T10:20:00Z`, `Live verification: performed 2026-05-05`); the runtime profile on Day 7 (`generated-at: 2026-05-12T08:30:00Z`); the interview, scorecard and package on Day 7.
+- Identity is re-probed on resume (`identity-probe-recheck-resume`).
+- Strict verdict with a batch that finds a conflict: item 10 `✗ conflict` (the interview names `payments-latency-p99`; `describe-alarms` does not return it).
+- One discovery delegation; derived-facts-only probes; runtime-trace's own 7 gates.
+
+`mock-artifacts/service-catalog.md` and `mock-artifacts/runtime-profile.md` are the shared mock sibling artifacts (runtime-profile-schema 2; catalog with Owner/Live columns, `Live verification: performed`, Unattributed list, secrets as references). The mock Wiring section deliberately lists one configured caller the interview omits (role `legacy-orders-exec` may send to `payments-capture-queue`), so item 19 is a `✗ conflict` wherever both a profile and Section 8 exist. The interview has two variants: A (happy-path only: incoming role not yet permitted, 3-5 deploys/week, DR to us-west-2) and B (all others: role permitted, 5 deploys/quarter, single-region DR).
 
 ---
 
 ## Session 1 — Day 1 (2026-05-05)
 
-**What happens:**
-
-1. Operator invokes `service-takeover` for service `payments`.
-2. Skill runs Gates 1, 1.5, 2, 3 sequentially. Operator approves each gate.
-3. At Gate 4 (runtime-trace invocation), operator types "pause" instead of approving.
-4. Skill writes `state.md` to `.culiops/service-takeover/payments/state.md`:
-   - Steps 1-3: `done` with 2026-05-05 timestamps.
-   - Steps 4-7: `pending`.
-   - Includes a pause note: "Operator paused at Gate 4 on 2026-05-05T10:30Z."
-5. Session ends. No further progress.
-
-**Artifacts produced:**
-
-- `mock-artifacts/service-catalog.md` (diagram + live discovery merged)
-- `expected-handoff/execution-plan.md` (from Step 1.5)
-- `day-1-state/state.md` (state file at end of Day 1)
-
----
+1. Operator invokes `service-takeover` for `payments`. Gate 1 (09:00-09:05Z): intake.
+2. Gate 1.5 (09:05-09:20Z): probes (identity 09:08, Event history 09:09, RE index 09:10); plan emitted 09:12, approved 09:20.
+3. Gates 2-3 (09:20-10:30Z): one `service-discovery` delegation; catalog returned 10:20; same-target check on snapshot (age 10 min); snapshot 10:30.
+4. At Gate 4 (10:30Z) the operator types "pause". `day-1-state/state.md` is written (Steps 4-7 `pending`, pause note).
 
 ## Session 2 — Day 7 (2026-05-12)
 
-**What happens:**
-
-1. Operator re-invokes `service-takeover` for service `payments`.
-2. Skill detects existing `state.md` and reads it before doing anything else.
-3. Skill prints current state summary:
-
-   ```
-   Found existing run for service: payments
-
-   Steps completed (Day 1 — 2026-05-05):
-     Step 1  — done (Intake)
-     Step 1.5 — done (Information audit)
-     Step 2  — done (Diagram extraction)
-     Step 3  — done (Live discovery)
-
-   Steps pending:
-     Step 4  — Runtime profile (runtime-trace)
-     Step 5  — Outgoing team interview
-     Step 6  — Readiness scorecard
-     Step 7  — Handoff package assembly
-
-   Artifacts on disk:
-     mock-artifacts/service-catalog.md  (merged, 2026-05-05T10:30Z)
-     expected-handoff/execution-plan.md (2026-05-05T09:20Z)
-
-   Resume from Step 4 / jump to a specific step / restart entirely?
-   ```
-
-4. Operator responds: "resume from Step 4".
-5. Skill adds audit trail entry: "Operator resumed run on 2026-05-12T08:00Z. Confirmed resume point: Step 4."
-6. Skill proceeds through Gates 4-7 with 2026-05-12 timestamps.
-7. Final `state.md` captures audit entries from both sessions.
-
-**Key behaviors validated:**
-
-- **No silent continuation.** Skill always prompts before resuming; it does not automatically pick up where it left off.
-- **Artifact reuse.** `service-catalog.md` produced on Day 1 is used by Steps 4-7 without re-running discovery.
-- **Execution plan reuse.** The runtime-trace invocation command printed at Gate 4 is sourced from the execution plan saved on Day 1 (Step 1.5).
-- **Merged audit trail.** The final `state.md` includes timestamped entries from 2026-05-05 (Steps 1-3) and 2026-05-12 (resume entry + Steps 4-7). No entries are dropped or overwritten.
-- **State file as source of truth.** Day 7 session never asks the operator to re-enter service name, account, region, or IAM ARN. All are read from `state.md`.
+1. 08:00Z: re-invocation. The skill reads `state.md` first and prints the Day-1 state, artifacts and the resume question (resume from Step 4 / jump / restart). Operator: "resume from Step 4". Recorded.
+2. 08:02Z: identity re-check (account matches intake).
+3. 08:03Z: existing artifact `service-catalog.md` (7 days old): use / verify / re-run offered; **use as-is** chosen; age recorded.
+4. Gate 4 (08:05-08:35Z): runtime-trace invocation (saved from the Day-1 plan); profile generated 08:30Z; same-target check (age 5 min; resolved set = catalog inventory).
+5. Gate 5 (08:35-09:15Z): questionnaire; filled interview received 09:10Z (variant B, 11 complete).
+6. Gate 6 (09:15-09:40Z): deploy role confirmed (09:16); batch proposed 09:18, approved 09:20, run: alarms (4 of 5 present: item 10 `✗ conflict`), PITR `ENABLED` (item 24 `◐`), simulation 6 of 6 `allowed` (item 15 `✓ verified`). Item 19 `✗ conflict`. Attestations 09:30-09:34. Verdict `partial`.
+7. Gate 7 (09:40-10:05Z): 8 files.
 
 ---
 
-## Fixture files and their roles
+## Fixture files
 
 | File | Role |
 |---|---|
-| `input.md` | Describes the two-session scenario and operator actions |
-| `day-1-state/state.md` | State file as written at end of Day 1 (Steps 1-3 done, Steps 4-7 pending) |
-| `day-7-state/state.md` | State file as written at end of Day 7 (all steps done, merged audit trail) |
-| `mock-artifacts/service-catalog.md` | Produced on Day 1 Step 2-3; reused on Day 7 Steps 4-7 |
-| `mock-artifacts/runtime-profile.md` | Produced on Day 7 Step 4 |
-| `filled-interview.md` | Produced on Day 7 Step 5 |
-| `expected-handoff/state.md` | Identical to `day-7-state/state.md` — the final state included in handoff package |
-| `expected-handoff/README.md` | Handoff package README (same as happy-path) |
-| `expected-handoff/readiness-scorecard.md` | PRR-style scorecard (same as happy-path) |
-| `expected-handoff/open-questions.md` | Open questions list (same as happy-path) |
-| `expected-handoff/execution-plan.md` | Execution plan from Step 1.5 (same as happy-path) |
-| `DRY-RUN-NOTES.md` | This file |
+| `input.md` | The two-session scenario |
+| `day-1-state/state.md` | State at the end of Day 1 (Steps 4-7 pending, pause note) |
+| `day-7-state/state.md` | State at the end of Day 7 (also `expected-handoff/state.md`) |
+| `mock-artifacts/service-catalog.md` | Produced Day 1, reused Day 7 (age 7 d, recorded) |
+| `mock-artifacts/runtime-profile.md` | Produced Day 7 |
+| `filled-interview.md` | Variant B, received Day 7 |
+| `expected-handoff/` | Package files; distinct from happy-path (marks, verdict, timestamps, plan addendum) |
 
----
+## Marks
 
-## Deviations from happy-path
+14 ✓ verified, 3 ✓ attested, 6 ◐, 0 ✗, 2 ✗ conflict, 0 ?, 0 N/A (25 items).
 
-The handoff package contents (README, readiness-scorecard, open-questions, execution-plan) are identical to happy-path. The only differences are:
+## Acceptance check
 
-1. Steps 1-3 timestamps are 2026-05-05 (not 2026-05-12).
-2. Steps 4-7 timestamps are 2026-05-12 (same date as happy-path, different wall-clock times).
-3. The audit trail contains the session resume entry between the Day 1 pause and the Day 7 Step 4 start.
-4. `run-started-at` in the state frontmatter is 2026-05-05T09:00:00Z (Day 1 intake), while `run-completed-at` is 2026-05-12T10:05:00Z (Day 7 completion).
+- Verdict `partial`; items 10 and 19 `✗ conflict`; both in the High section of `open-questions.md`.
+- `state.md` carries both sessions' timestamps and the same-target row "7 d ... operator chose use as-is".
+- No timestamp in the handoff pre-dates its source artifact or conflicts with the Day-1 / Day-7 split.
+
+Citations in `expected-handoff/readiness-scorecard.md` are package-relative: `interview-questionnaire.md` is the snapshot of `filled-interview.md`; `service-catalog.md` and `runtime-profile.md` are the snapshots of the files under `mock-artifacts/`; `state.md` is `expected-handoff/state.md`. Line numbers refer to those files.

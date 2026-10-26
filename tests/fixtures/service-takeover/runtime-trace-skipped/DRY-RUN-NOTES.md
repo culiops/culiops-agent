@@ -1,84 +1,46 @@
-# DRY-RUN-NOTES — runtime-trace-skipped fixture
+# Dry-run notes — runtime-trace-skipped
 
 ## What this fixture validates
 
-Scenario: operator lacks `ce:*` IAM permissions in the target account (corporate policy blocks Cost Explorer for engineering accounts). The skill's Gate 1.5 capability probe detects the denial before any sibling skill is invoked. The operator chooses to proceed without runtime data. Step 4 is skipped cleanly.
+- A skipped sibling step is recorded cleanly: `skipped` (not `done`, not `failed`) with a traceable reason; no runtime profile is synthesized.
+- **Scenario rescope:** the reason is an operator time-constraint choice. The earlier "Cost Explorer denied" scenario was overbroad (runtime-trace runs without Cost Explorer: only the spend section is affected, the other sources still work) and asked the operator for a Cost Explorer permission the skill never needs. Both are gone, along with the policy attribution.
+- Scorecard degradation is exact: items 5, 7, 8, 9 depend only on the profile and become `?` (4 items). Items 2, 16, 18, 19 and 25 need the profile to be cross-checked, so they are `◐` rather than `✓`; no `✗` and no false `✓`.
+- The Step 6 batch is independent of the profile: alarms `✓ verified` (10), simulation `allowed` (15 `✓ verified`), PITR `ENABLED` (24 stays `◐`).
+- Same-target check on the catalog; one discovery delegation; the Step 1.5 probes that have no consumer are not emitted.
 
-## Validation points
+`mock-artifacts/service-catalog.md` and `mock-artifacts/runtime-profile.md` are the shared mock sibling artifacts (runtime-profile-schema 2; catalog with Owner/Live columns, `Live verification: performed`, Unattributed list, secrets as references). The mock Wiring section deliberately lists one configured caller the interview omits (role `legacy-orders-exec` may send to `payments-capture-queue`), so item 19 is a `✗ conflict` wherever both a profile and Section 8 exist. The interview has two variants: A (happy-path only: incoming role not yet permitted, 3-5 deploys/week, DR to us-west-2) and B (all others: role permitted, 5 deploys/quarter, single-region DR).
+(Here Wiring does not exist, so item 19 is `◐`, not a conflict.)
 
-### 1. Capability probe detects IAM gap at Gate 1.5 (before any sibling invocation)
+---
 
-Probe phase runs four checks: AWS access, CloudTrail, Resource Explorer, Cost Explorer. The Cost Explorer check (`ce:GetCostAndUsage`) returns ACCESS DENIED. The skill surfaces this as a gap with three operator-decidable options — not a hard failure that aborts the run.
+## Gate transitions
 
-Expected behavior verified:
-- Probe result recorded in state.md capability-probe table: `DENIED — ce:* blocked by corporate IAM policy`.
-- Three options presented to operator: escalate IAM, proceed without runtime data, abort.
-- Operator selects "proceed without runtime data" — selection recorded with timestamp in state.md audit trail and execution-plan.md IAM gap decision block.
-- No `runtime-trace` invocation occurs.
-- No CLI commands for `ce:*` are emitted after the denial.
+**Gate 1** (14:00Z). Inputs as happy-path.
 
-### 2. Step 4 marked `skipped` in state.md with reason
+**Gate 1.5** (14:03Z-14:12Z). Identity probe (derived fact: account matches intake). Operator chooses to skip runtime-trace at 14:09Z; options shown: run now / run later / skip. The plan lists the consequences for items 2, 5, 7, 8, 9, 16, 18, 19, 25. Approved 14:12Z.
 
-Step 4 row in state.md:
+**Gates 2-3** (14:12Z-14:33Z). One delegation; same-target check OK; snapshot.
 
-```
-| 4 | Runtime profile — runtime-trace | skipped | — | — | IAM gap — operator choice (accepted at Gate 1.5; no runtime-profile.md produced) |
-```
+**Gate 4** (14:33Z). Skipped. State row:
+`| 4 | Runtime profile — runtime-trace | skipped | — | — | skipped: operator choice at Gate 1.5 (time constraint) |`
+Audit line: `Step 4 SKIPPED (operator choice, Gate 1.5). No runtime-trace invocation printed; no runtime-profile.md produced or synthesized`.
 
-Audit trail entry:
+**Gate 5** (14:33Z-15:10Z). Interview variant B, 11 complete.
 
-```
-2026-05-12T14:35:00Z  Step 4 skipped — IAM gap accepted at Gate 1.5 (operator choice); no runtime-trace invoked; no runtime-profile.md produced
-```
+**Gate 6** (15:10Z-15:35Z). Auto-mark with no profile; batch run; attestations of items 3, 11, 12. Verdict `partial`.
 
-Neither a `done` nor `failed` — explicitly `skipped` with reason traceable to the Gate 1.5 decision.
+**Gate 7** (15:35Z-15:40Z). Package of 7 files (no runtime profile); README gate list says Gate 4 was skipped by operator choice.
 
-### 3. runtime-profile.md absent from handoff directory; placeholder present
+---
 
-`mock-artifacts/runtime-profile.md` does NOT exist. `mock-artifacts/.runtime-trace-not-run` exists with one-line explanation. The skill does not synthesize a fake runtime profile or leave a partial file.
+## Marks
 
-### 4. Scorecard Runtime category (items 7-9) all degrade to `?`
+7 ✓ verified, 3 ✓ attested, 11 ◐, 0 ✗, 0 ✗ conflict, 4 ?, 0 N/A (25 items): 7 + 3 + 11 + 4 = 25.
 
-Items 7, 8, 9 all show:
-- **Mark:** ? (auto-degraded)
-- **Evidence:** `no runtime-profile.md (Step 4 skipped per operator at Gate 1.5)`
+## Acceptance check
 
-No false ✓ (would assert data we don't have) and no ✗ (would imply the service is broken). The `?` mark represents "evidence source unavailable, cannot assert either way."
+- `runtime-profile.md` is absent from the package and from `mock-artifacts/`; `.runtime-trace-not-run` explains why.
+- Items 5, 7, 8, 9 are `?`; the summary table rows add up to 25 and the `?` column to 4.
+- `open-questions.md` HIGH-1 is "run runtime-trace and resume at Step 4"; nothing asks for a Cost Explorer permission.
 
-### 5. Items 2 and 5 also degrade to `?`
-
-Item 2 (deploy role) relied on `runtime-profile.md → Control-Plane Activity → Principals table`. Item 5 (cross-region footprint) relied on `runtime-profile.md → Cross-Region Footprint → Resource Explorer query`. Both degrade to `?` for the same reason. The degradation propagates correctly to all items that depend on the missing artifact.
-
-### 6. Verdict: not-ready
-
-With 7 items at `?` (5 from runtime-profile dependency, 2 manual not confirmed), the scorecard verdict is `not-ready`. The skill does not silently declare `ready` or omit the verdict.
-
-### 7. open-questions.md surfaces HIGH-1 blocker
-
-`HIGH-1` in open-questions.md states: "Activity baseline unavailable — recommend escalating IAM for ce:* read and re-running." It is listed under High Priority (blockers — must resolve before handoff), not Medium or Low. It includes concrete suggested action (request specific permissions, re-run from Step 4).
-
-### 8. Handoff README first-day actions include IAM follow-up
-
-README first-day actions include:
-> **Address IAM gap before signing off on takeover.** Request `ce:GetCostAndUsage` and `ce:GetCostForecast` access on account 123456789012 from IAM admin. Then re-run `service-takeover` from Step 4...
-
-The README verdict is `not-ready` and the IAM gap action is the first substantive item in first-day actions.
-
-### 9. Steps 2, 3, 5, 6, 7 proceed normally
-
-Gates 2 and 3 (service-discovery) do not require Cost Explorer and run normally. Step 5 (interview) and Steps 6-7 (scorecard + package) also proceed. The skip is surgical — only Step 4 is affected.
-
-### 10. Execution plan records the decision
-
-`execution-plan.md` contains an "IAM gap — operator decision" section capturing: the gap description, impact, three options presented, operator selection, and timestamp. This is the audit trail for why Step 4 is absent.
-
-## How to re-run after IAM is resolved
-
-1. Operator requests `ce:GetCostAndUsage` and `ce:GetCostForecast` on account 123456789012.
-2. IAM admin grants access.
-3. Operator re-invokes `service-takeover` for service `payments`.
-4. Skill reads `state.md`, sees Step 4 as `skipped`, offers to resume from Step 4.
-5. Capability probe re-runs — Cost Explorer now passes.
-6. Step 4 executes: `runtime-trace` invoked, `runtime-profile.md` produced.
-7. Scorecard re-runs with new artifact — items 7-9, 2, 5 auto-marked from runtime-profile.md.
-8. Verdict updates to `ready` (assuming all other items remain ✓).
+Citations in `expected-handoff/readiness-scorecard.md` are package-relative: `interview-questionnaire.md` is the snapshot of `filled-interview.md`; `service-catalog.md` and `runtime-profile.md` are the snapshots of the files under `mock-artifacts/`; `state.md` is `expected-handoff/state.md`. Line numbers refer to those files.

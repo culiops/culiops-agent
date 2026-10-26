@@ -2,22 +2,21 @@
 
 ## Scenario
 
-The operator previously ran service-discovery against the payments service 14 days ago. The catalog still exists at `.culiops/service-discovery/payments-catalog.md`. Today they're starting a takeover and want fresh discovery data.
+The operator ran `service-discovery` against the payments service 14 days ago (5 resources). That catalog still sits at `.culiops/service-discovery/payments-catalog.md` (see `preexisting/payments-catalog.md`). Today they start a takeover and want fresh discovery data, but keep the old picture for comparison.
 
 ## Operator inputs
 
-Same as happy-path, plus:
-- Available materials note: "Pre-existing service-discovery catalog at `.culiops/service-discovery/payments-catalog.md` (14 days old)."
+Same as happy-path, plus: "Pre-existing service-discovery catalog at `.culiops/service-discovery/payments-catalog.md` (14 days old)." Interview variant B.
 
 ## Expected gate behavior
 
-- Gate 1.5: execution plan identifies the pre-existing catalog. Proposes 3 options for Step 2 row: use as-is / verify with thin re-scan / re-run from scratch.
-- Operator selects re-run.
-- At Step 2: skill renames the old catalog to `.culiops/service-discovery/payments-catalog.20260428-stale.md` (timestamp suffix from old catalog's frontmatter `generated-at`), then prints fresh `service-discovery` invocation.
-- Rest of run proceeds as happy-path.
+- Gate 1.5: the plan shows the existing catalog and offers **use as-is / verify with a thin re-scan / re-run**. Operator chooses re-run.
+- The skill **never renames or edits the sibling skill's file** (consumed read-only). It copies the old catalog **into the takeover directory** as `service-catalog.2026-04-28.md`, and the fresh `service-discovery` output goes to a different path (`payments-prod.md`).
+- After the snapshot the skill diffs old (5 resources) vs new (8): +3 (`payments-capture-dlq`, the two secrets), none removed, none changed. The drift becomes an open question.
+- Rest of the run as happy-path (batch run; interview variant B).
 
 ## Notable findings
 
-- Old catalog preserved (never deleted).
-- New catalog snapshot in handoff directory is from today, not from 14 days ago.
-- state.md records the rename action in audit trail.
+- Verdict: **partial** (15 ✓ verified, 3 ✓ attested, 6 ◐, 0 ✗, 1 ✗ conflict, 0 ?, 0 N/A).
+- 9-file package: the usual 8 plus `service-catalog.2026-04-28.md`.
+- The stale catalog lowered nothing: the re-run catalog is live-backed.

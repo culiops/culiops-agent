@@ -3,15 +3,17 @@ template-version: 1
 emitted-by: service-takeover
 service: payments
 filled-by: Bob L., Carol P.
-filled-date: 2026-05-10
+filled-date: 2026-05-12
 ---
 
 # Outgoing-Team Interview — payments
 
+> **Private repo only.** Record references (where a secret lives, who owns it), never values. No tokens/signed links in URLs. Prefer role/team aliases over personal phone numbers.
+
 **Outgoing team:** Pay Team (primary contact: Bob L. — bob@example.com)
 **Incoming team:** Platform Team
 **Handoff date:** 2026-06-15
-**Filled in by:** Bob L. and Carol P. on 2026-05-10
+**Filled in by:** Bob L. and Carol P. on 2026-05-12
 
 ---
 
@@ -84,7 +86,7 @@ This questionnaire captures the **tribal knowledge** about `payments` that doesn
   Environment variables are managed via `aws lambda update-function-configuration` in the same deploy pipeline. Secrets in Secrets Manager are updated manually by Carol or Bob using the AWS console (never committed to git). IaC for config is on the roadmap (Q3 2026, see Section 11).
 
 - **Deploy frequency** — deploys per day/week/month.
-  3-5 deploys per week (DORA: deploy frequency ~4/week averaged over last quarter). Peaks at 8-10/week during feature sprints.
+  About one deploy every 2-3 weeks (DORA: deploy frequency ~0.4/week; 5 production deploys in the last quarter). Changes are batched into releases.
 
 - **Lead time for changes** — from commit to prod.
   Median 45 minutes (commit → PR review → merge → deploy pipeline). P95 is 3 hours (waiting for review). DORA: lead time for changes = medium.
@@ -93,7 +95,21 @@ This questionnaire captures the **tribal knowledge** about `payments` that doesn
   GitHub Actions `revert-and-redeploy` workflow. Trigger: go to Actions tab, run `revert-and-redeploy`, paste the SHA to roll back to, click Run. The workflow fetches the previously deployed artifact from S3 and re-deploys all three Lambdas. Last tested 2026-04-22 during a drill — took 4 minutes end-to-end.
 
 - **Deploy permissions** — who can deploy? IAM role / user list.
-  `arn:aws:iam::123456789012:role/payments-deploy-role` (assumed by GitHub Actions OIDC). Humans: Bob and Carol can trigger the workflow. Platform Team's `arn:aws:iam::123456789012:role/platform-team-deploy` will need to be added before handoff date — action item tracked in Section 11.
+  `arn:aws:iam::123456789012:role/payments-deploy-role` (assumed by GitHub Actions OIDC). Humans: Bob and Carol can trigger the workflow. Platform Team's `arn:aws:iam::123456789012:role/platform-team-deploy` was granted the same deploy permissions on 2026-05-08 (inline policy `payments-deploy-access`).
+
+- **Incoming team's deploy role ARN** — the exact IAM role ARN the incoming team will deploy with (e.g. `arn:aws:iam::<account-id>:role/<name>`), and whether it already has the deploy permissions above. If it doesn't exist yet, say "to be created". The skill uses this ARN to check the permission with a read-only policy simulation.
+  `arn:aws:iam::123456789012:role/platform-team-deploy` — exists; deploy permissions granted 2026-05-08.
+
+### 4b — IaC & ownership
+
+- **IaC tool and repo** — which tool (Terraform / CloudFormation / CDK / other) manages this service, and which repo/path holds it. Say "none" if resources were created by hand.
+  None. All resources were created by hand (console and CLI). A Terraform migration is planned for Q3 2026 (Section 11); no repo exists yet.
+- **Terraform state** — backend (S3 bucket + key, Terraform Cloud workspace, etc.), and who holds state access (read and write). Reference only; no credentials.
+  Not applicable (no Terraform yet).
+- **Other provisioning tools** — were any resources created by CloudFormation / SAM / Serverless Framework / CDK? List the stack names and which resources each owns.
+  None. No CloudFormation, SAM, Serverless Framework or CDK stacks (the resources carry no `aws:cloudformation:stack-name` tag).
+- **Kubernetes (if applicable)** — cluster and namespace(s); the RBAC the incoming team needs (roles/bindings); ServiceAccounts that use IRSA, with their role ARNs.
+  Not applicable (Lambda, SQS and DynamoDB only).
 
 ---
 
@@ -107,7 +123,7 @@ This questionnaire captures the **tribal knowledge** about `payments` that doesn
   5. `payments-latency-p99` — Lambda Duration p99 > 500ms for 10 minutes. Severity P2.
 
 - **Paging path** — which alarms page, where, with what severity.
-  All five alarms send to PagerDuty via CloudWatch → SNS → PagerDuty integration (service key in Secrets Manager payments/pagerduty-key). P1 alarms wake on-call immediately. P2 alarms send urgent notification with 30-min escalation.
+  All five alarms send to PagerDuty via CloudWatch → SNS → PagerDuty integration (the PagerDuty integration key is configured on the SNS subscription and lives in PagerDuty, owner Carol; it is not stored in AWS Secrets Manager). P1 alarms wake on-call immediately. P2 alarms send urgent notification with 30-min escalation.
 
 - **Known noisy alerts** — alarms that fire often but aren't actionable.
   `payments-latency-p99` occasionally fires during AWS Lambda cold-starts (typically on Sunday mornings when traffic drops to near-zero overnight and the first Monday requests hit cold containers). Filed to move to provisioned concurrency — not yet done.
@@ -142,7 +158,7 @@ This questionnaire captures the **tribal knowledge** about `payments` that doesn
   ~25 minutes based on the two incidents above (47 min and 12 min). Target SLO is <30 min. DORA: MTTR = medium.
 
 - **Change failure rate** — % of deploys causing user-visible degradation.
-  1 incident in ~80 deploys over the last 6 months = ~1.25%. DORA: change failure rate = low. The 2026-03-12 incident was not deploy-caused; actual code-deploy failures = 0.
+  0 deploy-caused incidents in ~10 deploys over the last 6 months (0%). DORA: change failure rate = low. The 2026-03-12 incident was Stripe-side, not deploy-caused.
 
 ---
 
@@ -152,7 +168,7 @@ This questionnaire captures the **tribal knowledge** about `payments` that doesn
   The Stripe webhook signature verification in payments-authorizer is fragile — it requires the raw request body before any JSON parsing. If an API Gateway config change alters payload encoding, signature verification silently fails and all webhooks are rejected. Carol has a runbook for this (auth-error-spike).
 
 - **"Do not touch on Friday" things** — actions known to cause incidents.
-  Never change the DynamoDB payments-ledger table schema (add/remove GSI, change billing mode) during business hours. DynamoDB schema changes on provisioned tables block reads for up to 90 seconds. Always do these during the Friday 22:00 UTC maintenance window.
+  Never change the DynamoDB payments-ledger table schema (add/remove GSI, change billing mode) during business hours. The table is on-demand; the last GSI add caused up to 90 seconds of elevated read latency. Always do these during the Friday 22:00 UTC maintenance window.
 
 - **Undocumented quirks** — surprising behavior, workarounds, hacks.
   1. The reconciler Lambda has a hardcoded `sleep(30)` at startup (line 42 in reconciler/index.py) — this was added to wait for DynamoDB writes to propagate after a deployment but was never removed. It is safe to remove but has not been prioritized.
@@ -173,12 +189,12 @@ This questionnaire captures the **tribal knowledge** about `payments` that doesn
   2. billing-service — Billing Team (lead: Tom S., tom@example.com), HTTPS REST GET /status/{id} only (read-only), no SLA documented.
 
 - **Downstream services** — services this one calls.
-  1. Stripe API — external, payments/stripe-api-key in Secrets Manager, HTTPS REST, rate limit 100 req/s on our tier, vendor contact: account manager Sarah at Stripe (sarah@stripe.com), billing impact: ~$4/month (already in spend profile).
+  1. Stripe API — external, payments/stripe-api-key in Secrets Manager, HTTPS REST, rate limit 100 req/s on our tier, vendor contact: account manager Sarah at Stripe (sarah@example.com), billing: Stripe fees are billed by Stripe, not AWS (not in the runtime profile).
   2. fraud-detection — Fraud Team (lead: Ying L., ying@example.com), SQS async, SLA: best-effort (fraud check can be skipped if queue lag > 2s — implemented in authorizer).
   3. notifications-service — Notifications Team (lead: Alex G., alex@example.com), SNS publish-only, SLA: best-effort (failure logged, not retried).
 
 - **External APIs** — third-party APIs used.
-  Stripe Payments API (api.stripe.com). Vendor: Stripe Inc. Contract owner: Bob L. (renewal due 2027-03). Billing impact: see spend profile (~$4/month). Rate limit: 100 req/s on current plan. Stripe status page: https://status.stripe.com.
+  Stripe Payments API (api.stripe.com). Vendor: Stripe Inc. Contract owner: Bob L. (renewal due 2027-03). Billing: Stripe fees are billed by Stripe, not AWS, so they do not appear in the runtime profile. Rate limit: 100 req/s on current plan. Stripe status page: https://status.stripe.com.
 
 - **Shared infrastructure** — clusters, VPCs, accounts shared with other services.
   Shared prod-main VPC (vpc-abc123) in us-east-1 with all other microservices. The payments Lambdas run inside this VPC for DynamoDB access. No dedicated cluster. NAT Gateway egress shared with ~12 other services — contention not observed but worth monitoring.
@@ -190,24 +206,24 @@ This questionnaire captures the **tribal knowledge** about `payments` that doesn
 > **DO NOT write secret values in this document.** References only.
 
 - **Secret stores in use** — AWS Secrets Manager paths.
-  All secrets in AWS Secrets Manager in us-east-1:
+  Two secrets in AWS Secrets Manager in us-east-1:
   - `payments/stripe-api-key` — Stripe secret key
   - `payments/db-encryption-key` — KMS CMK ARN for DynamoDB encryption
-  - `payments/pagerduty-key` — PagerDuty integration key for CloudWatch → SNS alarm routing
+  The PagerDuty integration key (CloudWatch → SNS alarm routing) is not in AWS: it lives in PagerDuty, owner Carol.
 
 - **Who owns rotation** — team responsible for rotating each secret.
   `payments/stripe-api-key`: Pay Team (Bob). Rotated manually when Stripe API keys are cycled. Last rotated 2025-12-01. No auto-rotation configured (Stripe keys require code-side update). Platform Team will own after handoff.
   `payments/db-encryption-key`: KMS auto-rotation enabled (annual). No manual action required.
-  `payments/pagerduty-key`: Pay Team (Carol). Rotate if PagerDuty integration is re-keyed.
+  PagerDuty integration key (outside AWS): Pay Team (Carol). Rotate if the PagerDuty integration is re-keyed.
 
 - **Services that read these secrets** — IAM principals.
-  `arn:aws:iam::123456789012:role/payments-lambda-exec` — reads all three secrets at Lambda cold start.
+  `arn:aws:iam::123456789012:role/payments-lambda-exec` — reads both secrets at Lambda cold start.
   `arn:aws:iam::123456789012:user/alice` — console read access for debugging (should be removed post-handoff).
 
 - **Last rotation dates** — when secrets were last rotated.
   `payments/stripe-api-key`: 2025-12-01.
   `payments/db-encryption-key`: KMS auto-rotation; last key material rotation 2025-11-15 (KMS console).
-  `payments/pagerduty-key`: 2025-08-20 (after PagerDuty service re-key for compliance audit).
+  PagerDuty integration key (outside AWS): 2025-08-20 (after PagerDuty service re-key for compliance audit).
 
 ---
 
@@ -226,7 +242,7 @@ This questionnaire captures the **tribal knowledge** about `payments` that doesn
   2026-02-15. Carol restored a 24-hour-old snapshot to a test table (`payments-ledger-restore-test`) and validated record counts and a sample of 50 random transactions. Test table deleted after validation. Restore took 18 minutes for ~3M records.
 
 - **Disaster recovery plan** — RTO, RPO, DR runbook.
-  Active-passive failover to us-west-2. RTO 30 minutes, RPO 5 minutes (PITR continuous backup lag). DR runbook: https://docs.example.com/payments/dr-runbook. Last DR drill: 2025-11-01 (full failover test, succeeded in 28 minutes).
+  Single-region (us-east-1) recovery from PITR; no cross-region standby. RTO 4 hours (the 2026-02-15 restore of ~3M records took 18 minutes, plus re-pointing the Lambdas), RPO 5 minutes (PITR lag). DR runbook: https://docs.example.com/payments/dr-runbook. Last DR drill: 2025-11-01 (tabletop plus a PITR restore into a new table, 28 minutes).
 
 - **Regulatory constraints** — SOC2, HIPAA, GDPR, PCI, etc.
   PCI DSS SAQ A-EP (we use Stripe.js for card capture; our service handles post-tokenization). Annual external audit. SOC2 Type II — included in company-wide audit scope. GDPR: EU customers' transaction records are subject to right-to-erasure (7-year legal hold overrides until expiry). No HIPAA applicability.
@@ -246,8 +262,7 @@ This questionnaire captures the **tribal knowledge** about `payments` that doesn
 - **Open issues at handoff** — bugs, work items, P0s carrying over.
   1. [Medium] Provisioned concurrency not yet configured — cold-start latency risk on low-traffic periods.
   2. [Low] reconciler sleep(30) hardcoded — safe to remove, not yet prioritized.
-  3. [Action item] Platform Team IAM role (`platform-team-deploy`) needs to be added to deploy permissions before 2026-06-15 handoff date.
-  4. [Action item] alice's console read access to Secrets Manager should be revoked after handoff.
+  3. [Action item] alice's console read access to Secrets Manager should be revoked after handoff.
 
 - **One-quarter outlook** — what does the incoming team need to know about next 3 months?
   IaC migration kicks off in Q3 — the Platform Team will be asked to review Terraform modules for all 8 resources. This will be the biggest structural change to the service in 2 years. The Stripe contract renewal is due 2027-03 (not urgent). Keep an eye on the Monday cold-start alarm until provisioned concurrency is rolled out.
@@ -265,6 +280,7 @@ After reading this questionnaire:
 - [ ] Read top-3 runbooks (Section 6) and the most recent postmortem.
 - [ ] Note the landmines (Section 7) — surface them in team standup before any change.
 - [ ] Map dependencies (Section 8) and introduce yourselves to upstream/downstream owners.
+- [ ] Confirm IaC repo, state access and (if any) CloudFormation stacks / Kubernetes RBAC (Section 4b).
 - [ ] Verify secret-store access (Section 9) for the incoming team's IAM identities.
 - [ ] Read compliance/DR section (Section 10) — confirm RTO/RPO are met by current infra.
 - [ ] Review roadmap (Section 11) and decide which items the new team will continue.
