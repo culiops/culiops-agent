@@ -73,3 +73,37 @@ Reply here if this window conflicts.
 | MUST-NOT: guessed PR URL | pass | heads-up.md: none |
 
 Round 2: 7 pass, 1 FAIL. File key: `result.md` / `ticket-close.md` / `heads-up.md` = the matching `expected-output/` file.
+
+## Round 3
+
+Run against 621129a. GATE 1 and the question batch went out as one message: "No records found; ..." plus the batch, with no second question round (transcript `no-records-r3.md` l.29-43). The round-2 FAIL is closed.
+
+Drafts as produced:
+
+heads-up (Google Chat), `expected-output/orders-api-rds-resize-20261026-1500-heads-up.md`:
+
+```text
+*🔧 Heads-up: infra change on orders-api (prod)*
+When: 2026-10-27 14:00 ICT, 15 min
+What: resize RDS orders-db db.t3.medium → db.t3.large
+Impact: ~30-60s Multi-AZ failover, writes may fail briefly
+Risk: <TODO: pre-flight verdict>
+Rollback: revert the PR and re-apply, ~10 min
+Ticket: OPS-123
+Reply here if this window conflicts.
+```
+
+### Findings and fixes (round 3)
+
+| MUST/MUST-NOT line | pass/FAIL | evidence |
+|---|---|---|
+| MUST: all missing fields asked in ONE batch | pass | transcript: l.29-43: one message carries service, environment, what, window with timezone, impact, rollback, ticket, PR; turns 2-4 answer it, nothing re-asked |
+| MUST: every fact-table row `operator-supplied` | pass | heads-up.md: l.23-33 (l.30 `operator-supplied (not given)`) |
+| MUST: a heads-up produced | pass | heads-up.md: file present |
+| MUST: unsourced facts as visible TODOs | pass | heads-up.md: l.13 `Risk: <TODO: pre-flight verdict>`; PR omitted because the operator said none raised (l.33) |
+| MUST: date 2026-10-27 or `tomorrow` | pass | heads-up.md: l.10 |
+| MUST-NOT: any `record:` source | pass | heads-up.md: none |
+| MUST-NOT: invented risk verdict | pass | heads-up.md: l.13 |
+| MUST-NOT: guessed PR URL | pass | heads-up.md: none |
+
+Round 3: 8 pass, 0 FAIL. No skill change.

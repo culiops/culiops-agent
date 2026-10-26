@@ -19,27 +19,26 @@ Rollback: not needed, nothing was applied
 | Field | Value | Source |
 |-------|-------|--------|
 | Service / env | orders-api / prod | `record: .culiops/iac-change-execution/orders-api-resize-rds-20261027-1015.md#header` |
-| Execution path | PR | `record: .culiops/iac-change-execution/orders-api-resize-rds-20261027-1015.md#header (Execution path)` |
+| Ticket key (not in draft; the Jira comment is posted on this ticket) | OPS-123 | `record: .culiops/iac-change-execution/orders-api-resize-rds-20261027-1015.md#Ticket Reference` |
+| Execution path | PR | `record: .culiops/iac-change-execution/orders-api-resize-rds-20261027-1015.md#header` |
+| Phase | 1 of 1 (single phase; ticket-close allowed because the outcome is an abort) | `record: .culiops/iac-change-execution/orders-api-resize-rds-20261027-1015.md#Change Plan` |
 | Outcome | aborted | `record: .culiops/iac-change-execution/orders-api-resize-rds-20261027-1015.md#Outcome` |
-| Nothing applied | confirmed: nothing was applied, the pre-flight blocked it | operator-supplied |
-| What | RDS orders-db resize db.t3.medium → db.t3.large | `record: .culiops/iac-change-execution/orders-api-resize-rds-20261027-1015.md#header (Change)` |
-| Applied | not applied (aborted, nothing applied) | `record: .culiops/iac-change-execution/orders-api-resize-rds-20261027-1015.md#Outcome` |
-| Verification | not run (record: "n/a — nothing applied") | `record: .culiops/iac-change-execution/orders-api-resize-rds-20261027-1015.md#Execution Log` |
-| Rollback | not needed, nothing was applied (confirmed abort; Change Plan: "not applicable, nothing was applied") | `record: .culiops/iac-change-execution/orders-api-resize-rds-20261027-1015.md#Change Plan` |
-| Ticket key | OPS-123 (not shown in the comment; it is posted on that ticket) | `record: .culiops/iac-change-execution/orders-api-resize-rds-20261027-1015.md#Ticket Reference` |
-| PR line | omitted: aborted at GATE, no `Execution:` line carries a PR URL and the operator gave none | `record: .culiops/iac-change-execution/orders-api-resize-rds-20261027-1015.md#Execution Log` |
-| Phases | 1 of 1, so no per-phase PR / Outcome lines | `record: .culiops/iac-change-execution/orders-api-resize-rds-20261027-1015.md#Change Plan` |
+| Anything applied | No, nothing was applied | operator-supplied |
+| What | RDS orders-db resize db.t3.medium → db.t3.large | `record: .culiops/iac-change-execution/orders-api-resize-rds-20261027-1015.md#header` |
+| PR | none exists, line omitted (the Execution: line records an abort at the gate) | `record: .culiops/iac-change-execution/orders-api-resize-rds-20261027-1015.md#Execution Log` |
+| Applied | not applied | operator-supplied |
+| Verification | not run (record: "n/a — nothing applied"; operator gave no verification) | `record: .culiops/iac-change-execution/orders-api-resize-rds-20261027-1015.md#Execution Log` and operator-supplied |
+| Rollback | not needed, nothing was applied (confirmed abort, nothing applied; Change Plan rollback path: "not applicable, nothing was applied") | `record: .culiops/iac-change-execution/orders-api-resize-rds-20261027-1015.md#Change Plan` and operator-supplied |
+| Plan summary (reference only, not in draft) | 1 to add, 0 to change, 1 to destroy | `record: .culiops/iac-change-execution/orders-api-resize-rds-20261027-1015.md#Execution Log` |
 
 ## Redaction log
 
-| # | Type | Found in (record#section) | Replaced with |
-|---|------|---------------------------|---------------|
-| 1 | plan output (counts) | `.culiops/pre-flight/orders-api-resize-rds-20261027-1000.md#Risk Scorecard` | (dropped) |
-| 2 | plan output (diff line) | `.culiops/pre-flight/orders-api-resize-rds-20261027-1000.md#Evidence` | (dropped) |
-| 3 | plan output (counts) | `.culiops/iac-change-execution/orders-api-resize-rds-20261027-1015.md#Execution Log` | (dropped) |
+Redaction log: nothing masked
 
 ## Open TODOs
+
 none
 
 ## Flags
+
 none

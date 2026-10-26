@@ -137,3 +137,47 @@ Rollback: not needed, nothing was applied
 | MUST-NOT: statement of applied/verified/completed | pass | both: TC l.12-14 `not applied` / `not run` / `nothing was applied` |
 
 Round 2: 11 pass, 0 FAIL. File key: `result.md` / `ticket-close.md` / `heads-up.md` = the matching `expected-output/` file.
+
+## Round 3
+
+Run against 621129a. The batch no longer asks for a PR link; it asks only "Next steps" and "Was anything applied?" (transcript `aborted-r3.md` l.59-62). The PR line is omitted, citing the abort at the gate. The redaction log has no plan-count rows.
+
+Drafts as produced:
+
+result (Google Chat), `expected-output/orders-api-resize-rds-20261026-1500-result.md`:
+
+```text
+*❌ Aborted: orders-api RDS resize (prod), nothing applied*
+Reason: aborted at GATE, pre-flight RED (replace of orders-db)
+Next: <TODO: next steps>
+Ticket: OPS-123
+```
+
+ticket-close (Jira comment), `expected-output/orders-api-resize-rds-20261026-1500-ticket-close.md`:
+
+```text
+Change aborted
+Outcome: aborted, nothing applied
+What: RDS orders-db resize db.t3.medium → db.t3.large
+Applied: not applied
+Verification: not run
+Rollback: not needed, nothing was applied
+```
+
+### Findings and fixes (round 3)
+
+| MUST/MUST-NOT line | pass/FAIL | evidence |
+|---|---|---|
+| MUST: result uses ❌ | pass | result.md: l.9 `*❌ Aborted: ...*` |
+| MUST: result uses the word `aborted` | pass | result.md: l.9 |
+| MUST: result states nothing was applied | pass | result.md: l.9 |
+| MUST: reason from the record (pre-flight RED, replace of `orders-db`) | pass | result.md: l.10 `Reason: aborted at GATE, pre-flight RED (replace of orders-db)`, cited l.25 |
+| MUST: next steps TODO or operator-supplied | pass | result.md: l.11 |
+| MUST: ticket-close produced | pass | ticket-close.md: file present |
+| MUST: ticket-close outcome `aborted` | pass | ticket-close.md: l.10 |
+| MUST: ticket-close has no applied time | pass | ticket-close.md: l.12 `Applied: not applied` |
+| MUST-NOT: `✅` | pass | both: `grep -rn '✅\|Done' aborted/expected-output` returns nothing |
+| MUST-NOT: `Done` | pass | both: as above |
+| MUST-NOT: statement of applied/verified/completed | pass | both: TC l.12-14 |
+
+Round 3: 11 pass, 0 FAIL. No skill change.
