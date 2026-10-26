@@ -6,7 +6,7 @@
 ## Draft
 
 ```text
-🔧 Heads-up: infra change on orders-api (prod)
+*🔧 Heads-up: infra change on orders-api (prod)*
 When: 2026-10-27 14:00 ICT, 15 min
 What: resize RDS orders-db db.t3.medium → db.t3.large
 Impact: ~30-60s Multi-AZ failover, writes may fail briefly
@@ -20,20 +20,22 @@ Reply here if this window conflicts.
 
 | Field | Value | Source |
 |-------|-------|--------|
-| Service / env | orders-api / prod | `record: .culiops/iac-change-execution/orders-api-resize-rds-20261027-1015.md#header` |
-| Execution path | PR | `record: .culiops/iac-change-execution/orders-api-resize-rds-20261027-1015.md#header (Execution path)` |
-| Platform | Google Chat | `operator-supplied` (default, confirmed) |
-| Window start | 2026-10-27 14:00 | `operator-supplied` ("tomorrow 14:00", resolved against session date 2026-10-26) |
-| Duration | 15 min | `operator-supplied` |
-| Timezone | ICT | `operator-supplied` |
-| What | resize RDS orders-db db.t3.medium → db.t3.large | `record: .culiops/iac-change-execution/orders-api-resize-rds-20261027-1015.md#header (Change)`; `record: .culiops/pre-flight/orders-api-resize-rds-20261027-1000.md#header (Action)` |
-| Phases | 1 of 1 (no phase line needed) | `record: .culiops/iac-change-execution/orders-api-resize-rds-20261027-1015.md#Change Plan` |
-| Impact | ~30-60s Multi-AZ failover, writes may fail briefly | `operator-supplied` (used as given) |
+| Service / env | orders-api / prod | `record: .culiops/iac-change-execution/orders-api-resize-rds-20261027-1015.md#Header` |
+| Window start | 2026-10-27 14:00 (operator said "tomorrow 14:00"; resolved against session date 2026-10-26) | operator-supplied |
+| Timezone | ICT | operator-supplied |
+| Duration | 15 min (written as given, no `~` added) | operator-supplied |
+| What (Change line) | resize RDS orders-db db.t3.medium → db.t3.large | `record: .culiops/iac-change-execution/orders-api-resize-rds-20261027-1015.md#Header` |
+| Impact | ~30-60s Multi-AZ failover, writes may fail briefly (used as given) | operator-supplied |
 | Risk | YELLOW | `record: .culiops/pre-flight/orders-api-resize-rds-20261027-1000.md#Verdict` |
-| Rollback | revert PR + apply, ~10 min | `record: .culiops/iac-change-execution/orders-api-resize-rds-20261027-1015.md#Change Plan` (Rollback path, summarised) |
-| Ticket | OPS-123 | `record: .culiops/iac-change-execution/orders-api-resize-rds-20261027-1015.md#Ticket Reference` (key parsed from the URL) |
-| PR | https://github.com/acme/orders-infra/pull/482 | `record: .culiops/iac-change-execution/orders-api-resize-rds-20261027-1015.md#Execution Log` (Phase 1, Execution line) |
-| Closing line | Reply here if this window conflicts. | fixed shape text, `skills/change-comms/examples/messages.md#heads-up` |
+| Rollback | revert PR + apply, ~10 min (summarised from "revert PR #482 and re-apply, ~10 min") | `record: .culiops/iac-change-execution/orders-api-resize-rds-20261027-1015.md#Change Plan` |
+| Ticket key | OPS-123 (parsed from the Ticket Reference URL) | `record: .culiops/iac-change-execution/orders-api-resize-rds-20261027-1015.md#Ticket Reference` |
+| PR | https://github.com/acme/orders-infra/pull/482 | `record: .culiops/iac-change-execution/orders-api-resize-rds-20261027-1015.md#Execution Log` |
+| Execution path (not in draft) | PR | `record: .culiops/iac-change-execution/orders-api-resize-rds-20261027-1015.md#Header` |
+| Record Date (not in draft; no timezone, time the record was written, not an event time) | 2026-10-27 10:15 | `record: .culiops/iac-change-execution/orders-api-resize-rds-20261027-1015.md#Header` |
+| Pre-flight Date (not in draft) | 2026-10-27 10:00 (UTC) | `record: .culiops/pre-flight/orders-api-resize-rds-20261027-1000.md#Header` |
+| Plan summary (not in draft) | 0 to add, 1 to change, 0 to destroy | `record: .culiops/iac-change-execution/orders-api-resize-rds-20261027-1015.md#Execution Log` |
+| Plan hash (not in draft) | sha256:7a1c9e… (truncated in the record) | `record: .culiops/iac-change-execution/orders-api-resize-rds-20261027-1015.md#Execution Log` |
+| Commit (not in draft) | e7f8a9b | `record: .culiops/iac-change-execution/orders-api-resize-rds-20261027-1015.md#Header` |
 
 ## Redaction log
 

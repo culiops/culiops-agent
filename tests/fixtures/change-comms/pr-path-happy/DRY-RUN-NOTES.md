@@ -102,3 +102,60 @@ Rollback: not needed. Revert PR + apply if required.
 Round 1: 12 pass, 0 FAIL.
 
 No fix targeted a failure here. The runner's own choices (batch per point in time, a GATE 2 per message, `applied` in the title, the slug derivation) are now written into the skill. Re-run because the output changes: chat title lines bold and no fixed-shape fact-table rows.
+
+## Round 2
+
+Run against b76eccc. GATE 1 offered the 1015 record and the 1000 pre-flight; the stale rotate-logs record was not offered. The runner asked one batch before apply (timezone, window, impact) and one after apply (apply facts) before drafting the result. The ticket-close reads `Applied: <TODO: apply date> 14:12 ICT`. Ruling: correct. The operator script gives `applied 14:12 ICT` with no date, the window date is not an apply date, and Constraint 2 forbids inferring one. The skill now spells out this form in `messages.md` so runs agree.
+
+Drafts as produced:
+
+heads-up (Google Chat), `expected-output/orders-api-resize-rds-20261026-1500-heads-up.md`:
+
+```text
+*🔧 Heads-up: infra change on orders-api (prod)*
+When: 2026-10-27 14:00 ICT, 15 min
+What: resize RDS orders-db db.t3.medium → db.t3.large
+Impact: ~30-60s Multi-AZ failover, writes may fail briefly
+Risk: YELLOW (pre-flight)
+Rollback: revert PR + apply, ~10 min
+Ticket: OPS-123 | PR: https://github.com/acme/orders-infra/pull/482
+Reply here if this window conflicts.
+```
+
+result (Google Chat), `expected-output/orders-api-resize-rds-20261026-1500-result.md`:
+
+```text
+*✅ Done: orders-api RDS resize (prod), applied 14:12 ICT*
+Verified: connections + error rate normal 15 min
+Ticket: OPS-123
+```
+
+ticket-close (Jira comment), `expected-output/orders-api-resize-rds-20261026-1500-ticket-close.md`:
+
+```text
+Change completed
+What: RDS orders-db resized db.t3.medium → db.t3.large
+PR: https://github.com/acme/orders-infra/pull/482
+Applied: <TODO: apply date> 14:12 ICT
+Verification: connections + error rate normal 15 min
+Rollback: not needed. Revert PR + apply if required.
+```
+
+### Findings and fixes (round 2)
+
+| MUST/MUST-NOT line | pass/FAIL | evidence |
+|---|---|---|
+| MUST: confirm 1015 + 1000, not rotate-logs | pass | transcript: `pr-path-happy-r2.md` l.29, operator l.31 |
+| MUST: ask timezone when the window has none | pass | transcript: l.41-49, batch item 1; operator turn 4 `ICT` |
+| MUST: heads-up at most 8 lines with `YELLOW`, `OPS-123`, PR 482 | pass | heads-up.md: l.9-16; l.13, l.15 |
+| MUST: operator impact; rollback cites `#Change Plan` | pass | heads-up.md: l.12; l.30 |
+| MUST: ask apply facts BEFORE the result | pass | transcript: l.131-137 before the result draft |
+| MUST: result contains `14:12 ICT` | pass | result.md: l.9 |
+| MUST: ticket-close has PR URL, `14:12 ICT`, operator verification | pass | ticket-close.md: l.11, l.12 `Applied: <TODO: apply date> 14:12 ICT`, l.13 |
+| MUST: `(UTC)` / record `Date` never the window timezone | pass | heads-up.md: l.10 ICT, `operator-supplied` l.25 |
+| MUST: date 2026-10-27 or `tomorrow` | pass | heads-up.md: l.10 |
+| MUST-NOT: apply claim from `Outcome: completed` | pass | R, TC: R l.20-23, TC l.26 `operator-supplied` |
+| MUST-NOT: `10:15` as apply time | pass | all: only HU l.34 as the record write time |
+| MUST-NOT: stale rotate-logs record used | pass | all: not in any Sources line or row |
+
+Round 2: 12 pass, 0 FAIL. File key: `result.md` / `ticket-close.md` / `heads-up.md` = the matching `expected-output/` file.

@@ -39,3 +39,37 @@ Fixes made in the skill (re-run required):
 - With no records, the minimum fields join the one batch; the execution path is asked only for a result or ticket-close.
 - PR segment omitted when the operator says none is raised (now explicit in Constraint 8).
 - GATE 1 has a no-records wording; chat title line bold.
+
+## Round 2
+
+Run against b76eccc. The draft and the fact table pass. Every row is now `operator-supplied`, including l.30 `operator-supplied (not given)`. The process failed the one-batch MUST. GATE 1 only asked "Is this right?". The facts came only because the operator volunteered them, and the PR link was then asked in a second round. The skill had GATE 1 before the batch even when there are no records. Fixed: with no records, GATE 1 and the batch are now one message.
+
+Drafts as produced:
+
+heads-up (Google Chat), `expected-output/orders-api-rds-resize-20261026-1500-heads-up.md`:
+
+```text
+*🔧 Heads-up: infra change on orders-api (prod)*
+When: 2026-10-27 14:00 ICT, 15 min
+What: resize RDS orders-db db.t3.medium → db.t3.large
+Impact: ~30-60s Multi-AZ failover, writes may fail briefly
+Risk: <TODO: pre-flight verdict>
+Rollback: revert the PR and re-apply, ~10 min
+Ticket: OPS-123
+Reply here if this window conflicts.
+```
+
+### Findings and fixes (round 2)
+
+| MUST/MUST-NOT line | pass/FAIL | evidence |
+|---|---|---|
+| MUST: all missing fields asked in ONE batch | FAIL | transcript: `no-records-r2.md` l.17-21: GATE 1 asked only `No records found; ... Is this right?`; the operator volunteered the facts; l.40-45 a second question round asked the PR link |
+| MUST: every fact-table row `operator-supplied` | pass | heads-up.md: l.23-34 all `operator-supplied` (l.30 `operator-supplied (not given)`) |
+| MUST: a heads-up produced | pass | heads-up.md: file present |
+| MUST: unsourced facts as visible TODOs | pass | heads-up.md: l.13 `Risk: <TODO: pre-flight verdict>`; PR omitted because the operator said none raised (l.33) |
+| MUST: date 2026-10-27 or `tomorrow` | pass | heads-up.md: l.10 |
+| MUST-NOT: any `record:` source | pass | heads-up.md: none |
+| MUST-NOT: invented risk verdict | pass | heads-up.md: l.13 |
+| MUST-NOT: guessed PR URL | pass | heads-up.md: none |
+
+Round 2: 7 pass, 1 FAIL. File key: `result.md` / `ticket-close.md` / `heads-up.md` = the matching `expected-output/` file.

@@ -46,3 +46,41 @@ Fixes made in the skill (re-run required):
 - No PR line on a direct apply (Constraint 8, Red Flag row, `messages.md`).
 - Success title wording is `applied <time>` instead of `finished <time>`.
 - The platform is stated at GATE 1 instead of being asked separately.
+
+## Round 2
+
+Run against b76eccc. The Slack title is bold. Outcome and verification are taken from the record. The PR line is omitted because this was a direct apply. The apply time is a TODO.
+
+Drafts as produced:
+
+result (Slack), `expected-output/orders-api-add-5xx-alarm-20261026-1500-result.md`:
+
+```text
+*✅ Done: orders-api add CloudWatch alarm for ALB 5xx rate (prod), applied <TODO: apply time>*
+Verified: re-plan shows no changes, alarm state OK
+Ticket: OPS-123
+```
+
+ticket-close (Jira comment), `expected-output/orders-api-add-5xx-alarm-20261026-1500-ticket-close.md`:
+
+```text
+Change completed
+What: CloudWatch alarm added for orders-api ALB 5xx rate
+Applied: <TODO: apply time>
+Verification: re-plan showed no changes, alarm state OK
+Rollback: not needed. Remove the alarm and re-apply if required.
+```
+
+### Findings and fixes (round 2)
+
+| MUST/MUST-NOT line | pass/FAIL | evidence |
+|---|---|---|
+| MUST: Slack formatting (`*bold*`, no wiki markup) | pass | result.md: l.9 `*✅ Done: ... applied <TODO: apply time>*` |
+| MUST: verification cited `...-20261027-1100.md#Execution Log` | pass | result.md: l.25 |
+| MUST: outcome from the record | pass | result.md: l.22 cites `#Outcome`; l.10 `Verified: re-plan shows no changes, alarm state OK` |
+| MUST: apply time omitted or `<TODO: apply time>`, listed under Open TODOs | pass | both: R l.9 + l.37; TC l.11 + l.40 |
+| MUST: result and ticket-close produced | pass | both: two files |
+| MUST-NOT: `11:00` as apply time | pass | both: `11:00` absent from both files |
+| MUST-NOT: invented apply time | pass | both: TODO only |
+
+Round 2: 7 pass, 0 FAIL. File key: `result.md` / `ticket-close.md` / `heads-up.md` = the matching `expected-output/` file.

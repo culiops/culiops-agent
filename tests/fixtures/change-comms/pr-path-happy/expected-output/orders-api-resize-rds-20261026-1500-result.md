@@ -6,8 +6,8 @@
 ## Draft
 
 ```text
-✅ Done: orders-api RDS resize (prod), applied 14:12 ICT
-Verified: connections + error rate normal for 15 min
+*✅ Done: orders-api RDS resize (prod), applied 14:12 ICT*
+Verified: connections + error rate normal 15 min
 Ticket: OPS-123
 ```
 
@@ -15,18 +15,16 @@ Ticket: OPS-123
 
 | Field | Value | Source |
 |-------|-------|--------|
-| Service / env | orders-api / prod | `record: .culiops/iac-change-execution/orders-api-resize-rds-20261027-1015.md#header` |
-| Execution path | PR (record Outcome `completed` means the PR was created, not applied; apply facts come from the operator) | `record: .culiops/iac-change-execution/orders-api-resize-rds-20261027-1015.md#header (Execution path)`, `#Outcome` |
-| Platform | Google Chat | `operator-supplied` (default, confirmed) |
-| What (title) | RDS resize | `record: .culiops/iac-change-execution/orders-api-resize-rds-20261027-1015.md#header (Change)` |
-| Phase | 1 of 1 (no phase wording needed) | `record: .culiops/iac-change-execution/orders-api-resize-rds-20261027-1015.md#Change Plan` |
-| Apply outcome | success (✅) | `operator-supplied` |
-| Apply time | 14:12 | `operator-supplied` (date not given, shown as given) |
-| Timezone | ICT | `operator-supplied` |
-| Verification | connections + error rate normal for 15 min | `operator-supplied` ("connections + error rate normal 15 min") |
-| Ticket | OPS-123 | `record: .culiops/iac-change-execution/orders-api-resize-rds-20261027-1015.md#Ticket Reference` (key parsed from the URL) |
-
-The record `Date` (2026-10-27 10:15, no timezone, time the record was written) is not used as an event time.
+| Service / env | orders-api / prod | `record: .culiops/iac-change-execution/orders-api-resize-rds-20261027-1015.md#Header` |
+| Change label | RDS resize (from the Change line "Resize RDS orders-db from db.t3.medium to db.t3.large") | `record: .culiops/iac-change-execution/orders-api-resize-rds-20261027-1015.md#Header` |
+| Apply outcome | success | operator-supplied |
+| Apply time | 14:12 | operator-supplied |
+| Timezone | ICT | operator-supplied |
+| Verification | connections + error rate normal 15 min (used as given) | operator-supplied |
+| Ticket key | OPS-123 (parsed from the Ticket Reference URL) | `record: .culiops/iac-change-execution/orders-api-resize-rds-20261027-1015.md#Ticket Reference` |
+| Execution path (not in draft) | PR | `record: .culiops/iac-change-execution/orders-api-resize-rds-20261027-1015.md#Header` |
+| Record Outcome (not in draft) | completed. On the PR path this means the PR was created; it is not used as the apply outcome | `record: .culiops/iac-change-execution/orders-api-resize-rds-20261027-1015.md#Outcome` |
+| Record Verification (not in draft) | "pending — pipeline applies after merge"; not used, the operator's verification replaces it | `record: .culiops/iac-change-execution/orders-api-resize-rds-20261027-1015.md#Execution Log` |
 
 ## Redaction log
 

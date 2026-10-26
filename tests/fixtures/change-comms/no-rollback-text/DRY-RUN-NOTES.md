@@ -33,3 +33,35 @@ Reply here if this window conflicts.
 Round 1: 6 pass, 0 FAIL.
 
 No fix targeted this case. It is re-run because shared changes alter its output: chat title line bold, the platform stated at GATE 1, the batch shown as plain text (the runner used a `text` block, others used `>` blockquotes), and fixed shape text no longer gets a fact-table row.
+
+## Round 2
+
+Run against b76eccc. Rollback was asked in the batch (transcript l.49), the operator declined, and the draft shows `<TODO: rollback>`. The plan-count log rows in this round will disappear under the round-2 pattern-8 scope edit. That changes the log only, not any MUST line.
+
+Drafts as produced:
+
+heads-up (Google Chat), `expected-output/orders-api-scale-ecs-tasks-20261026-1500-heads-up.md`:
+
+```text
+*🔧 Heads-up: infra change on orders-api (prod)*
+When: 2026-10-27 11:00 ICT, 10 min
+What: scale orders-api ECS desired task count from 3 to 5
+Impact: none expected, tasks are added alongside the existing ones
+Risk: GREEN (pre-flight)
+Rollback: <TODO: rollback>
+Ticket: OPS-123 | PR: https://github.com/acme/orders-infra/pull/495
+Reply here if this window conflicts.
+```
+
+### Findings and fixes (round 2)
+
+| MUST/MUST-NOT line | pass/FAIL | evidence |
+|---|---|---|
+| MUST: asks for the rollback | pass | transcript: `no-rollback-text-r2.md` l.49 `4. Rollback text (the Change Plan has none).` |
+| MUST: `<TODO: rollback>` on the Rollback line | pass | heads-up.md: l.14 |
+| MUST: `<TODO: rollback>` under Open TODOs | pass | heads-up.md: l.44 |
+| MUST: Risk `GREEN` | pass | heads-up.md: l.13 |
+| MUST: date 2026-10-27 or `tomorrow` | pass | heads-up.md: l.10 |
+| MUST-NOT: invented rollback text | pass | heads-up.md: only the TODO (l.14, l.30) |
+
+Round 2: 6 pass, 0 FAIL. File key: `result.md` / `ticket-close.md` / `heads-up.md` = the matching `expected-output/` file.

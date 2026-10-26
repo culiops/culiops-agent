@@ -52,3 +52,47 @@ Fixes made in the skill (re-run required):
 - Fixed shape wording gets no fact-table row; only `record:` and `operator-supplied` sources.
 - Ticket-close refusal happens at GATE 1 and writes no file.
 - Chat title line bold.
+
+## Round 2
+
+Run against b76eccc. The heads-up What line names all three phases and the one this window covers. The result is `⏸` phase 2 with PR 502. The ticket-close was refused at GATE 1 (transcript l.25) and again at turn 9 (l.212), and no file was written.
+
+Drafts as produced:
+
+heads-up (Google Chat), `expected-output/orders-api-upgrade-postgres-engine-version-20261026-1500-heads-up.md`:
+
+```text
+*🔧 Heads-up: infra change on orders-api (prod)*
+When: 2026-10-28 22:00 ICT, 2h
+What: orders-db Postgres 14.9 → 15.4, 3 phases: snapshot → upgrade → cleanup; this window: upgrade
+Impact: ~5-10 min of downtime during the engine upgrade restart
+Risk: YELLOW (pre-flight)
+Rollback: restore from the phase 1 snapshot into a new instance and repoint orders-api, hours not minutes
+Ticket: OPS-123 | PR: https://github.com/acme/orders-infra/pull/502
+Reply here if this window conflicts.
+```
+
+result (Google Chat), `expected-output/orders-api-upgrade-postgres-engine-version-20261026-1500-result.md`:
+
+```text
+*⏸ Partial: orders-api Postgres engine upgrade (prod), phase 2 of 3 applied, 22:40 ICT*
+State: snapshot and upgrade applied; engine shows 15.4 and available, error rate normal; cleanup not started
+Next: <TODO: next steps>
+Ticket: OPS-123 | PR: https://github.com/acme/orders-infra/pull/502
+```
+
+### Findings and fixes (round 2)
+
+| MUST/MUST-NOT line | pass/FAIL | evidence |
+|---|---|---|
+| MUST: heads-up at most 8 lines | pass | heads-up.md: l.9-16, 8 lines |
+| MUST: phases on one line | pass | heads-up.md: l.11 `What: orders-db Postgres 14.9 → 15.4, 3 phases: snapshot → upgrade → cleanup; this window: upgrade` |
+| MUST: window `2026-10-28 22:00 ICT`, about 2h | pass | heads-up.md: l.10 `When: 2026-10-28 22:00 ICT, 2h` |
+| MUST: result `phase 2 of 3` with PR 502 | pass | result.md: l.9 `phase 2 of 3 applied`; l.12 `pull/502` |
+| MUST: current state, phase 3 still to do | pass | result.md: l.10 `cleanup not started` |
+| MUST: ticket-close refused with the reason, no draft | pass | transcript: `multi-phase-partial-r2.md` l.25, l.212; l.222 `No ticket-close file` |
+| MUST-NOT: a ticket-close draft | pass | expected-output: no ticket-close file |
+| MUST-NOT: wording implying the whole change completed | pass | result.md: l.9 `⏸ Partial` |
+| MUST-NOT: phase 2 apply claim sourced from the record | pass | result.md: l.25-28 `operator-supplied` |
+
+Round 2: 9 pass, 0 FAIL. File key: `result.md` / `ticket-close.md` / `heads-up.md` = the matching `expected-output/` file.

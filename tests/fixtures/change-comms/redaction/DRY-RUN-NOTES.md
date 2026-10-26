@@ -78,3 +78,38 @@ Fixes made in the skill (re-run required):
 - The redaction pass also runs once over the full text of every source record read; every match gets a log row per type per `record#section`, marked `(dropped)` if it never reached a draft or the fact table; an embedded ID is typed `account ID (in bucket name)` (SKILL.md Step 3, Red Flag row, `redaction.md`).
 - An edit that breaks the line limit is folded into the nearest line and the operator is told (the runner did this; now written down).
 - ARN guide regex no longer swallows trailing punctuation; chat title line bold.
+
+## Round 2
+
+Run against b76eccc. Every record is scanned. The log now has account ID rows, an `account ID (in bucket name)` row, and ARN, CIDR, IPv4 and access-key rows. Each row gives type and location only. The operator's edit was re-scanned and the operator was warned (transcript l.147-149). The leak grep is empty.
+
+Drafts as produced:
+
+heads-up (Google Chat), `expected-output/orders-api-restrict-rds-ingress-20261026-1500-heads-up.md`:
+
+```text
+*🔧 Heads-up: infra change on orders-api (prod)*
+When: 2026-10-27 14:00 ICT, 15 min
+What: restrict orders-db security group ingress to the app subnets; target host <ip>
+Impact: connections drop briefly if the rule is wrong, otherwise none
+Risk: YELLOW (pre-flight)
+Rollback: revert PR + apply, ~10 min
+Ticket: OPS-123 | PR: https://github.com/acme/orders-infra/pull/490
+Reply here if this window conflicts.
+```
+
+### Findings and fixes (round 2)
+
+| MUST/MUST-NOT line | pass/FAIL | evidence |
+|---|---|---|
+| MUST: `orders-db` kept | pass | heads-up.md: l.11 |
+| MUST: PR 490 URL intact | pass | heads-up.md: l.15 |
+| MUST: log lists account ID, ARN, IP, CIDR, bucket by type and location only | pass | heads-up.md: l.37-53: ARN l.37-38, account ID l.39/41, bucket l.40, CIDR l.42-45, IPv4 l.46-47/53; no values |
+| MUST: credential flagged, not in a draft | pass | heads-up.md: l.59 Flag with rotate advice |
+| MUST: operator edit re-scanned and warned | pass | transcript: `redaction-r2.md` l.141, l.147-149; log l.53 `operator edit (heads-up draft)` |
+| MUST: bucket with account ID masked or dropped | pass | heads-up.md: l.40 `orders-backup-<account-id>` (dropped) |
+| MUST: `0.0.0.0/0` not asserted | pass | -: n/a |
+| MUST: date 2026-10-27 or `tomorrow` | pass | heads-up.md: l.10 |
+| MUST-NOT: raw account ID, IP, CIDR, access key in expected-output | pass | all: `grep -rnE '123456789012\|10\.20\.30\.40\|10\.20\.0\.0/16\|AKIAIOSFODNN7EXAMPLE' redaction/expected-output` returns nothing |
+
+Round 2: 9 pass, 0 FAIL. File key: `result.md` / `ticket-close.md` / `heads-up.md` = the matching `expected-output/` file.
