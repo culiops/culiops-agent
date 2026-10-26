@@ -11,7 +11,7 @@ Apply in this order (ARNs first, so an account ID inside an ARN is never half-ma
 | 1 | ARN | ``arn:aws[a-z-]*:[a-z0-9-]+:[a-z0-9-]*:[0-9]*:[^\s,;)`]*[^\s.,;)`]`` | its resource name: the last segment after `/` or `:`. Trailing punctuation (`.`, `,`, `)`, `;`, a closing backtick) stays outside the match and is kept |
 | 2 | 12-digit account ID | `(?<![0-9])[0-9]{12}(?![0-9])` | `<account-id>` |
 | 3 | CIDR | IPv4 or IPv6 address followed by `/<prefix>` | `<cidr>` |
-| 4 | IPv4 / IPv6 | `\b(?:[0-9]{1,3}\.){3}[0-9]{1,3}\b`; IPv6 = a colon-separated hex form that contains `::` or at least one hex letter `a-f` (covers `::1`, `fe80::1`, `2001:db8::8a2e:370:7334`). Not IPv6: `HH:mm` or `HH:mm:ss` times (digits only) MAC-like values (`00:1a:2b:3c:4d:5e`, six 2-digit groups) and hash prefixes (`sha256:7a1c…`) | `<ip>` |
+| 4 | IPv4 / IPv6 | `\b(?:[0-9]{1,3}\.){3}[0-9]{1,3}\b`; IPv6 = a colon-separated hex form that contains `::` or at least one hex letter `a-f` (covers `::1`, `fe80::1`, `2001:db8::8a2e:370:7334`). Not IPv6: `HH:mm` or `HH:mm:ss` times (digits only), MAC-like values (`00:1a:2b:3c:4d:5e`, six 2-digit groups) and hash prefixes (`sha256:7a1c…`) | `<ip>` |
 | 5 | Access key | `\b(AKIA\|ASIA)[A-Z0-9]{16}\b` | `<redacted-secret>` |
 | 6 | JWT-shaped token | `eyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+`, and `Bearer \S+` | `<redacted-secret>` |
 | 7 | Inline credential | `(?i)(password\|secret\|token)\s*[=:]\s*\S+` | `<redacted-secret>` |
@@ -49,13 +49,13 @@ The log is shown with the drafts and saved with them. It is a Markdown table, ou
 | # | Type | Found in (record#section) | Replaced with |
 |---|---|---|---|
 | 1 | account ID | `.culiops/iac-change-execution/orders-api-resize-20261027-1400.md#Change Plan` | `<account-id>` |
-| 2 | ARN | `.culiops/pre-flight/orders-api-resize-20261027-1330.md#Blast Radius` | `orders-db` |
+| 2 | ARN | `.culiops/pre-flight/orders-api-resize-20261027-1330.md#Blast Radius` | `orders-db` (dropped) |
 | 3 | IPv4 | operator edit (heads-up draft) | `<ip>` |
-| 4 | access key | `.culiops/iac-change-execution/orders-api-resize-20261027-1400.md#Execution Log` | `<redacted-secret>` |
+| 4 | access key | `.culiops/iac-change-execution/orders-api-resize-20261027-1400.md#Execution Log` | `<redacted-secret>` (dropped) |
 
 - **The original value is never written to the log**, not even partly (no last four digits, no first octet). The log records the type, the location and the replacement only.
 - "Found in" is `record#section`, or `operator edit (<message type> draft)` or `operator-supplied` for values that did not come from a record. One row per type per `record#section`. When the identifier is embedded in another name, the type says so: `account ID (in bucket name)`.
-- "Replaced with" is the replacement, followed by `(dropped)` when the value never reached a draft or the fact table.
+- "Replaced with" is the replacement. `(dropped)` after it marks an original value that never reached a draft or the fact table (its section was summarised or not used); the cell still shows what it would have been replaced with. Row 2: the ARN in the Blast Radius was not used, so it is logged as its resource name, `orders-db` (dropped). Rows 1 and 3 reached the fact table or a draft, masked, so they carry no marker.
 - An empty log is stated as `Redaction log: nothing masked`, so the operator can tell "clean" from "not checked". A value that was dropped counts as masked and gets a row; never drop one silently.
 
 ## Re-scan after edits

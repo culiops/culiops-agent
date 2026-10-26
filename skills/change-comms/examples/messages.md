@@ -85,8 +85,8 @@ Ticket: OPS-123 | PR: <link>
 Aborted:
 
 ```text
-❌ Aborted: orders-api RDS resize (prod), nothing applied
-Reason: pre-flight RED, the plan replaces orders-db
+❌ Aborted: orders-api queue retention change (prod), nothing applied
+Reason: stopped before apply: plan validation failed (invalid orders-events queue policy)
 Next: <TODO: next steps>
 Ticket: OPS-123
 ```
@@ -95,7 +95,8 @@ Rules:
 - **Sources.** On the direct-apply path, outcome and verification come from the record's `Outcome` and `Execution Log`. On the PR path, Outcome `completed` means the PR was created, not applied: apply time, apply outcome and verification come from the operator. If neither source has them, they are `<TODO: apply time>` / `<TODO: verification>`. Never write `Verified:` from a PR-created record.
 - **Failed** states whether it was rolled back (operator-supplied or record-cited; otherwise `State: <TODO: rolled back or not>`) and the next step.
 - **Next** is operator-supplied only. Pre-flight mitigations and L1 cause detail are not next steps until the operator chooses them. Do not add a retry condition, a promised new window, a "reopen this ticket" route, or a stated cause ("likely...").
-- **Aborted** is only written after the operator confirms nothing was applied. If anything was applied, use the failed or partial shape. `Reason:` summarises the record's `Execution:` line (for example `aborted at GATE — pre-flight RED (replace of orders-db)`), cited in the fact table; only when the record gives none is it operator-supplied, else `Reason: <TODO: reason>`. An aborted result carries no apply time.
+- **Aborted** is only written after the operator confirms nothing was applied. If anything was applied, use the failed or partial shape. `Reason:` summarises the record's `Execution:` line in plain words, cited in the fact table; only when the record gives none is it operator-supplied, else `Reason: <TODO: reason>`. An aborted result carries no apply time.
+- **Reason lines are for managers and developers:** plain words, no skill jargon (GATE, HARD BLOCK, Step N). A record line like `aborted at GATE — pre-flight RED (<cause>)` becomes `stopped before apply: pre-flight check failed (<cause>)`.
 - **Partial** says "phase N of M" and names the current state in one line. Operator-supplied verification goes in that `State:` line.
 - **No verification done.** If the operator says nothing was checked, write `Verified: pending`; if verification was not given at all, `Verified: <TODO: verification>`.
 - A result carries no `Rollback:` line. A failed result states the rollback outcome in its `State:` line; any other rollback detail goes in only if the operator asks for it.
@@ -114,7 +115,7 @@ Rollback: not needed. Revert PR + apply if required.
 ```
 
 Rules:
-- Lines are exactly `What`, `PR`, `Applied`, `Verification`, `Rollback`, in that order, under a one-line title. Add `Outcome:` (after the title) when the outcome is not success.
+- Lines are exactly `What`, `PR`, `Applied`, `Verification`, `Rollback`, in that order, under a one-line title. Add `Outcome:` (after the title) when the outcome is not success. An aborted ticket-close also adds one `Reason:` line after `Outcome:`, taken from the record in plain words (same rule as the aborted result), so a Jira reader can tell why.
 - `PR` is the real URL, parsed from the `Execution:` line or given by the operator. Otherwise `PR: <TODO: PR link>`. Omit the `PR` line when no PR exists (direct apply, abort before a PR was created).
 - On a direct apply, the revert instruction after `Rollback: not needed.` is summarised from the Change Plan rollback path (no PR to revert, no CLI command).
 - `Applied` and `Verification` come from the record only on the direct-apply path; on the PR path they come from the operator. A time given with no date is written `Applied: <TODO: apply date> 14:12 ICT`; never borrow the window date.
@@ -126,7 +127,8 @@ Not completed (aborted at the gate, so no PR was created and the `PR` line is om
 ```text
 Change aborted
 Outcome: aborted, nothing applied
-What: RDS orders-db resize db.t3.medium → db.t3.large
+Reason: stopped before apply: plan validation failed (invalid orders-events queue policy)
+What: orders-events SQS queue retention 4 → 14 days
 Applied: not applied
 Verification: not run
 Rollback: not needed, nothing was applied
@@ -162,5 +164,5 @@ Verification: <TODO: verification>
 Rollback: not needed. Revert each PR + apply if required, <TODO: rollback>
 ```
 
-- **Abort across phases:** title `Change aborted`, `Outcome: aborted at phase N of M, <state>`, and the same per-phase `PR` and `Outcome` lines (`applied`, `not applied`). Use `Rollback: not needed, nothing was applied` only if no phase was applied.
+- **Abort across phases:** title `Change aborted`, `Outcome: aborted at phase N of M, <state>`, one `Reason:` line, and the same per-phase `PR` and `Outcome` lines (`applied`, `not applied`). Use `Rollback: not needed, nothing was applied` only if no phase was applied.
 - **Partial with phases remaining:** a partial outcome gets a `⏸` result only. The skill refuses to write a ticket-close and says why: the ticket-close is posted when the work is finished, and the work is not. Offer it again after the last phase or an abort.
