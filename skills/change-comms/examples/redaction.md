@@ -1,6 +1,6 @@
 # Examples: Redaction Rules for `change-comms`
 
-Reference for the redaction pass of the `change-comms` skill. Run it on every draft, after drafting and again after every operator edit. All sample values below are obviously fake.
+Reference for the redaction pass of the `change-comms` skill. Run it on every draft, after drafting and again after every operator edit, and once over the full text of every source record read (so an identifier that was summarised away is still logged, as `dropped`). All sample values below are obviously fake.
 
 ## Patterns
 
@@ -8,14 +8,14 @@ Apply in this order (ARNs first, so an account ID inside an ARN is never half-ma
 
 | # | Identifier | Match (guide) | Replace with |
 |---|---|---|---|
-| 1 | ARN | `arn:aws[a-z-]*:[a-z0-9-]+:[a-z0-9-]*:[0-9]*:\S+` | its resource name: the last segment after `/` or `:`. Trailing punctuation (`.`, `,`, `)`, `;`) stays outside the match and is kept |
+| 1 | ARN | `arn:aws[a-z-]*:[a-z0-9-]+:[a-z0-9-]*:[0-9]*:[^\s,;)]*[^\s.,;)]` | its resource name: the last segment after `/` or `:`. Trailing punctuation (`.`, `,`, `)`, `;`) stays outside the match and is kept |
 | 2 | 12-digit account ID | `(?<![0-9])[0-9]{12}(?![0-9])` | `<account-id>` |
 | 3 | CIDR | IPv4 or IPv6 address followed by `/<prefix>` | `<cidr>` |
 | 4 | IPv4 / IPv6 | `\b(?:[0-9]{1,3}\.){3}[0-9]{1,3}\b`; IPv6 = a colon-separated hex form that contains `::` or at least one hex letter `a-f` (covers `::1`, `fe80::1`, `2001:db8::8a2e:370:7334`). Not IPv6: `HH:mm` or `HH:mm:ss` times (digits only) and MAC-like values (`00:1a:2b:3c:4d:5e`, six 2-digit groups) | `<ip>` |
 | 5 | Access key | `\b(AKIA\|ASIA)[A-Z0-9]{16}\b` | `<redacted-secret>` |
 | 6 | JWT-shaped token | `eyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+`, and `Bearer \S+` | `<redacted-secret>` |
 | 7 | Inline credential | `(?i)(password\|secret\|token)\s*[=:]\s*\S+` | `<redacted-secret>` |
-| 8 | Plan, diff or state output | any `terraform plan`, diff or state text, including counts such as "1 to add, 1 to destroy" | never included; summarise in words from the Change Plan instead |
+| 8 | Plan, diff or state output | any `terraform plan`, diff or state text, including counts such as "1 to add, 1 to destroy" | never in a draft; summarise in words from the Change Plan. The fact table may cite counts |
 
 Examples (input then output):
 
@@ -38,7 +38,7 @@ A credential found in a record is more than a mask. Besides the log entry, raise
 Only these are left unmasked:
 
 - The PR URL and the ticket URL, in the fields where they belong.
-- The source-path column of the fact table (`record: <path>#<section>`), which is saved in the `.culiops/` file and never pasted into chat.
+- The source-path column of the fact table (`record: <path>#<section>`). It is shown to the operator at GATE 2 and saved in the `.culiops/` file, but never goes into a draft.
 
 Anything else sitting in the same line or field is still scanned. An exemption never covers a value the operator typed into a draft.
 
@@ -54,7 +54,8 @@ The log is shown with the drafts and saved with them. It is a Markdown table, ou
 | 4 | access key | `.culiops/iac-change-execution/orders-api-resize-20261027-1400.md#Execution Log` | `<redacted-secret>` |
 
 - **The original value is never written to the log**, not even partly (no last four digits, no first octet). The log records the type, the location and the replacement only.
-- "Found in" is `record#section`, or `operator edit (<message type> draft)` or `operator-supplied` for values that did not come from a record.
+- "Found in" is `record#section`, or `operator edit (<message type> draft)` or `operator-supplied` for values that did not come from a record. One row per type per `record#section`. When the identifier is embedded in another name, the type says so: `account ID (in bucket name)`.
+- "Replaced with" is the replacement, followed by `(dropped)` when the value never reached a draft or the fact table.
 - An empty log is stated as `Redaction log: nothing masked`, so the operator can tell "clean" from "not checked". A value that was dropped counts as masked and gets a row; never drop one silently.
 
 ## Re-scan after edits
