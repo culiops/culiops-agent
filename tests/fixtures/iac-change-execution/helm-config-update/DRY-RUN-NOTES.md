@@ -14,6 +14,8 @@ Expected skill behaviour at each step. Recorded for pre-dry-run reference; "Gaps
 | Tool detection | Finds `Chart.yaml` → identifies Helm. Notes `values.yaml` (base) and `values-prod.yaml` (prod overrides) |
 | Values file targeting | `replicaCount: 2` is in `values-prod.yaml` (overrides base default of 1). Skill identifies `values-prod.yaml` as the file to modify |
 | Naming pattern | Reads catalog: `{{ .Chart.Name }}` — Kubernetes resources use chart name directly |
+| Evidence table | `replicaCount` `code: values-prod.yaml:<line>` = 2 vs `live: kubectl get deploy notifyapi -n notifyapi-prod -o jsonpath='{.spec.replicas}'` = 2 ✅; HPA presence checked live (an HPA would override `replicas` — drift if present) |
+| Delivery model / target | Checks for Argo CD / Flux objects managing the release (none in fixture → PR path is default, direct apply allowed); target check = `kubectl config current-context` + namespace `notifyapi-prod` |
 
 ## Step 2 — Plan
 
@@ -65,7 +67,7 @@ Execution path: PR (default)
 
 - Skill checks `.culiops/pre-flight/` for a reusable record
 - Finds `.culiops/pre-flight/notifyapi-config-update-20260424-1030.md`
-- Match rule check: (a) same service `notifyapi` + action type (replica scaling) ✓, (b) resources (Deployment) are a subset of assessed resources ✓, (c) no commits since `d4e5f6g` touch `values-prod.yaml` or `Chart.yaml` ✓
+- Match rule check: (a) record's **Plan hash** equals the SHA-256 of the current `helm diff` text ✓, (b) same target — context + namespace `notifyapi-prod` ✓, (c) record is within the 24h freshness window (dry-run clock: 2026-04-24, record 10:30 same day) ✓. If any of the three fails → invoke pre-flight inline instead
 - **REUSE** — does NOT re-invoke pre-flight
 - Shows: "Using existing pre-flight record from `.culiops/pre-flight/notifyapi-config-update-20260424-1030.md` (verdict: GREEN)"
 - GATE 3: Green → proceed
@@ -101,7 +103,8 @@ helm upgrade notifyapi . \
 |------|-----------------|
 | Helm detection | Skill identifies Chart.yaml → Helm (not Terraform) |
 | Catalog read | Skill uses dependency graph from `.culiops/service-discovery/notifyapi-prod.md` |
-| Pre-flight reuse | Skill finds existing Green record, checks match rule, reuses without re-invoking |
+| Pre-flight reuse | Skill finds existing Green record, checks plan hash + target + freshness, reuses without re-invoking |
+| Evidence table | `replicaCount` confirmed in code and live; HPA override checked |
 | Values file targeting | `values-prod.yaml` is modified, not `values.yaml` |
 | Minimal diff | Only `replicaCount` line is changed |
 | PR path | No direct apply; skill produces PR workflow |

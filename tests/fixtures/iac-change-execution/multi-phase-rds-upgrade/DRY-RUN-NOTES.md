@@ -18,6 +18,8 @@ Expected skill behaviour at each step. Recorded for pre-dry-run reference; "Gaps
 | Alarm threshold analysis | Reads `aws_cloudwatch_metric_alarm.paymentapi_db_connections` threshold=80 vs current limit=100 (80%). Notes new limit=200 → proportional threshold=160 |
 | Direct apply flag | Operator specifies `--direct-apply` (maintenance window context); skill records execution path as direct apply |
 | tfvars location | Finds `envs/prod.tfvars` |
+| Evidence table | `max_connections` current value: `code:` the parameter group in `main.tf` vs `live: aws rds describe-db-parameters` (filtered to `max_connections`); instance class `code: envs/prod.tfvars` vs `live: aws rds describe-db-instances`; alarm threshold `code: main.tf` vs `live: aws cloudwatch describe-alarms`. Any mismatch is drift and must be acknowledged before planning. The reboot phase cannot be approved on a `catalog:`-only row |
+| Target check | Direct apply ⇒ target check shown before plan **and** re-shown at each GATE 4 (account / region / `-var-file=envs/prod.tfvars`) |
 
 ## Step 2 — Plan
 

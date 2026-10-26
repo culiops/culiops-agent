@@ -2,7 +2,7 @@
 
 Reference command templates for the `iac-change-execution` skill when the target infrastructure is AWS. The skill reads this file during Step 1 (Research gap-filling), Step 4c (Apply), and Step 5a (Verification).
 
-Replace placeholders (`{cluster}`, `{service}`, `{stack}`, `{region}`, `{T-1h}`, `{now}`, etc.) with the values resolved in Step 1 research or detected from the plan output.
+Replace placeholders (`{cluster}`, `{service}`, `{region}`, `{T-1h}`, `{now}`, etc.) with the values resolved in Step 1 research or detected from the plan output.
 
 ## Prerequisites
 
@@ -13,7 +13,7 @@ Replace placeholders (`{cluster}`, `{service}`, `{stack}`, `{region}`, `{T-1h}`,
 **Least-privilege IAM — TWO tiers are required for this skill.**
 
 - **Tier 1 (Steps 1 and 5 — read-only):** AWS-managed `ReadOnlyAccess`, or a scoped custom policy allowing `Describe*`, `List*`, `Get*` on relevant resource types, plus `cloudwatch:GetMetricStatistics`, `cloudwatch:GetMetricData`, `logs:FilterLogEvents`. Never use `PowerUserAccess` or `AdministratorAccess` for read-only operations.
-- **Tier 2 (Step 4 — mutation only):** the minimum role that permits the specific mutation — e.g., a scoped `cloudformation:ExecuteChangeSet` policy, or `lambda:UpdateFunctionCode` only on the target function ARN. Elevated permissions must be assumed immediately before the mutation and dropped after. Never hold an elevated session while running read-only queries.
+- **Tier 2 (Step 4 — mutation only):** the minimum role that permits the specific mutation — e.g., `ecs:UpdateService` on the target service, or `lambda:UpdateFunctionCode` only on the target function ARN. Elevated permissions must be assumed immediately before the mutation and dropped after. Never hold an elevated session while running read-only queries.
 
 **Cost awareness:** CloudWatch `GetMetric*` and `logs:FilterLogEvents` incur small per-call and per-GB-scanned charges.
 
@@ -37,9 +37,9 @@ Replace placeholders (`{cluster}`, `{service}`, `{stack}`, `{region}`, `{T-1h}`,
 
 ### Lambda — current function state
 
-- Function configuration: `aws lambda get-function --function-name {function} --region {region}`
+- Function configuration (avoid `get-function` / unfiltered `get-function-configuration`: both return environment variable **values**, which often hold secrets): `aws lambda get-function-configuration --function-name {function} --query '{Runtime:Runtime,Handler:Handler,MemorySize:MemorySize,Timeout:Timeout,Role:Role,Layers:Layers[].Arn}' --region {region}`
 - Function state and last modified: `aws lambda get-function-configuration --function-name {function} --query '{State:State,LastModified:LastModified,Runtime:Runtime,MemorySize:MemorySize,Timeout:Timeout}' --region {region}`
-- Current environment variables (names only, not values): `aws lambda get-function-configuration --function-name {function} --query 'Environment.Variables' --region {region}`
+- Current environment variables (names only, not values): `aws lambda get-function-configuration --function-name {function} --query 'keys(Environment.Variables)' --region {region}`
 - Aliases and routing config: `aws lambda list-aliases --function-name {function} --region {region}`
 
 ### EC2 — current instance state
@@ -60,13 +60,6 @@ Replace placeholders (`{cluster}`, `{service}`, `{stack}`, `{region}`, `{T-1h}`,
 - List secrets (names only): `aws secretsmanager list-secrets --query 'SecretList[].{Name:Name,LastChanged:LastChangedDate}' --region {region}`
 
 **Never retrieve secret values or parameter values during research.** If the change requires knowing a value, ask the operator to provide it.
-
-### CloudFormation stack state
-
-- Stack status: `aws cloudformation describe-stacks --stack-name {stack} --region {region}`
-- Stack resources: `aws cloudformation list-stack-resources --stack-name {stack} --region {region}`
-- Existing change sets: `aws cloudformation list-change-sets --stack-name {stack} --region {region}`
-- Drift status: `aws cloudformation describe-stack-drift-detection-status --stack-drift-detection-id {detection-id} --region {region}`
 
 ### Resource ownership (before any import — who owns this resource today?)
 
@@ -118,7 +111,7 @@ Each command below changes cloud state. The skill presents each command to the o
 **MUTATION** — `terraform apply tfplan`
 - Blast radius: all resources in the plan output; varies by change. Review plan output before approving.
 - Elevated permission required: IAM role or policy with create/update/delete rights on the specific resource types in the plan.
-- Rollback path: `terraform apply` from the previous state file snapshot, or manual revert per resource; no automated rollback.
+- Rollback path: revert the code change (`git revert`), then plan and apply the reverted code through the same reviewed path. **Never restore or `state push` an old state file as a rollback** — state records reality, it does not change it, and pushing stale state orphans or duplicates live resources. Destroyed data-bearing resources (databases, buckets, volumes) are not recoverable by any revert — only by restoring a backup/snapshot taken before the apply.
 - Note: `tfplan` is the binary produced by `terraform plan -out=tfplan`. Never run `terraform apply` without the plan file.
 
 ### Standard pattern — import-to-manage-legacy (zero-mutation)
@@ -142,13 +135,6 @@ resource "aws_kinesis_stream" "legacy_orders" {
 
 `terraform plan` then shows an import with **no diff** — the resource is adopted exactly as-is, no mutation. This is the standard, safe way to adopt legacy resources (verified against real retired-state imports). Drop `ignore_changes = all` only once you intend to converge config to reality. Pair with the ownership check above — never import a resource an active CFN / Serverless stack still owns.
 
-### CloudFormation — execute change set
-
-**MUTATION** — `aws cloudformation execute-change-set --change-set-name {change-set-name} --stack-name {stack} --region {region}`
-- Blast radius: resources listed in the change set. Review with `aws cloudformation describe-change-set --change-set-name {change-set-name} --stack-name {stack}` before approving.
-- Elevated permission required: `cloudformation:ExecuteChangeSet` scoped to the stack ARN, plus permissions for each resource type the change set modifies.
-- Rollback path: CloudFormation automatic rollback if the update fails; for manual rollback, execute a change set that restores the previous template.
-
 ### Lambda — lambroll deploy
 
 **MUTATION** — `lambroll deploy --function-json {function.json}`
@@ -170,9 +156,7 @@ resource "aws_kinesis_stream" "legacy_orders" {
 | Placeholder | Description | Example |
 |-------------|-------------|---------|
 | `{cluster}`, `{service}`, `{function}`, `{instance}` | Resource identifiers | `widgetapi-prod-eu-web` |
-| `{stack}` | CloudFormation stack name | `widgetapi-prod-infra` |
 | `{tg-arn}`, `{lb-id}`, `{listener-arn}`, `{sg-id}` | AWS identifiers (ARN or ID) | See the resource in the catalog |
 | `{region}` | AWS region | `eu-west-1` |
 | `{T-15m}`, `{T-1h}` | ISO-8601 time offsets | `2026-04-24T09:45:00Z` |
 | `{now}` | Current time, ISO 8601 | `2026-04-24T10:00:00Z` |
-| `{change-set-name}` | CloudFormation change set name | `cs-widgetapi-resize-20260424` |

@@ -33,7 +33,7 @@ Confirm active context: `kubectl config current-context`.
 
 ### Deployment — current config
 
-- Deployment details: `kubectl get deploy {deploy} -n {namespace} -o yaml`
+- Deployment details: `kubectl get deploy {deploy} -n {namespace} -o yaml` (inline `env[].value` entries can hold credentials — summarize env var names, don't echo values)
 - Deployment summary: `kubectl describe deploy/{deploy} -n {namespace}`
 - Deployment strategy: `kubectl get deploy {deploy} -n {namespace} -o jsonpath='{.spec.strategy}'`
 - Replica count: `kubectl get deploy {deploy} -n {namespace} -o jsonpath='{.spec.replicas}'`
@@ -63,9 +63,10 @@ Confirm active context: `kubectl config current-context`.
 
 - Current release values: `helm get values {release} -n {namespace}`
 - All values (including defaults): `helm get values {release} -n {namespace} --all`
+- **Values and manifests can contain secrets** (DB passwords, API keys passed as values; rendered `Secret` objects with base64 `data`). Base64 is not encryption. Report key names only, and redact values before writing anything to the execution record.
 - Release metadata and chart version: `helm status {release} -n {namespace}`
 - Release history: `helm history {release} -n {namespace}`
-- Rendered manifests for the current release: `helm get manifest {release} -n {namespace}`
+- Rendered manifests for the current release, excluding Secrets: `helm get manifest {release} -n {namespace} | yq 'select(.kind != "Secret")'`
 
 ---
 
@@ -112,10 +113,10 @@ Each command below changes cluster state. The skill presents each command to the
 
 ### Helm — upgrade an existing release
 
-**MUTATION** — `helm upgrade {release} {chart} -n {namespace} -f {values-file} --version {chart-version} --atomic --timeout 5m`
+**MUTATION** — `helm upgrade {release} {chart} -n {namespace} -f {values-file} --version {chart-version} --atomic --timeout 5m` (Helm 4 renamed `--atomic` to `--rollback-on-failure`; check `helm version` and use the matching flag)
 - Blast radius: all Kubernetes resources managed by the release (Deployments, Services, ConfigMaps, etc.); running pods in the namespace are restarted according to the deployment strategy.
 - Elevated permission required: namespace-scoped `Role` with `create`, `update`, `patch`, `delete` on `deployments`, `services`, `configmaps`, and any other resource types the chart manages.
-- Rollback path: `helm rollback {release} {prev-revision} -n {namespace}` — rolls back to the specified previous revision. `--atomic` flag auto-rolls back if the upgrade fails before `--timeout` elapses.
+- Rollback path: `helm rollback {release} {prev-revision} -n {namespace}` — rolls back to the specified previous revision. `--atomic` / `--rollback-on-failure` auto-rolls back if the upgrade fails before `--timeout` elapses. Set `--timeout` longer than the chart's slowest hook (e.g. DB migration jobs) or a healthy-but-slow upgrade gets rolled back mid-migration.
 - Note: always run `helm diff upgrade {release} {chart} -f {values-file}` (Step 4a) and review before approving the upgrade.
 
 ### Helm — install a new release
@@ -130,14 +131,14 @@ Each command below changes cluster state. The skill presents each command to the
 **MUTATION** — `kubectl apply -k {overlay-path}`
 - Blast radius: all resources in the Kustomize overlay; existing resources with matching names are patched in-place. Review `kubectl diff -k {overlay-path}` (Step 4a) before approving.
 - Elevated permission required: namespace-scoped `Role` with `create`, `update`, `patch` on the resource types in the overlay (typically `deployments`, `configmaps`, `services`, `ingresses`).
-- Rollback path: apply the previous version of the overlay (`kubectl apply -k {prev-overlay-path}`), or revert the overlay files in the repo and re-apply. No built-in rollback mechanism.
+- Rollback path: revert the overlay files in the repo and re-apply (`kubectl apply -k {overlay-path}`). For Deployments / StatefulSets / DaemonSets, `kubectl rollout undo {kind}/{name} -n {namespace}` restores the previous pod template (it does not revert ConfigMaps, Services, or other objects).
 
 ### Raw manifest — apply a single manifest
 
 **MUTATION** — `kubectl apply -f {manifest-file} -n {namespace}`
 - Blast radius: only the resources defined in the manifest file. Review `kubectl diff -f {manifest-file}` (Step 4a) before approving.
 - Elevated permission required: namespace-scoped `Role` with `create`, `update`, `patch` on the specific resource types in the manifest.
-- Rollback path: apply the previous version of the manifest (`kubectl apply -f {prev-manifest-file}`), or `kubectl delete -f {manifest-file}` to remove newly created resources. No built-in rollback for in-place updates.
+- Rollback path: apply the previous version of the manifest (`kubectl apply -f {prev-manifest-file}`); for workload pod-template changes, `kubectl rollout undo {kind}/{name} -n {namespace}`. **Never use `kubectl delete -f {manifest-file}` as a rollback** when the file contains any resource that existed before the apply — it deletes those pre-existing production objects too. Delete only the specific objects the change newly created, by name.
 
 ---
 

@@ -14,7 +14,7 @@ Update `values-prod.yaml`: change `replicaCount` from `2` to `4`. No other value
 
 - **Helm tool support:** skill detects `Chart.yaml` and recognises this as a Helm-managed service (not Terraform)
 - **Catalog consumption:** `.culiops/service-discovery/notifyapi-prod.md` exists; skill reads it for upstream dependencies and naming pattern
-- **Pre-flight record reuse:** `.culiops/pre-flight/notifyapi-config-update-20260424-1030.md` exists with a Green verdict for this exact change; skill REUSES it rather than re-invoking `pre-flight`
+- **Pre-flight record reuse:** `.culiops/pre-flight/notifyapi-config-update-20260424-1030.md` exists with a Green verdict for this exact change (matching plan hash, same target, within 24h); skill REUSES it rather than re-invoking `pre-flight`
 - **Values file targeting:** skill modifies `values-prod.yaml` (not `values.yaml`) because `values-prod.yaml` holds env-specific overrides
 - **PR path (default):** no direct-apply override; skill produces a PR
 

@@ -16,6 +16,8 @@ Expected skill behaviour at each step. Recorded for pre-dry-run reference; "Gaps
 | SNS topic discovery | Reads `aws_sns_topic.paymentapi_alerts` → alarm should reuse `aws_sns_topic.paymentapi_alerts.arn` |
 | ECS identifiers | Records `ClusterName = "paymentapi-cluster-${var.env}"`, `ServiceName = "paymentapi-svc-${var.env}"` for alarm dimensions |
 | tfvars location | Finds `envs/prod.tfvars` — notes `-var-file=envs/prod.tfvars` for plan command |
+| Evidence table | Rows for the ECS cluster/service names and the SNS topic, each with `code: main.tf:<line>`; skill proposes a live batch (`aws ecs describe-services`, `aws sns get-topic-attributes`, `aws cloudwatch describe-alarms --alarm-name-prefix paymentapi`) to confirm they exist and no alarm with the new name already exists. If declined → rows marked `code-only — not live-verified` and passed to pre-flight |
+| Delivery model / target | Notes how prod is selected (`-var-file=envs/prod.tfvars`); target check (`aws sts get-caller-identity`) required before Step 4a plan |
 
 ## Step 2 — Plan
 
