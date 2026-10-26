@@ -1,0 +1,5 @@
+{
+  "_note": "Query 0b-2 (ownership probe, item #2). No CloudFormation tag; IaC match kinesis.tf:3 → owner terraform. The stream is NOT in a shared module (single aws_kinesis_stream resource).",
+  "Tags": [{"Key": "ManagedBy", "Value": "terraform"}, {"Key": "Service", "Value": "orders"}],
+  "HasMoreTags": false
+}

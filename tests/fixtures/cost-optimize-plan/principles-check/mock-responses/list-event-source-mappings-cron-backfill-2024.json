@@ -1,0 +1,4 @@
+{
+  "_note": "Query 5 (item #1). No SQS / Kinesis / DynamoDB-stream / Kafka mappings. EventBridge rules are not event-source mappings; they appear in the resource policy (Query 6).",
+  "EventSourceMappings": []
+}

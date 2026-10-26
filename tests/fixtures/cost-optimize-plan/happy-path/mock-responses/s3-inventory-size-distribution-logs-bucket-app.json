@@ -1,0 +1,12 @@
+{
+  "_note": "Query 13 (item #2). list-bucket-inventory-configurations shows a weekly Parquet inventory (config 'weekly-size', destination acme-analytics-exports). The latest report (2026-05-24) is read with get-object and SUMMARISED to an object-size distribution for the objects aged >= 90d. This replaces a biased list-objects-v2 sample.",
+  "objects_aged_90d_plus": 489089,
+  "size_percentiles_KiB": {
+    "p1": 190,
+    "p5": 410,
+    "p50": 7900,
+    "p95": 31000
+  },
+  "objects_below_128KiB": 0,
+  "note": "Standard-IA bills a 128 KiB minimum object size and S3 does not transition objects < 128 KiB by default; none exist, so none are excluded."
+}

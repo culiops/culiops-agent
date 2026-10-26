@@ -1,0 +1,7 @@
+{
+  "_note": "Query 0b (ownership probe). No aws:cloudformation:* or controller tags. With the IaC hit at s3.tf:88, Owner = terraform. (Reversibility is not scored: Evidence 🚫 decides first.)",
+  "TagSet": [
+    {"Key": "Environment", "Value": "prod"},
+    {"Key": "Service", "Value": "log-export"}
+  ]
+}

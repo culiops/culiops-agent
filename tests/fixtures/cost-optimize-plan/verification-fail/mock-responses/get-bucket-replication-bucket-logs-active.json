@@ -1,4 +1,5 @@
 {
+  "_note": "Query 7. This bucket is not a replication SOURCE. (Destination-side check across other buckets is opt-in at GATE 2 and was not selected.)",
   "Error": {
     "Code": "ReplicationConfigurationNotFoundError",
     "Message": "The replication configuration was not found"

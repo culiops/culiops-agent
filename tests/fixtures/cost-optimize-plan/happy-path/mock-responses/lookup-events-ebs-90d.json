@@ -1,3 +1,4 @@
 {
+  "_note": "Query 16 (item #3). cloudtrail lookup-events for vol-0xxxxxxxxxxxxxxx1, window 2026-02-27 to 2026-05-28 (90d). AttachVolume / DetachVolume are MANAGEMENT events, so LookupEvents is a valid source here. No events: the volume has been unattached for at least the whole window. Last detach is older than the window and cannot be dated.",
   "Events": []
 }

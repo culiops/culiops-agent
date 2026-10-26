@@ -1,10 +1,12 @@
 # verification-fail — cost-optimize-plan fixture
 
-Single-item report recommending deletion of `bucket-logs-active` ($400/mo). Verification queries reveal active GetObject traffic — the skill places the item in 🚫 Do not act, demonstrating Iron Law #3 (no tier without evidence) and resisting the upstream recommendation.
+Single-item report recommending deletion of `bucket-logs-active` ($400/mo). Verification reads real S3 request activity from the bucket's server access logs and finds daily GET traffic; the skill places the item in 🚫 Do not act, demonstrating Law 3 (no tier without evidence) and resisting the upstream recommendation.
 
 ## What's modelled
 
-Account `123456789012` (`acme-prod`), region `ap-southeast-1`. The upstream `cloud-cost-investigate` waste audit found one remediation candidate: delete `bucket-logs-active` to save $400/mo. The bucket carries no S3 lifecycle policy and its name did not appear in the account's tag-scope. All 7 verification queries succeed. However, `cloudtrail:LookupEvents` returns 1,247 GetObject events in the last 30d (last event 2026-05-27 14:32 UTC, principal `AssumedRole/lambda-export-fn`) — the skill places the item in 🚫 Do not act with full disqualifying evidence shown. No actionable items reach the plan.
+Account `123456789012` (`acme-prod`), region `ap-southeast-1`. The upstream waste audit flagged `bucket-logs-active` because its $400/mo cost was flat for 90+ days, it has no lifecycle policy and the name is not in the active-service tag scope. The bucket has **server access logging enabled** into `acme-s3-access-logs` (same account), with history from 2025-11-10. No S3 request-metrics configuration exists.
+
+**IaC repo: simulated** (`~/acme-infra`); `mock-responses/iac-grep-simulated.json` stands in for the grep, and the `code:` refs (`s3.tf:88`, `lambda.tf:140`) are illustrative.
 
 ## The operator question
 
@@ -14,29 +16,40 @@ Account `123456789012` (`acme-prod`), region `ap-southeast-1`. The upstream `clo
 
 ## What this fixture exercises
 
-- **Single-item batch verification (7 queries):** GetBucketLocation, GetBucketPolicy, GetBucketLogging, GetBucketReplication, GetBucketVersioning, CloudTrail LookupEvents (30d), ListObjectsV2.
-- **`cloudtrail:LookupEvents` returns 1,247 GetObject events in last 30d → triggers 🚫 column on Evidence dimension.** Last event 2026-05-27 14:32 UTC, principal `AssumedRole/lambda-export-fn`. Active log-processing pipeline reads from this bucket.
-- **Skill resists the upstream recommendation:** places item in 🚫 with full disqualifying evidence shown, NOT silently dropped.
-- **Plan summary table shows 0 actionable items** — the zero-count case for all four actionable tiers is exercised.
+- **S3 activity from a real data-event source.** `delete-s3-bucket.md` order: (3a) request metrics: none → (3b) server access logs: available, read from the log bucket → (3c) CloudTrail Lake: not needed. `cloudtrail lookup-events` is never used for object activity (management events only).
+- **Target check + ownership probe** (`0a`, `0b`).
+- **Evidence 🚫 on a recurring, recent pattern:** 3,694 GETs in 90d, 1,247 in the last 30d, every day, last 2026-05-27 14:32 UTC, single principal `lambda-export-fn`. Principle 3: steady use, not a historical burst.
+- **Skill resists the upstream recommendation:** a `high`-confidence delete lands in 🚫 with the evidence quoted, NOT silently dropped.
+- **Zero-actionable plan:** every actionable tier empty, `$0/mo` total.
+- **Secrets rule:** the access-log result is a summary (counts and distribution); no rows, IPs or keys.
 
-> **Mock response note:** `lookup-events-bucket-logs-active-90d.json` contains 5 representative events. The top-level `EventsCount` field (`1247`) is a **fixture convention** — it is not a real AWS SDK response field. The fixture README and `DRY-RUN-NOTES.md` document this so reviewers know the count is the signal, not the JSON array length.
+> **Mock convention:** `access-log-summary-bucket-logs-active.json` is a summary of reading ~3,800 log objects, not a real response shape. The counts are the signal.
 
 ## Files in this fixture
 
-| File | Purpose |
-|------|---------|
-| `operator-question.md` | The freeform operator request to feed the skill |
-| `upstream-report.md` | Synthetic `cloud-cost-investigate` waste report — skill input |
-| `mock-responses/get-bucket-location-bucket-logs-active.json` | Bucket region (ap-southeast-1) |
-| `mock-responses/get-bucket-policy-bucket-logs-active.json` | Bucket policy (empty statements) |
-| `mock-responses/get-bucket-logging-bucket-logs-active.json` | Server access logging (not enabled) |
-| `mock-responses/get-bucket-replication-bucket-logs-active.json` | Replication config (none — AWS error shape) |
-| `mock-responses/get-bucket-versioning-bucket-logs-active.json` | Versioning state (Suspended) |
-| `mock-responses/lookup-events-bucket-logs-active-90d.json` | **CloudTrail: 1,247 GetObject events in 30d — the disqualifying signal** |
-| `mock-responses/list-objects-v2-bucket-logs-active.json` | Object count (47 objects, most-recent 2026-05-27) |
-| `expected-output.md` | The plan markdown the skill produces at GATE 3 |
-| `DRY-RUN-NOTES.md` | Gate transitions and acceptance check |
+Row = the `#` in the plan's "Verification queries run" table.
+
+| File | Row | Purpose |
+|------|-----|---------|
+| `operator-question.md` | — | The freeform operator request |
+| `upstream-report.md` | — | Synthetic waste report (skill input) |
+| `mock-responses/sts-get-caller-identity.json` | 0a | Target check |
+| `mock-responses/iac-grep-simulated.json` | 0b | Simulated IaC grep (owner terraform) |
+| `mock-responses/get-bucket-tagging-bucket-logs-active.json` | 0b | Bucket tags |
+| `mock-responses/get-bucket-location-bucket-logs-active.json` | 1 | Bucket region (Metrics-rule precondition) |
+| `mock-responses/get-bucket-versioning-bucket-logs-active.json` | 2 | Versioning Suspended |
+| `mock-responses/get-bucket-lifecycle-configuration-bucket-logs-active.json` | 2 | No lifecycle rule |
+| `mock-responses/list-bucket-metrics-configurations-bucket-logs-active.json` | 3 | No request-metrics configuration |
+| `mock-responses/get-bucket-logging-bucket-logs-active.json` | 4 | Access logging enabled → `acme-s3-access-logs` |
+| `mock-responses/access-log-summary-bucket-logs-active.json` | 4 | **Summarized 90d access-log read: the disqualifying signal** |
+| `mock-responses/get-metric-data-bucket-size-bucket-logs-active-90d.json` | 5 | Object count growth + non-empty check |
+| `mock-responses/get-bucket-policy-bucket-logs-active.json` | 6 | `NoSuchBucketPolicy` |
+| `mock-responses/get-bucket-replication-bucket-logs-active.json` | 7 | No replication |
+| `mock-responses/log-target-sweep-bucket-logs-active.json` | 8 | Not a log destination |
+| `mock-responses/dns-sweep-bucket-logs-active.json` | 9 | No DNS reference |
+| `expected-output.md` | — | The plan the skill produces at GATE 3 |
+| `DRY-RUN-NOTES.md` | — | Gate transitions and acceptance check |
 
 ## Expected outcome
 
-The single item lands in 🚫 Do not act. The Disqualifying evidence column quotes the CloudTrail signal (1,247 GetObject events, last event date, principal). The plan summary table shows 0 items in all four actionable tiers. The Gaps section reads "None." No item is silently dropped.
+The single item lands in 🚫 Do not act. The disqualifying-evidence cell quotes the access-log signal with the `live:4` reference. The plan summary shows 0 in every actionable tier. The item is neither dropped nor in any other tier.

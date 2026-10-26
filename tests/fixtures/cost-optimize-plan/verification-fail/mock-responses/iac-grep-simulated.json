@@ -1,0 +1,10 @@
+{
+  "_note": "SIMULATED. No real IaC tree exists in this fixture; this file stands in for the operator-supplied IaC repo (~/acme-infra). Code refs are illustrative.",
+  "iac_repo": "~/acme-infra",
+  "searches": [
+    {"term": "bucket-logs-active", "hits": [
+      {"file": "s3.tf", "line": 88, "text": "resource \"aws_s3_bucket\" \"logs_active\" { bucket = \"bucket-logs-active\" ... }"},
+      {"file": "lambda.tf", "line": 140, "text": "resource \"aws_iam_role_policy\" \"export_fn_read\" { ... Resource = [\"arn:aws:s3:::bucket-logs-active/*\"] ... }"}
+    ]}
+  ]
+}

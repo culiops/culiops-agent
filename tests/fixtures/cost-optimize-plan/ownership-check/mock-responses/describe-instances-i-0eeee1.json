@@ -1,0 +1,26 @@
+{
+  "_note": "Query 0b-2 (ownership probe; also rightsize-ec2.md Query 1, same call). The tag aws:autoscaling:groupName=web-asg means the instance is an Auto Scaling group member launched from a launch template. A resize of one member is reverted at the next scale-out / instance refresh; the change belongs in the launch template. Owner = asg -> ❔ owned-by-asg. The remaining rightsize-ec2.md queries are skipped.",
+  "Reservations": [
+    {
+      "OwnerId": "111122223333",
+      "Instances": [
+        {
+          "InstanceId": "i-0eeee1",
+          "InstanceType": "m5.2xlarge",
+          "State": {"Code": 16, "Name": "running"},
+          "LaunchTime": "2026-05-20T02:10:44.000Z",
+          "Architecture": "x86_64",
+          "Monitoring": {"State": "enabled"},
+          "VpcId": "vpc-0abc123def456789b",
+          "Tags": [
+            {"Key": "Name", "Value": "web"},
+            {"Key": "Environment", "Value": "prod"},
+            {"Key": "aws:autoscaling:groupName", "Value": "web-asg"},
+            {"Key": "aws:ec2launchtemplate:id", "Value": "lt-0123456789abcdef0"},
+            {"Key": "aws:ec2launchtemplate:version", "Value": "7"}
+          ]
+        }
+      ]
+    }
+  ]
+}

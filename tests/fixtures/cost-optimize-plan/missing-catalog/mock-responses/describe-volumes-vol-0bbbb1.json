@@ -1,4 +1,5 @@
 {
+  "_note": "Query 0b-1 (ownership probe + playbook Query 1). available, no attachments. No kubernetes.io / ebs.csi.aws.com / aws:* tag. No IaC repo was supplied, so the grep could not run: owner = unknown (treated as unmanaged for Reversibility; Dimension 4 = \u26aa).",
   "Volumes": [
     {
       "VolumeId": "vol-0bbbb1",
@@ -13,8 +14,14 @@
       "MultiAttachEnabled": false,
       "Attachments": [],
       "Tags": [
-        {"Key": "Environment", "Value": "staging"},
-        {"Key": "Service", "Value": "data-pipeline"}
+        {
+          "Key": "Environment",
+          "Value": "staging"
+        },
+        {
+          "Key": "Service",
+          "Value": "data-pipeline"
+        }
       ]
     }
   ]

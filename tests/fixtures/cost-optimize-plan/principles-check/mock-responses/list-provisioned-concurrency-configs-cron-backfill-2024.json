@@ -1,0 +1,8 @@
+{
+  "_note": "Query 4 (item #1). Provisioned concurrency is configured on the ALIAS `live` (PC is not possible on $LATEST). 2 units are warm and billed whether or not traffic arrives: this is the source of the $35/mo. Configured PC with ZERO traffic is the cheapest-reversible lever (Principle 2): removing it is the first rung of the ladder.",
+  "ProvisionedConcurrencyConfigs": [
+    {"FunctionArn": "arn:aws:lambda:ap-southeast-1:123456789012:function:cron-backfill-2024:live",
+     "RequestedProvisionedConcurrentExecutions": 2, "AvailableProvisionedConcurrentExecutions": 2, "AllocatedProvisionedConcurrentExecutions": 2,
+     "Status": "READY", "LastModified": "2026-02-14T08:42:18.000+0000"}
+  ]
+}

@@ -1,0 +1,4 @@
+{
+  "_note": "Query 11 (item #2, Realizable column). ce get-reservation-coverage filtered to Amazon DynamoDB, 30d. No reserved capacity covers this table, so provisioned capacity is billed at the on-demand-purchase provisioned rate (no commitment would absorb a change).",
+  "CoveragesByTime": [{"Total": {"CoverageHours": {"OnDemandHours": "180000", "ReservedHours": "0", "CoverageHoursPercentage": "0.0"}}}]
+}

@@ -1,4 +1,5 @@
 {
+  "_note": "Query 4. No existing lifecycle rule: nothing to overlap or replace.",
   "Error": {
     "Code": "NoSuchLifecycleConfiguration",
     "Message": "The lifecycle configuration does not exist"

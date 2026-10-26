@@ -2,7 +2,9 @@
 **Upstream report:** .culiops/cloud-cost-investigate/acme-staging-waste-20260528-1130.md
 **Mode of upstream:** waste
 **Scope:** 987654321098 / acme-staging (single)
-**Catalog used:** none — Dimension 4 conservative scoring
+**Target:** account 987654321098 (sts verified, live:0a), region(s) us-east-1
+**IaC repo(s):** none - ownership from tags only
+**Catalog used:** none - Dimension 4 conservative scoring
 **Date:** 2026-05-28 11:36
 **Items considered:** 2   **Savings floor:** $5/mo
 **Cloud:** aws
@@ -10,22 +12,37 @@
 ## Scoping decisions
 
 Confirmed at GATE 1:
-- Upstream report: `.culiops/cloud-cost-investigate/acme-staging-waste-20260528-1130.md` (waste mode, single-cloud aws).
+- Upstream report: `.culiops/cloud-cost-investigate/acme-staging-waste-20260528-1130.md` (waste mode, single-cloud aws, fresh).
 - 2 items above $5/mo floor; 0 filtered below floor.
-- Catalog: none — `.culiops/service-discovery/` does not exist. No IaC tree accessible. Dimension 4 (Dependency) will score ⚪ for all items; treated as 🟡-equivalent per tier rules.
-- Region: us-east-1.
+- Target: account `987654321098`, region `us-east-1`.
+- Catalog: none - `.culiops/service-discovery/` does not exist. **IaC repo: none supplied**, so the ownership grep cannot run: owners resolve to `unknown` and Dimension 4 scores ⚪ for both items (treated as 🟡-equivalent per tier rules). `unmanaged` cannot be proven, so Reversibility never gets the "re-apply old IaC" basis.
 - Operator approved scope and savings floor. Proceeding to verification planning.
 
 ## Verification queries run
 
-| # | Item | API | IAM | Status | Evidence captured |
-|---|------|-----|-----|--------|-------------------|
-| 1 | Delete vol-0bbbb1 | ec2:DescribeVolumes | ec2:Describe* | ok | state=available; 200 GB gp3; no Attachments |
-| 2 | Delete vol-0bbbb1 | ec2:DescribeSnapshots | ec2:Describe* | ok | 1 snapshot (snap-0cccc2def3456789a, completed 2026-05-08, weekly-backup) |
-| 3 | Delete vol-0bbbb1 | cloudtrail:LookupEvents (AttachVolume/DetachVolume, 90d) | cloudtrail:LookupEvents | ok | 0 events — no attach/detach in 90d |
-| 4 | Add lifecycle policy logs-archive-bucket | s3:GetBucketLifecycleConfiguration | s3:GetBucketLifecycleConfiguration | ok | NoSuchLifecycleConfiguration — no existing policy |
-| 5 | Add lifecycle policy logs-archive-bucket | s3:ListBucketIntelligentTieringConfigurations | s3:ListBucketIntelligentTieringConfigurations | ok | IntelligentTieringConfigurationList=[] — no existing IT config |
-| 6 | Add lifecycle policy logs-archive-bucket | cloudwatch:GetMetricStatistics (BucketSizeBytes, StandardStorage) | cloudwatch:GetMetricStatistics | ok | 3,968,054,599,680 bytes (~3.70 TB) StandardStorage — within ±5% of upstream 3.6 TB estimate |
+All queries executed 2026-05-28 11:31-11:34 UTC. Row numbering: `0a` target check, `0b-<item>` ownership probe, then `1..N`. Evidence is summarized.
+
+| # | Item | API | IAM | Status | Evidence captured (summary) |
+|---|------|-----|-----|--------|-----------------------------|
+| 0a | all | sts:GetCallerIdentity | sts:GetCallerIdentity | ok | account 987654321098 = `Scope`; region us-east-1 (2026-05-28T11:31Z) |
+| 0b-1 | Delete vol-0bbbb1 | ec2:DescribeVolumes (tags) | ec2:Describe* | ok | `State=available`, `Attachments=[]`, 200 GB gp3; no `kubernetes.io/*` / `ebs.csi.aws.com/*` tag; no IaC repo → owner **unknown** |
+| 0b-2 | Lifecycle logs-archive-bucket | s3:GetBucketTagging | s3:GetBucketTagging | ok | no CloudFormation / controller tag; no IaC repo → owner **unknown** |
+| 1 | Delete vol-0bbbb1 | ec2:DescribeSnapshots | ec2:Describe* | ok | 1 snapshot `snap-0cccc2def3456789a`, completed 2026-05-08, DLM-managed |
+| 2 | Delete vol-0bbbb1 | cloudtrail:LookupEvents (AttachVolume/DetachVolume, 90d; management events) | cloudtrail:LookupEvents | ok | 0 events in 2026-02-27 → 2026-05-28: unattached for the whole window |
+| 3 | Delete vol-0bbbb1 | rbin:ListRules (EBS_SNAPSHOT) | rbin:ListRules | ok | no Recycle Bin rule |
+| 4 | Lifecycle logs-archive-bucket | s3:GetBucketLifecycleConfiguration | s3:GetLifecycleConfiguration | ok | `NoSuchLifecycleConfiguration` |
+| 5 | Lifecycle logs-archive-bucket | s3:GetBucketVersioning | s3:GetBucketVersioning | ok | versioning never enabled |
+| 6 | Lifecycle logs-archive-bucket | s3:ListBucketIntelligentTieringConfigurations | s3:GetIntelligentTieringConfiguration | ok | none |
+| 7 | Lifecycle logs-archive-bucket | cloudwatch:GetMetricData (`BucketSizeBytes`, `NumberOfObjects`; daily, 90d) | cloudwatch:GetMetricData | ok | Standard 3,968,054,599,680 B (3.61 TiB) / 661,000 objects (avg 6.0 MB); nothing in other classes |
+| 8 | Lifecycle logs-archive-bucket | s3:ListBucketAnalyticsConfigurations + s3:GetObject (SCA export) | s3:GetAnalyticsConfiguration, s3:GetObject | ok | Storage Class Analysis, 98 days of history; objects aged >= 90d: 641,000 (3,584 GiB), **0 GET requests** |
+| 9 | Lifecycle logs-archive-bucket | s3:ListBucketInventoryConfigurations + s3:GetObject (inventory report) | s3:GetInventoryConfiguration, s3:GetObject | ok | objects aged >= 90d: p5 = 480 KiB, none < 128 KiB |
+| 10 | Lifecycle logs-archive-bucket | ce:GetCostAndUsage (S3 storage line items, 30d) | ce:GetCostAndUsage | ok | bill-derived Standard rate; target-class rates from the Pricing API fallback (fictional fixture values) |
+
+**Total estimated API cost:** one Cost Explorer request (billed per request) plus a few S3 GETs and free describe/list calls; CloudTrail LookupEvents is free.
+
+### Principle 2 cost-direction computation (item #2)
+
+Fixture rates (bill-derived Standard, Pricing-API-fallback Glacier Flexible Retrieval; not AWS list prices): gross 3,584 GiB x (0.0540 − 0.0036) = +$180.6/mo; archive per-object overhead (641,000 x 40 KiB) −$0.3/mo; early-deletion exposure $0 (no expiration); retrieval fees $0 (0 reads of aged objects). **Net +$180.3/mo** (upstream $180/mo, +0.2%). One-time transition requests (641,000 x 0.06 per 1,000) −$38.5; payback about 6 days. Direction confirmed positive.
 
 ## Plan summary
 
@@ -33,40 +50,43 @@ Confirmed at GATE 1:
 |------|-------|--------------------|
 | 🟢 Fast wins | 0 | — |
 | 🟡 Coordinated | 2 | $232/mo |
+| 🔵 Requires owner confirmation | 0 | — |
 | 🔴 Risky | 0 | — |
 | 🚫 Do not act | 0 | — |
 | ❔ Manual review | 0 | — |
 
-**Total plan savings:** $232/mo (both items high-confidence, both in 🟡 due to Dependency ⚪)
+**Total plan savings:** $232/mo (both items high-confidence, both in 🟡)
 
 ## 🟢 Fast wins
 
-No items in this tier (Dimension 4 scored ⚪ for all items due to missing catalog — ⚪ is treated as 🟡-equivalent, preventing 🟢 Fast win qualification).
+No items in this tier.
 
 ## 🟡 Coordinated
 
-| # | Action | Resource | Savings | Reversibility | Blast | Evidence | Dependency | Source | Rollback |
-|---|--------|----------|---------|---------------|-------|----------|------------|--------|----------|
-| 2 | Add S3 lifecycle policy (Standard → Glacier after 90d) | logs-archive-bucket | $180/mo | 🟢 | 🟢 | 🟢 | ⚪ | line-item-computation (high) | Remove policy rule via IaC revert; objects already transitioned to Glacier re-transition to Standard on next access |
-| 1 | Delete unattached EBS volume | vol-0bbbb1 | $52/mo | 🟡 | 🟢 | 🟢 | ⚪ | line-item-computation (high) | Snapshot exists (snap-0cccc2def3456789a, 2026-05-08); restore from snapshot then attach |
+| # | Action | Resource | Owner | Savings | Realizable | Reversibility | Blast | Evidence | Dependency | Source | Rollback |
+|---|--------|----------|-------|---------|------------|---------------|-------|----------|------------|--------|----------|
+| 2 | Add S3 lifecycle rule (Standard → Glacier Flexible Retrieval after 90d, no expiration) | logs-archive-bucket | unknown | $180/mo | ✓ cost direction net +$180/mo after fees (live:7,8,9,10) | 🟡 any `Transition` | 🟢 | 🟢 live:8,9 | ⚪ no catalog, no IaC repo | line-item-computation (high) | Removing the rule does NOT move objects back; restore + copy needed (fees apply). No IaC to revert (owner unknown) |
+| 1 | Delete unattached EBS volume | vol-0bbbb1 | unknown | $52/mo | ✓ gp3 storage, no commitment applies | 🟡 valid rollback snapshot (live:1,2) | 🟢 | 🟢 live:2 | ⚪ no catalog, no IaC repo | line-item-computation (high) | Restore from `snap-0cccc2def3456789a` (new volume ID); take a fresh final snapshot first |
 
-**Item #2 — Add lifecycle policy logs-archive-bucket**
+**Dimension detail - #2 lifecycle logs-archive-bucket:**
+- **Reversibility 🟡** - `lifecycle-s3.md`: a `Transition` to Glacier Flexible Retrieval is 🟡 (reads fail until restore). Independently, owner `unknown` removes the IaC-revert basis, so even an instantly readable target could not be 🟢 here.
+- **Blast radius 🟢** - single bucket, adds the only rule on an empty rule set (live:4).
+- **Evidence 🟢** - every `required` row passes: 0 GET requests on objects aged >= 90d across 98 days of Storage Class Analysis (live:8; Glacier Flexible target); net +$180.3/mo after fees (live:10 inputs, computation above); observed 3.61 TiB vs the report's 3.6 TB (live:7); no Intelligent-Tiering overlap (live:6); not versioned (live:5).
+- **Dependency footprint ⚪** - no catalog and no IaC repo: nothing to scan. ⚪ on Dimension 4 is treated as 🟡-equivalent (it does not force 🔴; only Evidence ⚪ does). Operator should confirm no consumer reads objects of that age (e.g. quarterly pulls) before applying. Running `service-discovery` replaces the ⚪ with a real score.
 
-**Dimension detail:**
-- **Reversibility 🟢** — Lifecycle policy add is a reversible config change; removing the policy rule returns the bucket to its prior state. Objects already transitioned to Glacier are retrievable via restore and re-transition automatically. (Playbook: lifecycle-s3.)
-- **Blast radius 🟢** — Single-bucket policy add; no shared namespace touched; no other resources disrupted.
-- **Evidence of no-use 🟢** — No existing lifecycle policy (query #4: NoSuchLifecycleConfiguration) and no Intelligent-Tiering config (query #5). CloudWatch confirms ~3.70 TB StandardStorage (query #6), consistent with upstream estimate. Policy-only change does not delete data.
-- **Dependency footprint ⚪** — Dimension 4 ⚪ — no catalog and no IaC tree access. Operator should manually verify no consumers before applying. Catalog can be regenerated with `service-discovery` skill. ⚪ treated as 🟡-equivalent per tier rules → item placed in 🟡 Coordinated (not 🔴 Risky).
+**Dimension detail - #1 delete vol-0bbbb1:**
+- **Reversibility 🟡** - a *valid* rollback snapshot exists: `snap-0cccc2def3456789a` is `completed`, started 2026-05-08, after the volume's last detach (which predates the 90d window, live:2) and inside the window. It is DLM-managed, so its retention is not guaranteed (Gap). Without it this would be 🔴.
+- **Blast radius 🟢** - unattached, not Kubernetes-owned (live:0b-1).
+- **Evidence 🟢** - no Attach/Detach event in 90d (live:2): unattached >= 60d (upstream dates it 2026-02-20, 97 days). Evidence is 🟢, so tier rule 3's "delete AND Evidence not 🟢" clause does not fire.
+- **Dependency footprint ⚪** - no catalog and no IaC repo; treated as 🟡-equivalent.
 
-**Item #1 — Delete unattached EBS volume vol-0bbbb1**
+**Why neither is 🟢:** Reversibility is 🟡 for both and Dimension 4 is ⚪. Tier rule 4 (any 🟡 including ⚪ on Dimension 4, no 🔴 / 🚫 / 🔵 / Evidence-⚪). A catalog alone would not make either a Fast win.
 
-**Dimension detail:**
-- **Reversibility 🟡** — EBS volume deletion is irreversible. However, snapshot snap-0cccc2def3456789a (weekly-backup, completed 2026-05-08) exists and is 20 days old — recent enough to mitigate risk but not a same-day backup. Snapshot restore is the rollback path; volume object cannot be recovered post-delete. (Playbook: delete-ebs-volume.) Scored 🟡 rather than 🔴 because a recent snapshot is present (playbook threshold: snapshot <30d old → 🟡; no snapshot or snapshot >90d → 🔴).
-- **Blast radius 🟢** — Volume is unattached (Attachments=[], query #1). No EC2 instance, no service, no data pipeline currently mounted to it. Single-resource delete with no shared-namespace impact.
-- **Evidence of no-use 🟢** — Volume has been in state=available (unattached) since 2026-02-20 per upstream report. CloudTrail confirms 0 AttachVolume/DetachVolume events in the last 90 days (query #3). The volume has been dormant for 97 days.
-- **Dependency footprint ⚪** — Dimension 4 ⚪ — no catalog and no IaC tree access. Operator should manually verify no consumers before applying. Catalog can be regenerated with `service-discovery` skill. ⚪ treated as 🟡-equivalent per tier rules → item placed in 🟡 Coordinated (not 🔴 Risky).
+> Ordering hint: take a fresh final snapshot before deleting #1 (the existing one is 20 days old and DLM-managed). #2 is independent of #1.
 
-> **Ordering hint: take snapshot before deleting.** The existing snapshot (snap-0cccc2def3456789a, 2026-05-08) is 20 days old. The EBS playbook recommends creating a fresh snapshot immediately before delete to minimize recovery RPO. Use `iac-change-execution` to sequence the snapshot step before the destroy step.
+## 🔵 Requires owner confirmation
+
+No items in this tier.
 
 ## 🔴 Risky
 
@@ -76,17 +96,22 @@ No items in this tier.
 
 No items in this tier.
 
-## ❔ Manual review
+## ❔ Manual review required
 
 No items in this tier.
 
+## Drift
+
+None - no IaC repo was supplied, so no code-versus-live comparison was possible.
+
 ## Gaps
 
-Service-discovery catalog absent at `.culiops/service-discovery/`. Dimension 4 (Dependency footprint) scored ⚪ for all items; conservative tier rules placed otherwise-fast-win items in 🟡 Coordinated. Operator can regenerate the catalog and re-run for tighter tiering.
+- Service-discovery catalog absent at `.culiops/service-discovery/` and no IaC repo supplied: Dimension 4 scored ⚪ for both items and owners are `unknown`. Supply the IaC repo path and/or run `service-discovery`, then re-run for tighter scoring (Dependency and ownership; the tier would stay 🟡 because of Reversibility).
+- Item #1: the DLM policy's retention for `snap-0cccc2def3456789a` is not queried by the playbook; use a dedicated, tagged final snapshot taken at execution time.
 
 ## Next steps (informational)
 
-- For item #2 (🟡 logs-archive-bucket lifecycle): low coordination overhead for the policy change itself, but verify no downstream consumers depend on current storage class before applying. Add `aws_s3_bucket_lifecycle_configuration` via `iac-change-execution`.
-- For item #1 (🟡 vol-0bbbb1 delete): sequence (a) create fresh EBS snapshot, then (b) destroy vol-0bbbb1. Treat as irreversible — confirm contents not needed before proceeding.
-- **Run `service-discovery` first for a tighter triage.** With a catalog in place, Dimension 4 can score 🟢 or 🟡 based on actual consumers rather than ⚪ unknown — both items may qualify for 🟢 Fast win after catalog-based scoring.
+- #2 (🟡): add the lifecycle rule through whichever IaC owns the bucket (find it first: owner is `unknown`). Every eligible object is already older than 90 days, so the whole 3,584 GiB transitions on the first run; confirm nobody reads that data. Merge into the existing rule set (there is none today).
+- #1 (🟡): sequence (a) fresh final snapshot, then (b) delete `vol-0bbbb1`. Owner `unknown`: there may be no IaC resource to remove; `iac-change-execution` will establish that.
+- **Run `service-discovery` and supply the IaC repo for a tighter triage.**
 - `iac-change-execution` will call `pre-flight` for full risk clearance before any apply. This plan's tier badge does not short-circuit pre-flight.

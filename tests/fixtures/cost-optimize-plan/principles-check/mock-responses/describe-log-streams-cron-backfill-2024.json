@@ -1,0 +1,5 @@
+{
+  "_note": "Query 7 (item #1, OPTIONAL, opted in at GATE 2). Log group /aws/lambda/cron-backfill-2024 exists under the default name (no custom LoggingConfig) and its retention (365 days) covers the 90d window, so it is valid evidence. Last execution log event is older than the window start (2026-02-28).",
+  "logGroup": {"name": "/aws/lambda/cron-backfill-2024", "retentionInDays": 365, "customLoggingConfig": false},
+  "logStreams": [{"lastEventTimestamp": "2026-02-12T04:00:11.000Z"}]
+}

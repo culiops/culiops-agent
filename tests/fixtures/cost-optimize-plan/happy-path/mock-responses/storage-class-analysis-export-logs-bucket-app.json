@@ -1,0 +1,49 @@
+{
+  "_note": "Query 12b (item #2). For a Standard-IA target this access-pattern row is OPTIONAL in lifecycle-s3.md (no restore problem; retrieval fees are priced in the cost-direction row). It was run, so it must pass: it does. Latest daily SCA CSV export (get-object on acme-analytics-exports, key sca/logs-bucket-app/2026-05-27.csv), SUMMARISED by age group per the export's ObjectAge / GetRequestCount columns. Observation window 2026-02-02 to 2026-05-27 (115 days).",
+  "observation_days": 115,
+  "age_groups": [
+    {
+      "ObjectAge": "000-029",
+      "ObjectCount": 28000,
+      "Storage_GiB": 220,
+      "GetRequestCount": 61400
+    },
+    {
+      "ObjectAge": "030-059",
+      "ObjectCount": 14000,
+      "Storage_GiB": 120,
+      "GetRequestCount": 9300
+    },
+    {
+      "ObjectAge": "060-089",
+      "ObjectCount": 9911,
+      "Storage_GiB": 73,
+      "GetRequestCount": 1100
+    },
+    {
+      "ObjectAge": "090-119",
+      "ObjectCount": 82000,
+      "Storage_GiB": 590,
+      "GetRequestCount": 0
+    },
+    {
+      "ObjectAge": "120-149",
+      "ObjectCount": 80000,
+      "Storage_GiB": 578,
+      "GetRequestCount": 0
+    },
+    {
+      "ObjectAge": "150-179",
+      "ObjectCount": 78000,
+      "Storage_GiB": 560,
+      "GetRequestCount": 0
+    },
+    {
+      "ObjectAge": "180+",
+      "ObjectCount": 249089,
+      "Storage_GiB": 2163,
+      "GetRequestCount": 0
+    }
+  ],
+  "_totals": "objects aged >= 90d: 489,089 (3,891 GiB, 0 GET requests over the 115-day observation window). Objects younger than 90d (51,911 objects, 413 GiB) keep being read normally and are not transitioned. Grand total 541,000 objects / 4,304 GiB, matching row 11."
+}

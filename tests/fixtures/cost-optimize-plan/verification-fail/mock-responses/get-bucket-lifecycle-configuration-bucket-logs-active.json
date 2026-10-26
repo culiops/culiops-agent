@@ -1,0 +1,4 @@
+{
+  "_note": "Query 2b. No lifecycle rule (matches the upstream report).",
+  "Error": {"Code": "NoSuchLifecycleConfiguration", "Message": "The lifecycle configuration does not exist"}
+}

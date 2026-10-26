@@ -51,9 +51,9 @@ Compute Optimizer has been active for 29 days and has 1 EC2 recommendation above
 
 1 bucket with >1 TB StandardStorage and no lifecycle policy or Intelligent-Tiering configuration.
 
-| Bucket | StandardStorage | Est. age >90d | Missing policy | Est. savings (add 90d→Glacier) |
+| Bucket | StandardStorage | Est. age >90d | Missing policy | Est. savings (add 90d→Standard-IA) |
 |--------|----------------|---------------|----------------|-------------------------------|
-| logs-bucket-app | 4.2 TB | ~3.8 TB | lifecycle policy | $200/mo |
+| logs-bucket-app | 4.2 TB | ~3.8 TB | lifecycle policy | $100/mo |
 
 ### Orphaned snapshots
 
@@ -64,10 +64,10 @@ Compute Optimizer has been active for 29 days and has 1 EC2 recommendation above
 | # | Action | Resource(s) | Est. savings | Source | Confidence | Evidence |
 |---|--------|-------------|--------------|--------|------------|----------|
 | 1 | Rightsize prod-api from m5.4xlarge to m5.2xlarge | i-0a1b2c3d4e5f67890 | $280/mo | compute-optimizer | medium | CO recommendation; 14d avg CPU 4%, max 13.8% |
-| 2 | Add S3 lifecycle policy (StandardStorage → Glacier after 90 days) | logs-bucket-app | $200/mo | line-item-computation | high | 4.2 TB StandardStorage; ~3.8 TB estimated >90d aged; no existing lifecycle policy or Intelligent-Tiering |
+| 2 | Add S3 lifecycle policy (StandardStorage → Standard-IA after 90 days) | logs-bucket-app | $100/mo | line-item-computation | high | 4.2 TB StandardStorage; ~3.8 TB estimated >90d aged; no existing lifecycle policy or Intelligent-Tiering |
 | 3 | Delete unattached EBS volume | vol-0xxxxxxxxxxxxxxx1 | $48/mo | line-item-computation | high | state=available since 2026-02-14; no attachments; 200 GB gp3 |
 
-**Total estimated savings:** $248/mo (high-confidence) + $280/mo (medium-confidence) = $528/mo combined
+**Total estimated savings:** $148/mo (high-confidence) + $280/mo (medium-confidence) = $428/mo combined
 
 ## Gaps
 
@@ -77,6 +77,6 @@ Compute Optimizer has been active for 29 days and has 1 EC2 recommendation above
 ## Next steps (informational)
 
 - Rightsize item #1 via `iac-change-execution` (update instance type in IaC).
-- Add lifecycle policy for item #2 via `iac-change-execution` (add `aws_s3_bucket_lifecycle_configuration` resource).
+- Add lifecycle policy for item #2 via `iac-change-execution` (add `aws_s3_bucket_lifecycle_configuration` resource, transition to GLACIER).
 - Delete volume for item #3 via `iac-change-execution` (snapshot first, then destroy).
 - Consider enabling Compute Optimizer for RDS to surface additional rightsizing opportunities.

@@ -1,0 +1,11 @@
+{
+  "_note": "Query 5 (activity source 3c, discovery). list-event-data-stores then get-event-data-store. An existing store 'org-data-events' captures S3 data events (AWS::S3::Object) and was created 2025-09-01, so a StartQuery against it is the only remaining way to observe 90d of GetObject / PutObject for this bucket.",
+  "EventDataStore": {
+    "Name": "org-data-events",
+    "EventDataStoreArn": "arn:aws:cloudtrail:ap-southeast-1:123456789012:eventdatastore/11111111-2222-3333-4444-555555555555",
+    "Status": "ENABLED",
+    "CreatedTimestamp": "2025-09-01T00:00:00Z",
+    "RetentionPeriod": 365,
+    "AdvancedEventSelectors": [{"Name": "S3 data events", "FieldSelectors": [{"Field": "eventCategory", "Equals": ["Data"]}, {"Field": "resources.type", "Equals": ["AWS::S3::Object"]}]}]
+  }
+}

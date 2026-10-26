@@ -1,0 +1,4 @@
+{
+  "_note": "Query 0b-2 (ownership probe). No CloudFormation / controller tags. No IaC repo supplied, so owner = unknown.",
+  "TagSet": [{"Key": "Environment", "Value": "staging"}, {"Key": "Service", "Value": "log-archive"}]
+}

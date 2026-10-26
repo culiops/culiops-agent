@@ -1,0 +1,5 @@
+{
+  "_note": "Query 10 (item #2), burst view. 15d @ Period=60 (1-minute data is retained only 15 days), one get-metric-data call. Peak consumed CU/s = max(Sum / 60). SUMMARIZED. Used here for workload SHAPE (steady vs spiky); there is no proposed capacity to compare against because the proposed change is a billing-mode switch.",
+  "table": {"read_peak_CU_per_s": 171, "write_peak_CU_per_s": 80, "read_peak_over_avg": 1.24, "write_peak_over_avg": 1.18},
+  "gsi_customer-id-index": {"read_peak_CU_per_s": 44, "write_peak_CU_per_s": 22}
+}

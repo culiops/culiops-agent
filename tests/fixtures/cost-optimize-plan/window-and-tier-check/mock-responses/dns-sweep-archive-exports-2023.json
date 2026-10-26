@@ -1,0 +1,6 @@
+{
+  "_note": "Query 11 (DNS reference sweep). 1 hosted zone, 38 records, no match for the bucket's S3 / website endpoints.",
+  "hosted_zones": 1,
+  "records_scanned": 38,
+  "matches": []
+}

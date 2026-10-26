@@ -1,0 +1,6 @@
+{
+  "_note": "Query 9 (DNS reference sweep). 1 hosted zone (acme.example, public), all 38 records listed with pagination and matched client-side, case-insensitive, for 'bucket-logs-active.s3', 'bucket-logs-active.s3-website' and a record named like the bucket. No match.",
+  "hosted_zones": 1,
+  "records_scanned": 38,
+  "matches": []
+}

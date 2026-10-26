@@ -1,4 +1,5 @@
 {
+  "_note": "Query 0b-3 (ownership probe) and the playbook's Query 1, one call. State=available, Attachments=[]. No kubernetes.io / ebs.csi.aws.com / aws:* tags; IaC grep finds no match, so Owner = unmanaged (no IaC resource to remove; no 're-apply old IaC' rollback).",
   "Volumes": [
     {
       "VolumeId": "vol-0xxxxxxxxxxxxxxx1",

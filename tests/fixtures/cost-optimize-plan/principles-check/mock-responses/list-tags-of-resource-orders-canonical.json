@@ -1,0 +1,4 @@
+{
+  "_note": "Query 0b-2 (ownership probe, item #2): dynamodb list-tags-of-resource. No aws:cloudformation:stack-name tag; IaC match orders.tf:8 → owner terraform. No lifecycle ignore_changes on capacity (so a capacity change would be applied, though no capacity change is proposed here).",
+  "Tags": [{"Key": "ManagedBy", "Value": "terraform"}, {"Key": "Service", "Value": "orders"}]
+}

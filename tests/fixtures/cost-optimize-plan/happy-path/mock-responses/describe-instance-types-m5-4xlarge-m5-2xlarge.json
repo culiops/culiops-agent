@@ -1,0 +1,7 @@
+{
+  "_note": "Query 1 (item #1). Current vs target class. Target RAM (32 GiB) < current RAM (64 GiB), so the memory row of rightsize-ec2.md is REQUIRED.",
+  "InstanceTypes": [
+    {"InstanceType": "m5.4xlarge", "VCpuInfo": {"DefaultVCpus": 16}, "MemoryInfo": {"SizeInMiB": 65536}, "NetworkInfo": {"NetworkPerformance": "Up to 10 Gigabit"}, "ProcessorInfo": {"SupportedArchitectures": ["x86_64"]}, "BurstablePerformanceSupported": false},
+    {"InstanceType": "m5.2xlarge", "VCpuInfo": {"DefaultVCpus": 8}, "MemoryInfo": {"SizeInMiB": 32768}, "NetworkInfo": {"NetworkPerformance": "Up to 10 Gigabit"}, "ProcessorInfo": {"SupportedArchitectures": ["x86_64"]}, "BurstablePerformanceSupported": false}
+  ]
+}

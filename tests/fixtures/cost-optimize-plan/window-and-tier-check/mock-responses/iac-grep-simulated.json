@@ -1,0 +1,16 @@
+{
+  "_note": "SIMULATED. No real IaC tree exists in this fixture; this file stands in for the operator-supplied IaC repo (~/acme-infra). Code refs are illustrative.",
+  "iac_repo": "~/acme-infra",
+  "searches": [
+    {"term": "archive-exports-2023", "hits": [
+      {"file": "s3.tf", "line": 120, "text": "resource \"aws_s3_bucket\" \"archive_exports_2023\" { bucket = \"archive-exports-2023\" ... }"}
+    ]},
+    {"term": "orders-ingest", "hits": [
+      {"file": "kinesis.tf", "line": 3, "text": "resource \"aws_kinesis_stream\" \"orders_ingest\" { name = \"orders-ingest\" shard_count = 2 retention_period = 168 ... }"},
+      {"file": "kinesis.tf", "line": 19, "text": "resource \"aws_kinesis_stream_consumer\" \"fraud_scoring\" { name = \"fraud-scoring-efo\" stream_arn = aws_kinesis_stream.orders_ingest.arn }"},
+      {"file": "lambda.tf", "line": 55, "text": "resource \"aws_lambda_event_source_mapping\" \"orders_projector\" { event_source_arn = aws_kinesis_stream.orders_ingest.arn ... }"}
+    ],
+     "references_outside_own_resource_block": 2,
+     "note": "consumer 'analytics-mirror-efo' has NO IaC resource (registered at runtime by an application)"}
+  ]
+}

@@ -1,0 +1,9 @@
+{
+  "_note": "Query 0b-1 (ownership probe, item #1): lambda list-tags. No aws:cloudformation:stack-name tag. Tag ManagedBy=terraform plus the IaC match at main.tf:1 → owner terraform.",
+  "Tags": {
+    "Service": "orders-legacy",
+    "Owner": "platform-team",
+    "ManagedBy": "terraform",
+    "TerraformModule": "terraform/lambda/cron-backfill-2024"
+  }
+}

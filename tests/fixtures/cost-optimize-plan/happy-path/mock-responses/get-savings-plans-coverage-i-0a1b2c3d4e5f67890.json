@@ -1,0 +1,6 @@
+{
+  "_note": "Query 7a (item #1, Realizable column). ce get-savings-plans-coverage, 30d, filtered to the instance's service/region/family. Coverage 0%: the instance's usage is billed on-demand.",
+  "SavingsPlansCoverages": [
+    {"Attributes": {"INSTANCE_TYPE_FAMILY": "m5", "REGION": "ap-southeast-1"}, "Coverage": {"SpendCoveredBySavingsPlans": "0.0", "OnDemandCost": "560.0", "TotalCost": "560.0", "CoveragePercentage": "0.0"}}
+  ]
+}

@@ -1,0 +1,6 @@
+{
+  "_note": "Query 14 (item #2, OPTIONAL row, opted in at GATE 2). WriteProvisionedThroughputExceeded Sum, 90d @ 3600s, dimension StreamName from row 12. All zero: producers are not attempting writes either. Summarized.",
+  "MetricDataResults": [
+    {"Id": "wthr", "Label": "WriteProvisionedThroughputExceeded Sum", "StatusCode": "Complete", "_points": 2160, "_summary": {"nonzero_hours": 0, "total": 0}}
+  ]
+}

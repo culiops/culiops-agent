@@ -1,0 +1,4 @@
+{
+  "_note": "Query 3. rbin list-rules --resource-type EBS_SNAPSHOT: no Recycle Bin rule.",
+  "Rules": []
+}

@@ -1,0 +1,14 @@
+{
+  "_note": "Query 9 (item #2) and its GSI repeat. get-metric-data, 30d (2026-04-29 to 2026-05-29) @ Period=3600 (720 points per series). SUMMARIZED (fixture convention). UNIT CONVERSION: ConsumedXCapacityUnits Sum over an hour is TOTAL units; average CU/s = Sum / 3600. Comparison is against PROVISIONED CU/s, never the raw Sum. Provisioned series exist because the table is provisioned.",
+  "table": {
+    "read":  {"hourly_sum_mean": 496800, "hourly_sum_p99": 540000, "avg_CU_per_s": 138, "p99_CU_per_s": 150, "provisioned_CU_per_s": 200, "p99_utilization_pct": 75, "p99_over_avg": 1.09},
+    "write": {"hourly_sum_mean": 244800, "hourly_sum_p99": 262800, "avg_CU_per_s": 68,  "p99_CU_per_s": 73,  "provisioned_CU_per_s": 100, "p99_utilization_pct": 73, "p99_over_avg": 1.07},
+    "ReadThrottleEvents_30d_sum": 0, "WriteThrottleEvents_30d_sum": 0
+  },
+  "gsi_customer-id-index": {
+    "read":  {"avg_CU_per_s": 35, "p99_CU_per_s": 38, "provisioned_CU_per_s": 50, "p99_utilization_pct": 76},
+    "write": {"avg_CU_per_s": 17, "p99_CU_per_s": 19, "provisioned_CU_per_s": 25, "p99_utilization_pct": 76},
+    "ReadThrottleEvents_30d_sum": 0, "WriteThrottleEvents_30d_sum": 0
+  },
+  "_30d_consumed_totals_for_cost_math": {"table_read_units": 357696000, "table_write_units": 176256000, "gsi_read_units": 90720000, "gsi_write_units": 44064000}
+}

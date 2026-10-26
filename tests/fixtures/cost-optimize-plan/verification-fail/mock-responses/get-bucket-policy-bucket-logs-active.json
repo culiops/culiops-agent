@@ -1,3 +1,4 @@
 {
-  "Policy": "{\"Version\":\"2012-10-17\",\"Statement\":[]}"
+  "_note": "Query 6. No bucket policy: no cross-account or log-delivery service principals to raise Blast.",
+  "Error": {"Code": "NoSuchBucketPolicy", "Message": "The bucket policy does not exist"}
 }

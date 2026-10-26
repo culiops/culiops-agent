@@ -1,0 +1,8 @@
+{
+  "_note": "Query 12 (item #2, Principle 4). ce get-cost-and-usage, DynamoDB provisioned-capacity line items for orders-canonical + its GSI, 30d. Effective rate = usage quantity / line-item cost. FICTIONAL account: these are fixture values, not AWS list prices. There is no on-demand usage in this account's bill for this table, so the on-demand rates come from the Pricing API fallback (Query 13).",
+  "line_items": [
+    {"usage_type": "ReadCapacityUnit-Hrs (table + GSI)", "quantity": 180000, "cost_usd": 26.46, "effective_usd_per_unit_hour": 0.000147, "label": "bill-derived"},
+    {"usage_type": "WriteCapacityUnit-Hrs (table + GSI)", "quantity": 90000, "cost_usd": 66.15, "effective_usd_per_unit_hour": 0.000735, "label": "bill-derived"}
+  ],
+  "current_provisioned_cost_usd_per_30d": 92.61
+}

@@ -1,0 +1,6 @@
+{
+  "_note": "Query 9. Weekly inventory report (latest 2026-05-24) summarized for objects aged >= 90d. Replaces a biased list-objects-v2 sample.",
+  "objects_aged_90d_plus": 641000,
+  "size_percentiles_KiB": {"p1": 220, "p5": 480, "p50": 5900, "p95": 24000},
+  "objects_below_128KiB": 0
+}

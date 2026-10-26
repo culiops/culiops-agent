@@ -1,0 +1,6 @@
+{
+  "_note": "Query 0a. Account MUST equal the upstream report Scope account (111122223333). Region ap-southeast-1 passed explicitly on every call.",
+  "UserId": "AROAEXAMPLEEXAMPLE:ops-session",
+  "Account": "111122223333",
+  "Arn": "arn:aws:sts::111122223333:assumed-role/CostPlanReadOnly/ops-session"
+}

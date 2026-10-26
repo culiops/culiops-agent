@@ -1,0 +1,16 @@
+{
+  "_note": "SIMULATED. No real IaC tree exists in this fixture; this file stands in for the operator-supplied IaC repo (~/acme-infra, Terraform + Helm). Code refs are illustrative. The ownership probe greps the resource IDs; neither raw resource is declared in code because a controller / ASG creates them. The extra searches (ASG name, PVC name) only point the reviewer at the real owner.",
+  "iac_repo": "~/acme-infra",
+  "searches": [
+    {"term": "vol-0dddd1", "hits": []},
+    {"term": "i-0eeee1", "hits": []},
+    {"term": "web-asg", "hits": [
+      {"file": "asg.tf", "line": 12, "text": "resource \"aws_autoscaling_group\" \"web\" { name = \"web-asg\" launch_template { id = aws_launch_template.web.id version = \"$Latest\" } ... }"},
+      {"file": "launch_template.tf", "line": 5, "text": "resource \"aws_launch_template\" \"web\" { ... instance_type = \"m5.2xlarge\" (line 9) ... }"}
+    ]},
+    {"term": "data-kafka", "hits": [
+      {"file": "charts/kafka/values.yaml", "line": 21, "text": "replicaCount: 0   # StatefulSet scaled down"},
+      {"file": "charts/kafka/storageclass.yaml", "line": 8, "text": "reclaimPolicy: Retain"}
+    ]}
+  ]
+}

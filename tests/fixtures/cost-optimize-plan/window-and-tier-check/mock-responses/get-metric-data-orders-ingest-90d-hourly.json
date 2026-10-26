@@ -1,0 +1,9 @@
+{
+  "_note": "Query 13 (item #2). ONE get-metric-data call, 90d @ Period=3600 (2,160 points per series; get-metric-statistics would exceed its 1,440 cap). Window 2026-04-10 to 2026-07-09. Series SUMMARIZED (fixture convention). Dimension StreamName comes from the describe in row 12a. Kinesis publishes explicit zero-valued datapoints, so the zeros below are observed values, not an empty series.",
+  "MetricDataResults": [
+    {"Id": "inrec", "Label": "IncomingRecords Sum", "StatusCode": "Complete", "_points": 2160, "_summary": {"nonzero_hours": 0, "total": 0, "last_30d_nonzero_hours": 0, "burst_older_than_30d": "none"}},
+    {"Id": "inbytes", "Label": "IncomingBytes Sum", "StatusCode": "Complete", "_points": 2160, "_summary": {"nonzero_hours": 0, "total": 0}},
+    {"Id": "getrec", "Label": "GetRecords.Records Sum", "StatusCode": "Complete", "_points": 2160, "_summary": {"nonzero_hours": 0, "total": 0}},
+    {"Id": "iterage", "Label": "GetRecords.IteratorAgeMilliseconds Maximum", "StatusCode": "Complete", "_points": 0, "_summary": {"note": "no datapoints: nobody polls the stream (no GetRecords calls)"}}
+  ]
+}

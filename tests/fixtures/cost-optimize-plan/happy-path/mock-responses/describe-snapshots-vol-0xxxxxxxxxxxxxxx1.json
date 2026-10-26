@@ -1,19 +1,19 @@
 {
+  "_note": "Query 15 (item #3). The only snapshot is a manual one taken 2026-02-08, i.e. BEFORE the volume was detached (upstream: unattached since 2026-02-14) and OLDER than the 90d CloudTrail window (starts 2026-02-27). The last detach cannot be dated from CloudTrail, so this snapshot is not provably valid (delete-unattached-ebs.md: valid = completed AND StartTime after the last detach). Reversibility stays red.",
   "Snapshots": [
     {
       "SnapshotId": "snap-0abcdef0123456789",
       "VolumeId": "vol-0xxxxxxxxxxxxxxx1",
       "State": "completed",
       "VolumeSize": 200,
-      "StartTime": "2026-05-13T03:00:00.000Z",
+      "StartTime": "2026-02-08T03:00:00.000Z",
       "Progress": "100%",
       "OwnerId": "123456789012",
-      "Description": "weekly-backup",
+      "Description": "pre-migration manual snapshot",
       "Encrypted": true,
       "StorageTier": "standard",
       "Tags": [
-        {"Key": "Environment", "Value": "prod"},
-        {"Key": "Schedule", "Value": "weekly"}
+        {"Key": "Environment", "Value": "prod"}
       ]
     }
   ]

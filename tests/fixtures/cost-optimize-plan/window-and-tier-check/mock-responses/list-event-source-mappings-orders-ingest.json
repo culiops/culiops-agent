@@ -1,5 +1,5 @@
 {
-  "_note": "1 Lambda event-source mapping wired to orders-ingest — another ATTACHMENT signal (Dimension 2 blast radius), not activity. Reinforces idle-ambiguous: the wiring is live even though throughput is zero.",
+  "_note": "Query 16 (item #2). 1 Enabled Lambda event-source mapping: ATTACHMENT (Dimension 2/4), not activity. In IaC at lambda.tf:55.",
   "EventSourceMappings": [
     {
       "UUID": "a1b2c3d4-0000-0000-0000-000000000001",

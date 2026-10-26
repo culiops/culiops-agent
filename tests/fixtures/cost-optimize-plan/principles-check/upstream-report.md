@@ -24,15 +24,15 @@ Run a waste audit on our AWS prod account (ap-southeast-1). We added v0.9 princi
 |---|-----|-------|-----|--------|-------|
 | 1 | lambda:ListFunctions | ap-southeast-1 | lambda:ListFunctions | ok | 14 functions enumerated |
 | 2 | cloudwatch:GetMetricStatistics (Lambda.Invocations, 30d) | per-function | cloudwatch:GetMetricStatistics | ok | cron-backfill-2024: 0 invocations |
-| 3 | lambda:ListEventSourceMappings | per-function | lambda:ListEventSourceMappings | ok | cron-backfill-2024: 0 mappings — uses EventBridge rules not event source mappings (out of waste-audit scope) |
+| 3 | lambda:ListEventSourceMappings | per-function | lambda:ListEventSourceMappings | ok | cron-backfill-2024: 0 mappings (other invokers not enumerated; out of waste-audit scope) |
 | 4 | dynamodb:DescribeTable | per-table | dynamodb:DescribeTable | ok | orders-canonical: PROVISIONED mode, 200 RCU / 100 WCU |
-| 5 | cloudwatch:GetMetricStatistics (DynamoDB.ConsumedReadCapacityUnits + ConsumedWriteCapacityUnits, 14d hourly) | per-table | cloudwatch:GetMetricStatistics | ok | orders-canonical: steady ~70% utilization, p99/avg ratio ≈ 1.6 |
+| 5 | cloudwatch:GetMetricStatistics (DynamoDB.ConsumedReadCapacityUnits + ConsumedWriteCapacityUnits, 14d hourly) | per-table | cloudwatch:GetMetricStatistics | ok | orders-canonical: steady ~70% utilization, p99/avg ratio ≈ 1.1 |
 
 ## Findings
 
 ### 1. Idle Lambda function with provisioned concurrency
 
-`cron-backfill-2024` has zero invocations in 30d but accrues $35/mo from configured provisioned concurrency (2 units). The function code is committed to IaC (terraform/lambda/cron-backfill-2024). **Activity-unverified flag NOT applicable here** — Invocations metric is the activity dimension and it shows zero. However, the function is referenced by 2 EventBridge rules (`legacy-backfill-daily-cron`, `legacy-backfill-weekly-cleanup`) per a separate `events:ListRules` sweep below — these are **attachment** signals, not activity. Per Principle 1, attachment alone does not promote the function to in-use.
+`cron-backfill-2024` has zero invocations in 30d but accrues $35/mo from configured provisioned concurrency (2 units; line-item purchase option: on-demand). The function code is committed to IaC (terraform/lambda/cron-backfill-2024). **Activity-unverified flag NOT applicable here** — the Invocations metric is the activity dimension and it shows zero. The audit did not enumerate what else is wired to the function (event sources, EventBridge rules, resource-policy invokers): any such wiring is **attachment**, not activity. Per Principle 1, attachment alone does not promote the function to in-use. Note the 30d window is short for a delete (Principle 3).
 
 ### 2. Over-provisioned DynamoDB table — mode-switch savings claim
 
@@ -50,8 +50,8 @@ Run a waste audit on our AWS prod account (ap-southeast-1). We added v0.9 princi
 ## Gaps
 
 - Item #2 savings claim is `direction-unverified` per Principle 2 — downstream `cost-optimize-plan` will recompute before promoting to any actionable tier.
-- EventBridge rule sweep for item #1 not performed in this batch (operator declined drill-down to keep API costs bounded); deferred to cost-optimize-plan's playbook verification step.
+- Item #1: wiring sweep (event-source mappings, aliases, resource-based policy, EventBridge rules) not performed in this batch (operator declined drill-down to keep API costs bounded); deferred to cost-optimize-plan's playbook verification step. Window is 30d; a delete needs 60-180d.
 
 ## Next steps (informational)
 
-- Run `cost-optimize-plan` on this report. Item #1 should land 🟡 Coordinated (EventBridge attachment is blast-radius, not activity). Item #2 should land in 🚫 Do not act if recomputation confirms on-demand would cost MORE at steady ~70% utilization, with a sibling recommendation to instead reduce provisioned capacity by ~30%.
+- Run `cost-optimize-plan` on this report. Item #1: any wiring found is blast-radius / dependency input, not activity. Item #2: recompute the mode-switch delta against observed throughput before it is promoted to any actionable tier; if on-demand costs more at steady utilization it must not be actioned.

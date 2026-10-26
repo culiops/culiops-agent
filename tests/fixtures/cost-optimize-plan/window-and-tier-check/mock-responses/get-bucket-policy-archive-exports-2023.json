@@ -1,0 +1,6 @@
+{
+  "_note": "Query 8. Policy grants read to two same-account service roles (svc-report-exporter, svc-monthly-close); no cross-account or log-delivery principals. Summary of principals only.",
+  "principals_summary": ["arn:aws:iam::123456789012:role/svc-report-exporter", "arn:aws:iam::123456789012:role/svc-monthly-close"],
+  "cross_account": false,
+  "log_delivery_service_principals": false
+}

@@ -1,4 +1,5 @@
 {
+  "_note": "Query 1. One completed snapshot, 2026-05-08, inside the 90d CloudTrail window and AFTER the volume's last detach (which predates the window start 2026-02-27, row 2), so it is provably a valid rollback snapshot (delete-unattached-ebs.md). It is DLM-managed (tag dlm:managed): it can expire per its policy; the policy's retention is not part of the playbook's queries (Gap).",
   "Snapshots": [
     {
       "SnapshotId": "snap-0cccc2def3456789a",
@@ -10,8 +11,14 @@
       "Description": "weekly-backup",
       "Encrypted": true,
       "Tags": [
-        {"Key": "Environment", "Value": "staging"},
-        {"Key": "CreatedBy", "Value": "backup-automation"}
+        {
+          "Key": "Environment",
+          "Value": "staging"
+        },
+        {
+          "Key": "dlm:managed",
+          "Value": "true"
+        }
       ]
     }
   ]

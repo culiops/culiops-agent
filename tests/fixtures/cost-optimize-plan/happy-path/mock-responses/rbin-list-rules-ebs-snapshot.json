@@ -1,0 +1,4 @@
+{
+  "_note": "Query 17 (item #3). rbin list-rules --resource-type EBS_SNAPSHOT. No Recycle Bin retention rule: a deleted snapshot would not be recoverable either.",
+  "Rules": []
+}

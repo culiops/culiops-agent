@@ -1,0 +1,21 @@
+{
+  "_note": "Query 6 (item #1). cloudtrail start-query then get-query-results against the existing store. Billed per GB scanned (itemized at GATE 2: about 38 GB scanned). Result rows are SUMMARIZED; principals aggregated, no per-event rows recorded. Verify the requestParameters accessor syntax against the CloudTrail Lake SQL docs before first use.",
+  "StartQuery": {
+    "QueryStatement": "SELECT eventName, COUNT(*) AS n, MIN(eventTime) AS first_seen, MAX(eventTime) AS last_seen FROM 11111111-2222-3333-4444-555555555555 WHERE eventTime > '2026-04-10 00:00:00' AND eventSource = 's3.amazonaws.com' AND element_at(requestParameters, 'bucketName') = 'archive-exports-2023' GROUP BY eventName",
+    "QueryId": "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"
+  },
+  "GetQueryResults": {
+    "QueryStatus": "FINISHED",
+    "QueryStatistics": {"BytesScanned": 41339658240, "ResultsCount": 1},
+    "QueryResultRows": [
+      {"eventName": "GetObject", "n": 214, "first_seen": "2026-04-11 02:14:00", "last_seen": "2026-07-08 18:22:00"}
+    ]
+  },
+  "_derived_by_day_grouping": {
+    "note": "Same query grouped by week (second call, same scan class). 13 weekly buckets, every one non-zero.",
+    "weekly_GetObject_counts": [16, 17, 15, 18, 16, 17, 16, 15, 17, 16, 18, 16, 17],
+    "total": 214,
+    "principals": {"svc-report-exporter": 171, "svc-monthly-close": 43},
+    "pattern": "about 2-3 reads per day spread across the whole window; month-start reads by svc-monthly-close; NOT a single burst"
+  }
+}

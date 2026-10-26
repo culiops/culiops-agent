@@ -1,0 +1,4 @@
+{
+  "_note": "Query 12b (item #2). 2 open shards, no closed shards still inside the retention window.",
+  "Shards": [{"ShardId": "shardId-000000000000"}, {"ShardId": "shardId-000000000001"}]
+}

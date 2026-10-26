@@ -1,4 +1,4 @@
 {
-  "_note": "Versioning disabled → S3 delete would be irreversible (Dimension 1 = 🔴). Not the deciding dimension here (Evidence 🚫 forces 🚫 first), but recorded for completeness.",
+  "_note": "Query 2a. Versioning Suspended: it was enabled once and is now off. Reversibility input only (a delete would not be recoverable); not the deciding dimension because Evidence 🚫 fires first.",
   "Status": "Suspended"
 }
