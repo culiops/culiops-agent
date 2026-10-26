@@ -16,7 +16,7 @@ Exercises: failure wording that matches the recorded outcome exactly, an explici
 ## MUST
 
 - Result uses ❌ and the word `aborted`, and states that nothing was applied.
-- Result gives the reason from the record (pre-flight RED, replace of `orders-db`) and what happens next as a TODO or as operator-supplied.
+- Result gives the reason from the record in plain words: the pre-flight check failed or blocked the change because the plan replaces `orders-db` (the verdict word `RED` is not required verbatim). What happens next is a TODO or operator-supplied.
 - Ticket-close is produced (allowed after an abort) and lists the outcome as `aborted` with no applied time.
 
 ## MUST-NOT

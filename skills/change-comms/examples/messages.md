@@ -115,7 +115,7 @@ Rollback: not needed. Revert PR + apply if required.
 ```
 
 Rules:
-- Lines are exactly `What`, `PR`, `Applied`, `Verification`, `Rollback`, in that order, under a one-line title. Add `Outcome:` (after the title) when the outcome is not success. An aborted ticket-close also adds one `Reason:` line after `Outcome:`, taken from the record in plain words (same rule as the aborted result), so a Jira reader can tell why.
+- Lines are exactly `What`, `PR`, `Applied`, `Verification`, `Rollback`, in that order, under a one-line title. Add `Outcome:` (after the title) when the outcome is not success. An aborted ticket-close also adds one `Reason:` line after `Outcome:`, in plain words and with the same sources as the aborted result (record, else operator, else `<TODO: reason>`), so a Jira reader can tell why.
 - `PR` is the real URL, parsed from the `Execution:` line or given by the operator. Otherwise `PR: <TODO: PR link>`. Omit the `PR` line when no PR exists (direct apply, abort before a PR was created).
 - On a direct apply, the revert instruction after `Rollback: not needed.` is summarised from the Change Plan rollback path (no PR to revert, no CLI command).
 - `Applied` and `Verification` come from the record only on the direct-apply path; on the PR path they come from the operator. A time given with no date is written `Applied: <TODO: apply date> 14:12 ICT`; never borrow the window date.
@@ -146,7 +146,7 @@ The shapes above show plain text. In a chat draft, wrap the title line in `*...*
 
 ## Multi-phase
 
-- **Heads-up:** one message for the whole change. `What` always names every phase on one line, for example `What: 3 phases: snapshot → upgrade → cleanup`, and the window covers all of them. If the operator's window covers only some phases, still name every phase, then the ones this window covers: `What: 3 phases: snapshot → upgrade → cleanup; this window: upgrade`.
+- **Heads-up:** one message for the whole change. `What` names the change first, then every phase, on one line, for example `What: orders-cache Redis 6.2 → 7.1, 3 phases: snapshot → upgrade → cleanup`, and the window covers all of them. If the operator's window covers only some phases, still name the change and every phase, then the ones this window covers: `What: orders-cache Redis 6.2 → 7.1, 3 phases: snapshot → upgrade → cleanup; this window: upgrade`.
 - **Result:** one message per phase, saying `phase N of M`. The PR link is that phase's PR. A partial or aborted outcome says which phase stopped and the current state.
 - **Ticket-close:** only after the last phase is applied, or after an abort. It lists every phase's PR URL and its outcome, one `Label: value` line each, so every phase gets both a `PR (phase N of M)` line and an `Outcome (phase N of M)` line:
 

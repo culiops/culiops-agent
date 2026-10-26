@@ -7,5 +7,5 @@ Message types requested: heads-up. Platform: Google Chat (default).
 3. `tomorrow 11:00, 10 min ICT` (window with timezone)
 4. `none expected, tasks are added alongside the existing ones` (impact)
 5. `Google Chat` (platform)
-6. `I don't have a rollback to give, leave it open.` (answer when the skill asks for rollback; the operator declines)
+6. `I don't have a rollback to give, leave it open.` (answer when asked for the rollback)
 7. `Accept the heads-up.`
