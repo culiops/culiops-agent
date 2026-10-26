@@ -134,7 +134,7 @@ Cross-reference with service-discovery catalog if available (`.culiops/service-d
 - Check whether changed resources are marked as critical-path
 - If catalog shows 3+ downstream consumers → **Red**
 - If catalog shows 1–2 downstream consumers → **Yellow**
-- If no catalog exists → score as unknown (⚪), suggest running service-discovery
+- If no catalog exists → score as unknown (⚪), suggest running service-discovery. Exception: every changed resource is on the not-app-facing list (see `### Application compatibility`) and the plan changes no output / export → **Green**, citing the plan. Nothing can consume an alarm or a dashboard
 
 Check for backward-incompatible changes:
 - Renamed or removed outputs/exports → breaks consumers at their next apply
@@ -160,6 +160,7 @@ Classify alerting maturity:
 Check whether the change itself modifies monitoring:
 - Deleting or disabling alarms/monitors → **Red** (reducing observability)
 - Adding new alarms/monitors → lowers risk (improving observability)
+- **The change only adds or edits not-app-facing monitoring** (alarms, dashboards, metric filters) and changes nothing app-facing → **Green**. This category asks whether a break caused by *this change* would be detected, and such a change gives the app nothing to break. The maturity ladder above scores the monitoring around app-facing changes, not the alarm being added. The mitigation is to confirm after apply that the new alarm leaves `INSUFFICIENT_DATA`
 
 ### Cost impact
 
@@ -170,6 +171,7 @@ Detect cost-relevant changes in the plan:
 - Cross-region replication additions: flag data transfer costs
 - NAT Gateway additions: flag hourly + per-GB data processing charges
 - Usage-based services (API Gateway, Lambda, SQS, SNS): flag if traffic volume is unknown
+- Additions that are only alarms, dashboards or metric filters are cost-**Green** (fixed, small per-unit prices). Log groups are not in this exception: ingestion and storage scale with volume
 - Decreases (scale-down, rightsizing, deletion) are cost-**Green**. Their capacity risk is scored under blast radius and resource health — don't count it twice
 
 Look prices up for the target region (AWS Price List API, the pricing calculator) and record the lookup date. Never use a remembered price — prices change and differ by region.
@@ -192,6 +194,41 @@ Detect security-relevant changes:
 - **Audit logging:** CloudTrail, EKS control-plane logging. Flag disabling as **Red**
 - **Secret references:** new or changed Secrets Manager / SSM ARNs, Kubernetes Secret references. Flag hardcoded secrets as **Red** — and name the location, never repeat the value
 
+A narrowing (removed action, tighter resource or condition) is Green here. Whether the app still needs what was removed is category 11, below.
+
+### Application compatibility
+
+Category 11 is **fail-closed** (`SKILL.md` → Scoring Rules). A changed attribute is **not app-facing** only if it is on this list:
+
+- Tags / labels / annotations that nothing reads at runtime, descriptions, comments
+- Dashboards, metric filters, log groups and log retention
+- Alarms whose actions only notify: no actions, or SNS topics whose subscriptions are all `email`, `email-json` or `sms`. Check this with the subscription-protocol query in `examples/aws.md`, reading protocols only and never endpoints. An alarm action that scales (Auto Scaling or Application Auto Scaling policy), stops, reboots, terminates or recovers EC2, starts SSM automation, or reaches a `lambda`, `sqs`, `firehose`, `http(s)` or `application` subscriber changes the system, so that alarm is **app-facing**. If the subscriber protocols were not checked, treat the alarm as app-facing (unsure means triggered)
+- Backup, snapshot and recovery-point schedules (score them under category 2)
+- Scaling counts alone: desired count, replicas, min / max size (score them under category 1)
+- IAM for humans and CI/CD roles (not a role the workload runs as)
+- Cost-only purchase options: reservations, savings plans, spot / on-demand split
+
+**Everything else is app-facing.** The table below shows common app-facing changes and what to search for. It is a set of examples, not the trigger list. A resource type missing from it still triggers category 11.
+
+| Attribute | Terraform | Kubernetes (Helm / Kustomize / manifests) | ecspresso / lambroll | What to search in the app |
+|---|---|---|---|---|
+| Workload permissions removed or narrowed | task / function / instance-profile role policy, IRSA / Pod Identity role policy, resource policy (bucket, queue, key) | the ServiceAccount's role annotation, RBAC for in-cluster API calls | task role / function role ARN | the SDK call for each removed action (`sqs:SendMessage` → `SendMessage(`), the resource name / ARN |
+| Env var / config key removed, renamed, or value format changed | `environment` / `secrets` in task definitions, Lambda `environment`, SSM parameter names | `env`, `envFrom`, ConfigMap / Secret **keys**, mounted file paths | `environment`, `secrets`, Lambda `Environment` names | the old and new names (`Getenv`, `process.env`, `os.environ`, config struct tags); how the value is parsed |
+| Endpoint identity: hostname, port, path, protocol | DB / cache endpoint after replace, listener port, target-group health-check path, DNS record, queue / topic / bucket / table rename or replace | `Service` port / port name, `Ingress` path, container port, probe path | `portMappings`, `healthCheck` command / path | the host / port / path the app dials or serves; the health-check handler |
+| Engine or runtime version | `engine_version` (major), cache `engine_version`, Lambda `runtime`, OpenSearch / Kafka version | image of a sidecar or dependency chart (DB, broker) | Lambda `runtime` | driver / client library version in the lockfile (`go.mod`, `package-lock.json`, `requirements*.txt`, `pom.xml`) |
+| Limits the app must fit inside | SQS visibility timeout, ALB / NLB idle timeout, DB `max_connections` (parameter group), Lambda timeout / memory / reserved concurrency, API Gateway timeout | CPU / memory limits, `terminationGracePeriodSeconds`, HPA min / max | task CPU / memory, Lambda timeout / memory | processing time, connection pool size, request timeout, shutdown handling |
+| CDN, edge and request routing | CloudFront cache behaviors (`path_pattern`, `allowed_methods`), cache policy (cache key: headers / cookies / query strings; TTLs), origin request policy, CloudFront Functions / Lambda@Edge, ALB listener rules, API Gateway routes / authorizers / stage variables, WAF rules | `Ingress` paths, rewrites and annotations, Gateway API routes, service-mesh routing | — | the routes under the pattern; whether each response depends on the user (cookies, `Authorization`, session) or on headers / query strings left out of the cache key; whether the app sets `Cache-Control` / `Vary`; HTTP methods the routes need. A cookie-dependent response under a cache key without that cookie is served to other users: also score it under category 9 |
+| Encryption key on data the app reads | KMS key change on bucket / table / queue / secret | — | — | whether the app's role can use the new key (`kms:Decrypt`) — usually an IAM check, not code |
+
+**Scoring** (after Step 3b):
+- A use of the old contract is found → **Red**. Name the call site (`app:` citation) and the failure mode. Logged-and-ignored or default-fallback failures are silent: say that health checks, error rate and alarms will not show the break.
+- The app degrades but keeps working (e.g. a timeout falls back to a shorter default) → **Yellow**, with the effect.
+- All uses found and compatible (e.g. the app already reads both the old and the new name) → **Green**, cite them.
+- No use found → **Yellow**, unless `live` evidence also shows the old contract unused (e.g. IAM last-accessed for the service older than the activity window, zero sends / requests over ≥ 30 days) → then **Green**. A text search can miss dynamic names and other consumers.
+- No source available → **⚪**.
+
+**Mitigation pattern:** expand–contract. Ship the app change that works with both the old and the new contract, deploy it, verify (live), then make the infra change. Or keep the old contract. Removing a permission the app uses only after the app stops calling it.
+
 ## L2 — Context Questions
 
 Beyond the standard 7 questions (defined in SKILL.md), ask these IaC-specific questions:
@@ -213,6 +250,7 @@ When the operator opts into L3, run these from `examples/aws.md` / `examples/kub
 | Timing context | Current request rate vs. baseline — is this peak traffic? | Request rate > 1.5x baseline → peak traffic, elevate timing score |
 | Change velocity | Recent deployments in the last 24h; last successful apply | Multiple recent deploys → elevate change velocity score |
 | Cost impact | Current spend rate on resources being changed | Use to validate or adjust L1 cost estimate |
+| Application compatibility | For a removed permission or resource: role last-accessed, `simulate-principal-policy`, send / publish activity on the resource (`examples/aws.md` → Application Compatibility Checks) | Used recently → supports a Red found in code; unused over ≥ 30 days **and** no use in the source → Green. Live data alone never shows how the app fails |
 
 ## Rationalization Prevention
 
@@ -225,7 +263,7 @@ When the operator opts into L3, run these from `examples/aws.md` / `examples/kub
 | "The plan says 'No changes', nothing to assess" | STOP — if the operator expected changes, the plan probably ran against the wrong workspace / var-file / context. Re-check the target. |
 | "This is a rollback, so it's inherently safe" | STOP — rollbacks can fail, can conflict with data changes that happened after the original deploy, or can roll back to a state that no longer works with current dependencies. Score normally. |
 | "The same change worked in staging" | STOP — staging doesn't have production traffic, production data, or production dependencies. Production risk is independent. |
-| "This is just a config change, not infrastructure" | STOP — config changes cause more outages than infrastructure changes. Evaluate the same 10 categories. |
+| "This is just a config change, not infrastructure" | STOP — config changes cause more outages than infrastructure changes. Evaluate the same 11 categories. |
 | "Scaling down saves money, so cost is Yellow" | STOP — a cost decrease is cost-Green. The risk is lost capacity: score it under blast radius and resource health. |
 | "The resource shows 0 errors, so it's healthy and needed" | STOP — 0 errors ≠ used or necessary. A resource can run error-free and still be pure waste (an idle poller). Judge resource health on useful activity, not just the absence of failures. |
 | "Releasing this Elastic IP is safe, nothing internal uses it" | STOP — a partner firewall may allowlist the public IP. Release is irreversible. Run the external-allowlist check (≥ 6mo zero egress + operator confirmation) before scoring Green. |

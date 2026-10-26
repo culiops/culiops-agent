@@ -1,0 +1,58 @@
+aws_s3_bucket.invoices: Refreshing state... [id=acme-invoices-prod]
+aws_ecs_task_definition.invoicesvc: Refreshing state... [id=invoicesvc]
+aws_ecs_service.invoicesvc: Refreshing state... [id=arn:aws:ecs:ap-northeast-1:444455556666:service/billing/invoicesvc]
+
+Terraform used the selected providers to generate the following execution
+plan. Resource actions are indicated with the following symbols:
+  ~ update in-place
+-/+ destroy and then create replacement
+
+Terraform will perform the following actions:
+
+  # aws_ecs_service.invoicesvc will be updated in-place
+  ~ resource "aws_ecs_service" "invoicesvc" {
+        id              = "arn:aws:ecs:ap-northeast-1:444455556666:service/billing/invoicesvc"
+        name            = "invoicesvc"
+      ~ task_definition = "arn:aws:ecs:ap-northeast-1:444455556666:task-definition/invoicesvc:41" -> (known after apply)
+        # (14 unchanged attributes hidden)
+    }
+
+  # aws_ecs_task_definition.invoicesvc must be replaced
+-/+ resource "aws_ecs_task_definition" "invoicesvc" {
+      ~ arn                   = "arn:aws:ecs:ap-northeast-1:444455556666:task-definition/invoicesvc:41" -> (known after apply)
+      ~ container_definitions = jsonencode(
+          ~ [
+              ~ {
+                  ~ environment = [
+                      - {
+                          - name  = "INVOICE_BUCKET"
+                          - value = "acme-invoices-prod"
+                        },
+                      + {
+                          + name  = "INVOICE_BUCKET_NAME"
+                          + value = "acme-invoices-prod"
+                        },
+                      - {
+                          - name  = "PDF_TIMEOUT"
+                          - value = "20s"
+                        },
+                      + {
+                          + name  = "PDF_RENDER_TIMEOUT_SECONDS"
+                          + value = "20"
+                        },
+                        {
+                            name  = "HTTP_PORT"
+                            value = "9090"
+                        },
+                    ]
+                    name        = "invoicesvc"
+                    # (8 unchanged attributes hidden)
+                },
+            ] # forces replacement
+        )
+      ~ id                    = "invoicesvc" -> (known after apply)
+      ~ revision              = 41 -> (known after apply)
+        # (8 unchanged attributes hidden)
+    }
+
+Plan: 1 to add, 1 to change, 1 to destroy.

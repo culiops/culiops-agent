@@ -25,15 +25,17 @@ Multiple Reds:
 - Operator familiarity: Yellow (first time migrating RDS to Aurora)
 - Observability readiness: Yellow (RDS alarms exist but no Aurora-specific alarms in the plan)
 - Cost impact: Yellow (Aurora pricing differs from RDS — moderate cost change)
-- Security posture: Yellow (new IAM role, security group modification — within VPC)
+- Security posture: **Red + HARD BLOCK** (encryption removal: the destroyed instance has `storage_encrypted = true` at `plan:13`, the new `aws_rds_cluster` sets neither `storage_encrypted` nor `kms_key_id` (`main.tf:4-19`), and the AWS provider defaults `storage_encrypted` to `false` for `provisioned` clusters. Also a new IAM role and an SG change within the VPC)
 - Resource health: Green (live evidence — L3 approved: instance `available`, CPU / connections normal, no alarm in `ALARM`)
+- Application compatibility: ⚪ (the DB endpoint changes from the RDS instance to the Aurora cluster endpoint, an app-facing attribute; no app source for `userapi` / `authapi` / `billingapi` in the fixture)
 
-Overall: **RED — HARD BLOCK** (irreversible data change)
+Overall: **RED — HARD BLOCK** (irreversible data change on category 2; encryption removal on category 9)
 
 ## What this fixture exercises
 
 - **Multiple Red scores:** verifies the skill handles compounding Reds correctly
 - **Hard block on reversibility:** `destroy` of stateful `aws_db_instance` is irreversible data loss
+- **Hard block on security posture:** the replacement drops encryption at rest because the default is unencrypted, not because anything says so. Corrected 2026-10-26: this fixture scored it Yellow until a verification pass found it
 - **Dependency impact from shared infrastructure:** 3 downstream services affected
 - **Actionable mitigations:** skill must recommend (as operator actions — pre-flight never runs them): take RDS snapshot, notify downstream teams, consider parallel-run strategy (expand-and-contract)
 - **Evidence rule:** `UNVERIFIED` final-snapshot behaviour cannot clear the destroy; live `describe-db-instances` / `describe-db-snapshots` give the recovery evidence

@@ -4,6 +4,43 @@ All notable changes to the `culiops` plugin will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.13.0] — 2026-10-26
+
+### Added
+
+- **pre-flight: category 11, Application compatibility.** A change can be valid on the infrastructure side and still break the application. The usual cases are removing an IAM action the app still calls, renaming an env var or config key the app still reads, and changing an endpoint, port, engine version or limit the app depends on.
+  - **Trigger.** When the plan changes such an attribute, pre-flight asks where the application source is (Q8). It then reads the source at the deployed commit SHA, looks for uses of the old contract, and records how each use fails: crash, request error, retry, logged-and-ignored or default fallback.
+  - **Silent failures.** When a failure is swallowed, or the health check doesn't exercise the broken path, the report says that health, error-rate and alarm signals will stay green after apply. A Green on resource health never clears category 11.
+  - **Trigger is fail-closed.** Category 11 triggers on any change to a resource the app runs on, is reached through, or calls. Only attributes on a short not-app-facing list skip it: tags, dashboards, logs, backup schedules, scaling counts, IAM for humans and CI, purchase options, and alarms whose actions only notify. An alarm counts as notify-only when every SNS subscription protocol, checked live (protocols only, never endpoints), is `email`, `email-json` or `sms`. An alarm that scales, stops or reboots EC2, runs SSM automation, or reaches a Lambda, SQS or HTTP subscriber changes the system, so it is app-facing. If the protocols weren't checked, it is treated as app-facing. The table of common app-facing changes includes CDN, edge and routing (CloudFront behaviors and policies, ALB rules, API Gateway, WAF, Ingress). It is a set of examples, not the trigger list.
+  - **Scoring.** Red is a soft block. A cookie-dependent response cached under a cookie-less key is also scored on security posture.
+  - **Evidence.** New tag `app:<repo>@<sha>:<path:line>`.
+- **Two equal ways to read the source** (`examples/app-source.md`):
+  - A **local checkout**, through `git rev-parse`, `git grep <ref>` and `git show`. Nothing is fetched or checked out in the operator's tree.
+  - **GitHub through `gh`**: commit → tree → raw contents at the pinned SHA. Choosing `gh` approves only those `GET` reads. The least-privilege token is Contents: read + Metadata: read.
+  - Code search is never used as evidence of "no use", because it covers the default branch only. Nothing is ever cloned into the target repo, and app code is never run.
+- **Live checks for category 11** (`examples/aws.md`): role last-accessed, `simulate-principal-policy` / `simulate-custom-policy`, and send / publish activity on the resource. New CloudFront checks cover behaviors, the cache-policy key and TTLs, the origin request policy, and metrics.
+- **pre-flight Step 5b, verify before presenting.** Before the operator sees the report:
+  - The cited source of each Red, each Green on categories 2 / 9 / 10 / 11, each hard-block condition and each mitigation premise is re-opened and checked.
+  - Code, plan and live evidence win over catalog notes, comments and operator statements.
+  - The verdict arithmetic is written out.
+  - When the verdict is GREEN or a hard block fired, a separate reviewer in a fresh context scores the evidence without seeing the first scores. Disagreements are settled or shown to the operator.
+  - Every record has a `## Verification` section with a "Not verified" list.
+- **Fixtures** `tests/fixtures/pre-flight/app-impact-cdn-cache` (a cache behavior over per-user routes, plus a stale catalog note), `app-impact-iam-narrowing` (a removed SQS permission the app still uses, failing silently; local mode) and `app-impact-env-rename` (renamed env vars behind a health check that stays 200; `gh` mode, L3 declined). Both have baseline and scored dry-run notes.
+
+### Changed
+
+- **pre-flight:**
+  - The scorecard has 11 categories.
+  - Security posture scores a permission narrowing Green and leaves the breakage question to category 11.
+  - Dependency impact, cost impact and observability readiness are Green from the plan when the change only adds or edits things nothing can consume: alarms, dashboards, metric filters, with no output or export changed. Before this, an addition-only change without a service-discovery catalog could never be GREEN, and the alarm being added was itself scored as "static threshold → Yellow".
+  - The three existing fixtures gain a category 11 row.
+
+### Fixed
+
+- **`high-risk-rds-migration` fixture.** Security posture was scored Yellow. The destroyed instance is encrypted (`plan:13`), and the new Aurora cluster sets no `storage_encrypted`, which defaults to `false` for provisioned clusters. That is encryption removal, a hard block. The verification pass found it.
+- **`low-risk-cloudwatch-alarm` fixture.** It expected GREEN, which the rules could not produce without a catalog. With the change above it is GREEN again, and fresh eyes run on it.
+  - The record format's assessor list no longer names a `cli-command` assessor that never existed.
+
 ## [0.12.0] — 2026-10-26
 
 ### Added

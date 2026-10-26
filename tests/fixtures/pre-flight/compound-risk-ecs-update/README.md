@@ -26,8 +26,9 @@ Multiple Yellows → escalation:
 - Cost impact: Green (cost decreases; the capacity risk is scored under blast radius, not here)
 - Security posture: Green (no IAM/network/encryption changes)
 - Resource health: Green (live evidence — L3 approved: 4/4 tasks running, no alarm in `ALARM` on the service)
+- Application compatibility: ⚪ (the container `healthCheck` path changes to `/healthz`, an app-facing attribute; no app source in the fixture, so the skill can't confirm the new image serves it)
 
-3 Yellows → **multi-Yellow escalation → RED — SOFT BLOCK**
+3 Yellows + 1 ⚪ → **multi-Yellow escalation → RED — SOFT BLOCK**
 
 ## What this fixture exercises
 

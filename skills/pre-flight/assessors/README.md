@@ -27,6 +27,7 @@ Per-category extraction rules specific to this action type:
 ### Observability readiness
 ### Cost impact
 ### Security posture
+### Application compatibility
 
 ## L2 — Context Questions
 Additional questions beyond the standard 7 that are specific to this action type.

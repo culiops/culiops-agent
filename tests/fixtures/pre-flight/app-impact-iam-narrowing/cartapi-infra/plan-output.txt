@@ -1,0 +1,45 @@
+aws_iam_role_policy.cartapi_task_publish: Refreshing state... [id=cartapi-task:cartapi-publish]
+aws_ecs_task_definition.cartapi: Refreshing state... [id=cartapi]
+aws_sqs_queue.ledger: Refreshing state... [id=https://sqs.eu-west-1.amazonaws.com/111122223333/cartapi-ledger.fifo]
+
+Terraform used the selected providers to generate the following execution
+plan. Resource actions are indicated with the following symbols:
+  ~ update in-place
+
+Terraform will perform the following actions:
+
+  # aws_iam_role_policy.cartapi_task_publish will be updated in-place
+  ~ resource "aws_iam_role_policy" "cartapi_task_publish" {
+        id     = "cartapi-task:cartapi-publish"
+        name   = "cartapi-publish"
+      ~ policy = jsonencode(
+          ~ {
+              ~ Statement = [
+                    {
+                        Action   = [
+                            "sns:Publish",
+                        ]
+                        Effect   = "Allow"
+                        Resource = [
+                            "arn:aws:sns:eu-west-1:111122223333:cart-events",
+                        ]
+                        Sid      = "AllowSNSPublishCartEvents"
+                    },
+                  - {
+                      - Action   = [
+                          - "sqs:SendMessage",
+                        ] -> null
+                      - Effect   = "Allow" -> null
+                      - Resource = [
+                          - "arn:aws:sqs:eu-west-1:111122223333:cartapi-ledger.fifo",
+                        ] -> null
+                      - Sid      = "AllowSQSSendLedger" -> null
+                    },
+                ]
+                # (1 unchanged attribute hidden)
+            }
+        )
+        # (1 unchanged attribute hidden)
+    }
+
+Plan: 0 to add, 1 to change, 0 to destroy.
