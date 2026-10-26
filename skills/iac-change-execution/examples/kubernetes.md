@@ -1,6 +1,6 @@
 # Examples: Kubernetes CLI Templates for `iac-change-execution`
 
-Reference command templates for the `iac-change-execution` skill when the target workloads are managed by Kubernetes tooling — Helm, Kustomize, or raw manifests. These templates apply regardless of where the cluster runs: EKS, GKE, AKS, or on-premises. Use alongside the matching cloud file (`aws.md`, `gcp.md`, `azure.md`) for cluster-level cloud operations.
+Reference command templates for the `iac-change-execution` skill when the target workloads are managed by Kubernetes tooling — Helm, Kustomize, or raw manifests. These templates apply to EKS and to self-managed / on-premises clusters. For EKS, use alongside `aws.md` for cluster-level cloud operations.
 
 Replace placeholders (`{namespace}`, `{release}`, `{chart}`, `{image-tag}`, `{values-file}`, etc.) with the values resolved in Step 1 research or detected from the plan output.
 
@@ -14,9 +14,7 @@ Replace placeholders (`{namespace}`, `{release}`, `{chart}`, `{image-tag}`, `{va
 **Authentication (kubeconfig):** The operator must have a valid kubeconfig context pointing to the target cluster before running any command.
 
 - EKS: `aws eks update-kubeconfig --name {cluster} --region {region}`
-- GKE: `gcloud container clusters get-credentials {cluster} --region {region} --project {project}`
-- AKS: `az aks get-credentials --name {cluster} --resource-group {rg}`
-- On-premises / other: obtain kubeconfig from the cluster administrator.
+- On-premises / self-managed: obtain kubeconfig from the cluster administrator.
 
 Confirm active context: `kubectl config current-context`.
 
