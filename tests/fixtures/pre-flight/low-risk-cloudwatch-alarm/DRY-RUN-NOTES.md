@@ -31,6 +31,23 @@ Simulated run of the 7-step skill against this fixture. Recorded on 2026-04-23; 
 
 No findings — the skill produced a clean all-Green assessment.
 
+### Variant: alarm with a scaling action
+
+This is the same alarm with an Application Auto Scaling policy ARN added to `alarm_actions`. The alarm now changes the system, so it is app-facing:
+
+- Category 11 triggers and asks Q8. With no source available, it is ⚪.
+- The monitoring-only exceptions for categories 4, 7 and 8 no longer apply. Category 4 becomes ⚪. Categories 7 and 8 become Yellow, because cost is now driven by usage.
+- Four Yellow / ⚪ scores escalate the verdict to **RED — soft block**.
+
+A simulated run also flagged two real problems:
+
+- The OK action has no scale-in, so capacity can only grow.
+- The policy ARN is hard-coded to prod while the alarm name uses `var.env`.
+
+### Variant: SNS protocols not checked
+
+If the L3 subscription-protocol query isn't run, nothing shows the alarm is notify-only. It is treated as app-facing (unsure means triggered), so the verdict can't be GREEN.
+
 ### Variant: L3 declined
 
 Same inputs, operator answers "no" to L3. Category 10 → ⚪ (the operator saying "it's fine" is `operator-stated`, not evidence). 1 ⚪ caps the verdict → **YELLOW — proceed with caution**, with the mitigation "approve the L3 health checks to clear ⚪".
