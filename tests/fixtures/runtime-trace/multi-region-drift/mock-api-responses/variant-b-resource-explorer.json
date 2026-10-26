@@ -1,0 +1,22 @@
+{
+  "_note": "VARIANT B (local index only). The us-west-2 Lambda payments-archive exists in the account but is NOT returned: the only index is LOCAL in us-east-1, so Search covers us-east-1 only.",
+  "probe-004 ListIndexes": {
+    "Indexes": [
+      {"Region": "us-east-1", "Type": "LOCAL", "Arn": "arn:aws:resource-explorer-2:us-east-1:123456789012:index/33333333-aaaa-bbbb-cccc-000000000001"}
+    ]
+  },
+  "probe-005 GetIndex(us-east-1)": {"Type": "LOCAL", "State": "ACTIVE"},
+  "probe-006 ListViews(us-east-1)": {"Views": ["arn:aws:resource-explorer-2:us-east-1:123456789012:view/default/44444444-aaaa-bbbb-cccc-000000000001"]},
+  "probe-007 GetView": {"View": {"IncludedProperties": [{"Name": "tags"}]}},
+  "re-001 Search": {
+    "_request": {"region": "us-east-1", "QueryString": "tag:service=payments"},
+    "Count": {"TotalResources": 5, "Complete": true},
+    "Resources": [
+      {"Arn": "arn:aws:lambda:us-east-1:123456789012:function:payments-charge", "Region": "us-east-1", "ResourceType": "lambda:function"},
+      {"Arn": "arn:aws:lambda:us-east-1:123456789012:function:payments-cleanup", "Region": "us-east-1", "ResourceType": "lambda:function"},
+      {"Arn": "arn:aws:lambda:us-east-1:123456789012:function:payments-refund", "Region": "us-east-1", "ResourceType": "lambda:function"},
+      {"Arn": "arn:aws:sqs:us-east-1:123456789012:payments-retry-queue", "Region": "us-east-1", "ResourceType": "sqs:queue"},
+      {"Arn": "arn:aws:dynamodb:us-east-1:123456789012:table/payments-idempotency", "Region": "us-east-1", "ResourceType": "dynamodb:table"}
+    ]
+  }
+}

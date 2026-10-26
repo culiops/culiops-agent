@@ -1,0 +1,4 @@
+{
+  "_note": "probe-008 (GATE 1a). An empty trailList means NO TRAIL, not 'CloudTrail unavailable'. It only informs the '>90 days / data events' Gap.",
+  "trailList": []
+}

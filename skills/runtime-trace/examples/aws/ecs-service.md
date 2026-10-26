@@ -14,7 +14,9 @@ For each ECS service in scope, the skill fetches these metrics.
 
 **Verdict heuristic:**
 
-- `idle` — `RunningTaskCount` average is zero (or metric missing → log gap).
-- `healthy` — peak CPU < 80% and peak Memory < 80%.
-- `saturated` — peak CPU ≥ 80% OR peak Memory ≥ 80%.
-- `unknown` — any required metric returned no datapoints (Container Insights may not be enabled).
+- `no-activity-14d` — `RunningTaskCount` average is 0 throughout the window. If Container Insights is off (`RunningTaskCount` → `metric-not-found`), the verdict comes from `AWS/ECS` CPU alone: CPU datapoints present → tasks were running; none → `unknown` (log gap: "Container Insights not enabled").
+- `heuristic: healthy` — peak CPU < 80% and peak Memory < 80%.
+- `heuristic: saturated` — peak CPU ≥ 80% OR peak Memory ≥ 80%.
+- `unknown` — CPU and memory both `metric-not-found`.
+
+Empty series are never zero: run the `ListMetrics` existence check (SKILL.md, source d) and record `no-data (metric exists)` or `metric-not-found`. Verdicts describe; they never recommend (Constraint 9). Thresholds are heuristics — always show the raw numbers next to the verdict.

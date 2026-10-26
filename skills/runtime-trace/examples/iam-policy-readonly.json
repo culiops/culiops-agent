@@ -2,6 +2,16 @@
   "Version": "2012-10-17",
   "Statement": [
     {
+      "Sid": "IdentityAndAccountReadOnly",
+      "Effect": "Allow",
+      "Action": [
+        "sts:GetCallerIdentity",
+        "iam:ListAccountAliases",
+        "organizations:DescribeOrganization"
+      ],
+      "Resource": "*"
+    },
+    {
       "Sid": "CostExplorerReadOnly",
       "Effect": "Allow",
       "Action": [
@@ -16,7 +26,6 @@
       "Effect": "Allow",
       "Action": [
         "cloudtrail:LookupEvents",
-        "cloudtrail:GetTrailStatus",
         "cloudtrail:DescribeTrails"
       ],
       "Resource": "*"
@@ -31,12 +40,27 @@
       "Resource": "*"
     },
     {
-      "Sid": "ResourceExplorerReadOnly",
+      "Sid": "ResourceInventoryReadOnly",
       "Effect": "Allow",
       "Action": [
         "resource-explorer-2:Search",
+        "resource-explorer-2:GetIndex",
         "resource-explorer-2:ListIndexes",
-        "resource-explorer-2:ListViews"
+        "resource-explorer-2:ListViews",
+        "resource-explorer-2:GetView",
+        "tag:GetResources"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "WiringReadOnly",
+      "Effect": "Allow",
+      "Action": [
+        "lambda:GetPolicy",
+        "lambda:ListEventSourceMappings",
+        "sqs:GetQueueAttributes",
+        "elasticloadbalancing:DescribeTargetGroups",
+        "elasticloadbalancing:DescribeListeners"
       ],
       "Resource": "*"
     }

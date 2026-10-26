@@ -1,0 +1,16 @@
+{
+  "_note": "Call cw-002: existence check issued ONLY because cw-001 returned an empty series for payments-cleanup Invocations (m3). An empty MetricDataResults array is not read as zero: a wrong dimension, Region or namespace also returns []. Free-tier request. Caveat (AWS API reference): ListMetrics omits metrics that have not reported data in the past two weeks, so a HIT means CloudWatch still lists the metric; a MISS is ambiguous (wrong dimension/Region, or no datapoints for > 2 weeks). See DRY-RUN-NOTES.md.",
+  "request": {
+    "api": "cloudwatch:ListMetrics",
+    "region": "us-east-1",
+    "Namespace": "AWS/Lambda",
+    "MetricName": "Invocations",
+    "Dimensions": [{"Name": "FunctionName", "Value": "payments-cleanup"}]
+  },
+  "response": {
+    "Metrics": [
+      {"Namespace": "AWS/Lambda", "MetricName": "Invocations", "Dimensions": [{"Name": "FunctionName", "Value": "payments-cleanup"}]}
+    ]
+  },
+  "interpreted_as": "no-data (metric exists) -> verdict no-activity-14d"
+}

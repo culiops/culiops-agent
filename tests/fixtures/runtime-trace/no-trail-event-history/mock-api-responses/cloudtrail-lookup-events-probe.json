@@ -1,0 +1,12 @@
+{
+  "_note": "probe-009 (GATE 1a): cloudtrail:LookupEvents, MaxResults=1, region us-east-1. Succeeds even though no trail exists, because Event history is on by default and independent of trails. A successful page = CloudTrail capability test passed. The main run (ct-001..ct-005) uses the same responses as basic-lambda-service/mock-api-responses/cloudtrail-events.json.",
+  "request": {"MaxResults": 1},
+  "Events": [
+    {
+      "EventId": "00000000-0000-0000-0000-00000000aaaa",
+      "EventName": "ConsoleLogin",
+      "EventTime": "2026-05-12T15:24:51Z",
+      "EventSource": "signin.amazonaws.com"
+    }
+  ]
+}

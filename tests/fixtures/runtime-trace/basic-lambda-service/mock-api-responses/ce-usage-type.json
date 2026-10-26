@@ -1,19 +1,69 @@
 {
+  "_note": "Call ce-002. Same Filter, window and granularity as ce-001, GROUP BY USAGE_TYPE. Same 3 of 30 daily rows shown (identical days as ce-001; each service's usage types add up to that service's ce-001 daily figure). The full 30 rows sum to `_sum_of_all_30_days`, whose total (23.02) equals ce-001. One page.",
+  "_request": {
+    "TimePeriod": {"Start": "2026-04-11", "End": "2026-05-11"},
+    "Granularity": "DAILY",
+    "Metrics": ["AmortizedCost"],
+    "Filter": {
+      "And": [
+        {"Tags": {"Key": "service", "Values": ["payments"], "MatchOptions": ["EQUALS"]}},
+        {"Dimensions": {"Key": "RECORD_TYPE", "Values": ["Usage", "DiscountedUsage", "SavingsPlanCoveredUsage"]}}
+      ]
+    },
+    "GroupBy": [{"Type": "DIMENSION", "Key": "USAGE_TYPE"}]
+  },
   "GroupDefinitions": [
     {"Type": "DIMENSION", "Key": "USAGE_TYPE"}
   ],
   "ResultsByTime": [
     {
-      "TimePeriod": {"Start": "2026-04-01", "End": "2026-05-01"},
+      "TimePeriod": {"Start": "2026-04-11", "End": "2026-04-12"},
       "Total": {},
       "Groups": [
-        {"Keys": ["USE1-NatGateway-Bytes"], "Metrics": {"UnblendedCost": {"Amount": "24.88", "Unit": "USD"}}},
-        {"Keys": ["USE1-Lambda-GB-Second"], "Metrics": {"UnblendedCost": {"Amount": "12.04", "Unit": "USD"}}},
-        {"Keys": ["USE1-Lambda-Request"], "Metrics": {"UnblendedCost": {"Amount": "6.38", "Unit": "USD"}}},
-        {"Keys": ["USE1-DataProcessing-Bytes"], "Metrics": {"UnblendedCost": {"Amount": "2.43", "Unit": "USD"}}},
-        {"Keys": ["USE1-CW-Ingest-Bytes"], "Metrics": {"UnblendedCost": {"Amount": "8.61", "Unit": "USD"}}}
+        {"Keys": ["USE1-Lambda-GB-Second"], "Metrics": {"AmortizedCost": {"Amount": "0.3720", "Unit": "USD"}}},
+        {"Keys": ["USE1-Request"], "Metrics": {"AmortizedCost": {"Amount": "0.1980", "Unit": "USD"}}},
+        {"Keys": ["USE1-WriteRequestUnits"], "Metrics": {"AmortizedCost": {"Amount": "0.0840", "Unit": "USD"}}},
+        {"Keys": ["USE1-ReadRequestUnits"], "Metrics": {"AmortizedCost": {"Amount": "0.0290", "Unit": "USD"}}},
+        {"Keys": ["USE1-TimedStorage-ByteHrs"], "Metrics": {"AmortizedCost": {"Amount": "0.0176", "Unit": "USD"}}},
+        {"Keys": ["USE1-Requests-Tier1"], "Metrics": {"AmortizedCost": {"Amount": "0.0130", "Unit": "USD"}}}
+      ],
+      "Estimated": false
+    },
+    {
+      "TimePeriod": {"Start": "2026-04-25", "End": "2026-04-26"},
+      "Total": {},
+      "Groups": [
+        {"Keys": ["USE1-Lambda-GB-Second"], "Metrics": {"AmortizedCost": {"Amount": "0.4150", "Unit": "USD"}}},
+        {"Keys": ["USE1-Request"], "Metrics": {"AmortizedCost": {"Amount": "0.2210", "Unit": "USD"}}},
+        {"Keys": ["USE1-WriteRequestUnits"], "Metrics": {"AmortizedCost": {"Amount": "0.0910", "Unit": "USD"}}},
+        {"Keys": ["USE1-ReadRequestUnits"], "Metrics": {"AmortizedCost": {"Amount": "0.0320", "Unit": "USD"}}},
+        {"Keys": ["USE1-TimedStorage-ByteHrs"], "Metrics": {"AmortizedCost": {"Amount": "0.0177", "Unit": "USD"}}},
+        {"Keys": ["USE1-Requests-Tier1"], "Metrics": {"AmortizedCost": {"Amount": "0.0145", "Unit": "USD"}}}
+      ],
+      "Estimated": false
+    },
+    {
+      "TimePeriod": {"Start": "2026-05-10", "End": "2026-05-11"},
+      "Total": {},
+      "Groups": [
+        {"Keys": ["USE1-Lambda-GB-Second"], "Metrics": {"AmortizedCost": {"Amount": "0.3560", "Unit": "USD"}}},
+        {"Keys": ["USE1-Request"], "Metrics": {"AmortizedCost": {"Amount": "0.1890", "Unit": "USD"}}},
+        {"Keys": ["USE1-WriteRequestUnits"], "Metrics": {"AmortizedCost": {"Amount": "0.0810", "Unit": "USD"}}},
+        {"Keys": ["USE1-ReadRequestUnits"], "Metrics": {"AmortizedCost": {"Amount": "0.0280", "Unit": "USD"}}},
+        {"Keys": ["USE1-TimedStorage-ByteHrs"], "Metrics": {"AmortizedCost": {"Amount": "0.0178", "Unit": "USD"}}},
+        {"Keys": ["USE1-Requests-Tier1"], "Metrics": {"AmortizedCost": {"Amount": "0.0128", "Unit": "USD"}}}
       ],
       "Estimated": false
     }
-  ]
+  ],
+  "_sum_of_all_30_days": {
+    "USE1-Lambda-GB-Second": "12.04",
+    "USE1-Request": "6.38",
+    "USE1-WriteRequestUnits": "2.71",
+    "USE1-ReadRequestUnits": "0.94",
+    "USE1-TimedStorage-ByteHrs": "0.53",
+    "USE1-Requests-Tier1": "0.42",
+    "Total": "23.02",
+    "EstimatedDaysExcluded": 0
+  }
 }

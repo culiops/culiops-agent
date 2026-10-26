@@ -15,9 +15,12 @@ For each REST API in scope, the skill fetches these metrics.
 
 **Verdict heuristic:**
 
-- `idle` — `Count` sum is 0.
-- `healthy` — 5XX rate < 1% and 4XX rate < 5%.
-- `degraded` — 5XX rate ≥ 1% OR 4XX rate ≥ 5%.
-- `unknown` — any required metric returned no datapoints.
+- `no-activity-14d` — `Count` has no datapoints (metric listed) or sums to 0.
+- `heuristic: healthy` — 5XX rate < 1%.
+- `heuristic: degraded` — 5XX rate ≥ 1%.
+- 4XX rate is shown as a number, not a verdict: auth-heavy and public APIs routinely run high 4XX rates by design.
+- `unknown` — `Count` returned `metric-not-found`.
+
+Empty series are never zero: run the `ListMetrics` existence check (SKILL.md, source d) and record `no-data (metric exists)` or `metric-not-found`. Verdicts describe; they never recommend (Constraint 9). Thresholds are heuristics — always show the raw numbers next to the verdict.
 
 Note: HTTP APIs (v2) are not covered by this file. Add `examples/aws/apigw-http.md` if needed.

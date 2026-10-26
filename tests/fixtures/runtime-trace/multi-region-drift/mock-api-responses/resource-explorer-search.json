@@ -1,4 +1,17 @@
 {
+  "_note": "VARIANT A (aggregator). Call re-001, Step 2b, issued through the view in the aggregator Region (us-east-1).",
+  "_request": {
+    "api": "resource-explorer-2:Search",
+    "region": "us-east-1",
+    "ViewArn": "arn:aws:resource-explorer-2:us-east-1:123456789012:view/all-resources/22222222-aaaa-bbbb-cccc-000000000001",
+    "QueryString": "tag:service=payments",
+    "callId": "re-001"
+  },
+  "_probes": {
+    "GetIndex(us-east-1)": {"Type": "AGGREGATOR", "State": "ACTIVE"},
+    "ListIndexes": "us-east-1 AGGREGATOR, us-west-2 LOCAL (17 indexes in total in the full response)",
+    "GetView": {"IncludedProperties": [{"Name": "tags"}]}
+  },
   "Count": {"TotalResources": 6, "Complete": true},
   "Resources": [
     {"Arn": "arn:aws:lambda:us-east-1:123456789012:function:payments-charge", "Region": "us-east-1", "ResourceType": "lambda:function"},
