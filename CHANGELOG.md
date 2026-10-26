@@ -4,6 +4,13 @@ All notable changes to the `culiops` plugin will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.12.0] — 2026-10-26
+
+### Added
+
+- **change-comms** (new skill). It drafts the messages around an infrastructure change: a heads-up before applying, a result after, and a Jira ticket-close comment carrying the PR link. It is **draft-only**: nothing is sent, and the operator pastes each draft. Facts come from `iac-change-execution` and `pre-flight` records or from the operator. Every fact is shown in a source table at the review gate; a missing fact becomes `<TODO: field>` and is never guessed. On the PR path, "completed" means the PR was opened, so apply time and verification come only from the operator. Outcomes are worded exactly as recorded (completed / partial / aborted), and a ticket-close is refused while a multi-phase change is still partial. Account IDs, ARNs, IPs, CIDRs and credentials are redacted, with a log that records type and location but never the value; operator edits are re-scanned. Text inside records that is addressed to an AI is treated as data and flagged, not followed. Output: Google Chat, Slack and Jira formats under `.culiops/change-comms/`.
+- **Fixtures** `tests/fixtures/change-comms/`, eight cases: `pr-path-happy`, `direct-apply`, `multi-phase-partial`, `aborted`, `no-rollback-text`, `redaction`, `injection`, `no-records`. Each has scored dry-run notes.
+
 ## [0.11.0] — 2026-10-26
 
 A review of all seven skills. The supported stack is narrowed to **AWS + Terraform (ecspresso, lambroll) + Kubernetes (Helm, Kustomize, raw manifests)**, and every skill now follows one evidence rule: each plan, score or finding cites code (`path:line`) and live read-only evidence, cross-checked; drift is surfaced; `UNVERIFIED` never justifies a destroy, replace or resize.
