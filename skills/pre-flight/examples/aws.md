@@ -95,6 +95,16 @@ The live identity must match the target recorded in Step 1. If it doesn't, stop 
 
 ---
 
+## Application Compatibility Checks (category 11)
+
+Live evidence of whether a contract the plan removes is still used. They complement the app source (Step 3b) and never replace it: use shows *that* the app calls something, only the code shows what it does when the call fails.
+
+- Role's service-level last access (two calls; `iam:GenerateServiceLastAccessedDetails` is in `IAMReadOnlyAccess`, and it starts a report job without changing any resource): `aws iam generate-service-last-accessed-details --arn {role-arn} --granularity ACTION_LEVEL --query JobId --output text`, then `aws iam get-service-last-accessed-details --job-id {job-id} --query 'ServicesLastAccessed[?ServiceNamespace==`{namespace}`].{service:ServiceNamespace,last:LastAuthenticated,actions:TrackedActionsLastAccessed[].{a:ActionName,last:LastAccessedTime}}'`. Action-level data exists only for some services; "accessed" counts denied attempts too.
+- Would the role still be allowed the action after the change? `aws iam simulate-principal-policy --policy-source-arn {role-arn} --action-names {action} --resource-arns {resource-arn} --query 'EvaluationResults[].{action:EvalActionName,decision:EvalDecision}'` evaluates the policies attached **now**: run it to find out whether another policy still grants the action. `aws iam simulate-custom-policy --policy-input-list file://{new-policy.json} --action-names {action} --resource-arns {resource-arn}` evaluates the proposed document alone (write the file outside the repo, delete it after).
+- Send / publish activity on the resource (≥ 30 days): SQS `NumberOfMessagesSent`, SNS `NumberOfMessagesPublished`, S3 request metrics (only if enabled on the bucket), DynamoDB `ConsumedWriteCapacityUnits`, e.g. `aws cloudwatch get-metric-statistics --namespace AWS/SQS --metric-name NumberOfMessagesSent --dimensions Name=QueueName,Value={queue} --start-time {T-30d} --end-time {now} --period 86400 --statistics Sum --region {region}`.
+
+---
+
 ## Observability Checks
 
 ### CloudWatch Alarms

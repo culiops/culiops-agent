@@ -21,6 +21,7 @@ Simulated run of the 7-step skill against this fixture. Recorded on 2026-04-23; 
 | L3 target check | `aws sts get-caller-identity` account and `--region us-east-1` match the plan's target |
 | L3 resource health | Operator approved the read-only batch. `ecs describe-services` running = desired, no pending; `describe-alarms --state-value ALARM` shows nothing on `orderapi-prod` dimensions → Green (`live:2`, `live:3`) |
 | Evidence rule | Category 10 Green cites live evidence; categories 2 and 9 cite the plan |
+| Category 11 not triggered | Adding an alarm changes no app-contract attribute → Green from the plan, Q8 not asked |
 
 ## Findings and fixes applied
 
@@ -37,7 +38,7 @@ Same inputs, operator answers "no" to L3. Category 10 → ⚪ (the operator sayi
 - Target: account `<plan account>` / `us-east-1`
 - Plan hash: `sha256:76e9ec8f3d6c7697eb0d3a6f6a081f9a215ee05a89d8d28c4893a970096185b1` (SHA-256 of `plan-output.txt`)
 - Verdict: **GREEN — proceed**
-- All 10 categories scored Green, each with its evidence source
+- All 11 categories scored Green, each with its evidence source
 - No hard blocks, no acknowledged risks, no mitigations needed
 - L1 detail: Terraform plan adds 1 `aws_cloudwatch_metric_alarm`, 0 changes, 0 destroys. Git history shows no recent changes to these files.
 - L2 context: normal hours, no incidents, experienced operator

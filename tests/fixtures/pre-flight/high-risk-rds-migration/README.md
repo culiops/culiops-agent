@@ -27,6 +27,7 @@ Multiple Reds:
 - Cost impact: Yellow (Aurora pricing differs from RDS — moderate cost change)
 - Security posture: Yellow (new IAM role, security group modification — within VPC)
 - Resource health: Green (live evidence — L3 approved: instance `available`, CPU / connections normal, no alarm in `ALARM`)
+- Application compatibility: ⚪ (the DB endpoint changes from the RDS instance to the Aurora cluster endpoint, an app-contract attribute; no app source for `userapi` / `authapi` / `billingapi` in the fixture)
 
 Overall: **RED — HARD BLOCK** (irreversible data change)
 

@@ -17,7 +17,7 @@ Simulated run of the 7-step skill against this fixture. Recorded on 2026-04-23; 
 | Change velocity (Yellow) | Simulated: 2 commits in last 7 days (recent schema migration prep) → Yellow |
 | Operator familiarity (Yellow) | Operator answered: first time migrating RDS→Aurora (Q5 variant) → Yellow |
 | Observability readiness (Yellow) | Existing RDS alarms won't work on Aurora — new alarms not in the plan → Yellow |
-| Multi-Yellow escalation | 5 Yellow categories → triggers Red soft block escalation (in addition to the hard blocks) |
+| Multi-Yellow escalation | 5 Yellow + 1 ⚪ categories → triggers Red soft block escalation (in addition to the hard blocks) |
 | Actionable mitigations | Skill must recommend: (1) take final RDS snapshot, (2) run parallel Aurora cluster before destroying RDS, (3) notify downstream teams, (4) add Aurora-specific CloudWatch alarms |
 
 ## Scoring detail
@@ -34,6 +34,7 @@ Simulated run of the 7-step skill against this fixture. Recorded on 2026-04-23; 
 | 8 | Cost impact | 🟡 | Aurora pricing change — moderate, predictable |
 | 9 | Security posture | 🟡 | New IAM role (AWS managed policy); SG rule update within VPC |
 | 10 | Resource health | 🟢 | `live` instance `available`, CPU / connections within normal range, no alarm in `ALARM` |
+| 11 | Application compatibility | ⚪ | Endpoint changes (`aws_db_instance.main` destroyed, new `aws_rds_cluster.main` endpoint); consumers' source not provided at Q8. Mitigation 3 (update connection strings) is the expand–contract step |
 
 **Overall verdict: RED — HARD BLOCK** (irreversible data change on category 2)
 

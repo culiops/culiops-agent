@@ -4,6 +4,30 @@ All notable changes to the `culiops` plugin will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.13.0] — 2026-10-26
+
+### Added
+
+- **pre-flight: category 11, Application compatibility.** A change can be valid on the infrastructure side and still break the application. The usual cases are removing an IAM action the app still calls, renaming an env var or config key the app still reads, and changing an endpoint, port, engine version or limit the app depends on.
+  - **Trigger.** When the plan changes such an attribute, pre-flight asks where the application source is (Q8). It then reads the source at the deployed commit SHA, looks for uses of the old contract, and records how each use fails: crash, request error, retry, logged-and-ignored or default fallback.
+  - **Silent failures.** When a failure is swallowed, or the health check doesn't exercise the broken path, the report says that health, error-rate and alarm signals will stay green after apply. A Green on resource health never clears category 11.
+  - **Scoring.** Red is a soft block. The category is not triggered by tags, alarms or other changes the app doesn't depend on.
+  - **Evidence.** New tag `app:<repo>@<sha>:<path:line>`.
+- **Two equal ways to read the source** (`examples/app-source.md`):
+  - A **local checkout**, through `git rev-parse`, `git grep <ref>` and `git show`. Nothing is fetched or checked out in the operator's tree.
+  - **GitHub through `gh`**: commit → tree → raw contents at the pinned SHA. Choosing `gh` approves only those `GET` reads. The least-privilege token is Contents: read + Metadata: read.
+  - Code search is never used as evidence of "no use", because it covers the default branch only. Nothing is ever cloned into the target repo, and app code is never run.
+- **Live checks for category 11** (`examples/aws.md`): role last-accessed, `simulate-principal-policy` / `simulate-custom-policy`, and send / publish activity on the resource.
+- **Fixtures** `tests/fixtures/pre-flight/app-impact-iam-narrowing` (a removed SQS permission the app still uses, failing silently; local mode) and `app-impact-env-rename` (renamed env vars behind a health check that stays 200; `gh` mode, L3 declined). Both have baseline and scored dry-run notes.
+
+### Changed
+
+- **pre-flight:**
+  - The scorecard has 11 categories.
+  - Security posture scores a permission narrowing Green and leaves the breakage question to category 11.
+  - The three existing fixtures gain a category 11 row. No verdict changes.
+  - The record format's assessor list no longer names a `cli-command` assessor that never existed.
+
 ## [0.12.0] — 2026-10-26
 
 ### Added
