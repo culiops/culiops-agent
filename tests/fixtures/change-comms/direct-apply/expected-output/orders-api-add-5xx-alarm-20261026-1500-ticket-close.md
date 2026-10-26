@@ -7,10 +7,10 @@
 
 ```text
 Change completed
-What: Added CloudWatch alarm for orders-api ALB 5xx rate
+What: CloudWatch alarm added for orders-api ALB 5xx rate
 Applied: <TODO: apply time>
-Verification: re-plan showed no changes; alarm state OK
-Rollback: not needed. Remove the alarm definition and re-apply if required.
+Verification: re-plan shows no changes, alarm state OK
+Rollback: not needed. Remove the alarm and re-apply if required.
 ```
 
 ## Fact table
@@ -18,24 +18,26 @@ Rollback: not needed. Remove the alarm definition and re-apply if required.
 | Field | Value | Source |
 |-------|-------|--------|
 | Service | orders-api | `record: .culiops/iac-change-execution/orders-api-add-5xx-alarm-20261027-1100.md#header` |
-| Environment | prod | `record: .culiops/iac-change-execution/orders-api-add-5xx-alarm-20261027-1100.md#header` |
-| What | Added CloudWatch alarm for orders-api ALB 5xx rate | `record: .culiops/iac-change-execution/orders-api-add-5xx-alarm-20261027-1100.md#header (Change)` |
-| Execution path | Direct apply | `record: .culiops/iac-change-execution/orders-api-add-5xx-alarm-20261027-1100.md#header` |
-| Outcome | completed (direct apply, single phase 1 of 1), so no `Outcome:` line | `record: .culiops/iac-change-execution/orders-api-add-5xx-alarm-20261027-1100.md#Outcome` |
-| PR | line omitted: direct apply, no PR exists | `record: .culiops/iac-change-execution/orders-api-add-5xx-alarm-20261027-1100.md#header (Execution path)` |
-| Applied | `<TODO: apply time>` (operator answered "don't know"; the Execution line states no time; record Date is not an apply time) | `operator-supplied (not given)` |
-| Verification | re-plan showed no changes; alarm state OK | `record: .culiops/iac-change-execution/orders-api-add-5xx-alarm-20261027-1100.md#Execution Log (Phase 1, Verification line)` |
-| Rollback status | not needed (outcome is a completed direct apply) | `record: .culiops/iac-change-execution/orders-api-add-5xx-alarm-20261027-1100.md#Outcome` |
-| Rollback instruction | remove the alarm definition and re-apply (summarised, no command) | `record: .culiops/iac-change-execution/orders-api-add-5xx-alarm-20261027-1100.md#Change Plan (Rollback path line)` |
-| Ticket key (not shown in this draft; the comment is posted on it) | OPS-123 | `record: .culiops/iac-change-execution/orders-api-add-5xx-alarm-20261027-1100.md#Ticket Reference` |
-| Platform | Jira comment (ticket-close is always a Jira comment) | `operator-supplied` |
+| Environment | prod (not shown in this draft) | `record: .culiops/iac-change-execution/orders-api-add-5xx-alarm-20261027-1100.md#header` |
+| What | Add CloudWatch alarm for orders-api ALB 5xx rate | `record: .culiops/iac-change-execution/orders-api-add-5xx-alarm-20261027-1100.md#header` |
+| Execution path | Direct apply (so the PR line is omitted; nothing to link) | `record: .culiops/iac-change-execution/orders-api-add-5xx-alarm-20261027-1100.md#header` |
+| Outcome | completed → title "Change completed" | `record: .culiops/iac-change-execution/orders-api-add-5xx-alarm-20261027-1100.md#Outcome` |
+| Execution result | apply finished with no error | `record: .culiops/iac-change-execution/orders-api-add-5xx-alarm-20261027-1100.md#Execution Log` (Phase 1, Execution line) |
+| Verification | re-plan shows no changes; alarm state OK | `record: .culiops/iac-change-execution/orders-api-add-5xx-alarm-20261027-1100.md#Execution Log` (Phase 1, Verification line) |
+| Applied | `<TODO: apply time>` | `operator-supplied (not given)` |
+| Rollback status | not needed (confirmed success: Outcome completed, clean Execution, clean Verification) | `record: .culiops/iac-change-execution/orders-api-add-5xx-alarm-20261027-1100.md#Outcome` and `#Execution Log` |
+| Rollback revert instruction | remove the alarm and re-apply (summarised, no command) | `record: .culiops/iac-change-execution/orders-api-add-5xx-alarm-20261027-1100.md#Change Plan` (Phase 1, Rollback path line) |
+| Ticket key | OPS-123 (Jira URL gives the key; the comment goes on this ticket, so no key line in the shape) | `record: .culiops/iac-change-execution/orders-api-add-5xx-alarm-20261027-1100.md#Ticket Reference` |
+| Platform | Jira comment (ticket-close is always Jira) | `operator-supplied` |
 
 ## Redaction log
 
 Redaction log: nothing masked
 
 ## Open TODOs
-- `<TODO: apply time>` (Applied line)
+
+- `<TODO: apply time>` (operator did not know it)
 
 ## Flags
+
 none

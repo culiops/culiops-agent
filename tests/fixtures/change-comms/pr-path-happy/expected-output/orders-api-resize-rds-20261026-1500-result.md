@@ -7,7 +7,7 @@
 
 ```text
 *✅ Done: orders-api RDS resize (prod), applied 14:12 ICT*
-Verified: connections + error rate normal 15 min
+Verified: connections and error rate normal for 15 min
 Ticket: OPS-123
 ```
 
@@ -15,14 +15,15 @@ Ticket: OPS-123
 
 | Field | Value | Source |
 |-------|-------|--------|
-| Service / environment | orders-api / prod | `record: .culiops/iac-change-execution/orders-api-resize-rds-20261027-1015.md#header` |
-| Execution path | PR (record Outcome "completed" = PR created, not applied) | `record: .culiops/iac-change-execution/orders-api-resize-rds-20261027-1015.md#header` |
-| What | RDS resize | `record: .culiops/iac-change-execution/orders-api-resize-rds-20261027-1015.md#header` (Change line) |
-| Apply time | 14:12 | operator-supplied |
-| Timezone | ICT | operator-supplied |
-| Apply outcome | success | operator-supplied |
-| Verification | connections + error rate normal 15 min | operator-supplied |
-| Ticket | OPS-123 | `record: .culiops/iac-change-execution/orders-api-resize-rds-20261027-1015.md#Ticket Reference` |
+| Service / env | orders-api / prod | `record: .culiops/iac-change-execution/orders-api-resize-rds-20261027-1015.md#header` |
+| What | RDS resize (orders-db, db.t3.medium to db.t3.large) | `record: .culiops/iac-change-execution/orders-api-resize-rds-20261027-1015.md#header` (Change line) |
+| Execution path | PR | `record: .culiops/iac-change-execution/orders-api-resize-rds-20261027-1015.md#header` (Execution path line) |
+| Apply time | 14:12 | `operator-supplied` (no apply time in the Execution Log; no date given) |
+| Timezone | ICT | `operator-supplied` (given at the heads-up batch, carried over) |
+| Apply outcome | success (Done, ✅) | `operator-supplied` (record Outcome "completed" on the PR path means the PR was created, so it is not used as the apply outcome) |
+| Verification | connections and error rate normal for 15 min | `operator-supplied` (operator text: "connections + error rate normal 15 min") |
+| Ticket key | OPS-123 | `record: .culiops/iac-change-execution/orders-api-resize-rds-20261027-1015.md#Ticket Reference` |
+| Platform | Google Chat | `operator-supplied` |
 
 ## Redaction log
 

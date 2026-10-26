@@ -274,3 +274,45 @@ Rollback: not needed, nothing was applied
 | Fix-round 2: aborted ticket-close has a `Reason:` line | pass | ticket-close.md l.11 |
 
 Round 5: 12 pass, 0 FAIL (README lines plus fix-round-2 checks). No skill change.
+
+## Round 6 (final skill 656ac5b)
+
+Simulated run against the final skill (656ac5b). Round-6 checks added: no apply claim, no `✅`/`Done`. GATE 1 confirmed the 1015 record and 1000 pre-flight; one batch asked next steps and whether anything was applied. The apply-outcome item was not asked because the record is an abort.
+
+Drafts as produced:
+
+result (Google Chat), `expected-output/orders-api-resize-rds-20261026-1500-result.md`:
+
+```text
+*❌ Aborted: orders-api RDS orders-db resize (prod), nothing applied*
+Reason: stopped before apply: pre-flight check failed (replace of orders-db)
+Next: <TODO: next steps>
+Ticket: OPS-123
+```
+
+ticket-close (Jira comment), `expected-output/orders-api-resize-rds-20261026-1500-ticket-close.md`:
+
+```text
+Change aborted
+Outcome: aborted, nothing applied
+Reason: stopped before apply: pre-flight check failed (replace of orders-db)
+What: Resize RDS orders-db from db.t3.medium to db.t3.large
+Applied: not applied
+Verification: not run
+Rollback: not needed, nothing was applied
+```
+
+### Findings (round 6)
+
+| MUST/MUST-NOT line | pass/FAIL | evidence |
+|---|---|---|
+| MUST: result uses ❌ and `aborted`, states nothing applied | pass | result.md l.9 |
+| MUST: reason in plain words (pre-flight check failed, replace of `orders-db`); next steps TODO | pass | result.md l.10-11 |
+| MUST: ticket-close produced, outcome `aborted`, no applied time | pass | ticket-close.md l.9-10, l.13 |
+| MUST-NOT: `✅` in any draft | pass | `grep -nE '✅|Done' aborted/expected-output/*` returns nothing |
+| MUST-NOT: `Done` in any draft | pass | same grep returns nothing |
+| MUST-NOT: applied / verified / completed claim | pass | ticket-close.md l.10, l.13-15 are all negative (`not applied`, `not run`, `nothing was applied`) |
+| Final-fix: one batch (next steps, was anything applied) | pass | `aborted-r6.md` l.49-52 |
+| Final-fix I7: no example value in any output | pass | grep of example strings (`billing`, `PAY-77`, `HKT`, `example-pay`, `2026-11-04`, `21:47`) over expected-output returns nothing |
+
+Round 6: 8 pass, 0 FAIL (README lines plus final-fix checks). No skill change.

@@ -274,3 +274,62 @@ Rollback: not needed. Revert PR + apply if required.
 | MUST-NOT: stale rotate-logs record used | pass | rotate-logs is not in any Sources line or row |
 
 Round 5: 12 pass, 0 FAIL (README lines plus fix-round-2 checks). No skill change.
+
+## Round 6 (final skill 656ac5b)
+
+Simulated run against the final skill (656ac5b). The run paired the 1000 pre-flight through the iac record's pre-flight reference and did not list rotate-logs as a candidate. The apply facts were asked in a second batch before the result draft. The record's `Outcome: completed` was not used as an apply claim; the apply outcome, time and verification are operator-supplied.
+
+Drafts as produced:
+
+heads-up (Google Chat), `expected-output/orders-api-resize-rds-20261026-1500-heads-up.md`:
+
+```text
+*🔧 Heads-up: infra change on orders-api (prod)*
+When: 2026-10-27 14:00 ICT, 15 min
+What: resize RDS orders-db from db.t3.medium to db.t3.large
+Impact: ~30-60s Multi-AZ failover, writes may fail briefly
+Risk: YELLOW (pre-flight)
+Rollback: revert the PR and re-apply, ~10 min
+Ticket: OPS-123 | PR: https://github.com/acme/orders-infra/pull/482
+Reply here if this window conflicts.
+```
+
+result (Google Chat), `expected-output/orders-api-resize-rds-20261026-1500-result.md`:
+
+```text
+*✅ Done: orders-api RDS resize (prod), applied 14:12 ICT*
+Verified: connections and error rate normal for 15 min
+Ticket: OPS-123
+```
+
+ticket-close (Jira comment), `expected-output/orders-api-resize-rds-20261026-1500-ticket-close.md`:
+
+```text
+Change completed
+What: RDS orders-db resized from db.t3.medium to db.t3.large
+PR: https://github.com/acme/orders-infra/pull/482
+Applied: <TODO: apply date> 14:12 ICT
+Verification: connections and error rate normal for 15 min
+Rollback: not needed. Revert the PR and re-apply if required.
+```
+
+### Findings (round 6)
+
+| MUST/MUST-NOT line | pass/FAIL | evidence |
+|---|---|---|
+| MUST: confirm 1015 + 1000, not rotate-logs | pass | `pr-path-happy-r6.md` l.25-29 |
+| MUST: ask timezone when the window has none | pass | `pr-path-happy-r6.md` l.45-48 |
+| MUST: heads-up at most 8 lines with `YELLOW`, `OPS-123`, PR 482 | pass | heads-up.md l.9-16 (8 lines), l.13, l.15 |
+| MUST: operator impact; rollback cites `#Change Plan` | pass | heads-up.md l.12, l.30 |
+| MUST: apply facts asked BEFORE the result draft | pass | `pr-path-happy-r6.md` l.113-117 |
+| MUST: result contains `14:12 ICT` | pass | result.md l.9 |
+| MUST: ticket-close has PR URL, `14:12 ICT`, operator verification | pass | ticket-close.md l.11-13 |
+| MUST: `(UTC)` / record `Date` never the window timezone | pass | heads-up.md l.10, l.25 |
+| MUST: date 2026-10-27 or `tomorrow` | pass | heads-up.md l.10, l.26 |
+| MUST-NOT: apply claim from `Outcome: completed` | pass | result.md l.23; ticket-close.md l.27 |
+| MUST-NOT: `10:15` as an apply time | pass | `10:15` absent from all three files |
+| MUST-NOT: stale rotate-logs record used | pass | `rotate-logs` and `20261019` absent from all three files |
+| MUST-NOT: any value that appears only in the examples | pass | grep of example strings (`billing`, `PAY-77`, `HKT`, `example-pay`, `2026-11-04`, `21:47`) over expected-output returns nothing |
+| Final-fix I2: no apply claim from a PR-created line | pass | ticket-close.md l.24 (PR from the Execution line, shown as a link only), l.27 and l.31 (apply from the operator) |
+
+Round 6: 14 pass, 0 FAIL (README lines plus final-fix checks). No skill change.

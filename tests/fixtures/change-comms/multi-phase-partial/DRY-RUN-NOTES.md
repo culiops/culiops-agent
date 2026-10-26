@@ -188,3 +188,49 @@ Ticket: OPS-123 | PR: https://github.com/acme/orders-infra/pull/502
 | Fix-round 2: What line names the change first | pass | heads-up.md l.11 |
 
 Round 5: 11 pass, 0 FAIL (README lines plus fix-round-2 checks). No skill change.
+
+## Round 6 (final skill 656ac5b)
+
+Simulated run against the final skill (656ac5b). Phases 2 and 3 are both pending, so the first batch asked which phase(s) the window covers; the operator answered `phase 2 only`. The heads-up shows phase 2's verdict (`YELLOW`, the record's phase 1 verdict is `GREEN`) and PR 502. The record's phase 2 `Execution:` line only says the PR was created, so the phase 2 apply, outcome and verification are operator-supplied. The ticket-close was refused twice (at GATE 1 and when asked) and no file was written.
+
+Drafts as produced:
+
+heads-up (Google Chat), `expected-output/orders-api-upgrade-postgres-engine-version-20261026-1500-heads-up.md`:
+
+```text
+*🔧 Heads-up: infra change on orders-api (prod)*
+When: 2026-10-28 22:00 ICT, 2h
+What: upgrade RDS orders-db Postgres engine from 14.9 to 15.4, 3 phases: snapshot → engine upgrade → cleanup; this window: engine upgrade (phase 2)
+Impact: ~5-10 min of downtime during the engine upgrade restart
+Risk: YELLOW (pre-flight)
+Rollback: restore from the phase 1 snapshot into a new instance and repoint orders-api, takes hours
+Ticket: OPS-123 | PR: https://github.com/acme/orders-infra/pull/502
+Reply here if this window conflicts.
+```
+
+result (Google Chat), `expected-output/orders-api-upgrade-postgres-engine-version-20261026-1500-result.md`:
+
+```text
+*⏸ Partial: orders-api Postgres engine upgrade (prod), phase 2 of 3, 2026-10-28 22:40 ICT*
+State: snapshot and engine upgrade applied, cleanup not started; engine shows 15.4 and available, error rate normal
+Next: <TODO: next steps>
+Ticket: OPS-123 | PR: https://github.com/acme/orders-infra/pull/502
+```
+
+### Findings (round 6)
+
+| MUST/MUST-NOT line | pass/FAIL | evidence |
+|---|---|---|
+| MUST: heads-up at most 8 lines, phases on one line, window `2026-10-28 22:00 ICT`, 2h | pass | heads-up.md l.9-16 (8 lines), l.10-11 |
+| MUST: batch asks which phase(s); `phase 2 only` gives What = upgrade (phase 2), Risk `YELLOW`, PR 502 | pass | `multi-phase-partial-r6.md` l.42-46; heads-up.md l.11, l.13, l.15 |
+| MUST: result says `phase 2 of 3` with PR 502 | pass | result.md l.9, l.12 |
+| MUST: result states current state (phase 3 still to do) | pass | result.md l.10 |
+| MUST: ticket-close refused with the reason, no draft | pass | `multi-phase-partial-r6.md` l.173; no ticket-close file in expected-output |
+| MUST-NOT: a ticket-close draft | pass | expected-output holds only heads-up and result |
+| MUST-NOT: wording implying the whole change completed | pass | result.md l.9-10 |
+| MUST-NOT: phase 2 apply claim sourced from the record | pass | result.md l.23-24 (apply time and outcome operator-supplied; the Execution line is cited only for PR created) |
+| Final-fix I2: phase 1 `applied` cited to its operator-confirmed Execution line, no apply claim from a PR-created line | pass | result.md l.26, l.30 |
+| Final-fix I3: Risk uses the covered phase's verdict (phase 2 `YELLOW`, not phase 1 `GREEN`) and the window question was asked | pass | heads-up.md l.30; record l.46 vs l.54 |
+| Final-fix I7: no example value in any output | pass | grep of example strings (`billing`, `PAY-77`, `HKT`, `example-pay`, `2026-11-04`, `21:47`) over expected-output returns nothing |
+
+Round 6: 11 pass, 0 FAIL (README lines plus final-fix checks). No skill change.

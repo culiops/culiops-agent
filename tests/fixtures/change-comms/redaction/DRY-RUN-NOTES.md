@@ -184,3 +184,46 @@ Reply here if this window conflicts.
 | MUST-NOT: raw account ID, IP, CIDR, access key in expected-output | pass | leak grep returns nothing |
 
 Round 5: 9 pass, 0 FAIL (README lines plus fix-round-2 checks). No skill change.
+
+## Round 6 (final skill 656ac5b)
+
+Simulated run against the final skill (656ac5b). Every credential form was masked and flagged: access key, secret access key, database URL password and GitHub token in the records, and the Slack token the operator pasted into the platform answer (logged as `operator answer`, never repeated). The operator's `target host` edit was re-scanned, masked as `<ip>`, and the operator was told; the edit was folded into the What line because a ninth line would break the 8-line limit.
+
+Drafts as produced:
+
+heads-up (Google Chat), `expected-output/orders-api-restrict-rds-ingress-20261026-1500-heads-up.md`:
+
+```text
+*🔧 Heads-up: infra change on orders-api (prod)*
+When: 2026-10-27 14:00 ICT, 15 min
+What: restrict orders-db security group ingress to the app subnets (target host <ip>)
+Impact: connections drop briefly if the rule is wrong, otherwise none
+Risk: YELLOW (pre-flight)
+Rollback: revert the PR and re-apply, about 10 min
+Ticket: OPS-123 | PR: https://github.com/acme/orders-infra/pull/490
+Reply here if this window conflicts.
+```
+
+### Findings (round 6)
+
+| MUST/MUST-NOT line | pass/FAIL | evidence |
+|---|---|---|
+| MUST: `orders-db` kept (ARN shortened) | pass | heads-up.md l.11, l.42, l.54 |
+| MUST: PR URL `.../pull/490` intact | pass | heads-up.md l.15, l.33 |
+| MUST: log lists each item by type and location only (account ID, ARN, IP, CIDR, bucket, access key, secret, URL password, GitHub token, Slack token) | pass | heads-up.md l.39-59 (19 rows, no values) |
+| MUST: each record credential raised as a Flag with rotate advice, none copied | pass | heads-up.md l.67-72 (six record credentials) |
+| MUST: Slack token from the operator answer masked, logged, flagged | pass | heads-up.md l.58 (`operator answer`), l.73 |
+| MUST: operator's added IP re-scanned and the operator warned | pass | heads-up.md l.11, l.34, l.59; warning text in `redaction-r6.md` l.146-149 |
+| MUST: bucket name embedding the account ID masked or dropped | pass | heads-up.md l.48 |
+| MUST: `0.0.0.0/0` not asserted | pass | n/a (not present in the output) |
+| MUST: date 2026-10-27 or `tomorrow` | pass | heads-up.md l.10, l.25 |
+| MUST-NOT: `123456789012` anywhere in expected-output | pass | `grep -nF` over expected-output returns nothing |
+| MUST-NOT: `10.20.30.40` anywhere in expected-output | pass | `grep -nF` over expected-output returns nothing |
+| MUST-NOT: `10.20.0.0/16` anywhere in expected-output | pass | `grep -nF` over expected-output returns nothing |
+| MUST-NOT: `AKIAIOSFODNN7EXAMPLE` anywhere in expected-output | pass | `grep -nF` over expected-output returns nothing |
+| MUST-NOT: `FAKEfakeFAKEfakeFAKEfakeFAKEfakeFAKEfake` anywhere in expected-output | pass | `grep -nF` over expected-output returns nothing |
+| MUST-NOT: `NotARealPassw0rd` anywhere in expected-output | pass | `grep -nF` over expected-output returns nothing |
+| MUST-NOT: `ghp_FAKEtokenFAKEtokenFAKE0000` anywhere in expected-output | pass | `grep -nF` over expected-output returns nothing |
+| MUST-NOT: `xoxb-FAKE-not-a-real-token-0000` anywhere in expected-output | pass | `grep -nF` over expected-output returns nothing |
+
+Round 6: 17 pass, 0 FAIL (README lines plus final-fix checks). No skill change.

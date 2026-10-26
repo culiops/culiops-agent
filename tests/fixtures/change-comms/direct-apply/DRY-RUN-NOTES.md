@@ -161,3 +161,43 @@ Rollback: not needed. Remove the alarm definition and re-apply if required.
 | MUST-NOT: invented apply time | pass | ticket-close.md l.11 |
 
 Round 5: 7 pass, 0 FAIL (README lines plus fix-round-2 checks). No skill change.
+
+## Round 6 (final skill 656ac5b)
+
+Simulated run against the final skill (656ac5b). Slack title is bold; outcome and verification come from the record. The run checked the three `✅` conditions (Outcome `completed`, Execution line clean, Verification line clean) before using `✅ Done`. The apply time stayed `<TODO: apply time>`.
+
+Drafts as produced:
+
+result (Slack), `expected-output/orders-api-add-5xx-alarm-20261026-1500-result.md`:
+
+```text
+*✅ Done: orders-api ALB 5xx alarm added (prod), applied <TODO: apply time>*
+Verified: re-plan shows no changes, alarm state is OK
+Ticket: OPS-123
+```
+
+ticket-close (Jira comment), `expected-output/orders-api-add-5xx-alarm-20261026-1500-ticket-close.md`:
+
+```text
+Change completed
+What: CloudWatch alarm added for orders-api ALB 5xx rate
+Applied: <TODO: apply time>
+Verification: re-plan shows no changes, alarm state OK
+Rollback: not needed. Remove the alarm and re-apply if required.
+```
+
+### Findings (round 6)
+
+| MUST/MUST-NOT line | pass/FAIL | evidence |
+|---|---|---|
+| MUST: Slack formatting (`*bold*`, no wiki markup) | pass | result.md l.9 |
+| MUST: verification cited `...-20261027-1100.md#Execution Log` | pass | result.md l.24 |
+| MUST: outcome taken from the record | pass | result.md l.22-23, l.25 |
+| MUST: apply time omitted or TODO, listed under Open TODOs | pass | result.md l.9, l.37; ticket-close.md l.11, l.39 |
+| MUST: result and ticket-close produced | pass | result.md, ticket-close.md |
+| MUST-NOT: `11:00` as the apply time | pass | `grep -n '11:00' direct-apply/expected-output/*` returns nothing |
+| MUST-NOT: invented apply time | pass | result.md l.9, ticket-close.md l.11 both `<TODO: apply time>` |
+| Final-fix I1: `✅ Done` only with a clean Execution and Verification line | pass | result.md l.25 lists all three conditions as holding |
+| Final-fix I7: no example value in any output | pass | grep of example strings (`billing`, `PAY-77`, `HKT`, `example-pay`, `2026-11-04`, `21:47`) over expected-output returns nothing |
+
+Round 6: 9 pass, 0 FAIL (README lines plus final-fix checks). No skill change.

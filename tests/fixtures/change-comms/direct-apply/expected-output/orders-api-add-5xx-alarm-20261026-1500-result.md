@@ -6,8 +6,8 @@
 ## Draft
 
 ```text
-*✅ Done: orders-api 5xx alarm (prod), applied <TODO: apply time>*
-Verified: re-plan showed no changes; alarm state OK
+*✅ Done: orders-api ALB 5xx alarm added (prod), applied <TODO: apply time>*
+Verified: re-plan shows no changes, alarm state is OK
 Ticket: OPS-123
 ```
 
@@ -17,13 +17,15 @@ Ticket: OPS-123
 |-------|-------|--------|
 | Service | orders-api | `record: .culiops/iac-change-execution/orders-api-add-5xx-alarm-20261027-1100.md#header` |
 | Environment | prod | `record: .culiops/iac-change-execution/orders-api-add-5xx-alarm-20261027-1100.md#header` |
-| What (title wording) | 5xx alarm (Add CloudWatch alarm for orders-api ALB 5xx rate) | `record: .culiops/iac-change-execution/orders-api-add-5xx-alarm-20261027-1100.md#header` |
-| Execution path | Direct apply | `record: .culiops/iac-change-execution/orders-api-add-5xx-alarm-20261027-1100.md#header` |
-| Outcome | completed, so `✅ Done` (direct apply: Outcome read as applied) | `record: .culiops/iac-change-execution/orders-api-add-5xx-alarm-20261027-1100.md#Outcome` |
-| Apply time | `<TODO: apply time>` (operator answered "don't know"; the Execution line states no time; record Date is not an apply time) | `operator-supplied (not given)` |
-| Verification | re-plan showed no changes; alarm state OK | `record: .culiops/iac-change-execution/orders-api-add-5xx-alarm-20261027-1100.md#Execution Log (Phase 1, Verification line)` |
+| Change | Add CloudWatch alarm for orders-api ALB 5xx rate | `record: .culiops/iac-change-execution/orders-api-add-5xx-alarm-20261027-1100.md#header` |
+| Execution path | Direct apply (so no PR line) | `record: .culiops/iac-change-execution/orders-api-add-5xx-alarm-20261027-1100.md#header` |
+| Outcome | completed → Done, ✅ | `record: .culiops/iac-change-execution/orders-api-add-5xx-alarm-20261027-1100.md#Outcome` |
+| Execution result | apply finished with no error | `record: .culiops/iac-change-execution/orders-api-add-5xx-alarm-20261027-1100.md#Execution Log` (Phase 1, Execution line) |
+| Verification | re-plan shows no changes; alarm state OK | `record: .culiops/iac-change-execution/orders-api-add-5xx-alarm-20261027-1100.md#Execution Log` (Phase 1, Verification line) |
+| ✅ conditions (Constraint 10) | Outcome completed, Execution line clean, Verification clean: all three hold | `record: .culiops/iac-change-execution/orders-api-add-5xx-alarm-20261027-1100.md#Outcome` and `#Execution Log` |
+| Apply time | `<TODO: apply time>` | `operator-supplied (not given)` |
+| Timezone | not given; no time is shown, so none is attached | `operator-supplied (not given)` |
 | Ticket key | OPS-123 | `record: .culiops/iac-change-execution/orders-api-add-5xx-alarm-20261027-1100.md#Ticket Reference` |
-| PR | omitted: direct apply, no PR exists | `record: .culiops/iac-change-execution/orders-api-add-5xx-alarm-20261027-1100.md#header (Execution path)` |
 | Platform | Slack | `operator-supplied` |
 
 ## Redaction log
@@ -31,7 +33,9 @@ Ticket: OPS-123
 Redaction log: nothing masked
 
 ## Open TODOs
-- `<TODO: apply time>` (title line)
+
+- `<TODO: apply time>` (operator did not know it)
 
 ## Flags
+
 none

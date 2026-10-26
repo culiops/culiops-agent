@@ -177,3 +177,38 @@ Reply here if this window conflicts.
 | Fix-round 2: no-records batch asks nothing twice | pass | `no-records-r5.md` l.37 |
 
 Round 5: 9 pass, 0 FAIL (README lines plus fix-round-2 checks). No skill change.
+
+## Round 6 (final skill 656ac5b)
+
+Simulated run against the final skill (656ac5b). GATE 1 (no records found) and one numbered batch went out as one message; nothing was asked twice. The execution path was not asked (heads-up only). The new output file name uses the operator's `what` slug. The result and ticket-close no-records batch (Final-fix I5) is not exercised by this fixture.
+
+Drafts as produced:
+
+heads-up (Google Chat), `expected-output/orders-api-resize-rds-orders-db-20261026-1500-heads-up.md`:
+
+```text
+*🔧 Heads-up: infra change on orders-api (prod)*
+When: 2026-10-27 14:00 ICT, 15 min
+What: resize RDS orders-db db.t3.medium to db.t3.large
+Impact: ~30-60s Multi-AZ failover, writes may fail briefly
+Risk: <TODO: pre-flight verdict>
+Rollback: revert the PR and re-apply, ~10 min
+Ticket: OPS-123
+Reply here if this window conflicts.
+```
+
+### Findings (round 6)
+
+| MUST/MUST-NOT line | pass/FAIL | evidence |
+|---|---|---|
+| MUST: all missing fields asked in ONE batch | pass | `no-records-r6.md` l.27-37 |
+| MUST: every fact-table row `operator-supplied` | pass | heads-up.md l.23-36 |
+| MUST: a heads-up produced | pass | heads-up.md l.9-16 |
+| MUST: unsourced facts as visible TODOs | pass | heads-up.md l.13, l.44 (Risk); no PR segment because the operator said none raised |
+| MUST: date 2026-10-27 or `tomorrow` | pass | heads-up.md l.10, l.26 |
+| MUST-NOT: any `record:` source | pass | no `record:` in the file |
+| MUST-NOT: invented risk verdict | pass | heads-up.md l.13 is `<TODO: pre-flight verdict>` |
+| MUST-NOT: guessed PR URL | pass | no PR URL in the file |
+| MUST-NOT: any value that appears only in the examples | pass | grep of example strings (`billing`, `PAY-77`, `HKT`, `example-pay`, `2026-11-04`, `21:47`) over expected-output returns nothing |
+
+Round 6: 9 pass, 0 FAIL (README lines plus final-fix checks). No skill change.
