@@ -4,11 +4,44 @@ All notable changes to the `culiops` plugin will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.11.0] — 2026-10-26
+
+A review of all seven skills. The supported stack is narrowed to **AWS + Terraform (ecspresso, lambroll) + Kubernetes (Helm, Kustomize, raw manifests)**, and every skill now follows one evidence rule: each plan, score or finding cites code (`path:line`) and live read-only evidence, cross-checked; drift is surfaced; `UNVERIFIED` never justifies a destroy, replace or resize.
+
+### Breaking
+
+- **Supported stack.** GCP, Azure, Pulumi and Bicep are no longer supported. CloudFormation, SAM, Serverless Framework, CDK and Ansible are recognised (ownership is still detected, including the pre-import CloudFormation / Serverless check) and the skill stops instead of improvising.
+- **`runtime-profile-schema: 2`** (runtime-trace). New Wiring block, `no-activity-14d` replaces `idle`, cross-Region claims can be "not verifiable", spend without a scoping tag is "account context - not attributable". service-takeover still accepts a schema-1 profile but marks items 5 and 19 `?` and recommends a re-run.
+- **service-takeover scorecard.** Evidence classes `verified` / `attested` / `operator-stated` / `fail` / `conflict` / `unknown` / `N/A`, and a strict verdict: `ready` only when every item is verified, attested or N/A. Takeovers that scored `ready` under v0.10.0 may now score `partial` or `not-ready`.
+- **service-discovery catalog.** New `Live` column (Step 2V live cross-check) and `Owner` column; the catalog is stamped with its live-verification status. service-takeover relies on them: scorecard items 4 and 6 count attributed rows and need a live-backed catalog.
+- **pre-flight records** carry target, plan hash, plan source, delivery model and caller; iac-change-execution only reuses a record whose plan hash and target match and that is under 24h old.
+
+### Changed
+
+- **iac-change-execution:** code-vs-live evidence table in Step 1 (live reads as one approved batch plus the tool's own drift check); success criteria are commands with expected output; target check (account / region / context / workspace) before every plan and apply; Terraform rollback is revert-and-apply, never an old state file; `kubectl delete -f` is never a rollback; plan / state files never staged; GitOps (Argo CD / Flux) detected, PR path only; PR path follows repo conventions on any Git host; ticket and catalog text treated as data.
+- **pre-flight:** every score cites its evidence; Green on reversibility / security needs plan, code or live evidence, resource-health Green needs live evidence; any unknown caps the verdict at YELLOW; one-way in-place update table and rollback limits per tool; secrets never written to records; incident override needs a written justification; adds `kubectl diff`, Kustomize, Argo CD / Flux.
+- **cost-optimize-plan:** target check (account = report scope); empty is not zero for metric reads; per-item ownership probe (`unsupported-owner` for CloudFormation); evidence refs on every score, and a delete needs Evidence green to leave Risky; `Realizable` column (RI / SP coverage, cost direction); S3 activity from request metrics / access logs / CloudTrail Lake; separate ALB / NLB / CLB checks; lifecycle expiration treated as irreversible; no hardcoded prices.
+- **cloud-cost-investigate:** scoping probe (GATE 1a: caller identity, payer vs member with `LINKED_ACCOUNT` filtering, regions with spend), sweeps per region; no raw output in the report; anomaly usage computed at AmortizedCost with purchases, credits, refunds and tax apart; snapshot orphan and unattached-volume rules tightened; hourly metrics within the 1,440-datapoint limit; Kubernetes efficiency from the allocation API; Cost Explorer priced at $0.01 per page.
+- **runtime-trace:** spend attributed only via the scoping tag; audit sidecars hold projected fields only; scoping probe (GATE 1a); CloudTrail Event history used even without a trail; Wiring block from free reads; verdicts describe, never prescribe; IAM policy covers every call the skill makes.
+- **service-discovery:** secrets by projection (no Terraform state, `helm get`, `sops -d` or `kubectl get secret`; sensitive values recorded as `<set in file:line>`); optional live cross-check (Step 2V, offered by default); real-discovery results need a membership signal or land in Unattributed; new raw Kubernetes manifest detector; Terraform root rule and OpenTofu / Terragrunt signatures.
+- **service-takeover:** conflict check between interview answers and artifacts; optional Step 6 verification batch (offered by default); same-target and freshness checks on every upstream snapshot; one discovery delegation followed by catalog verification; package safety (private-repo banner, references not secrets, ingest secret scan).
+- **All skills:** commit only on approval, with default-branch and public-remote checks.
+- **Fixtures** updated to the new rules; new `cost-optimize-plan/ownership-check`, `runtime-trace/no-trail-event-history`, `service-discovery/repo-kustomize-manifests`, `service-discovery/repo-cfn-recognition`, `service-takeover/eks-cfn-partial`; `cloud-cost-investigate/attribution-gcp-orders` ported to `attribution-aws-orders`.
+
+### Removed
+
+Everything below is kept at tag [`archive/multi-cloud-v0.10.0`](https://github.com/culiops/culiops-agent/tree/archive/multi-cloud-v0.10.0).
+
+- GCP and Azure examples: `skills/{cloud-cost-investigate,iac-change-execution,pre-flight,service-discovery}/examples/{gcp,azure}.md`.
+- GCP and Azure cloud-discovery templates: `skills/service-discovery/cloud-discovery/{gcp,azure}.md`.
+- Pulumi and Bicep detectors: `skills/service-discovery/tool-detectors/{pulumi,bicep}.md`; Pulumi / Bicep / CloudFormation handling in pre-flight and iac-change-execution authoring.
+- Fixtures: `service-discovery/widgetapi-azure-aks`, `service-discovery/orders-diagrams-only` (its Mermaid / no-region cases ported), `cloud-cost-investigate/attribution-gcp-orders` (ported to AWS), `runtime-trace/cloudtrail-disabled` (replaced by `no-trail-event-history`).
+
 ## [0.10.0] — 2026-07-09
 
-### Cost skills — OPS-9169 field principles
+### Cost skills — field principles
 
-Field lessons from a real cost-optimization engagement (pricing-engine staging), folded into the existing Principle framework across the four cost skills.
+Field lessons from a real cost-optimization engagement on a staging environment, folded into the existing Principle framework across the four cost skills.
 
 - **Principle 3 (all cost skills): scale the verification window to the action's destructiveness.** idle→resize needs ≥30d, idle→delete 60–180d, at hourly granularity, inspecting the temporal distribution (a single historical burst ≠ steady low use). Replaces the flat 14-day default — the waste sweep is now 30d and delete-candidates pull 60–180d at drill-down; all AWS playbook evidence windows re-tiered accordingly.
 - **Principle 4 (all cost skills): cost from the bill, attribute to the metered dimension.** Bill-derived effective rates over list price (new `bill-derived` label); attribute cost to what is actually metered, not the trigger; classify recurring vs residual/self-clearing charges (don't chase a self-clearing line).
