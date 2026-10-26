@@ -8,7 +8,7 @@ Replace placeholders (`{cluster}`, `{service}`, `{T-1h}`, `{now}`, `{region}`, e
 
 **CLI tool:** AWS CLI v2 (`aws --version` >= 2.x).
 
-**Authentication:** any of — named profile (`--profile` or `AWS_PROFILE`), AWS SSO (`aws sso login`), IAM role, or STS temporary credentials. Confirm identity: `aws sts get-caller-identity`.
+**Authentication:** any of — named profile (`--profile` or `AWS_PROFILE`), AWS SSO (`aws sso login`), IAM role, or STS temporary credentials.
 
 **Least-privilege IAM — every command below is read-only.** Grant the operator either:
 - **Baseline:** AWS-managed `ReadOnlyAccess` policy
@@ -18,15 +18,26 @@ Replace placeholders (`{cluster}`, `{service}`, `{T-1h}`, `{now}`, `{region}`, e
 
 **Cost awareness:** CloudWatch `GetMetric*` and `logs:FilterLogEvents` incur small per-call and per-GB-scanned charges.
 
+**Secrets:** several read-only calls return secret values — `lambda get-function`, `get-function-configuration` and `list-versions-by-function` return environment-variable values; `ecs describe-task-definition` returns container environment values. Always use the `--query` shown here (it fetches only the fields needed), and never paste raw output into the record.
+
+---
+
+## Target Check (run first)
+
+The live identity must match the target recorded in Step 1. If it doesn't, stop L3.
+
+- Account: `aws sts get-caller-identity --query Account --output text` → must equal the plan's account ID
+- Region: the `--region` you pass below must equal the plan's region (check the provider block / var-file, not `aws configure get region`)
+
 ---
 
 ## Resource Health Checks
 
 ### ECS
 
-- Service status: `aws ecs describe-services --cluster {cluster} --services {service} --region {region}`
-- Running vs desired tasks: `aws ecs describe-services --cluster {cluster} --services {service} --query 'services[].{desired:desiredCount,running:runningCount,pending:pendingCount}' --region {region}`
-- Recent deployments: `aws ecs describe-services --cluster {cluster} --services {service} --query 'services[].deployments' --region {region}`
+- Running vs desired tasks: `aws ecs describe-services --cluster {cluster} --services {service} --query 'services[].{status:status,desired:desiredCount,running:runningCount,pending:pendingCount}' --region {region}`
+- Deployments: `aws ecs describe-services --cluster {cluster} --services {service} --query 'services[].deployments[].{status:status,rollout:rolloutState,taskDef:taskDefinition,created:createdAt}' --region {region}`
+- Recent service events (failing tasks, unhealthy targets): `aws ecs describe-services --cluster {cluster} --services {service} --query 'services[].events[:10].{at:createdAt,msg:message}' --region {region}`
 - CPU utilization (last 1h): `aws cloudwatch get-metric-statistics --namespace AWS/ECS --metric-name CPUUtilization --dimensions Name=ClusterName,Value={cluster} Name=ServiceName,Value={service} --start-time {T-1h} --end-time {now} --period 300 --statistics Average Maximum --region {region}`
 - Memory utilization (last 1h): `aws cloudwatch get-metric-statistics --namespace AWS/ECS --metric-name MemoryUtilization --dimensions Name=ClusterName,Value={cluster} Name=ServiceName,Value={service} --start-time {T-1h} --end-time {now} --period 300 --statistics Average Maximum --region {region}`
 
@@ -42,19 +53,24 @@ Replace placeholders (`{cluster}`, `{service}`, `{T-1h}`, `{now}`, `{region}`, e
 - Freeable memory: `aws cloudwatch get-metric-statistics --namespace AWS/RDS --metric-name FreeableMemory --dimensions Name=DBInstanceIdentifier,Value={instance} --start-time {T-1h} --end-time {now} --period 300 --statistics Minimum --region {region}`
 - Free storage space: `aws cloudwatch get-metric-statistics --namespace AWS/RDS --metric-name FreeStorageSpace --dimensions Name=DBInstanceIdentifier,Value={instance} --start-time {T-1h} --end-time {now} --period 300 --statistics Minimum --region {region}`
 - Database connections: `aws cloudwatch get-metric-statistics --namespace AWS/RDS --metric-name DatabaseConnections --dimensions Name=DBInstanceIdentifier,Value={instance} --start-time {T-1h} --end-time {now} --period 300 --statistics Maximum --region {region}`
-- Read/write latency: `aws cloudwatch get-metric-statistics --namespace AWS/RDS --metric-name ReadLatency --dimensions Name=DBInstanceIdentifier,Value={instance} --start-time {T-1h} --end-time {now} --period 300 --statistics Average p99 --region {region}`
+- Read latency (average): `aws cloudwatch get-metric-statistics --namespace AWS/RDS --metric-name ReadLatency --dimensions Name=DBInstanceIdentifier,Value={instance} --start-time {T-1h} --end-time {now} --period 300 --statistics Average --region {region}`
+- Read latency (p99 — percentiles need `--extended-statistics`, and one call takes either `--statistics` or `--extended-statistics`, not both): `aws cloudwatch get-metric-statistics --namespace AWS/RDS --metric-name ReadLatency --dimensions Name=DBInstanceIdentifier,Value={instance} --start-time {T-1h} --end-time {now} --period 300 --extended-statistics p99 --region {region}`
+- Same two calls with `WriteLatency` for write latency.
 
 ### ALB / Application Load Balancer
 
 - Target health: `aws elbv2 describe-target-health --target-group-arn {tg-arn} --region {region}`
 - HTTP 5xx (last 1h): `aws cloudwatch get-metric-statistics --namespace AWS/ApplicationELB --metric-name HTTPCode_ELB_5XX_Count --dimensions Name=LoadBalancer,Value={lb-id} --start-time {T-1h} --end-time {now} --period 300 --statistics Sum --region {region}`
-- Target response time: `aws cloudwatch get-metric-statistics --namespace AWS/ApplicationELB --metric-name TargetResponseTime --dimensions Name=LoadBalancer,Value={lb-id} --start-time {T-1h} --end-time {now} --period 300 --statistics Average p99 --region {region}`
-- Request count (traffic baseline): `aws cloudwatch get-metric-statistics --namespace AWS/ApplicationELB --metric-name RequestCount --dimensions Name=LoadBalancer,Value={lb-id} --start-time {T-1h} --end-time {now} --period 300 --statistics Sum --region {region}`
+- Target 5xx (last 1h): same call with `--metric-name HTTPCode_Target_5XX_Count`
+- Target response time (average): `aws cloudwatch get-metric-statistics --namespace AWS/ApplicationELB --metric-name TargetResponseTime --dimensions Name=LoadBalancer,Value={lb-id} --start-time {T-1h} --end-time {now} --period 300 --statistics Average --region {region}`
+- Target response time (p99): same call with `--extended-statistics p99` instead of `--statistics Average`
+- Request count (traffic baseline): `aws cloudwatch get-metric-statistics --namespace AWS/ApplicationELB --metric-name RequestCount --dimensions Name=LoadBalancer,Value={lb-id} --start-time {T-1h} --end-time {now} --period 300 --statistics Sum --region {region}` — run again with `{T-7d}`…`{T-7d+1h}` for the same hour last week as the baseline
 
 ### Lambda
 
 - Error count (last 1h): `aws cloudwatch get-metric-statistics --namespace AWS/Lambda --metric-name Errors --dimensions Name=FunctionName,Value={function} --start-time {T-1h} --end-time {now} --period 300 --statistics Sum --region {region}`
-- Duration (last 1h): `aws cloudwatch get-metric-statistics --namespace AWS/Lambda --metric-name Duration --dimensions Name=FunctionName,Value={function} --start-time {T-1h} --end-time {now} --period 300 --statistics Average p99 --region {region}`
+- Duration (average): `aws cloudwatch get-metric-statistics --namespace AWS/Lambda --metric-name Duration --dimensions Name=FunctionName,Value={function} --start-time {T-1h} --end-time {now} --period 300 --statistics Average --region {region}`
+- Duration (p99): same call with `--extended-statistics p99` instead of `--statistics Average`
 - Throttles: `aws cloudwatch get-metric-statistics --namespace AWS/Lambda --metric-name Throttles --dimensions Name=FunctionName,Value={function} --start-time {T-1h} --end-time {now} --period 300 --statistics Sum --region {region}`
 - Concurrent executions: `aws cloudwatch get-metric-statistics --namespace AWS/Lambda --metric-name ConcurrentExecutions --dimensions Name=FunctionName,Value={function} --start-time {T-1h} --end-time {now} --period 300 --statistics Maximum --region {region}`
 
@@ -65,12 +81,29 @@ Replace placeholders (`{cluster}`, `{service}`, `{T-1h}`, `{now}`, `{region}`, e
 
 ---
 
+## Reversibility Checks (stateful destroys and one-way changes)
+
+- RDS protection + backups: `aws rds describe-db-instances --db-instance-identifier {instance} --region {region} --query 'DBInstances[].{deletionProtection:DeletionProtection,backupRetention:BackupRetentionPeriod,latestRestorable:LatestRestorableTime}'`
+- Aurora cluster: `aws rds describe-db-clusters --db-cluster-identifier {cluster} --region {region} --query 'DBClusters[].{deletionProtection:DeletionProtection,backupRetention:BackupRetentionPeriod,latestRestorable:LatestRestorableTime}'`
+- Latest RDS snapshots: `aws rds describe-db-snapshots --db-instance-identifier {instance} --region {region} --query 'sort_by(DBSnapshots,&SnapshotCreateTime)[-3:].{id:DBSnapshotIdentifier,created:SnapshotCreateTime,status:Status,type:SnapshotType}'`
+- Latest Aurora snapshots: `aws rds describe-db-cluster-snapshots --db-cluster-identifier {cluster} --region {region} --query 'sort_by(DBClusterSnapshots,&SnapshotCreateTime)[-3:].{id:DBClusterSnapshotIdentifier,created:SnapshotCreateTime,status:Status}'`
+- AWS Backup recovery points: `aws backup list-recovery-points-by-resource --resource-arn {arn} --max-results 5 --region {region} --query 'RecoveryPoints[].{created:CreationDate,status:Status}'`
+- S3 versioning: `aws s3api get-bucket-versioning --bucket {bucket}`
+- S3 lifecycle rules (current): `aws s3api get-bucket-lifecycle-configuration --bucket {bucket}`
+- DynamoDB PITR: `aws dynamodb describe-continuous-backups --table-name {table} --region {region} --query 'ContinuousBackupsDescription.PointInTimeRecoveryDescription'`
+- NAT gateway egress (≥ 6 months, for the external-allowlist check): `aws cloudwatch get-metric-statistics --namespace AWS/NATGateway --metric-name BytesOutToDestination --dimensions Name=NatGatewayId,Value={nat-id} --start-time {T-180d} --end-time {now} --period 86400 --statistics Sum --region {region}`
+
+---
+
 ## Observability Checks
 
 ### CloudWatch Alarms
 
-- List alarms for a resource: `aws cloudwatch describe-alarms --alarm-name-prefix {service} --region {region} --query 'MetricAlarms[].{Name:AlarmName,State:StateValue}'`
-- Currently firing alarms: `aws cloudwatch describe-alarms --state-value ALARM --alarm-name-prefix {service} --region {region}`
+Find alarms by what they watch, not by name — an alarm named differently from the service is still the alarm that matters.
+
+- Alarms on a metric of the changed resource: `aws cloudwatch describe-alarms-for-metric --namespace AWS/ECS --metric-name CPUUtilization --dimensions Name=ClusterName,Value={cluster} Name=ServiceName,Value={service} --region {region} --query 'MetricAlarms[].{name:AlarmName,state:StateValue}'` (repeat per namespace / metric the change touches)
+- Everything currently firing in the region: `aws cloudwatch describe-alarms --state-value ALARM --region {region} --query '{metric:MetricAlarms[].{name:AlarmName,ns:Namespace,metric:MetricName,dims:Dimensions},composite:CompositeAlarms[].AlarmName}'` — then keep the ones whose dimensions reference the changed resources
+- If the team uses an alarm-name prefix convention, `--alarm-name-prefix {prefix}` is a shortcut, never the only check
 - Alarm history (last 24h): `aws cloudwatch describe-alarm-history --alarm-name {alarm} --history-item-type StateUpdate --start-date {T-24h} --end-date {now} --region {region}`
 
 ---
@@ -79,6 +112,17 @@ Replace placeholders (`{cluster}`, `{service}`, `{T-1h}`, `{now}`, `{region}`, e
 
 ### Recent Deployments
 
-- ECS recent deployments: `aws ecs describe-services --cluster {cluster} --services {service} --query 'services[].deployments[?status!=`PRIMARY`]' --region {region}`
-- Lambda recent versions: `aws lambda list-versions-by-function --function-name {function} --region {region} --query 'Versions[-3:]'`
+- ECS deployments: see Resource Health → ECS → Deployments (`createdAt` per deployment)
+- Lambda recent versions (no configuration values): `aws lambda list-versions-by-function --function-name {function} --region {region} --query 'Versions[-3:].{version:Version,modified:LastModified}'`
 - CodeDeploy recent deployments: `aws deploy list-deployments --application-name {app} --deployment-group-name {group} --create-time-range start={T-24h} --region {region}`
+
+### Last Terraform Apply (automation lag)
+
+- S3 backend state object, metadata only: `aws s3api head-object --bucket {state-bucket} --key {state-key} --query '{modified:LastModified,version:VersionId}'`
+- **Never** `aws s3 cp` / `get-object` the state file or run `terraform state pull` — state holds secrets in plaintext.
+
+---
+
+## Cost Checks
+
+- Current price for a type in the target region: AWS Price List API, e.g. `aws pricing get-products --region us-east-1 --service-code AmazonEC2 --filters Type=TERM_MATCH,Field=instanceType,Value={type} Type=TERM_MATCH,Field=regionCode,Value={region} Type=TERM_MATCH,Field=operatingSystem,Value=Linux Type=TERM_MATCH,Field=tenancy,Value=Shared Type=TERM_MATCH,Field=preInstalledSw,Value=NA Type=TERM_MATCH,Field=capacitystatus,Value=Used --max-results 1` (`--region us-east-1` is the Price List API endpoint; the resource region goes in the `regionCode` filter). Record the lookup date.

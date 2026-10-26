@@ -1,34 +1,38 @@
 # Dry-run of `pre-flight` against `compound-risk-ecs-update`
 
-Simulated run of the 7-step skill against this fixture. Recorded on 2026-04-23.
+Simulated run of the 7-step skill against this fixture. Recorded on 2026-04-23; re-run 2026-10-26 against the evidence rule and the cost-vs-capacity rule.
 
 ## What the fixture exercised
 
 | Principle | Exercised by |
 |-----------|--------------|
 | Assessor loading | `assessors/iac-change.md` matched ecspresso diff output |
-| Multi-Yellow escalation | 4 Yellow categories → escalated to Red soft block |
+| Multi-Yellow escalation | 3 Yellow categories → escalated to Red soft block |
 | Bundled change detection | 3 distinct changes in one deploy (image, scale, health check) amplify compound risk |
-| Capacity reduction risk | Scaling from 4 to 2 tasks is a 50% capacity reduction |
-| Health check change | Changing health check path can cause ALB to mark tasks unhealthy during rollout |
+| Capacity reduction risk | Scaling from 4 to 2 tasks is a 50% capacity reduction — scored under blast radius; cost is Green (a decrease) |
+| Health check change | The container `healthCheck` (task definition) path changes; if `/healthz` fails, ECS kills the new tasks and the deployment stalls or rolls back. The ALB target-group check is a separate setting |
+| Secrets in diff | `ecspresso diff` prints task-definition env values in plaintext — record names only |
+| Evidence rule | Category 10 Green cites live `ecs describe-services` + firing-alarm check (L3 approved) |
 
 ## Scoring detail
 
 | # | Category | Score | Signal |
 |---|----------|-------|--------|
-| 1 | Blast radius | 🟡 | Health check path change affects ALB routing; if new path returns 404, all tasks marked unhealthy. Scale-down reduces redundancy. |
-| 2 | Reversibility | 🟢 | ecspresso rollback available (`ecspresso rollback`); image tags are immutable in ECR; previous task definition revision preserved |
+| 1 | Blast radius | 🟡 | Scale-down 4→2 halves capacity and redundancy; if the new container health-check path fails, ECS replaces tasks in a loop (`plan:5-7`, `plan:14-16`) |
+| 2 | Reversibility | 🟢 | `ecspresso rollback` restores the previous task definition (image + health check); the desired count needs the previous service definition re-deployed from git — both known, scripted paths |
 | 3 | Change velocity | 🟡 | Simulated: 1 commit in last 7 days (image update on Monday), this is the 2nd change |
 | 4 | Dependency impact | 🟢 | No downstream consumers — searchapi is a leaf service |
 | 5 | Timing context | 🟢 | Normal hours, no freeze, no incidents (from L2) |
 | 6 | Operator familiarity | 🟡 | Operator answered: first time changing this service (from L2 Q4) |
 | 7 | Observability readiness | 🟢 | CloudWatch alarms exist for ECS CPU/memory and ALB 5xx |
-| 8 | Cost impact | 🟡 | 50% capacity reduction (4→2 tasks). Savings ~$X/month but risk of insufficient capacity during traffic spikes |
+| 8 | Cost impact | 🟢 | Cost decreases (4→2 tasks). Capacity risk scored under blast radius |
 | 9 | Security posture | 🟢 | No IAM, network, or encryption changes |
-| 10 | Resource health | 🟢 | Service healthy (from L2) |
+| 10 | Resource health | 🟢 | `live:2` 4/4 running, 0 pending; `live:4` no alarm in `ALARM` on the service |
 
-**Yellow count: 4** (blast radius, change velocity, operator familiarity, cost impact)
-**Multi-Yellow escalation triggered:** 4 >= 3 → **RED — SOFT BLOCK**
+**Yellow count: 3** (blast radius, change velocity, operator familiarity)
+**Multi-Yellow escalation triggered:** 3 >= 3 → **RED — SOFT BLOCK**
+
+Record header: Plan hash `sha256:ef96fe1da0f5310e450c54d6978c86f032d787fccffef4b73b36ed783659c911` (SHA-256 of `plan-output.txt`), target account `<plan account>` / `us-east-1`.
 
 **Overall verdict: RED — SOFT BLOCK** (multi-Yellow escalation — compound risk)
 
