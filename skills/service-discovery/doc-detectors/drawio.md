@@ -14,8 +14,11 @@ XML parsing of `<mxCell>` elements within `<mxGraphModel>` → `<root>`.
 
 1. **Nodes**: `<mxCell>` elements with a `value` attribute containing a label. Strip HTML tags from values (labels are often wrapped in `<div>`, `<b>`, `<font>`, etc.).
 2. **Edges**: `<mxCell>` elements with both `source` and `target` attributes. These represent relationships between nodes.
-3. **Shape hints**: The `style` attribute on `<mxCell>` encodes shape type. Cloud-provider stencils embed resource types directly (e.g., `shape=mxgraph.aws4.rds`, `shape=mxgraph.gcp2.cloud_sql`, `shape=mxgraph.azure.database`). Parse the `style` string as semicolon-delimited key=value pairs.
-4. **Containers**: `<mxCell>` elements with a non-empty `children` attribute or with `container=1` in the style. These may represent VPCs, regions, accounts, or service boundaries.
+3. **Shape hints**: The `style` attribute on `<mxCell>` encodes shape type. Cloud-provider stencils embed resource types directly (e.g., `shape=mxgraph.aws4.rds`). Newer AWS icon sets use `shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.<x>` (e.g., `resIcon=mxgraph.aws4.lambda_function`): read the service from `resIcon=` when present, otherwise from `shape=`. Parse the `style` string as semicolon-delimited key=value pairs. Only `mxgraph.aws4.*` stencils are interpreted; other providers' stencils are ignored (label text only).
+4. **Containers**: `<mxCell>` elements with `container=1` in the style, or any cell that other cells name in their `parent` attribute. Containment is expressed by the child's `parent` attribute (there is no `children` attribute). These may represent VPCs, regions, accounts, or service boundaries.
+
+## Output
+**Output: hints only** — `source=doc`, confidence capped at Medium; only live evidence can raise it.
 
 ## What to extract
 - **Resource types**: from shape style values (e.g., `mxgraph.aws4.rds` → RDS, `mxgraph.aws4.lambda` → Lambda) and from label text containing resource type keywords

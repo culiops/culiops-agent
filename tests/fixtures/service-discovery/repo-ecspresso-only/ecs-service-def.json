@@ -1,6 +1,6 @@
 {
-  "serviceName": "paymentapi-svc-${MUST_ENV:ENV}",
-  "desiredCount": "${MUST_ENV:DESIRED_COUNT}",
+  "serviceName": "paymentapi-svc-{{ must_env `ENV` }}",
+  "desiredCount": {{ must_env `DESIRED_COUNT` }},
   "launchType": "FARGATE",
   "platformVersion": "1.4.0",
   "loadBalancers": [

@@ -18,15 +18,18 @@ Text parsing of PlantUML syntax between `@startuml` and `@enduml` markers.
 2. **Node declarations**: `node "Label" as alias`, `database "Label" as alias`, `queue "Label" as alias`, `cloud "Label" as alias`, `component "Label" as alias`, `storage "Label" as alias`, `artifact "Label" as alias`. The keyword itself provides a resource type hint (database, queue, etc.).
 3. **Relationships**: `-->`, `->`, `..>`, `--`, with optional labels `: label`. Extract source, target, and label.
 4. **Groupings**: `package "Label" { ... }`, `rectangle "Label" { ... }`, `cloud "Label" { ... }`, `node "Label" { ... }`. Nested groupings represent service boundaries.
-5. **Stdlib includes**: `!include <awslib/...>`, `!include <azure/...>`, `!include <gcp/...>`, `!include <cloudinsight/...>`. These import cloud-provider icon macros. After an include, macros like `RDS(alias, "Label", "tech")`, `Lambda(alias, "Label")`, `EC2(alias, "Label")` declare resources with explicit cloud types.
+5. **Stdlib includes**: `!include <awslib/...>` (AWS icon macros). Other providers' includes are ignored. After an include, macros like `RDS(alias, "Label", "tech")`, `Lambda(alias, "Label")`, `EC2(alias, "Label")` declare resources with explicit cloud types.
+
+## Output
+**Output: hints only** — `source=doc`, confidence capped at Medium; only live evidence can raise it.
 
 ## What to extract
-- **Resource types**: from PlantUML keywords (`database`, `queue`, `cloud`, `node`), from stdlib macro names (`RDS`, `Lambda`, `EC2`, `S3Bucket`, `CloudSQL`, `AKS`), and from label text containing resource type keywords
+- **Resource types**: from PlantUML keywords (`database`, `queue`, `cloud`, `node`), from stdlib macro names (`RDS`, `Lambda`, `EC2`, `S3Bucket`), and from label text containing resource type keywords
 - **Resource names**: from quoted labels in node declarations and stdlib macro invocations
 - **Relationships**: from arrows between aliases/nodes, with edge labels
 - **Cloud context**: from stdlib include paths (e.g., `<awslib/...>` → AWS), from `cloud` groupings labeled with regions or provider names
 - **Service boundaries**: from `package`, `rectangle`, `cloud`, and `node` groupings
-- **Technology metadata**: from the third argument of stdlib macros (e.g., `RDS(db, "orders-db", "PostgreSQL")` → engine=PostgreSQL)
+- **Technology metadata**: the third (free-text) argument of stdlib macros (e.g., `RDS(db, "orders-db", "PostgreSQL")`) is a HINT, not a fact: record it as `engine-hint=PostgreSQL`, not as a verified engine or version
 
 ## Extraction examples
 
@@ -59,10 +62,10 @@ orderFn --> cache : port 6379
 
 **Extracted hints:**
 
-- Resource: type=ALB, name="api-alb", cloud=AWS, protocol=HTTPS (from `ELBApplicationLoadBalancer` macro)
-- Resource: type=Lambda, name="order-handler", cloud=AWS, runtime=Node.js 20 (from `Lambda` macro)
-- Resource: type=RDS, name="orders-db", cloud=AWS, engine=PostgreSQL 15 (from `RDS` macro)
-- Resource: type=ElastiCache Redis, name="session-cache", cloud=AWS, engine=Redis 7 (from `ElastiCacheForRedis` macro)
+- Resource: type=ALB, name="api-alb", cloud=AWS, protocol-hint=HTTPS (from `ELBApplicationLoadBalancer` macro)
+- Resource: type=Lambda, name="order-handler", cloud=AWS, runtime-hint=Node.js 20 (from `Lambda` macro)
+- Resource: type=RDS, name="orders-db", cloud=AWS, engine-hint=PostgreSQL 15 (from `RDS` macro)
+- Resource: type=ElastiCache Redis, name="session-cache", cloud=AWS, engine-hint=Redis 7 (from `ElastiCacheForRedis` macro)
 - Relationship: api-alb → order-handler (/api/orders)
 - Relationship: order-handler → orders-db (port 5432)
 - Relationship: order-handler → session-cache (port 6379)

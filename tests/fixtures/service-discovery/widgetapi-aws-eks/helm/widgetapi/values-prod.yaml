@@ -4,7 +4,7 @@ image:
 serviceAccount:
   annotations:
     # Filled in from platform TF output `widgetapi_workload_role_arn`.
-    eks.amazonaws.com/role-arn: arn:aws:iam::111111111111:role/widgetapi-prod-workload
+    eks.amazonaws.com/role-arn: arn:aws:iam::123456789012:role/widgetapi-prod-workload
 
 web:
   replicaCount: 4
@@ -15,6 +15,10 @@ web:
 
 worker:
   replicaCount: 3
+
+secretsStore:
+  enabled: true
+  environment: prod
 
 ingress:
   hosts:
@@ -31,11 +35,11 @@ env:
   DB_HOST_REPLICA: widgetapi-prod-db-ro.cluster-abc.eu-west-1.rds.amazonaws.com
   DB_NAME: widgetapi
   DB_USER: widgetapi
-  DB_SECRET_ARN: arn:aws:secretsmanager:eu-west-1:111111111111:secret:rds!db-widgetapi-prod
+  DB_SECRET_ARN: arn:aws:secretsmanager:eu-west-1:123456789012:secret:rds!db-widgetapi-prod
   CACHE_PRIMARY_HOST: widgetapi-prod-cache.abc.ng.0001.euw1.cache.amazonaws.com
   CACHE_READER_HOST: widgetapi-prod-cache-ro.abc.ng.0001.euw1.cache.amazonaws.com
   UPLOADS_BUCKET: widgetapi-prod-uploads
-  ASYNC_QUEUE_URL: https://sqs.eu-west-1.amazonaws.com/111111111111/widgetapi-prod-async
+  ASYNC_QUEUE_URL: https://sqs.eu-west-1.amazonaws.com/123456789012/widgetapi-prod-async
   AWS_REGION: eu-west-1
 
 datadog:

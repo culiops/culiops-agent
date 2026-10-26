@@ -16,7 +16,7 @@ A SOPS-encrypted file (`secrets/prod.enc.yaml`) sits in the repo as a regression
 
 ## Environments
 
-Two environments via `function.json` env interpolation; the operator passes `ENV=prod` (or `ENV=staging`) inline when invoking `lambroll deploy` (e.g., `ENV=prod lambroll deploy`). No env files ship in this fixture — the skill must record the env var as the parameter source and ask the operator which value to catalog against.
+Two environments via `function.json` env interpolation; the operator passes `ENV=prod` (or `ENV=staging`) inline when invoking `lambroll deploy` (e.g., `ENV=prod lambroll deploy`). No env files ship in this fixture — the skill must record the env var as the parameter source and ask the operator which value to catalog against. `function.json:14` also reads `LOG_LEVEL` through `` {{ env `LOG_LEVEL` }} `` and nothing says where it is set: it stays an **unresolved parameter** the skill must ask about.
 
 ## Stack layout
 
@@ -34,6 +34,7 @@ repo-lambroll-only/
 
 - **Detector loading:** `lambroll.md` matches `function.json`.
 - **Cross-stack dependency, not chased:** `{{ tfstate ... }}` references for Role, VPC, layers — recorded as upstream Terraform deps.
-- **Secret reference recording:** `Environment.Variables` value referencing a Secrets Manager ARN is recorded; the secret is never read.
+- **Secret reference recording:** `Environment.Variables` value referencing a Secrets Manager ARN is recorded as a reference; the secret is never read.
+- **Unresolved parameter:** `` {{ env `LOG_LEVEL` }} `` has no source in the repo — listed under unresolved parameters and open questions, never guessed.
 - **SOPS regression:** `secrets/*.enc.yaml` matches the secrets exclusion pattern — skill must NEVER read it; should NOT classify as a deploy artifact and trigger the escape hatch.
 - **Event source noted as out-of-scope:** the EventBridge rule that triggers the function lives in a different stack — recorded as "configured elsewhere".

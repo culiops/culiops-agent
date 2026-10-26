@@ -2,7 +2,7 @@
 
 ## Service Overview
 
-The payments service handles all payment processing for the platform. It runs in AWS account `123456789012`, region `us-east-1`.
+The payments service handles all payment processing for the platform. It runs in AWS account `123456789012`. It is normally served from `us-east-1`; failover drills bring the same stack up in `us-west-2`. This runbook does not say which region is serving at any given time.
 
 ## Infrastructure Components
 

@@ -1,0 +1,14 @@
+service: report-exporter
+
+provider:
+  name: aws
+  runtime: nodejs20.x
+  region: us-east-1
+  stage: ${opt:stage, 'prod'}
+
+functions:
+  export:
+    handler: handler.export
+    timeout: 60
+    events:
+      - schedule: rate(1 day)

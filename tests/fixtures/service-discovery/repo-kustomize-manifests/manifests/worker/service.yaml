@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: notifier-worker
+  labels:
+    app.kubernetes.io/name: notifier
+    app.kubernetes.io/component: worker
+spec:
+  selector:
+    app.kubernetes.io/name: notifier
+    app.kubernetes.io/component: worker
+  ports:
+    - name: metrics
+      port: 9090
+      targetPort: 9090

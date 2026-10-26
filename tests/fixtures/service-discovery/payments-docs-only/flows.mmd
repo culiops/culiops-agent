@@ -1,0 +1,7 @@
+%% Payment request flow. Deliberately shows no region and no account.
+flowchart LR
+    Client([Client apps]) -->|HTTPS| ALB[payments-alb<br>Application Load Balancer]
+    ALB --> API[payments-api<br>ECS Fargate]
+    API -->|SQL| DB[(payments-db<br>RDS PostgreSQL 15)]
+    API -->|session and idempotency keys| Cache[(payments-cache<br>ElastiCache Redis 7)]
+    Worker[payments-legacy-worker<br>EC2 batch reconcile] -.->|nightly reconcile| DB

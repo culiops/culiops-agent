@@ -49,6 +49,9 @@ If you cannot confidently identify a resource type, still list it with [uncertai
 
 Return the structured lists exactly as produced by the model. Do not attempt post-processing or confidence filtering — the operator will review all items.
 
+## Output
+**Output: hints only** — `source=doc`, confidence capped at Medium; only live evidence can raise it.
+
 ## What to extract
 - **Resource types**: from cloud-provider icons, shape conventions (cylinder = database, hexagon = service), and label text
 - **Resource names**: from label text on or adjacent to shapes

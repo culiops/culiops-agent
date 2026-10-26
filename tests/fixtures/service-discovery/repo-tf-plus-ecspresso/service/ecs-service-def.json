@@ -1,6 +1,6 @@
 {
-  "serviceName": "orderapi-svc-${MUST_ENV:ENV}",
-  "desiredCount": "${MUST_ENV:DESIRED_COUNT}",
+  "serviceName": "orderapi-svc-{{ must_env `ENV` }}",
+  "desiredCount": {{ must_env `DESIRED_COUNT` }},
   "launchType": "FARGATE",
   "loadBalancers": [
     {

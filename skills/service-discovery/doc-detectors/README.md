@@ -46,7 +46,7 @@ The `type` field in frontmatter determines which model processes files matching 
 
 | Detector | Format | Type | Notes |
 |----------|--------|------|-------|
-| [`drawio.md`](drawio.md) | Draw.io diagrams | structured | XML parsing, AWS/GCP/Azure shape detection |
+| [`drawio.md`](drawio.md) | Draw.io diagrams | structured | XML parsing, AWS shape detection (`mxgraph.aws4.*`, `resIcon=`) |
 | [`mermaid.md`](mermaid.md) | Mermaid diagrams | structured | Text parsing, embedded-in-markdown support |
 | [`plantuml.md`](plantuml.md) | PlantUML diagrams | structured | Text parsing, stdlib include detection |
 | [`markdown.md`](markdown.md) | Text documentation | text | Keyword extraction from .md/.txt/.adoc/.rst/.docx/.html/.pdf |

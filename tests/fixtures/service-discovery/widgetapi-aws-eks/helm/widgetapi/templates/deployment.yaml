@@ -38,6 +38,16 @@ spec:
             - secretRef:
                 name: {{ .Values.secretEnv.secretName }}
             {{- end }}
+            {{- if .Values.secretsStore.enabled }}
+            - secretRef:
+                name: {{ .Release.Name }}-db
+            {{- end }}
+          {{- if .Values.secretsStore.enabled }}
+          volumeMounts:
+            - name: secrets-store
+              mountPath: /mnt/secrets-store
+              readOnly: true
+          {{- end }}
           readinessProbe:
             httpGet:
               path: /healthz/ready
@@ -52,6 +62,15 @@ spec:
             periodSeconds: 20
           resources:
             {{- toYaml .Values.web.resources | nindent 12 }}
+      {{- if .Values.secretsStore.enabled }}
+      volumes:
+        - name: secrets-store
+          csi:
+            driver: secrets-store.csi.k8s.io
+            readOnly: true
+            volumeAttributes:
+              secretProviderClass: {{ .Release.Name }}-db
+      {{- end }}
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -88,5 +107,24 @@ spec:
             - secretRef:
                 name: {{ .Values.secretEnv.secretName }}
             {{- end }}
+            {{- if .Values.secretsStore.enabled }}
+            - secretRef:
+                name: {{ .Release.Name }}-db
+            {{- end }}
+          {{- if .Values.secretsStore.enabled }}
+          volumeMounts:
+            - name: secrets-store
+              mountPath: /mnt/secrets-store
+              readOnly: true
+          {{- end }}
           resources:
             {{- toYaml .Values.worker.resources | nindent 12 }}
+      {{- if .Values.secretsStore.enabled }}
+      volumes:
+        - name: secrets-store
+          csi:
+            driver: secrets-store.csi.k8s.io
+            readOnly: true
+            volumeAttributes:
+              secretProviderClass: {{ .Release.Name }}-db
+      {{- end }}
