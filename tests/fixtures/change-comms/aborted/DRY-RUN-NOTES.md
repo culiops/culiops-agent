@@ -40,3 +40,56 @@ A general assistant with no skill read both records, asked which platform, and (
 - Record `Date` times were shown with no timezone and the `(UTC)` tag was dropped.
 - A promise to post later was made on the operator's behalf.
 - No draft was saved to the `.culiops/change-comms/` output path.
+
+## Dry-run (with skill)
+
+Run 2026-10-26 by a sonnet runner following SKILL.md; transcript in the SDD dryrun folder. The runner confirmed the 1015 record and the 1000 pre-flight at GATE 1, asked one batch (timezone, apply time, PR link, next steps, anything applied, abort reason), took "Nothing was applied, the pre-flight blocked it" as the answer, and saved a result and a ticket-close. No invented next steps, no impact claim, no plan counts, plain `Label: value` Jira lines. Two README MUSTs failed, both caused by the skill: the skill told it to use `⛔` for an abort (the README and the spec say ❌), and its batch asked for the abort reason even though the record's `Execution:` line already states it, so the draft carries the operator's vaguer "the pre-flight blocked it" instead of RED and the replace of `orders-db`.
+
+Drafts as produced:
+
+result (Google Chat), saved as `expected-output/orders-api-resize-rds-20261026-1500-result.md`:
+
+```text
+⛔ Aborted: orders-api RDS resize (prod), nothing applied
+Reason: the pre-flight blocked it
+Next: <TODO: next steps>
+Ticket: OPS-123
+```
+
+ticket-close (Jira comment), saved as `expected-output/orders-api-resize-rds-20261026-1500-ticket-close.md`:
+
+```text
+Change aborted
+Outcome: aborted, nothing applied
+What: RDS orders-db resize db.t3.medium → db.t3.large
+PR: <TODO: PR link>
+Applied: not applied
+Verification: not run
+Rollback: not needed, nothing was applied
+```
+
+## Findings and fixes
+
+| MUST/MUST-NOT line | pass/FAIL | evidence |
+|---|---|---|
+| MUST: result uses ❌ | FAIL | Draft opens `⛔ Aborted: ...`. SKILL.md Constraint 10 mapped aborted to ⛔ |
+| MUST: result uses the word `aborted` | pass | `⛔ Aborted: orders-api RDS resize (prod), nothing applied` |
+| MUST: result states that nothing was applied | pass | `..., nothing applied` |
+| MUST: result gives the reason from the record (pre-flight RED, replace of `orders-db`) | FAIL | `Reason: the pre-flight blocked it` (operator wording). Neither RED nor the replace of orders-db appears; batch item 8 asked for a reason the record already held |
+| MUST: what happens next is a TODO or operator-supplied | pass | `Next: <TODO: next steps>` |
+| MUST: ticket-close produced | pass | `...-ticket-close.md` saved, Jira comment |
+| MUST: ticket-close lists outcome `aborted` | pass | `Outcome: aborted, nothing applied` |
+| MUST: ticket-close has no applied time | pass | `Applied: not applied` |
+| MUST-NOT: `✅` in any draft | pass | `grep -rn '✅\|Done' aborted/expected-output` returns nothing; same for the transcript's `text` blocks |
+| MUST-NOT: `Done` in any draft | pass | as above |
+| MUST-NOT: any statement that the change was applied, verified or completed | pass | `Applied: not applied`, `Verification: not run`, `Rollback: not needed, nothing was applied` |
+
+Round 1: 9 pass, 2 FAIL.
+
+Not a README line, but an anti-goal: the ticket-close shows `PR: <TODO: PR link>` although the abort happened at the gate and no PR was ever created. A visible TODO for something that does not exist reads as a gap.
+
+Fixes made in the skill (re-run required):
+- Aborted now uses ❌ with the word `Aborted` (Constraint 10, Red Flag row, `messages.md#result`).
+- The abort reason is taken from the record's `Execution:` line when it states one; the batch asks for it only otherwise (Constraint 10, batch, `messages.md` Aborted rule and example).
+- When no PR exists the PR line is omitted (Constraint 8, Red Flag row, `messages.md` ticket-close rule and the "Not completed" example).
+- Timezone and apply time are no longer asked for an abort that shows no time.

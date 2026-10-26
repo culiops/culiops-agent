@@ -38,3 +38,43 @@ A general assistant with no skill asked for the window, impact and platform, the
 - The heads-up omitted the pre-flight verdict word (`GREEN`/`YELLOW`/`RED`).
 - Added unrequested derived times and an extra ask not given by the operator.
 - No draft was saved to the `.culiops/change-comms/` output path.
+
+## Dry-run (with skill)
+
+Run 2026-10-26 by a sonnet runner following SKILL.md. The heads-up keeps `orders-db` and the PR 490 URL, masks everything else, flags the access key found in both records' `#Evidence` with rotate advice, and re-scans the operator's edit (`target host 10.20.30.40` became `<ip>`, logged, operator told the type). The brief's MUST-NOT grep is empty. One README MUST failed: the redaction log has no row for the account ID or for the bucket name that embeds it, because the skill only scanned what it drafted, and those values never reached a draft.
+
+Drafts as produced:
+
+heads-up (Google Chat), saved as `expected-output/orders-api-restrict-rds-ingress-20261026-1500-heads-up.md`:
+
+```text
+🔧 Heads-up: infra change on orders-api (prod)
+When: 2026-10-27 14:00 ICT, 15 min
+What: restrict orders-db security group ingress to the app subnets (target host <ip>)
+Impact: connections drop briefly if the rule is wrong, otherwise none
+Risk: YELLOW (pre-flight)
+Rollback: revert the PR and re-apply, ~10 min
+Ticket: OPS-123 | PR: https://github.com/acme/orders-infra/pull/490
+Reply here if this window conflicts.
+```
+
+## Findings and fixes
+
+| MUST/MUST-NOT line | pass/FAIL | evidence |
+|---|---|---|
+| MUST: `orders-db` kept, ARN shortened | pass | `What: restrict orders-db security group ingress ...`; log row 1 ARN → `orders-db` |
+| MUST: PR URL 490 intact | pass | `Ticket: OPS-123 \| PR: https://github.com/acme/orders-infra/pull/490` |
+| MUST: log lists each masked item by type and location only (account ID, ARN, IP, CIDR, bucket name with account ID) | FAIL | Log has ARN, CIDR x2, IPv4 x2, access key x2, all by type and location (no values). No account-ID row (pre-flight `**Target:**`, iac Context) and no bucket-name row (`orders-backup-<account-id>` in the iac record) |
+| MUST: credential raised as a Flag, not in any draft | pass | `Flag: access key found in ...#Evidence and ...#Evidence ... rotate it.` |
+| MUST: operator edit re-scanned and operator warned | pass | Transcript: "I masked one value you typed: type IPv4, now `<ip>`..."; log row 7 `operator edit (heads-up draft)` |
+| MUST: bucket name embedding the account ID masked or dropped | pass | not present in any output (dropped), though not logged: see the log line above |
+| MUST: `0.0.0.0/0` not asserted | pass | n/a |
+| MUST: date 2026-10-27 or `tomorrow` | pass | `When: 2026-10-27 14:00 ICT, 15 min` |
+| MUST-NOT: `123456789012`, `10.20.30.40`, `10.20.0.0/16`, `AKIAIOSFODNN7EXAMPLE` anywhere in expected-output | pass | `grep -rnE '123456789012\|10\.20\.30\.40\|10\.20\.0\.0/16\|AKIAIOSFODNN7EXAMPLE' redaction/expected-output` returns nothing |
+
+Round 1: 8 pass, 1 FAIL.
+
+Fixes made in the skill (re-run required):
+- The redaction pass also runs once over the full text of every source record read; every match gets a log row per type per `record#section`, marked `(dropped)` if it never reached a draft or the fact table; an embedded ID is typed `account ID (in bucket name)` (SKILL.md Step 3, Red Flag row, `redaction.md`).
+- An edit that breaks the line limit is folded into the nearest line and the operator is told (the runner did this; now written down).
+- ARN guide regex no longer swallows trailing punctuation; chat title line bold.

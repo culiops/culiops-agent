@@ -43,3 +43,62 @@ A general assistant with no skill listed the three candidate records, left out t
 - Heads-up and result drafts are paragraph-length, with extra asks the operator did not request, not short copy-paste messages.
 - Missing facts never became visible `<TODO: ...>` markers.
 - No draft was saved to the `.culiops/change-comms/` output path and there was no fact table for the review gate.
+
+## Dry-run (with skill)
+
+Run 2026-10-26 by a sonnet runner following SKILL.md. The runner offered the 1015 record and the 1000 pre-flight at GATE 1 (the stale rotate-logs record was not offered), asked a heads-up batch (timezone, window, impact), then a separate post-apply batch (apply time, outcome, verification) before the result. The record `Outcome: completed` was never used as an apply claim. All README lines pass.
+
+Drafts as produced:
+
+heads-up (Google Chat), saved as `expected-output/orders-api-resize-rds-20261026-1500-heads-up.md`:
+
+```text
+🔧 Heads-up: infra change on orders-api (prod)
+When: 2026-10-27 14:00 ICT, 15 min
+What: resize RDS orders-db db.t3.medium → db.t3.large
+Impact: ~30-60s Multi-AZ failover, writes may fail briefly
+Risk: YELLOW (pre-flight)
+Rollback: revert PR + apply, ~10 min
+Ticket: OPS-123 | PR: https://github.com/acme/orders-infra/pull/482
+Reply here if this window conflicts.
+```
+
+result (Google Chat), saved as `expected-output/orders-api-resize-rds-20261026-1500-result.md`:
+
+```text
+✅ Done: orders-api RDS resize (prod), applied 14:12 ICT
+Verified: connections + error rate normal for 15 min
+Ticket: OPS-123
+```
+
+ticket-close (Jira comment), saved as `expected-output/orders-api-resize-rds-20261026-1500-ticket-close.md`:
+
+```text
+Change completed
+What: RDS orders-db resized db.t3.medium → db.t3.large
+PR: https://github.com/acme/orders-infra/pull/482
+Applied: 14:12 ICT
+Verification: connections + error rate normal for 15 min
+Rollback: not needed. Revert PR + apply if required.
+```
+
+## Findings and fixes
+
+| MUST/MUST-NOT line | pass/FAIL | evidence |
+|---|---|---|
+| MUST: confirm the 1015 record and 1000 pre-flight, not rotate-logs | pass | GATE 1: `I'll use .../orders-api-resize-rds-20261027-1015.md (Date 2026-10-27 10:15 ...) and .../orders-api-resize-rds-20261027-1000.md ...`; operator turn 2 confirms |
+| MUST: ask for the timezone when the window arrives without one | pass | Batch A item 1 asked the timezone; turn 3 had none, turn 4 `ICT` answered it |
+| MUST: heads-up at most 8 lines with `YELLOW`, `OPS-123`, PR 482 | pass | 8 lines; `Risk: YELLOW (pre-flight)`; `Ticket: OPS-123 \| PR: https://github.com/acme/orders-infra/pull/482` |
+| MUST: impact is the operator's text; rollback cites `#Change Plan` | pass | `Impact: ~30-60s Multi-AZ failover, writes may fail briefly`; fact-table Rollback cites `record: .culiops/iac-change-execution/orders-api-resize-rds-20261027-1015.md#Change Plan` |
+| MUST: ask apply time, outcome and verification BEFORE the result | pass | Transcript: Batch B asked before Step 3 (result) |
+| MUST: result contains `14:12 ICT` | pass | `✅ Done: orders-api RDS resize (prod), applied 14:12 ICT` |
+| MUST: ticket-close has the PR URL, `14:12 ICT` and the operator's verification | pass | `PR: https://github.com/acme/orders-infra/pull/482`, `Applied: 14:12 ICT`, `Verification: connections + error rate normal for 15 min` |
+| MUST: pre-flight `(UTC)` and record `Date` never used as the window timezone | pass | window `2026-10-27 14:00 ICT`; ICT is operator-supplied |
+| MUST: date 2026-10-27 or `tomorrow` | pass | `When: 2026-10-27 14:00 ICT, 15 min` |
+| MUST-NOT: an apply claim sourced from `Outcome: completed` | pass | Apply outcome, time, verification all `operator-supplied` |
+| MUST-NOT: `10:15` shown as an apply time | pass | `10:15` only in the GATE 1 line and a fact-table note as the record write time |
+| MUST-NOT: the stale rotate-logs record used as a source | pass | not in any Sources line or fact-table row |
+
+Round 1: 12 pass, 0 FAIL.
+
+No fix targeted a failure here. The runner's own choices (batch per point in time, a GATE 2 per message, `applied` in the title, the slug derivation) are now written into the skill. Re-run because the output changes: chat title lines bold and no fixed-shape fact-table rows.
