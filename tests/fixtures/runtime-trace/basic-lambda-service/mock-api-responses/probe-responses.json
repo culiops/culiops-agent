@@ -1,0 +1,81 @@
+{
+  "_note": "GATE 1a scoping probe: one approved mini-batch, read-only. Only probe-010 is billed ($0.01). Responses trimmed to the fields the skill uses.",
+  "probe-001": {
+    "api": "sts:GetCallerIdentity",
+    "response": {"Account": "123456789012", "Arn": "arn:aws:iam::123456789012:user/alice", "UserId": "AIDAEXAMPLEALICE"},
+    "check": "Account equals operator-typed account 123456789012 -> OK"
+  },
+  "probe-002": {
+    "api": "iam:ListAccountAliases",
+    "response": {"AccountAliases": ["acme-prod"]}
+  },
+  "probe-003": {
+    "api": "organizations:DescribeOrganization",
+    "response": {"Organization": {"Id": "o-exampleorg1", "MasterAccountId": "111111111111", "FeatureSet": "ALL"}},
+    "check": "MasterAccountId 111111111111 != 123456789012 -> member account, not payer. No LINKED_ACCOUNT filter needed on CE (a member sees only its own account). A standalone account would return AWSOrganizationsNotInUseException, which is equally fine."
+  },
+  "probe-004": {
+    "api": "resource-explorer-2:ListIndexes",
+    "region": "us-east-1",
+    "response": {
+      "Indexes": [
+        {"Region": "us-east-1", "Type": "AGGREGATOR", "Arn": "arn:aws:resource-explorer-2:us-east-1:123456789012:index/11111111-aaaa-bbbb-cccc-000000000001"},
+        {"Region": "us-west-2", "Type": "LOCAL", "Arn": "arn:aws:resource-explorer-2:us-west-2:123456789012:index/11111111-aaaa-bbbb-cccc-000000000002"},
+        {"Region": "eu-west-1", "Type": "LOCAL", "Arn": "arn:aws:resource-explorer-2:eu-west-1:123456789012:index/11111111-aaaa-bbbb-cccc-000000000003"}
+      ]
+    },
+    "_note": "Fixture shows 3 of 17 entries; the full response has 1 AGGREGATOR (us-east-1) + 16 LOCAL. 14 entries elided."
+  },
+  "probe-005": {
+    "api": "resource-explorer-2:GetIndex",
+    "region": "us-east-1",
+    "response": {"Type": "AGGREGATOR", "State": "ACTIVE", "ReplicatingFrom": ["us-west-2", "eu-west-1"]},
+    "_note": "ReplicatingFrom is abbreviated to 2 of 16 Regions."
+  },
+  "probe-006": {
+    "api": "resource-explorer-2:ListViews",
+    "region": "us-east-1",
+    "response": {"Views": ["arn:aws:resource-explorer-2:us-east-1:123456789012:view/all-resources/22222222-aaaa-bbbb-cccc-000000000001"]}
+  },
+  "probe-007": {
+    "api": "resource-explorer-2:GetView",
+    "region": "us-east-1",
+    "response": {
+      "View": {
+        "ViewArn": "arn:aws:resource-explorer-2:us-east-1:123456789012:view/all-resources/22222222-aaaa-bbbb-cccc-000000000001",
+        "Filters": {"FilterString": ""},
+        "IncludedProperties": [{"Name": "tags"}]
+      }
+    },
+    "check": "View lives in the aggregator Region (us-east-1) and includes the `tags` property -> tag filtering and Owner hint are valid."
+  },
+  "probe-008": {
+    "api": "cloudtrail:DescribeTrails",
+    "region": "us-east-1",
+    "response": {"trailList": [{"Name": "mgmt-trail", "IsMultiRegionTrail": true, "S3BucketName": "acme-cloudtrail-archive", "HomeRegion": "us-east-1"}]},
+    "check": "Informs only the Gap about history older than 90 days / data events. It is NOT the capability test for LookupEvents."
+  },
+  "probe-009": {
+    "api": "cloudtrail:LookupEvents",
+    "region": "us-east-1",
+    "request": {"MaxResults": 1},
+    "response": {"Events": [{"EventId": "00000000-0000-0000-0000-00000000aaaa", "EventName": "ConsoleLogin", "EventTime": "2026-05-12T15:24:51Z", "EventSource": "signin.amazonaws.com"}]},
+    "check": "1 page returned -> Event history reachable. This is the CloudTrail capability test."
+  },
+  "probe-010": {
+    "api": "ce:GetCostAndUsage",
+    "request": {
+      "TimePeriod": {"Start": "2026-05-10", "End": "2026-05-11"},
+      "Granularity": "DAILY",
+      "Metrics": ["AmortizedCost"],
+      "Filter": {"Tags": {"Key": "service", "Values": ["payments"], "MatchOptions": ["EQUALS"]}}
+    },
+    "response": {
+      "ResultsByTime": [
+        {"TimePeriod": {"Start": "2026-05-10", "End": "2026-05-11"}, "Total": {"AmortizedCost": {"Amount": "0.6846", "Unit": "USD"}}, "Estimated": false}
+      ]
+    },
+    "cost": "$0.01",
+    "check": "Non-zero under the tag filter -> `service` is activated as a cost-allocation tag; the tag-filtered CE plan is meaningful."
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "_note": "tg-001, Step 2b fallback (free). resourcegroupstaggingapi:GetResources is REGIONAL: this call was made in us-east-1 only, so it can say nothing about other Regions. Tags are returned, so the Owner hint (aws:cloudformation:stack-name) is still available.",
+  "_request": {
+    "api": "resourcegroupstaggingapi:GetResources",
+    "region": "us-east-1",
+    "TagFilters": [{"Key": "service", "Values": ["payments"]}],
+    "callId": "tg-001"
+  },
+  "PaginationToken": "",
+  "ResourceTagMappingList": [
+    {"ResourceARN": "arn:aws:lambda:us-east-1:123456789012:function:payments-charge", "Tags": [{"Key": "service", "Value": "payments"}, {"Key": "aws:cloudformation:stack-name", "Value": "payments-stack"}]},
+    {"ResourceARN": "arn:aws:lambda:us-east-1:123456789012:function:payments-cleanup", "Tags": [{"Key": "service", "Value": "payments"}, {"Key": "aws:cloudformation:stack-name", "Value": "payments-stack"}]},
+    {"ResourceARN": "arn:aws:lambda:us-east-1:123456789012:function:payments-refund", "Tags": [{"Key": "service", "Value": "payments"}, {"Key": "aws:cloudformation:stack-name", "Value": "payments-stack"}]},
+    {"ResourceARN": "arn:aws:sqs:us-east-1:123456789012:payments-retry-queue", "Tags": [{"Key": "service", "Value": "payments"}, {"Key": "aws:cloudformation:stack-name", "Value": "payments-stack"}]},
+    {"ResourceARN": "arn:aws:dynamodb:us-east-1:123456789012:table/payments-idempotency", "Tags": [{"Key": "service", "Value": "payments"}, {"Key": "aws:cloudformation:stack-name", "Value": "payments-stack"}]}
+  ]
+}

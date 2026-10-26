@@ -1,8 +1,16 @@
 {
+  "_note": "probe-010 (GATE 1a): the only billed call before the plan is refused. Tag-filtered, 1 day, AmortizedCost, cost $0.01. Non-zero under the tag filter -> cost-allocation tag active.",
+  "request": {
+    "TimePeriod": {"Start": "2026-05-10", "End": "2026-05-11"},
+    "Granularity": "DAILY",
+    "Metrics": ["AmortizedCost"],
+    "Filter": {"Tags": {"Key": "service", "Values": ["platform-core"], "MatchOptions": ["EQUALS"]}}
+  },
   "ResultsByTime": [
     {
-      "TimePeriod": {"Start": "2026-05-11", "End": "2026-05-12"},
-      "Total": {"UnblendedCost": {"Amount": "742.18", "Unit": "USD"}}
+      "TimePeriod": {"Start": "2026-05-10", "End": "2026-05-11"},
+      "Total": {"AmortizedCost": {"Amount": "742.18", "Unit": "USD"}},
+      "Estimated": false
     }
   ]
 }

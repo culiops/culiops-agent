@@ -1,7 +1,7 @@
 ---
-runtime-profile-schema: 1
+runtime-profile-schema: 2
 runtime-trace-version: 0.6.0
-generated-at: 2026-05-12T15:30:00Z
+generated-at: 2026-05-12T15:40:00Z
 service: payments
 account: "123456789012"
 region: us-east-1
@@ -16,154 +16,224 @@ intent-category: takeover
 - Why it was generated: Service takeover from the Pay Team, scheduled for 2026-06-15. We have no documentation and want a runtime baseline before the handoff meeting.
 - Intent category: takeover
 - Who should read this: Incoming on-call rotation for the payments service (the Platform Team).
-- What it covers: spend (30d), control-plane events (90d), activity baselines (14d), cross-region resources (point-in-time).
-- What it does NOT cover: application logs, request-level traffic, traces, IaC, runbooks, on-call procedures, secret ownership (see Gaps and Caveats).
-- How fresh is this: generated 2026-05-12T15:30:00Z. AWS state may have changed since.
+- What it covers: tag-attributed spend (30 closed days), control-plane events (90d), configured callers (point-in-time), activity baselines (14d), cross-Region resources (point-in-time).
+- What it does NOT cover: application logs, request-level traffic, traces, IaC, runbooks, on-call procedures, secret ownership, data-plane callers actually observed (see Gaps and Caveats).
+- How fresh is this: generated 2026-05-12T15:40:00Z. AWS state may have changed since.
 
 ## Overview
 
 - Service: payments
-- AWS account: 123456789012
+- AWS account: 123456789012 (alias `acme-prod`; member account of an AWS Organization, not the payer; identity verified with `sts:GetCallerIdentity` = operator-typed account)
 - Primary region: us-east-1
 - Scoping primitive: tag `service=payments` (verbatim)
 - Discovery source: runtime-trace v0.6.0
-- Run timestamp: 2026-05-12T15:30:00Z (UTC)
+- Run timestamp: 2026-05-12T15:40:00Z (UTC)
 - Operator: arn:aws:iam::123456789012:user/alice
 
 | Source | Status | Reason |
 |---|---|---|
+| Scoping probe (GATE 1a) | ✓ ran | 10 read-only calls, 1 billed (CE, $0.01) |
+| Resource Explorer (resolve + cross-Region) | ✓ ran | Step 2b, `re-001`; aggregator view in us-east-1 |
 | Cost Explorer | ✓ ran | |
 | CloudTrail LookupEvents | ✓ ran | |
+| Wiring (Lambda / SQS reads) | ✓ ran | |
 | CloudWatch GetMetricData | ✓ ran | |
-| Resource Explorer | ✓ ran | |
 
-Time windows: Cost = 30d (2026-04-12 → 2026-05-12); CloudTrail = 90d; CloudWatch = 14d hourly + 24h at 5min; RE = point-in-time.
+Time windows: Cost = 30 closed days (2026-04-11 -> 2026-05-11, End exclusive; DAILY, summed; 0 days flagged Estimated); CloudTrail = 90d (2026-02-11 -> 2026-05-12); CloudWatch = 14d hourly; Wiring and Resource Explorer = point-in-time.
 
-Total cost of this run: $0.022 (cap was $1.00).
+Total cost of this run: $0.0302 (cap was $1.00).
+
+### Resolved resource set (Step 2b, `re-001`)
+
+Resolved by Resource Explorer `Search` `tag:service=payments` (free) before the plan was priced. Shown to and accepted by the operator at Gate 3. Everything below targets exactly these 5 resources.
+
+| Resource | Type | Region | Owner hint (`aws:cloudformation:stack-name`) |
+|---|---|---|---|
+| payments-charge | lambda:function | us-east-1 | payments-stack |
+| payments-refund | lambda:function | us-east-1 | payments-stack |
+| payments-cleanup | lambda:function | us-east-1 | payments-stack |
+| payments-retry-queue | sqs:queue | us-east-1 | payments-stack |
+| payments-idempotency | dynamodb:table | us-east-1 | payments-stack |
 
 ## TL;DR
 
 *Auto-generated from sections below. Verify against tables before consuming.*
 
-- Top spend: NAT Gateway data transfer ($24.88/mo, ~41% of bill) — not in the original diagram.
-- DynamoDB is in scope ($4.18/mo) — not in the original diagram.
-- Two IAM principals touched the service in last 90d: a deploy role (CI) and one engineer (read-only console).
-- `payments-cleanup` Lambda is idle (zero invocations in 14d) — candidate for sunset.
-- No cross-region drift; all five resources confirmed in us-east-1.
+- Spend attributable to tag `service=payments`: $23.02 over 30 closed days (Lambda 80.0%, DynamoDB 18.2%, SQS 1.8%). DynamoDB `payments-idempotency` is $4.18 of that; its metrics are not collected (resource type has no examples file).
+- Shared NAT / data-transfer cost is not attributable by tag; account-level context only. If any payments Lambda runs in a VPC, its outbound traffic may bill on shared infrastructure not covered by this profile.
+- Management events show who managed these resources (`PaymentsDeployRole` = CI, and `alice`). Who is configured to call them is in Wiring: API Gateway -> `payments-charge`; `payments-retry-queue` -> `payments-refund`. Data-plane callers are not observed.
+- `payments-cleanup`: no activity observed in 14d; window too short to judge periodic jobs — ask the outgoing team what payments-cleanup does.
+- No resources outside us-east-1 (aggregator-Region view with tags, indexes in 17 Regions, search complete).
 
 ## Spend Profile (Cost Explorer)
 
-**Request:** `ce:GetCostAndUsage` GROUP BY DIMENSION=SERVICE, TimePeriod=2026-04-12→2026-05-12, Granularity=MONTHLY. Call ID: `ce-001`.
+Scope: every call carries `Filter: Tags service=payments`, so the figures below are the spend **tagged** for this service. Cost-allocation tag `service` is active (GATE 1a probe returned a non-zero tagged amount). Window: 2026-04-11 -> 2026-05-11 (End exclusive), `DAILY`, 30 daily rows summed; days flagged `Estimated` would be excluded (none in this window). Metric `AmortizedCost`; record types limited to `Usage`, `DiscountedUsage`, `SavingsPlanCoveredUsage` (credits, tax, refunds and upfront/recurring fees are not included).
 
-| Service | Monthly cost (USD) | Share |
+**Request** (Call ID `ce-001`, 1 page):
+
+```json
+{"TimePeriod":{"Start":"2026-04-11","End":"2026-05-11"},"Granularity":"DAILY","Metrics":["AmortizedCost"],
+ "Filter":{"And":[{"Tags":{"Key":"service","Values":["payments"],"MatchOptions":["EQUALS"]}},
+                  {"Dimensions":{"Key":"RECORD_TYPE","Values":["Usage","DiscountedUsage","SavingsPlanCoveredUsage"]}}]},
+ "GroupBy":[{"Type":"DIMENSION","Key":"SERVICE"}]}
+```
+
+| Service | 30-day cost (USD) | Share |
 |---|---|---|
-| EC2 - Other (NAT, data transfer) | 27.31 | 44% |
-| AWS Lambda | 18.42 | 30% |
-| Amazon CloudWatch | 11.07 | 18% |
-| Amazon DynamoDB | 4.18 | 7% |
-| Amazon SQS | 0.42 | <1% |
+| AWS Lambda | 18.42 | 80.0% |
+| Amazon DynamoDB | 4.18 | 18.2% |
+| Amazon Simple Queue Service | 0.42 | 1.8% |
 
-*Total: $61.40/mo.*
+*Total: $23.02 (sum of 30 daily rows).*
 
-**Services billing but absent from diagram:** Amazon DynamoDB, EC2 - Other (NAT Gateway).
+**Request:** same Filter / window / granularity, `GroupBy USAGE_TYPE`. Call ID `ce-002`, 1 page.
 
-**Request:** `ce:GetCostAndUsage` GROUP BY DIMENSION=USAGE_TYPE. Call ID: `ce-002`.
+| Usage type | 30-day cost (USD) | Share of tagged spend |
+|---|---|---|
+| USE1-Lambda-GB-Second | 12.04 | 52.3% |
+| USE1-Request | 6.38 | 27.7% |
+| USE1-WriteRequestUnits | 2.71 | 11.8% |
+| USE1-ReadRequestUnits | 0.94 | 4.1% |
+| USE1-TimedStorage-ByteHrs | 0.53 | 2.3% |
+| USE1-Requests-Tier1 | 0.42 | 1.8% |
 
-Top usage types (last 30d):
+*Total: $23.02 (equals `ce-001`).*
 
-| Usage type | Cost (USD) |
-|---|---|
-| USE1-NatGateway-Bytes | 24.88 |
-| USE1-Lambda-GB-Second | 12.04 |
-| USE1-CW-Ingest-Bytes | 8.61 |
-| USE1-Lambda-Request | 6.38 |
-| USE1-DataProcessing-Bytes | 2.43 |
+**Account-level context (not attributable to this service):** NAT Gateway and cross-AZ / internet data transfer sit on shared infrastructure that is not tagged `service=payments`. They do not appear above and no unfiltered Cost Explorer query was run to estimate them.
 
 ## Control-Plane Activity (CloudTrail)
 
-**Request:** `cloudtrail:LookupEvents` filter=ResourceName for 5 ARNs, last 90d. Call ID: `ct-001`.
+**Requests:** `cloudtrail:LookupEvents`, one call series per resource name (the API accepts one lookup attribute per call): `payments-charge` (`ct-001`), `payments-refund` (`ct-002`), `payments-cleanup` (`ct-003`), `payments-retry-queue` (`ct-004`), `payments-idempotency` (`ct-005`). Region us-east-1, last 90d, page cap 20 per resource, paced at <= 2 requests/s. All 5 series ended on page 1 (no truncation). 5 events in total.
 
 Top API actions:
 
 | API action | Event count |
 |---|---|
-| UpdateFunctionCode | 1 |
+| UpdateFunctionCode | 2 |
 | UpdateFunctionConfiguration | 1 |
 | GetFunction | 1 |
+| DescribeTable | 1 |
+
+*Management events only — principals that managed these resources; data-plane callers are in Wiring.*
 
 Principals touching this service:
 
 | Principal | Type | Last seen | Event count |
 |---|---|---|---|
-| arn:aws:iam::123456789012:role/PaymentsDeployRole | AssumedRole | 2026-05-09T14:22:25Z | 2 |
-| arn:aws:iam::123456789012:user/alice | IAMUser | 2026-05-10T09:14:02Z | 1 |
+| arn:aws:iam::123456789012:role/PaymentsDeployRole | AssumedRole | 2026-05-09T14:22:25Z | 3 |
+| arn:aws:iam::123456789012:user/alice | IAMUser | 2026-05-10T09:15:11Z | 2 |
 
 Notable change events:
 
 | Time (UTC) | Event | Principal | Resource | EventId |
 |---|---|---|---|---|
+| 2026-05-09T14:21:40Z | UpdateFunctionCode | PaymentsDeployRole | payments-refund | 4d5e6f70-... |
 | 2026-05-09T14:22:18Z | UpdateFunctionCode | PaymentsDeployRole | payments-charge | 1a2b3c4d-... |
 | 2026-05-09T14:22:25Z | UpdateFunctionConfiguration | PaymentsDeployRole | payments-charge | 2b3c4d5e-... |
 
-**Principals not in any known runbook:** flag both for follow-up with the outgoing team (takeover interview).
+`payments-cleanup` and `payments-retry-queue` have no management events in the 90-day window.
+
+**Open question for the outgoing team:** are `PaymentsDeployRole` and `alice` the only expected managers of these resources?
+
+## Wiring (configured callers)
+
+Free, read-only calls. This block shows what is **configured** to call each resource (resource-based policies, event source mappings, queue policies), not who actually called. Identity-based grants (IAM roles with `lambda:InvokeFunction`) and EventBridge / Scheduler targets are not enumerated.
+
+| Target | Configured caller | Mechanism | Call ID |
+|---|---|---|---|
+| payments-charge | API Gateway, `AWS:SourceArn` = `arn:aws:execute-api:us-east-1:123456789012:a1b2c3d4e5/*/POST/charge` | Lambda resource policy (`lambda:GetPolicy`) | `wr-001` |
+| payments-refund | SQS queue `payments-retry-queue` (Enabled, batch size 10) | Event source mapping (`lambda:ListEventSourceMappings`) | `wr-005` |
+| payments-retry-queue | role `payments-charge-exec` may `sqs:SendMessage` | Queue policy (`sqs:GetQueueAttributes` Policy) | `wr-007` |
+| payments-cleanup | none found | `GetPolicy` -> ResourceNotFoundException (no resource policy); no event source mappings | `wr-003`, `wr-006` |
+
+Also read: `payments-refund` has no resource policy (`wr-002`); `payments-charge` and `payments-cleanup` have no event source mappings (`wr-004`, `wr-006`); `payments-retry-queue` has no `RedriveAllowPolicy`, so it is not configured as a dead-letter queue for other queues (`wr-007`).
 
 ## Activity Baselines (CloudWatch)
 
-**Request:** `cloudwatch:GetMetricData` for 3 Lambda functions × 6 metrics = 18 metric queries, 14d hourly. Call IDs: `cw-001` through `cw-018`.
+**Request:** `cloudwatch:GetMetricData`, one request with 23 queries (3 Lambda functions x 6 metrics + 1 SQS queue x 5 metrics), `Period=3600`, 14d, call ID `cw-001`. One follow-up `cloudwatch:ListMetrics` existence check (`cw-002`) for the one empty series.
 
 | Resource | Traffic (14d sum) | Errors (rate) | Throttles | Latency p99 | Concurrency peak | Verdict |
 |---|---|---|---|---|---|---|
-| payments-charge | 449,000 | 39 (0.009%) | 0 | (see audit) | (see audit) | healthy |
-| payments-refund | 9,290 | (see audit) | 0 | (see audit) | (see audit) | healthy |
-| payments-cleanup | 0 | n/a | n/a | n/a | n/a | **idle** |
+| payments-charge | 449,000 | 39 (0.009%) | none reported | 412 ms | 38 | healthy (heuristic) |
+| payments-refund | 9,290 | 4 (0.043%) | none reported | 288 ms | 6 | healthy (heuristic) |
+| payments-cleanup | no datapoints | no datapoints | no datapoints | no datapoints | no datapoints | no-activity-14d |
 
-**Idle suspects:** `payments-cleanup` — zero invocations in 14 days. Candidate for sunset; raise at takeover handoff.
+"none reported" = the Throttles series was empty while Invocations > 0 in the same window; it is not asserted as a numeric 0.
+
+| Resource | Sent / Received / Deleted (14d) | Backlog peak (visible) | Oldest-message age peak | Verdict |
+|---|---|---|---|---|
+| payments-retry-queue | 9,846 / 9,901 / 9,846 | 14 | 3 s | draining (heuristic) |
+
+Verdict definitions (all thresholds are heuristics, not facts about this service):
+
+- `healthy` — `heuristic:` Lambda: Errors/Invocations < 1% and no throttles reported.
+- `draining` — `heuristic:` SQS, not a DLQ (no queue in the resolved set names it as `deadLetterTargetArn`, no `RedriveAllowPolicy`): oldest-message age returns to baseline across the window rather than rising.
+- `no-activity-14d` — Invocations returned no datapoints for the 14d window and `ListMetrics` lists the metric (`no-data (metric exists)`). This is an observation about a 14-day window, not a judgement about the function.
+- DynamoDB `payments-idempotency`: metrics not collected (see Gaps).
+
+**`payments-cleanup`:** the empty `Invocations` series was not read as zero. Existence check `cw-002` (`ListMetrics`, `AWS/Lambda` / `Invocations` / `FunctionName=payments-cleanup`) returned the metric, so the dimensions and Region are right. No activity observed in 14d; window too short to judge periodic jobs — ask the outgoing team what payments-cleanup does.
 
 ## Cross-Region Footprint (Resource Explorer)
 
-**Request:** `resource-explorer-2:Search` Filter=`tag:service=payments`. Call ID: `re-001`.
+**Request:** `resource-explorer-2:Search` `QueryString=tag:service=payments`, `ViewArn=arn:aws:resource-explorer-2:us-east-1:123456789012:view/all-resources/22222222-aaaa-bbbb-cccc-000000000001`. Call ID `re-001` (the same call that resolved the resource set).
+
+Checks that make a cross-Region claim valid:
+
+| Check | Result |
+|---|---|
+| Aggregator Region | us-east-1 (index type `AGGREGATOR`, `ACTIVE`); the view used lives in this Region |
+| Indexed Regions | 17 (1 aggregator + 16 local, from `ListIndexes`); Regions without an index are invisible to Search |
+| View includes `tags` | yes (`GetView` `IncludedProperties=[tags]`), so the tag filter is valid |
+| Search completeness | `Count.Complete=true`, 5 of 5 |
 
 | Region | Count | Resources |
 |---|---|---|
 | us-east-1 | 5 | 3 Lambdas, 1 SQS queue, 1 DynamoDB table |
 
-**Resources outside assumed primary region:** none.
+**Resources outside primary Region (us-east-1):** none — all four checks pass.
 
 ## Gaps and Caveats
 
-- CloudTrail LookupEvents covers management events only, last 90 days. Anything older or any data-event activity (S3 reads, Lambda invokes) is not visible.
-- CloudWatch baselines come from CloudWatch's standard metrics. Custom application metrics (if any) not captured.
-- DynamoDB metrics not collected — resource type not yet supported in `examples/aws/`. Open question for follow-up.
-- Open question for outgoing team: what is `payments-cleanup` for? It has zero recent activity but is still deployed.
-- Open question for outgoing team: deploy role `PaymentsDeployRole` is shared across services or service-specific? Need to know before takeover.
+- CloudTrail LookupEvents covers management events only, last 90 days. A multi-Region trail `mgmt-trail` exists (S3 archive), so older history is available there but was not queried. Data-event activity (S3 reads, Lambda invokes, SQS sends) is not visible.
+- Wiring shows configured access paths, not observed callers. Identity-based grants and EventBridge / Scheduler rules are not enumerated, so "no configured caller found" for `payments-cleanup` is not evidence that nothing invokes it.
+- Spend is tag-attributed only. Untagged or shared cost (NAT Gateway, data transfer, any untagged log ingest) is not attributable and is excluded. Credits, tax, refunds and upfront/recurring fees are excluded by record type.
+- CloudWatch baselines come from standard metrics. Custom application metrics (if any) not captured. A 14-day window cannot show monthly or quarterly jobs.
+- DynamoDB metrics not collected — resource type `dynamodb:table` has no file under `examples/aws/` in this version. Open question for follow-up.
+- Open question for outgoing team: what is `payments-cleanup` for, and how is it triggered?
+- Open question for outgoing team: is deploy role `PaymentsDeployRole` shared across services or specific to payments? Need to know before takeover.
 
 ## Glossary
 
-- **NAT Gateway data transfer:** charges for outbound bytes through NAT Gateway. Often a stealth cost driver when private subnets call external APIs.
+- **Tag-attributed spend:** cost Cost Explorer assigns to resources carrying the cost-allocation tag `service=payments`. It is not the whole bill for the service's dependencies.
 - **Four golden signals:** traffic, latency, errors, saturation (Google SRE book, Ch. 6).
-- **CloudTrail LookupEvents 90-day cap:** AWS-imposed limit on this API. Anything older requires Athena over the CloudTrail S3 archive.
+- **CloudTrail LookupEvents 90-day cap:** AWS-imposed limit on Event history. Anything older requires the trail's S3 archive (Athena), which is out of scope.
+- **Event history:** CloudTrail's default, trail-independent record of the last 90 days of management events in a Region.
 
 ## How to re-run this analysis
 
 - Skill: `runtime-trace`
 - Invocation: scoping primitive `tag:service=payments`, account `123456789012`, region `us-east-1`.
 - Required IAM perms: see `examples/iam-policy-readonly.json` in the skill repo.
-- Required setup: Cost Explorer enabled, CloudTrail logging on, Resource Explorer view configured in `us-east-1`.
-- Expected cost: ~$0.022.
-- What may have drifted since this run: AWS state, IAM principals, spend, cross-region footprint can all change. Re-run before consuming this doc for any operational decision.
+- Required setup: Cost Explorer enabled and `service` activated as a cost-allocation tag; Resource Explorer aggregator view with `tags` in `us-east-1`. CloudTrail Event history is on by default; no trail is required.
+- Expected cost: ~$0.030.
+- What may have drifted since this run: AWS state, IAM principals, spend, wiring and cross-Region footprint can all change. Re-run before consuming this doc for any operational decision.
 
 ## Audit Trail
 
+Sidecars contain **projected fields only** (request + selected response fields; for CloudTrail: EventId, EventTime, EventName, EventSource, ReadOnly, principal ARN, principal type, account, Resources). `requestParameters`, `responseElements`, `sourceIPAddress`, `userAgent` and role session names are never written. Sidecars live under `.culiops/runtime-trace/payments-audit/` and are not committed by the skill. A sample is in `sample-sidecar-ct-001.json`.
+
 | Call ID | Source | API | Cost | Approved at |
 |---|---|---|---|---|
-| ce-001 | Cost Explorer | ce:GetCostAndUsage (SERVICE) | $0.01 | Gate 4, Cost Explorer block |
-| ce-002 | Cost Explorer | ce:GetCostAndUsage (USAGE_TYPE) | $0.01 | Gate 4, Cost Explorer block |
-| ct-001 | CloudTrail | cloudtrail:LookupEvents | $0.00 | Gate 4, CloudTrail block |
-| cw-001..018 | CloudWatch | cloudwatch:GetMetricData | $0.0002 | Gate 4, CloudWatch block |
-| re-001 | Resource Explorer | resource-explorer-2:Search | $0.00 | Gate 4, Resource Explorer block |
+| probe-001..009 | Scoping probe | sts, iam, organizations, resource-explorer-2 (ListIndexes, GetIndex, ListViews, GetView), cloudtrail (DescribeTrails, LookupEvents 1 page) | $0.00 | GATE 1a |
+| probe-010 | Scoping probe | ce:GetCostAndUsage (1 day, tag-filtered) | $0.01 | GATE 1a |
+| re-001 | Resource Explorer | resource-explorer-2:Search | $0.00 | Step 2b (shown at Gate 3) |
+| ce-001 | Cost Explorer | ce:GetCostAndUsage (SERVICE, DAILY, tag-filtered), 1 page | $0.01 | Gate 3 row 1; Gate 4 CE block |
+| ce-002 | Cost Explorer | ce:GetCostAndUsage (USAGE_TYPE, DAILY, tag-filtered), 1 page | $0.01 | Gate 3 row 2; Gate 4 CE block |
+| ct-001..005 | CloudTrail | cloudtrail:LookupEvents, 5 series x 1 page | $0.00 | Gate 3 row 3; Gate 4 CloudTrail block |
+| wr-001..007 | Wiring | lambda:GetPolicy x3, lambda:ListEventSourceMappings x3, sqs:GetQueueAttributes x1 | $0.00 | Gate 3 row 4; Gate 4 Wiring block |
+| cw-001 | CloudWatch | cloudwatch:GetMetricData, 23 metrics | $0.00023 | Gate 3 row 5; Gate 4 CloudWatch block |
+| cw-002 | CloudWatch | cloudwatch:ListMetrics (existence check, 1 request) | $0.00 (free tier) | Gate 3 row 6 (conditional); Gate 4 CloudWatch block |
 
-Total cost: $0.022 (≤ $1.00 cap).
+Cost arithmetic: 3 CE requests x $0.01 = $0.03 (probe + `ce-001` + `ce-002`; 1 page each, no extra pages) + 23 metrics / 1,000 x $0.01 = $0.00023. Total cost: **$0.0302** (≤ $1.00 cap).
 
-Gate sign-offs: alice — Gate 1 @ 15:25Z, Gate 2 @ 15:26Z, Gate 3 @ 15:27Z, Gate 4 @ 15:28Z, Gate 5 @ 15:29Z, Gate 6 @ 15:30Z.
-
-Full per-call responses cached at `.culiops/runtime-trace/payments-audit/<call-id>.json`.
+Gate sign-offs: alice — Gate 1 @ 15:25Z, GATE 1a @ 15:26Z, Gate 2 @ 15:27Z, Gate 3 @ 15:29Z, Gate 4 (CE @ 15:31Z, CloudTrail @ 15:33Z, Wiring @ 15:34Z, CloudWatch @ 15:36Z), Gate 5 @ 15:38Z, Gate 6 @ 15:40Z.

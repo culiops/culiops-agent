@@ -1,0 +1,53 @@
+{
+  "_note": "SAMPLE audit sidecar: what Gate 6 writes to .culiops/runtime-trace/payments-audit/ct-001.json for the raw response in mock-api-responses/cloudtrail-events.json (ct-001). Sidecars hold the request and a PROJECTED response only. Kept per event: EventId, EventTime, EventName, EventSource, ReadOnly, principalArn (sessionIssuer role ARN for assumed roles, userIdentity.arn otherwise), principalType, account, Resources. NEVER written: requestParameters, responseElements, sourceIPAddress, userAgent, the Username / role session name (ci-runner-44), or the raw CloudTrailEvent string. Compare with the raw file: the DB_CONN environment value, the IPs, the user agents and the session name are all gone. The skill does not commit this directory.",
+  "callId": "ct-001",
+  "timestamp": "2026-05-12T15:33:04Z",
+  "source": "CloudTrail",
+  "api": "cloudtrail:LookupEvents",
+  "region": "us-east-1",
+  "request": {
+    "LookupAttributes": [{"AttributeKey": "ResourceName", "AttributeValue": "payments-charge"}],
+    "StartTime": "2026-02-11T15:33:04Z",
+    "EndTime": "2026-05-12T15:33:04Z",
+    "MaxResults": 50
+  },
+  "pagesFetched": 1,
+  "pageCap": 20,
+  "responseProjected": [
+    {
+      "EventId": "1a2b3c4d-1111-2222-3333-444455556666",
+      "EventTime": "2026-05-09T14:22:18Z",
+      "EventName": "UpdateFunctionCode",
+      "EventSource": "lambda.amazonaws.com",
+      "ReadOnly": "false",
+      "principalArn": "arn:aws:iam::123456789012:role/PaymentsDeployRole",
+      "principalType": "AssumedRole",
+      "account": "123456789012",
+      "Resources": [{"ResourceType": "AWS::Lambda::Function", "ResourceName": "payments-charge"}]
+    },
+    {
+      "EventId": "2b3c4d5e-2222-3333-4444-555566667777",
+      "EventTime": "2026-05-09T14:22:25Z",
+      "EventName": "UpdateFunctionConfiguration",
+      "EventSource": "lambda.amazonaws.com",
+      "ReadOnly": "false",
+      "principalArn": "arn:aws:iam::123456789012:role/PaymentsDeployRole",
+      "principalType": "AssumedRole",
+      "account": "123456789012",
+      "Resources": [{"ResourceType": "AWS::Lambda::Function", "ResourceName": "payments-charge"}]
+    },
+    {
+      "EventId": "3c4d5e6f-3333-4444-5555-666677778888",
+      "EventTime": "2026-05-10T09:14:02Z",
+      "EventName": "GetFunction",
+      "EventSource": "lambda.amazonaws.com",
+      "ReadOnly": "true",
+      "principalArn": "arn:aws:iam::123456789012:user/alice",
+      "principalType": "IAMUser",
+      "account": "123456789012",
+      "Resources": [{"ResourceType": "AWS::Lambda::Function", "ResourceName": "payments-charge"}]
+    }
+  ],
+  "cost": "$0.00",
+  "approvedAt": "Gate 3 plan row 3; Gate 4 CloudTrail block"
+}

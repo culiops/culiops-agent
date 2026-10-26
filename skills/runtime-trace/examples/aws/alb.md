@@ -15,7 +15,9 @@ For each ALB in scope, the skill fetches these metrics.
 
 **Verdict heuristic:**
 
-- `idle` — `RequestCount` sum is zero.
-- `healthy` — backend 5XX rate < 1% and `HealthyHostCount` minimum > 0 throughout window.
-- `degraded` — backend 5XX rate ≥ 1% OR `HealthyHostCount` ever dropped to 0.
-- `unknown` — any required metric returned no datapoints.
+- `no-activity-14d` — `RequestCount` has no datapoints (metric listed) or sums to 0.
+- `heuristic: healthy` — backend 5XX rate < 1% and `HealthyHostCount` minimum > 0 throughout window.
+- `heuristic: degraded` — backend 5XX rate ≥ 1% OR `HealthyHostCount` ever dropped to 0.
+- `unknown` — `RequestCount` or `HealthyHostCount` returned `metric-not-found`. The `HTTPCode_*` metrics are sparse: empty with non-zero requests means none occurred.
+
+Empty series are never zero: run the `ListMetrics` existence check (SKILL.md, source d) and record `no-data (metric exists)` or `metric-not-found`. Verdicts describe; they never recommend (Constraint 9). Thresholds are heuristics — always show the raw numbers next to the verdict.

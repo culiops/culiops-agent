@@ -1,0 +1,10 @@
+{
+  "_note": "re-001, Step 2b (free). Shows the head of the resolved set only; the full response is 612 resources across many types. This count is what Gate 3 prices CloudTrail series and CloudWatch metrics against.",
+  "_request": {"api": "resource-explorer-2:Search", "QueryString": "tag:service=platform-core", "region": "us-east-1", "callId": "re-001"},
+  "Count": {"TotalResources": 612, "Complete": true},
+  "Resources": [
+    {"Arn": "arn:aws:ecs:us-east-1:123456789012:service/core-cluster/core-api", "Region": "us-east-1", "ResourceType": "ecs:service"},
+    {"Arn": "arn:aws:lambda:us-east-1:123456789012:function:core-ingest-0001", "Region": "us-east-1", "ResourceType": "lambda:function"},
+    {"Arn": "arn:aws:rds:us-east-1:123456789012:db:core-primary", "Region": "us-east-1", "ResourceType": "rds:db"}
+  ]
+}

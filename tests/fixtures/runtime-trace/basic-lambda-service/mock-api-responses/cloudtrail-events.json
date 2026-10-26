@@ -1,30 +1,78 @@
 {
-  "Events": [
-    {
-      "EventId": "1a2b3c4d-1111-2222-3333-444455556666",
-      "EventName": "UpdateFunctionCode",
-      "EventTime": "2026-05-09T14:22:18Z",
-      "Username": "PaymentsDeployRole",
-      "Resources": [
-        {"ResourceType": "AWS::Lambda::Function", "ResourceName": "payments-charge"}
-      ],
-      "CloudTrailEvent": "{\"userIdentity\":{\"type\":\"AssumedRole\",\"arn\":\"arn:aws:sts::123456789012:assumed-role/PaymentsDeployRole/ci-runner-44\",\"sessionContext\":{\"sessionIssuer\":{\"arn\":\"arn:aws:iam::123456789012:role/PaymentsDeployRole\"}}},\"eventSource\":\"lambda.amazonaws.com\"}"
+  "_note": "RAW LookupEvents responses as the API returns them (held in the session only). One call series per resource name (--lookup-attributes takes ONE item), 5 series, window 2026-02-11 -> 2026-05-12 (90d), region us-east-1, page cap 20/resource, pacing <= 2 req/s. Each series fit on 1 page here (no NextToken). The raw `CloudTrailEvent` string carries requestParameters, sourceIPAddress, userAgent and the role session name; these are NEVER written to a sidecar or to the profile (see ../sample-sidecar-ct-001.json). All secrets below are obviously fake fixture values.",
+  "responses": {
+    "ct-001": {
+      "request": {"LookupAttributes": [{"AttributeKey": "ResourceName", "AttributeValue": "payments-charge"}], "MaxResults": 50},
+      "Events": [
+        {
+          "EventId": "1a2b3c4d-1111-2222-3333-444455556666",
+          "EventName": "UpdateFunctionCode",
+          "ReadOnly": "false",
+          "EventTime": "2026-05-09T14:22:18Z",
+          "EventSource": "lambda.amazonaws.com",
+          "Username": "ci-runner-44",
+          "Resources": [{"ResourceType": "AWS::Lambda::Function", "ResourceName": "payments-charge"}],
+          "CloudTrailEvent": "{\"eventVersion\":\"1.09\",\"userIdentity\":{\"type\":\"AssumedRole\",\"accountId\":\"123456789012\",\"arn\":\"arn:aws:sts::123456789012:assumed-role/PaymentsDeployRole/ci-runner-44\",\"sessionContext\":{\"sessionIssuer\":{\"type\":\"Role\",\"arn\":\"arn:aws:iam::123456789012:role/PaymentsDeployRole\"}}},\"eventSource\":\"lambda.amazonaws.com\",\"eventName\":\"UpdateFunctionCode20150331v2\",\"sourceIPAddress\":\"203.0.113.24\",\"userAgent\":\"aws-sdk-go/1.50.1\",\"requestParameters\":{\"functionName\":\"payments-charge\",\"s3Bucket\":\"acme-artifacts\",\"s3Key\":\"payments/charge-2026-05-09.zip\"},\"responseElements\":{\"functionArn\":\"arn:aws:lambda:us-east-1:123456789012:function:payments-charge\"},\"recipientAccountId\":\"123456789012\"}"
+        },
+        {
+          "EventId": "2b3c4d5e-2222-3333-4444-555566667777",
+          "EventName": "UpdateFunctionConfiguration",
+          "ReadOnly": "false",
+          "EventTime": "2026-05-09T14:22:25Z",
+          "EventSource": "lambda.amazonaws.com",
+          "Username": "ci-runner-44",
+          "Resources": [{"ResourceType": "AWS::Lambda::Function", "ResourceName": "payments-charge"}],
+          "CloudTrailEvent": "{\"eventVersion\":\"1.09\",\"userIdentity\":{\"type\":\"AssumedRole\",\"accountId\":\"123456789012\",\"arn\":\"arn:aws:sts::123456789012:assumed-role/PaymentsDeployRole/ci-runner-44\",\"sessionContext\":{\"sessionIssuer\":{\"type\":\"Role\",\"arn\":\"arn:aws:iam::123456789012:role/PaymentsDeployRole\"}}},\"eventSource\":\"lambda.amazonaws.com\",\"eventName\":\"UpdateFunctionConfiguration20150331v2\",\"sourceIPAddress\":\"203.0.113.24\",\"userAgent\":\"aws-sdk-go/1.50.1\",\"requestParameters\":{\"functionName\":\"payments-charge\",\"environment\":{\"variables\":{\"DB_CONN\":\"postgres://payments:FIXTURE-NOT-A-REAL-SECRET@db.internal:5432/payments\",\"PSP_ENDPOINT\":\"https://psp.example.com\"}}},\"responseElements\":null,\"recipientAccountId\":\"123456789012\"}"
+        },
+        {
+          "EventId": "3c4d5e6f-3333-4444-5555-666677778888",
+          "EventName": "GetFunction",
+          "ReadOnly": "true",
+          "EventTime": "2026-05-10T09:14:02Z",
+          "EventSource": "lambda.amazonaws.com",
+          "Username": "alice",
+          "Resources": [{"ResourceType": "AWS::Lambda::Function", "ResourceName": "payments-charge"}],
+          "CloudTrailEvent": "{\"eventVersion\":\"1.09\",\"userIdentity\":{\"type\":\"IAMUser\",\"accountId\":\"123456789012\",\"arn\":\"arn:aws:iam::123456789012:user/alice\",\"userName\":\"alice\"},\"eventSource\":\"lambda.amazonaws.com\",\"eventName\":\"GetFunction20150331v2\",\"sourceIPAddress\":\"198.51.100.77\",\"userAgent\":\"Mozilla/5.0 (X11; Linux x86_64)\",\"requestParameters\":{\"functionName\":\"payments-charge\"},\"responseElements\":null,\"recipientAccountId\":\"123456789012\"}"
+        }
+      ]
     },
-    {
-      "EventId": "2b3c4d5e-2222-3333-4444-555566667777",
-      "EventName": "UpdateFunctionConfiguration",
-      "EventTime": "2026-05-09T14:22:25Z",
-      "Username": "PaymentsDeployRole",
-      "Resources": [{"ResourceType": "AWS::Lambda::Function", "ResourceName": "payments-charge"}],
-      "CloudTrailEvent": "{\"userIdentity\":{\"type\":\"AssumedRole\",\"arn\":\"arn:aws:sts::123456789012:assumed-role/PaymentsDeployRole/ci-runner-44\"},\"eventSource\":\"lambda.amazonaws.com\"}"
+    "ct-002": {
+      "request": {"LookupAttributes": [{"AttributeKey": "ResourceName", "AttributeValue": "payments-refund"}], "MaxResults": 50},
+      "Events": [
+        {
+          "EventId": "4d5e6f70-4444-5555-6666-777788889999",
+          "EventName": "UpdateFunctionCode",
+          "ReadOnly": "false",
+          "EventTime": "2026-05-09T14:21:40Z",
+          "EventSource": "lambda.amazonaws.com",
+          "Username": "ci-runner-44",
+          "Resources": [{"ResourceType": "AWS::Lambda::Function", "ResourceName": "payments-refund"}],
+          "CloudTrailEvent": "{\"eventVersion\":\"1.09\",\"userIdentity\":{\"type\":\"AssumedRole\",\"accountId\":\"123456789012\",\"arn\":\"arn:aws:sts::123456789012:assumed-role/PaymentsDeployRole/ci-runner-44\",\"sessionContext\":{\"sessionIssuer\":{\"type\":\"Role\",\"arn\":\"arn:aws:iam::123456789012:role/PaymentsDeployRole\"}}},\"eventSource\":\"lambda.amazonaws.com\",\"eventName\":\"UpdateFunctionCode20150331v2\",\"sourceIPAddress\":\"203.0.113.24\",\"userAgent\":\"aws-sdk-go/1.50.1\",\"requestParameters\":{\"functionName\":\"payments-refund\"},\"recipientAccountId\":\"123456789012\"}"
+        }
+      ]
     },
-    {
-      "EventId": "3c4d5e6f-3333-4444-5555-666677778888",
-      "EventName": "GetFunction",
-      "EventTime": "2026-05-10T09:14:02Z",
-      "Username": "alice",
-      "Resources": [{"ResourceType": "AWS::Lambda::Function", "ResourceName": "payments-charge"}],
-      "CloudTrailEvent": "{\"userIdentity\":{\"type\":\"IAMUser\",\"arn\":\"arn:aws:iam::123456789012:user/alice\"},\"eventSource\":\"lambda.amazonaws.com\"}"
+    "ct-003": {
+      "request": {"LookupAttributes": [{"AttributeKey": "ResourceName", "AttributeValue": "payments-cleanup"}], "MaxResults": 50},
+      "Events": []
+    },
+    "ct-004": {
+      "request": {"LookupAttributes": [{"AttributeKey": "ResourceName", "AttributeValue": "payments-retry-queue"}], "MaxResults": 50},
+      "Events": []
+    },
+    "ct-005": {
+      "request": {"LookupAttributes": [{"AttributeKey": "ResourceName", "AttributeValue": "payments-idempotency"}], "MaxResults": 50},
+      "Events": [
+        {
+          "EventId": "5e6f7081-5555-6666-7777-88889999aaaa",
+          "EventName": "DescribeTable",
+          "ReadOnly": "true",
+          "EventTime": "2026-05-10T09:15:11Z",
+          "EventSource": "dynamodb.amazonaws.com",
+          "Username": "alice",
+          "Resources": [{"ResourceType": "AWS::DynamoDB::Table", "ResourceName": "payments-idempotency"}],
+          "CloudTrailEvent": "{\"eventVersion\":\"1.09\",\"userIdentity\":{\"type\":\"IAMUser\",\"accountId\":\"123456789012\",\"arn\":\"arn:aws:iam::123456789012:user/alice\",\"userName\":\"alice\"},\"eventSource\":\"dynamodb.amazonaws.com\",\"eventName\":\"DescribeTable\",\"sourceIPAddress\":\"198.51.100.77\",\"userAgent\":\"Mozilla/5.0 (X11; Linux x86_64)\",\"requestParameters\":{\"tableName\":\"payments-idempotency\"},\"responseElements\":null,\"recipientAccountId\":\"123456789012\"}"
+        }
+      ]
     }
-  ]
+  }
 }

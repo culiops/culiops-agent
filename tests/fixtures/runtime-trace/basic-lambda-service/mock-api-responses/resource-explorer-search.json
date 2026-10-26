@@ -1,10 +1,18 @@
 {
+  "_request": {
+    "api": "resource-explorer-2:Search",
+    "region": "us-east-1",
+    "ViewArn": "arn:aws:resource-explorer-2:us-east-1:123456789012:view/all-resources/22222222-aaaa-bbbb-cccc-000000000001",
+    "QueryString": "tag:service=payments",
+    "callId": "re-001",
+    "step": "Step 2b (resolve resource set), cost: free"
+  },
   "Count": {"TotalResources": 5, "Complete": true},
   "Resources": [
-    {"Arn": "arn:aws:lambda:us-east-1:123456789012:function:payments-charge", "Region": "us-east-1", "ResourceType": "lambda:function"},
-    {"Arn": "arn:aws:lambda:us-east-1:123456789012:function:payments-cleanup", "Region": "us-east-1", "ResourceType": "lambda:function"},
-    {"Arn": "arn:aws:lambda:us-east-1:123456789012:function:payments-refund", "Region": "us-east-1", "ResourceType": "lambda:function"},
-    {"Arn": "arn:aws:sqs:us-east-1:123456789012:payments-retry-queue", "Region": "us-east-1", "ResourceType": "sqs:queue"},
-    {"Arn": "arn:aws:dynamodb:us-east-1:123456789012:table/payments-idempotency", "Region": "us-east-1", "ResourceType": "dynamodb:table"}
+    {"Arn": "arn:aws:lambda:us-east-1:123456789012:function:payments-charge", "Region": "us-east-1", "ResourceType": "lambda:function", "Service": "lambda", "Properties": [{"Name": "tags", "Data": [{"Key": "service", "Value": "payments"}, {"Key": "aws:cloudformation:stack-name", "Value": "payments-stack"}]}]},
+    {"Arn": "arn:aws:lambda:us-east-1:123456789012:function:payments-cleanup", "Region": "us-east-1", "ResourceType": "lambda:function", "Service": "lambda", "Properties": [{"Name": "tags", "Data": [{"Key": "service", "Value": "payments"}, {"Key": "aws:cloudformation:stack-name", "Value": "payments-stack"}]}]},
+    {"Arn": "arn:aws:lambda:us-east-1:123456789012:function:payments-refund", "Region": "us-east-1", "ResourceType": "lambda:function", "Service": "lambda", "Properties": [{"Name": "tags", "Data": [{"Key": "service", "Value": "payments"}, {"Key": "aws:cloudformation:stack-name", "Value": "payments-stack"}]}]},
+    {"Arn": "arn:aws:sqs:us-east-1:123456789012:payments-retry-queue", "Region": "us-east-1", "ResourceType": "sqs:queue", "Service": "sqs", "Properties": [{"Name": "tags", "Data": [{"Key": "service", "Value": "payments"}, {"Key": "aws:cloudformation:stack-name", "Value": "payments-stack"}]}]},
+    {"Arn": "arn:aws:dynamodb:us-east-1:123456789012:table/payments-idempotency", "Region": "us-east-1", "ResourceType": "dynamodb:table", "Service": "dynamodb", "Properties": [{"Name": "tags", "Data": [{"Key": "service", "Value": "payments"}, {"Key": "aws:cloudformation:stack-name", "Value": "payments-stack"}]}]}
   ]
 }

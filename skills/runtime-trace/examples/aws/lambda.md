@@ -15,7 +15,9 @@ For each Lambda function in scope, the skill fetches these metrics with `cloudwa
 
 **Verdict heuristic (used in the four-golden-signals table):**
 
-- `idle` — `Invocations` sum is zero over the 14-day window.
-- `healthy` — `Errors`/`Invocations` < 1% and `Throttles` = 0.
-- `degraded` — `Errors`/`Invocations` ≥ 1% OR `Throttles` > 0.
-- `unknown` — any metric returned no datapoints.
+- `no-activity-14d` — `Invocations` has no datapoints and the metric is listed by `ListMetrics`, or every datapoint is 0. A 14-day window cannot see monthly or quarterly jobs: add an open question ("scheduled? by what?") — never "idle" or "sunset".
+- `heuristic: healthy` — `Errors`/`Invocations` < 1% and `Throttles` = 0.
+- `heuristic: degraded` — `Errors`/`Invocations` ≥ 1% OR `Throttles` > 0.
+- `unknown` — `Invocations` returned `metric-not-found`. `Errors`, `Throttles` and `Duration` are sparse: no datapoints there with non-zero invocations means "none occurred", not unknown.
+
+Empty series are never zero: run the `ListMetrics` existence check (SKILL.md, source d) and record `no-data (metric exists)` or `metric-not-found`. Verdicts describe; they never recommend (Constraint 9). Thresholds are heuristics — always show the raw numbers next to the verdict.
