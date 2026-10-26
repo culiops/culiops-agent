@@ -1,0 +1,22 @@
+{
+  "_note": "Query 0b-1 (ownership probe; also the EBS playbook's Query 1, same call). State=available, Attachments=[] - but the tags are the point: kubernetes.io/created-for/pvc/name and ebs.csi.aws.com/cluster mark this as the backing volume of a PersistentVolume provisioned by the EBS CSI driver. A StatefulSet scaled to 0 leaves its PV's volume 'available'; that is NOT an orphan. Owner = k8s -> ❔ owned-by-k8s. The remaining delete-unattached-ebs.md queries are skipped.",
+  "Volumes": [
+    {
+      "VolumeId": "vol-0dddd1",
+      "State": "available",
+      "Size": 500,
+      "VolumeType": "gp3",
+      "AvailabilityZone": "ap-southeast-1b",
+      "CreateTime": "2026-01-12T05:41:09.000Z",
+      "Encrypted": true,
+      "Attachments": [],
+      "Tags": [
+        {"Key": "kubernetes.io/created-for/pvc/name", "Value": "data-kafka-2"},
+        {"Key": "kubernetes.io/created-for/pvc/namespace", "Value": "streaming"},
+        {"Key": "kubernetes.io/created-for/pv/name", "Value": "pvc-7c1e5a62-0000-4000-8000-000000000002"},
+        {"Key": "ebs.csi.aws.com/cluster", "Value": "true"},
+        {"Key": "CSIVolumeName", "Value": "pvc-7c1e5a62-0000-4000-8000-000000000002"}
+      ]
+    }
+  ]
+}

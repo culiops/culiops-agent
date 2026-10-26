@@ -1,0 +1,6 @@
+{
+  "_note": "Query 5a (item #1). No by-instance API exists, so the sweep lists target groups in the instance's VPC, then asks each for this instance's health. Only prod-api-tg contains it.",
+  "TargetGroups": [
+    {"TargetGroupName": "prod-api-tg", "TargetGroupArn": "arn:aws:elasticloadbalancing:ap-southeast-1:123456789012:targetgroup/prod-api-tg/0123456789abcdef", "VpcId": "vpc-0abc123def456789a"}
+  ]
+}

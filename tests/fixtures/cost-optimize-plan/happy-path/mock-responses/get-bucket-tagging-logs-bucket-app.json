@@ -1,0 +1,7 @@
+{
+  "_note": "Query 0b-2 (ownership probe, item #2). No controller or CloudFormation tags. IaC grep (iac-grep-simulated.json) finds the bucket resource at s3.tf:42 and no lifecycle configuration in code, so Owner = terraform.",
+  "TagSet": [
+    {"Key": "Environment", "Value": "prod"},
+    {"Key": "Service", "Value": "app-logging"}
+  ]
+}

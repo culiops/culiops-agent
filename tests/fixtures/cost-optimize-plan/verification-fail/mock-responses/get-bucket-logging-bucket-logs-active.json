@@ -1,3 +1,4 @@
 {
-  "LoggingEnabled": null
+  "_note": "Query 4a (activity source 3b). THIS bucket has server access logging enabled, delivering to acme-s3-access-logs under bucket-logs-active/. That log bucket is in the same account, so it is readable. Logging has been on since 2025-11-10 (from the oldest log object), which covers the 90d window.",
+  "LoggingEnabled": {"TargetBucket": "acme-s3-access-logs", "TargetPrefix": "bucket-logs-active/"}
 }

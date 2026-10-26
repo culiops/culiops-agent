@@ -1,3 +1,4 @@
 {
+  "_note": "Query 2a. Suspended: versioning was enabled once and is now off, so noncurrent versions from the earlier period may still exist. Reversibility input only (not decisive here).",
   "Status": "Suspended"
 }

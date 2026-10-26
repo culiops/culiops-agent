@@ -37,7 +37,7 @@ Run a waste audit on our AWS prod account (ap-southeast-1). Are there any RDS / 
 |---------|--------|-----------------|-----------------|-------------------|
 | legacy-orders-aurora | aurora-mysql 8.0.mysql_aurora.3.04.0 | 1 writer + 1 reader (db.r6g.large each) | >30d ago (no datapoint in window) | $420/mo |
 
-The cluster has not received any database connections in at least 30 days. The $420/mo charge is composed of $0.29/hr × 2 instances × 730 hr = $423.40/mo for instance-hours, plus storage and IO at near-zero usage. The cluster's tag `Service=orders-legacy` aligns with a service the catalog flags as "deprecated 2026-03-01" — operator should confirm decommissioning is intended.
+The cluster has not received any database connections in at least 30 days. The $420/mo charge is the bill's instance-hour line items for 2 db.r6g.large instances (1,460 instance-hours, bill-derived effective rate), plus storage and IO at near-zero usage. The cluster's tag `Service=orders-legacy` matches a service documented elsewhere as deprecated on 2026-03-01 (no catalog was used for this audit) — operator should confirm decommissioning is intended.
 
 ## Remediation list (prioritized)
 

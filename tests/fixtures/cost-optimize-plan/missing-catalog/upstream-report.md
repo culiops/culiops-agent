@@ -41,7 +41,7 @@ Run a waste audit on our AWS staging account (us-east-1). What can we delete or 
 
 1 bucket with >1 TB StandardStorage and no lifecycle policy or Intelligent-Tiering configuration.
 
-| Bucket | StandardStorage | Est. age >90d | Missing policy | Est. savings (add 90d→Glacier) |
+| Bucket | StandardStorage | Est. age >90d | Missing policy | Est. savings (add 90d→Glacier Flexible Retrieval) |
 |--------|----------------|---------------|----------------|-------------------------------|
 | logs-archive-bucket | 3.6 TB | ~3.5 TB | lifecycle policy | $180/mo |
 
@@ -54,7 +54,7 @@ Run a waste audit on our AWS staging account (us-east-1). What can we delete or 
 | # | Action | Resource(s) | Est. savings | Source | Confidence | Evidence |
 |---|--------|-------------|--------------|--------|------------|----------|
 | 1 | Delete unattached EBS volume | vol-0bbbb1 | $52/mo | line-item-computation | high | volume.state=available since 2026-02-20; no attachments; 200 GB gp3 |
-| 2 | Add lifecycle policy 90d→Glacier | logs-archive-bucket | $180/mo | line-item-computation | high | StandardStorage 3.6 TB, >90d-aged 3.5 TB; no existing lifecycle policy |
+| 2 | Add lifecycle policy 90d→Glacier Flexible Retrieval | logs-archive-bucket | $180/mo | line-item-computation | high | StandardStorage 3.6 TB, >90d-aged 3.5 TB; no existing lifecycle policy |
 
 **Total estimated savings:** $232/mo (high-confidence)
 

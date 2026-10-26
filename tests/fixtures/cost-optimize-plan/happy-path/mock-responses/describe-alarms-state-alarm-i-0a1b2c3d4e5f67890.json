@@ -1,0 +1,5 @@
+{
+  "_note": "Query 6 (item #1). describe-alarms --state-value ALARM, filtered client-side on InstanceId (top-level Dimensions and Metrics[] metric-math dimensions). No alarm in ALARM state references this instance.",
+  "MetricAlarms": [],
+  "CompositeAlarms": []
+}

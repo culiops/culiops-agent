@@ -1,3 +1,4 @@
 {
+  "_note": "Query 1. Confirms the bucket exists in this account and gives its region. A failure here would make every metric below \u26aa (empty is not zero).",
   "LocationConstraint": "ap-southeast-1"
 }

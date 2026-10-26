@@ -1,0 +1,8 @@
+{
+  "_note": "Query 3 (item #1). ONE get-metric-data call, 90d (2026-02-28 to 2026-05-29) @ Period=3600, namespace AWS/Lambda, metric Invocations, Stat Sum. Two series: (fn) FunctionName=cron-backfill-2024, and (alias) FunctionName + Resource=cron-backfill-2024:live (alias from Query 2; the larger per-hour count is taken, not the sum). Resource=cron-backfill-2024:$LATEST is NOT a published dimension value and is not queried. Lambda publishes no datapoints for a function that is never invoked, so both series are EMPTY. EMPTY IS NOT ZERO (Constraint 12): it counts as zero activity here ONLY because (a) the target check passed (row 0a), (b) get-function succeeded in the same account/region (row 1), and (c) the FunctionName and alias values were taken from get-function / list-aliases output.",
+  "MetricDataResults": [
+    {"Id": "fn", "Label": "Invocations Sum (FunctionName)", "StatusCode": "Complete", "Timestamps": [], "Values": []},
+    {"Id": "alias_live", "Label": "Invocations Sum (FunctionName + Resource=cron-backfill-2024:live)", "StatusCode": "Complete", "Timestamps": [], "Values": []}
+  ],
+  "_ProvisionedConcurrencyInvocations": "also empty. Not subtracted from anything: provisioned-concurrency invocations are real invocations, and there are none."
+}

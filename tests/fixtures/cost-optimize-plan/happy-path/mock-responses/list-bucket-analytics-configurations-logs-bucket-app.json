@@ -1,0 +1,22 @@
+{
+  "_note": "Query 12a (item #2; optional row for a Standard-IA target, run anyway). S3 Storage Class Analysis configuration. Created 2026-02-02, so it has ~115 days of history at 2026-05-28 (>= the 30d minimum for a transition rule). The API returns the configuration only; results are the daily CSV export read in 12b.",
+  "AnalyticsConfigurationList": [
+    {
+      "Id": "logs-all",
+      "Filter": null,
+      "StorageClassAnalysis": {
+        "DataExport": {
+          "OutputSchemaVersion": "V_1",
+          "Destination": {
+            "S3BucketDestination": {
+              "Format": "CSV",
+              "Bucket": "arn:aws:s3:::acme-analytics-exports",
+              "Prefix": "sca/logs-bucket-app/"
+            }
+          }
+        }
+      }
+    }
+  ],
+  "IsTruncated": false
+}

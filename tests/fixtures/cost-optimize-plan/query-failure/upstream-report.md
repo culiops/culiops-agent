@@ -25,8 +25,8 @@
 
 | # | Action | Resource(s) | Est. savings | Source | Confidence | Evidence |
 |---|--------|-------------|-------------|--------|------------|---------|
-| 1 | Delete unattached EBS volume | vol-0cccc1 | $35/mo | line-item-computation | high | volume.state=available since 2026-03-10 |
-| 2 | Delete S3 bucket bucket-logs-2019 | bucket-logs-2019 | $180/mo | line-item-computation | high | $180/mo unchanged 60+ days |
+| 1 | Delete S3 bucket bucket-logs-2019 | bucket-logs-2019 | $180/mo | line-item-computation | high | $180/mo unchanged 60+ days |
+| 2 | Delete unattached EBS volume | vol-0cccc1 | $35/mo | line-item-computation | high | volume.state=available since 2026-03-10 |
 | 3 | Delete unused load balancer prod-old-lb | prod-old-lb | $25/mo | line-item-computation | medium | 0 RequestCount in 30d |
 
 **Total estimated savings: $240/mo**
@@ -35,7 +35,17 @@
 
 ## Item Details
 
-### Item 1 — Delete unattached EBS volume vol-0cccc1
+### Item 1 — Delete S3 bucket bucket-logs-2019
+
+- **Resource type:** S3 bucket
+- **Resource ID:** bucket-logs-2019
+- **Region:** ap-southeast-1
+- **Bucket size:** ~1.8 TB (standard storage)
+- **Monthly cost:** ~$180
+- **Confidence:** high
+- **Evidence:** cost line item flat at $180/mo for 60+ days; bucket name suggests 2019-era log archive; no versioning, no lifecycle rules observed
+
+### Item 2 — Delete unattached EBS volume vol-0cccc1
 
 - **Resource type:** EBS volume
 - **Resource ID:** vol-0cccc1
@@ -46,16 +56,6 @@
 - **Monthly cost:** ~$35
 - **Confidence:** high
 - **Evidence:** volume.state=available; Attachments=[]; no instance association in billing for 79 days
-
-### Item 2 — Delete S3 bucket bucket-logs-2019
-
-- **Resource type:** S3 bucket
-- **Resource ID:** bucket-logs-2019
-- **Region:** ap-southeast-1
-- **Bucket size:** ~1.8 TB (standard storage)
-- **Monthly cost:** ~$180
-- **Confidence:** high
-- **Evidence:** cost line item flat at $180/mo for 60+ days; bucket name suggests 2019-era log archive; no versioning, no lifecycle rules observed
 
 ### Item 3 — Delete unused load balancer prod-old-lb
 

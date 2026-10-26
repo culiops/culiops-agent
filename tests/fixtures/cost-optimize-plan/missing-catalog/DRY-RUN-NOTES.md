@@ -1,37 +1,29 @@
-# Dry-run notes — missing-catalog
+# Dry-run notes - missing-catalog
 
 ## Gate transitions
 
-1. **GATE 1 (Scope)** — Operator provides path to upstream report (`operator-question.md`). Skill loads `upstream-report.md`, extracts 2-item Remediation list, reads `**Cloud:** aws` (single-cloud), `**Scope:** 987654321098 / acme-staging`. Applies $5/mo floor — both items pass ($52, $180). Checks for `.culiops/service-discovery/` directory — **does not exist**. Checks for IaC tree (`*.tf`, `*.tfvars`, etc.) in working directory — **none found**. Scoping summary shows: `**Catalog:** none — Dimension 4 conservative scoring`. Skill presents scoping summary noting that Dimension 4 will score ⚪ for all items and be treated as 🟡-equivalent. Operator confirms 2 items, $5/mo floor, single-cloud aws. Approved.
+1. **GATE 1 (Scope)** - Operator provides the upstream report path. Skill loads `upstream-report.md`, extracts 2 items, reads `**Cloud:** aws`, `**Scope:** 987654321098 / acme-staging`; target = account 987654321098, region us-east-1. $5/mo floor: both pass ($52, $180). Checks `.culiops/service-discovery/`: **does not exist**. Asks for the IaC repo path: **operator has none to give** ("none - ownership from tags only"). Scoping summary shows `Catalog: none - Dimension 4 conservative scoring` and `IaC repo(s): none`. Skill notes owners will be `unknown` and Dimension 4 ⚪ (treated as 🟡-equivalent). Operator confirms. Approved.
 
-2. **GATE 2 (Verification batch)** — Skill looks up playbooks for both items:
-   - Item #1 (delete EBS): `examples/aws/delete-ebs-volume.md` → 3 queries (DescribeVolumes, DescribeSnapshots, CloudTrail LookupEvents attach/detach 90d).
-   - Item #2 (lifecycle S3): `examples/aws/lifecycle-s3.md` → 3 queries (GetBucketLifecycleConfiguration, ListBucketIntelligentTieringConfigurations, BucketSizeBytes metric).
-   Both playbooks present; no manual-review items. Total: 6 queries, 0 deduplication opportunities (no shared resources). Estimated API cost: ~$0.50 (CloudTrail LookupEvents 90d dominates). IAM perms list shown: `ec2:Describe*`, `cloudtrail:LookupEvents`, `cloudwatch:GetMetricStatistics`, `s3:GetBucketLifecycleConfiguration`, `s3:ListBucketIntelligentTieringConfigurations`. Operator approves full batch.
+2. **GATE 2 (Verification batch)** - Query 0 (`0a`, `0b-1`, `0b-2`), then item #1 -> `delete-unattached-ebs.md` (snapshots, attach/detach history, Recycle Bin rules) and item #2 -> `lifecycle-s3.md` (lifecycle config, versioning, Intelligent-Tiering, size metrics, Storage Class Analysis, inventory size distribution, bill-derived rates). Both playbooks present; no manual-review items. IAM list and per-query cost itemized (free describe/list, LookupEvents free, one Cost Explorer request, a few S3 GETs). Operator approves. Per Step 2, each item's playbook queries are listed as conditional on Query 0b; here no owner routes to ❔, so none is skipped.
 
-3. **GATE 3 (Plan review)** — Skill executes 6 queries against mock-responses (all succeed). Scoring:
-   - **Item #1 (delete vol-0bbbb1):** Reversibility 🟡 (snapshot exists, 20d old — below 30d threshold), Blast 🟢 (unattached, no consumers), Evidence 🟢 (0 events 90d, dormant 97d), Dependency ⚪ (no catalog, no IaC tree).
-   - **Item #2 (lifecycle logs-archive-bucket):** Reversibility 🟢 (policy-only change), Blast 🟢 (single-bucket), Evidence 🟢 (no existing policy, ~3.70 TB confirmed), Dependency ⚪ (no catalog, no IaC tree).
-   Tier rule evaluation:
-   - Rule 1 (🚫): Evidence is 🚫? No → skip.
-   - Rule 2 (🔴): Reversibility 🔴 or Blast 🔴 or Dependency 🔴 or Evidence ⚪? No — Dependency is ⚪ but disambiguation rule says ⚪ on Dim 4 = 🟡-equivalent, NOT 🔴. → skip.
-   - Rule 3 (🟡): any dimension 🟡 (including ⚪ on dimensions 1/2/4), no 🔴 / 🚫 / Evidence-⚪? Yes — both items have Dependency ⚪ (= 🟡-equivalent) → **both land in 🟡 Coordinated**.
-   Ordering hint: snapshot-before-delete emitted for item #1. Draft plan composes with 0 items in 🟢, 2 items in 🟡. Operator reviews — sees dependency-⚪ note per item and in Gaps section, approves. Plan written to `.culiops/cost-optimize-plan/acme-staging-20260528-1136.md`.
+3. **Step 3 (Execute)** - `0a`: account = `Scope`. Ownership probes: no controller tags, no IaC to grep -> both owners `unknown`. All 10 queries succeed.
+
+4. **Step 4 (Triage)** - rules in order:
+   - **#1 (delete vol-0bbbb1):** Rev 🟡 (valid snapshot, taken after the last detach and inside the window), Blast 🟢, Evidence 🟢 (no events in 90d), Dep ⚪. Rule 1 no; rule 2 no (EBS is not idle-ambiguous); rule 3 no (no 🔴; Evidence is 🟢 so the "delete AND Evidence not 🟢" clause does not fire; a Dimension 4 ⚪ is 🟡-equivalent and does not trigger 🔴); rule 4 yes -> **🟡**.
+   - **#2 (lifecycle):** Rev 🟡 (Transition to Glacier Flexible; owner unknown), Blast 🟢, Evidence 🟢 (0 GETs on aged objects over 98d; net +$180.3/mo; size within 20%), Dep ⚪. Rule 4 -> **🟡**.
+   - Ordering hint: fresh final snapshot before #1.
+
+5. **GATE 3 (Plan review)** - Operator reviews: dependency-⚪ note per item and in Gaps. Approves. Plan written to `.culiops/cost-optimize-plan/acme-staging-20260528-1136.md`, uncommitted.
 
 ## What this fixture validates
 
-- **Conservative ⚪ tier rule: missing catalog does NOT force items to 🔴.** Dimension 4 ⚪ triggers the 🟡-equivalent path in tier rule 3, not the 🔴 path in rule 2. Both items land in 🟡 Coordinated.
-- **Dimension 4 ⚪ on ALL items still produces meaningful tier output (🟡 Coordinated).** The plan is not blocked or degraded to all-🚫; it proceeds with a conservative but actionable placement.
-- **Plan summary shows 0 🟢 Fast wins.** ⚪ on Dimension 4 prevents Fast win qualification because rule 4 (🟢 Fast win) requires all four dimensions to be 🟢, and ⚪ is not 🟢.
-- **Plan compose shows the dependency-unknown explanation per item AND in the Gaps section.** Each item's Dependency dimension detail states "Dimension 4 ⚪ — no catalog and no IaC tree access" and suggests running `service-discovery`. The Gaps section repeats this at plan level with the actionable suggestion to re-run after catalog regeneration.
-- **All 6 verification queries succeed (Evidence dimension 🟢 for both items).** The missing catalog is a scoping-step gap, not a verification failure — the queries themselves return good data.
-- **Snapshot-before-delete ordering hint emitted for item #1.** The existing snapshot (2026-05-08) is 20 days old; playbook recommends a fresh snapshot to minimize RPO.
+- **A missing catalog / IaC repo does not force 🔴.** Dimension 4 ⚪ takes the 🟡-equivalent path in tier rule 4; only Evidence ⚪ forces 🔴 (rule 3).
+- **The plan is still produced** and conservative; the absence of a catalog is a scoping gap, not a verification failure (all queries succeed, Evidence 🟢).
+- **Owner `unknown` is handled:** no `code:` refs are fabricated, Reversibility gets no "re-apply old IaC" basis, the header says `IaC repo(s): none`.
+- **Plan summary shows 🟢 = 0, 🟡 = 2, 🔴 = 0.**
+- **The lesson is stated accurately:** neither item would be a Fast win with a catalog (Reversibility 🟡), so the plan does not promise one.
+- **Snapshot-before-delete** ordering hint emitted for #1.
 
 ## Acceptance check
 
-A reviewer confirms:
-(a) The skill does not error on missing catalog — scoping summary acknowledges the absence and proceeds with conservative scoring.
-(b) Both items land in 🟡 Coordinated, not 🔴 Risky — the ⚪ disambiguation rule (Dependency ⚪ → 🟡-equivalent) fires correctly.
-(c) The Evidence column (and Dimension detail section) for each item explicitly notes the Dimension 4 ⚪ status and explains why — "no catalog and no IaC tree access; operator should manually verify no consumers before applying."
-(d) The plan summary table shows 🟢=0, 🟡=2, 🔴=0 — no items were promoted to 🔴 by the ⚪ score.
-(e) The Gaps section mentions the missing catalog and the `service-discovery` skill as the remedy.
+A reviewer confirms: (a) the skill does not error on a missing catalog / IaC repo and proceeds conservatively; (b) both items land in 🟡, not 🔴; (c) each item states Dimension 4 ⚪ and why, with owner `unknown`; (d) summary is 🟢=0, 🟡=2, 🔴=0; (e) Gaps mention the missing catalog and IaC repo with `service-discovery` / supplying the repo as the remedy, and do not claim a Fast win; (f) header has `Target` and `IaC repo(s)`; `Drift` says no comparison was possible.

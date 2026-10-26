@@ -1,0 +1,5 @@
+{
+  "_note": "Query 17 (item #2). firehose list-delivery-streams then describe-delivery-stream for each. One delivery stream (orders-archive-fh); its source is DirectPut, not orders-ingest. No Firehose reads this stream.",
+  "DeliveryStreamNames": ["orders-archive-fh"],
+  "sources_matching_orders_ingest_arn": []
+}

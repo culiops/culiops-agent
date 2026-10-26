@@ -1,0 +1,10 @@
+{
+  "_note": "Query 3a (item #1). CloudWatch agent IS installed. The agent publishes extra dimensions (ImageId, InstanceType); a metric query must match this dimension set exactly, so the next call takes the dimensions from this output.",
+  "Metrics": [
+    {"Namespace": "CWAgent", "MetricName": "mem_used_percent", "Dimensions": [
+      {"Name": "InstanceId", "Value": "i-0a1b2c3d4e5f67890"},
+      {"Name": "ImageId", "Value": "ami-0123456789abcdef0"},
+      {"Name": "InstanceType", "Value": "m5.4xlarge"}
+    ]}
+  ]
+}

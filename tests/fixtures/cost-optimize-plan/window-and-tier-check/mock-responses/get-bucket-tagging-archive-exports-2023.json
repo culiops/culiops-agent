@@ -1,0 +1,4 @@
+{
+  "_note": "Query 0b-1 (ownership probe, item #1). No CloudFormation / controller tags; IaC match s3.tf:120 → owner terraform.",
+  "TagSet": [{"Key": "Environment", "Value": "prod"}, {"Key": "Service", "Value": "reporting"}]
+}

@@ -1,0 +1,7 @@
+{
+  "_note": "Query 8. list-bucket-analytics-configurations (config 'all', CSV export to acme-staging-analytics/sca/) then get-object on the latest export, SUMMARIZED by age group. Config created 2026-02-18: 98 days of history (>= 30d minimum for a transition rule).",
+  "observation_days": 98,
+  "aged_90d_plus": {"ObjectCount": 641000, "Storage_GiB": 3584, "GetRequestCount": 0},
+  "younger_than_90d": {"ObjectCount": 20000, "Storage_GiB": 111, "GetRequestCount": 4200},
+  "_totals": "661,000 objects / 3,695 GiB, matching row 7. Reads of objects aged >= 90d over the observation window: 0."
+}

@@ -2,25 +2,35 @@
 
 ## Gate transitions
 
-1. **GATE 1 (Scope)** — Operator provides path to upstream report (`operator-question.md`). Skill loads `upstream-report.md`, extracts 3-item Remediation list, reads `**Cloud:** aws` (single-cloud), `**Scope:** 123456789012 / acme-prod`. Applies $5/mo floor — all 3 items pass ($280, $200, $48). No catalog at `.culiops/service-discovery/` — Dimension 4 will score ⚪ (treated as 🟡-equivalent). Skill presents scoping summary. Operator confirms 3 items, $5/mo floor, single-cloud aws. Approved.
+1. **GATE 1 (Scope)** — Operator provides the path to the upstream report. Skill loads `upstream-report.md`, extracts the 3-item Remediation list, reads `**Cloud:** aws` (single-cloud) and `**Scope:** 123456789012 / acme-prod`. Records the **target**: account 123456789012, region ap-southeast-1 (from the resource IDs). Report `Date:` 2026-05-28 is fresh. $5/mo floor: all 3 items pass ($280, $100, $48). No catalog at `.culiops/service-discovery/`. Skill asks for the IaC repo path; operator supplies `~/acme-infra` (simulated). Operator confirms scope. Approved.
 
-2. **GATE 2 (Verification batch)** — Skill looks up playbooks for all 3 items:
-   - Item #1 (rightsize EC2): `examples/aws/rightsize-ec2.md` → 5 queries (DescribeInstances, CPU metrics, NetworkIn metrics, CO recommendation, DescribeTargetHealth).
-   - Item #2 (lifecycle S3): `examples/aws/lifecycle-s3.md` → 3 queries (GetBucketLifecycleConfiguration, ListBucketIntelligentTieringConfigurations, BucketSizeBytes metric).
-   - Item #3 (delete EBS): `examples/aws/delete-ebs-volume.md` → 3 queries (DescribeVolumes, DescribeSnapshots, CloudTrail LookupEvents attach/detach 90d).
-   All playbooks present; no manual-review items. Total: 11 queries, 0 deduplication opportunities (no shared resources). Estimated API cost: $1.20 (CloudTrail LookupEvents 90d dominates). IAM perms list shown: `ec2:Describe*`, `cloudtrail:LookupEvents`, `cloudwatch:GetMetricStatistics`, `compute-optimizer:GetEC2InstanceRecommendations`, `elasticloadbalancing:DescribeTargetHealth`, `s3:GetBucketLifecycleConfiguration`, `s3:ListBucketIntelligentTieringConfigurations`. Operator approves full batch.
+2. **GATE 2 (Verification batch)** — Batch starts with Query 0: `0a` target check, then `0b-1..3` ownership probes. Skill then looks up playbooks: Per Step 2, each item's playbook queries are listed as conditional on Query 0b; here no owner routes to ❔, so none is skipped.
+   - Item #1 (rightsize EC2) → `rightsize-ec2.md` (queries 1-6) + the commitment-coverage check for `Realizable` (query 7).
+   - Item #2 (lifecycle S3) → `lifecycle-s3.md` (queries 8-14: lifecycle config, versioning, Intelligent-Tiering, size metrics, optional access-pattern evidence via Storage Class Analysis (operator opts in), object-size distribution, bill-derived rates).
+   - Item #3 (delete EBS) → `delete-unattached-ebs.md` (queries 15-17).
+   All playbooks present, no manual-review items, no dedup opportunities. IAM list and per-query cost itemized (Cost Explorer per request; S3 GETs for the SCA export and inventory report; LookupEvents free). Operator approves the full batch.
 
-3. **GATE 3 (Plan review)** — Skill executes 11 queries against mock-responses (all succeed), scores 4 dimensions for each item, assigns tiers (lifecycle=🟢, rightsize=🟡, delete-EBS=🔴), detects ordering hint (snapshot-before-delete on item #3), composes draft plan. Operator reviews — no revisions requested. Approved. Plan written to `.culiops/cost-optimize-plan/acme-prod-20260528-0921.md`.
+3. **Step 3 (Execute)** — `0a` first: `sts get-caller-identity` account = `Scope`. Then `0b` for each item (owners: terraform, terraform, unmanaged — none routes to ❔). All 17 follow-up queries succeed. Empty results (`lookup-events` for the volume, `describe-alarms`, `rbin` rules) are interpreted under the Metrics rule / Constraint 12 only where applicable: `lookup-events` is a management-event source and the describe call succeeded, so empty = no attach/detach.
+
+4. **Step 4 (Triage)** — scoring, rules applied in order, first match wins:
+   - **#1:** Rev 🟢 (`code:ec2.tf:17`), Blast 🟡 (TG, no catalog), Evidence 🟢 (all required rows incl. memory: 34.5% → 69.0% < 75%), Dep 🟡 (`code:alb.tf:64`). Realizable ✓. Rule 1 no; rule 2 no (not a delete); rule 3 no; rule 4 yes → **🟡**.
+   - **#2:** Rev 🟢 (Transition to Standard-IA, an instantly readable class; terraform with `code:s3.tf:42`), Blast 🟢, Evidence 🟢 (required rows: cost direction net +$97/mo, size within 20%; the optional access-pattern row was run and passes: 0 GETs on aged objects over 115d), Dep 🟢. Rules 1-4 do not fire (not idle-ambiguous, not a delete) → rule 5 → **🟢 Fast win**.
+   - **#3:** Rev 🔴 (snapshot not provably valid), Blast 🟢, Evidence 🟢, Dep 🟢. Rule 3 first clause (Reversibility 🔴) → **🔴**. (Evidence is 🟢, so the "delete AND Evidence not 🟢" clause is not the trigger.)
+   - Ordering hint: fresh final snapshot before #3.
+
+5. **GATE 3 (Plan review)** — Operator reviews, no revisions, approves. Plan written to `.culiops/cost-optimize-plan/acme-prod-20260528-0921.md`; left uncommitted (the repo does not track `.culiops/`).
 
 ## What this fixture validates
 
-- **Positive path with all queries succeeding.** Gaps section reads "None." No partial plan, no ⚪ Evidence scores.
-- **Three actionable tiers produced (🟢/🟡/🔴), no 🚫 or ❔.** Lifecycle policy scores all 🟢 dimensions → Fast win. Rightsize scores blast 🟡 (ALB target, 2 healthy = redundancy but shared namespace) + dependency 🟡 (1 IaC consumer) → Coordinated. EBS delete scores reversibility 🔴 (irreversible, dominates) with all other dimensions 🟢 → Risky.
-- **Ordering hint: snapshot-before-delete callout on item #3.** A snapshot exists (snap-0abcdef0123456789, 2026-05-13) but is 15 days old; playbook recommends a fresh snapshot before delete to minimize RPO. Emitted as a callout in the 🔴 section.
-- **Reversibility 🔴 dominates other 🟢 dimensions → item #3 lands in 🔴 not 🟢.** Tier rule 2 fires (Reversibility is 🔴) before rule 4 can fire. Even though blast, evidence, and dependency are all 🟢, the item stays 🔴.
-- **No catalog does not silently produce 🟢 Dependency scores.** Item #1 gets Dependency 🟡 because IaC grep finds 1 consumer (ALB TG). Item #3 gets Dependency 🟢 because grep finds none. No item claims 🟢 on Dependency from catalog absence alone.
-- **Plan summary savings total $528/mo** ($200 + $280 + $48), matching the upstream report's combined estimate.
+- **Target check first** (Constraint 11) and **ownership before triage** (Constraint 13) on a clean run: nothing is routed to ❔.
+- **Required memory signal** when the target class has less RAM; present here so the item is not forced 🔴.
+- **Evidence refs** on every dimension score (Law 3) and the `Owner` / `Realizable` columns in the 🟡 table; `Owner` in the 🔴 table.
+- **Lifecycle to an instantly readable class lands 🟢** (Reversibility 🟢; Glacier Flexible would be 🟡, Expiration 🔴). Evidence is activity-based, not just "no policy exists": the optional SCA row ran and passed, plus the required cost-direction row.
+- **Snapshot-validity rule** keeps a delete with an old snapshot at 🔴.
+- **Reversibility dominance:** Reversibility 🔴 forces 🔴 even with all other dimensions 🟢.
+- **No catalog does not silently produce 🟢 Dependency:** #1 gets 🟡 from a real IaC consumer; #3 gets 🟢 only because the grep ran and found nothing.
+- **Plan summary totals $428/mo**, matching the upstream report.
 
 ## Acceptance check
 
-A reviewer steps through `upstream-report.md` + each `mock-responses/*.json` and confirms the skill would produce `expected-output.md` with representative results (allowing for run-specific timestamps). The tier assignments, dimension scores, ordering hints, and Gaps text must match exactly. Note: emoji rendering in tier columns must be visible; if a markdown renderer strips 4-byte UTF-8 characters, the test is incomplete.
+A reviewer steps through `upstream-report.md` and each mock and confirms the skill would produce `expected-output.md` (allowing for run-specific timestamps): header has `Target` and `IaC repo(s)`; rows `0a` / `0b-N` present; tiers 🟢 / 🟡 / 🔴 exactly; `Owner` and `Realizable` columns populated with `live:` / `code:` refs; Drift and Gaps as written. Emoji must render; if a renderer strips 4-byte UTF-8 the test is incomplete.

@@ -1,0 +1,16 @@
+{
+  "_note": "Query 5 (activity source 3c, discovery). list-event-data-stores then get-event-data-store in ap-southeast-1. Store 'org-data-events' EXISTS, its advanced event selectors capture S3 data events (resources.type = AWS::S3::Object, all buckets) and it was created 2025-09-01, so it covers the 90d window (2026-04-10 to 2026-07-09). CloudTrail Lake StartQuery is only allowed against such an existing store.",
+  "EventDataStore": {
+    "Name": "org-data-events",
+    "EventDataStoreArn": "arn:aws:cloudtrail:ap-southeast-1:123456789012:eventdatastore/11111111-2222-3333-4444-555555555555",
+    "Status": "ENABLED",
+    "CreatedTimestamp": "2025-09-01T00:00:00Z",
+    "RetentionPeriod": 365,
+    "AdvancedEventSelectors": [
+      {"Name": "S3 data events", "FieldSelectors": [
+        {"Field": "eventCategory", "Equals": ["Data"]},
+        {"Field": "resources.type", "Equals": ["AWS::S3::Object"]}
+      ]}
+    ]
+  }
+}

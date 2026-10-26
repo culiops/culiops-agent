@@ -1,0 +1,4 @@
+{
+  "_note": "Query 0b-1 (ownership probe, item #1). No CloudFormation / controller tags. No IaC repo was supplied at GATE 1, so the grep could not run: owner = unknown (treated as unmanaged for Reversibility; Dimension 4 would be ⚪).",
+  "TagSet": [{"Key": "Environment", "Value": "prod"}, {"Key": "Service", "Value": "logging-archive"}]
+}

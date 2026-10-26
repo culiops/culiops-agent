@@ -1,0 +1,6 @@
+{
+  "_note": "Query 0b-3 (ownership probe, item #3). elbv2 describe-tags: no elbv2.k8s.aws/* or service.k8s.aws/* tag (so not controller-owned) and no CloudFormation tag. No IaC repo supplied, so owner = unknown.",
+  "TagDescriptions": [
+    {"ResourceArn": "arn:aws:elasticloadbalancing:ap-southeast-1:123456789012:loadbalancer/app/prod-old-lb/0123456789abcdef", "Tags": [{"Key": "Environment", "Value": "prod"}, {"Key": "Service", "Value": "legacy-web"}]}
+  ]
+}

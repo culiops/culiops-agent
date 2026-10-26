@@ -1,0 +1,16 @@
+{
+  "_note": "SIMULATED. No real IaC tree exists in this fixture; this file stands in for the operator-supplied IaC repo (~/acme-infra). Code refs are illustrative.",
+  "iac_repo": "~/acme-infra",
+  "searches": [
+    {"term": "cron-backfill-2024", "hits": [
+      {"file": "terraform/lambda/cron-backfill-2024/main.tf", "line": 1, "text": "resource \"aws_lambda_function\" \"cron_backfill_2024\" { function_name = \"cron-backfill-2024\" runtime = \"python3.11\" source: ./src (artifact retrievable from the repo) ... }"},
+      {"file": "terraform/lambda/cron-backfill-2024/main.tf", "line": 22, "text": "resource \"aws_lambda_alias\" \"live\" { name = \"live\" function_version = aws_lambda_function.cron_backfill_2024.version }"},
+      {"file": "terraform/lambda/cron-backfill-2024/main.tf", "line": 30, "text": "resource \"aws_lambda_provisioned_concurrency_config\" \"live\" { qualifier = aws_lambda_alias.live.name provisioned_concurrent_executions = 2 }"},
+      {"file": "terraform/lambda/cron-backfill-2024/rules.tf", "line": 3, "text": "resource \"aws_cloudwatch_event_rule\" \"daily\" { name = \"legacy-backfill-daily-cron\" ... } + target -> alias live"},
+      {"file": "terraform/lambda/cron-backfill-2024/rules.tf", "line": 14, "text": "resource \"aws_cloudwatch_event_rule\" \"weekly\" { name = \"legacy-backfill-weekly-cleanup\" ... } + target -> alias live"}
+    ], "references_outside_own_resource_block": 2},
+    {"term": "orders-canonical", "hits": [
+      {"file": "terraform/dynamodb/orders.tf", "line": 8, "text": "resource \"aws_dynamodb_table\" \"orders_canonical\" { name = \"orders-canonical\" billing_mode = \"PROVISIONED\" read_capacity = 200 write_capacity = 100 ... global_secondary_index customer-id-index 50/25 }"}
+    ], "lifecycle_ignore_changes_on_capacity": false}
+  ]
+}

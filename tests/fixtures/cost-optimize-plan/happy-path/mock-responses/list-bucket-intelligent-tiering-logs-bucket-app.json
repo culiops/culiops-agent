@@ -1,3 +1,4 @@
 {
+  "_note": "Query 10 (item #2). No Intelligent-Tiering configuration: no overlap with the Standard-to-Glacier saving.",
   "IntelligentTieringConfigurationList": []
 }

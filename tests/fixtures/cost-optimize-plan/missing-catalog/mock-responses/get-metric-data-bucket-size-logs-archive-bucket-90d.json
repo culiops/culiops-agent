@@ -1,0 +1,7 @@
+{
+  "_note": "Query 7. AWS/S3 daily metrics (period 86400), 90d, SUMMARIZED. Standard 3,968,054,599,680 B (3.61 TiB) / 661,000 objects (avg 6.0 MB); no bytes in other classes.",
+  "MetricDataResults": [
+    {"Id": "std", "Label": "BucketSizeBytes StandardStorage", "StatusCode": "Complete", "_summary": {"latest_2026-05-27": 3968054599680, "latest_TiB": 3.61}},
+    {"Id": "nobj", "Label": "NumberOfObjects AllStorageTypes", "StatusCode": "Complete", "_summary": {"latest_2026-05-27": 661000}}
+  ]
+}

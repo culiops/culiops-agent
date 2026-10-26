@@ -1,0 +1,4 @@
+{
+  "_note": "Query 4 (activity source 3b). Server access logging is NOT enabled on this bucket → no access logs to read; fall through to 3c (CloudTrail Lake).",
+  "LoggingEnabled": null
+}

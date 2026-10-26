@@ -22,7 +22,7 @@ Run a waste audit on our AWS prod account (ap-southeast-1). Surface idle delete 
 | # | API | Scope | IAM | Status | Notes |
 |---|-----|-------|-----|--------|-------|
 | 1 | s3api:ListBuckets | ap-southeast-1 | s3:ListAllMyBuckets | ok | archive-exports-2023 enumerated |
-| 2 | cloudtrail:LookupEvents (GetObject, **14d**) | archive-exports-2023 | cloudtrail:LookupEvents | ok | 0 GetObject events in 14d |
+| 2 | ce:GetCostAndUsage (S3 usage types, **14d**) | archive-exports-2023 | ce:GetCostAndUsage | ok | storage line items only; no request-charge line items above reporting precision |
 | 3 | kinesis:DescribeStreamSummary | orders-ingest | kinesis:DescribeStreamSummary | ok | PROVISIONED, 2 shards, retention 168h |
 | 4 | cloudwatch:GetMetricStatistics (Kinesis.IncomingRecords, **14d**) | orders-ingest | cloudwatch:GetMetricStatistics | ok | 0 records in 14d |
 
@@ -30,7 +30,7 @@ Run a waste audit on our AWS prod account (ap-southeast-1). Surface idle delete 
 
 ### 1. Idle S3 bucket (flagged on a 14d window)
 
-`archive-exports-2023` shows 0 GetObject events over the 14d audit window, $60/mo storage. Flagged as a delete candidate. **Window caveat:** 14d is short for a delete decision — downstream triage should re-check over the delete-appropriate window (Principle 3).
+`archive-exports-2023` shows no request-charge line items over the 14d audit window, $60/mo storage. Flagged as a delete candidate. **Caveats:** (1) request charges are an indirect, coarse signal, not an access measurement; (2) 14d is short for a delete decision — downstream triage should re-check over the delete-appropriate window (Principle 3) with a real S3 activity source (request metrics, server access logs or CloudTrail Lake).
 
 ### 2. Idle Kinesis stream with wired consumers
 
@@ -40,14 +40,14 @@ Run a waste audit on our AWS prod account (ap-southeast-1). Surface idle delete 
 
 | # | Action | Resource(s) | Est. savings | Source | Confidence | Evidence |
 |---|--------|-------------|--------------|--------|------------|----------|
-| 1 | Delete S3 bucket archive-exports-2023 | arn:aws:s3:::archive-exports-2023 | $60/mo | line-item-computation | **low (window-too-short)** | 0 GetObject in 14d — window too short for a delete per Principle 3; re-check over 60–180d downstream |
+| 1 | Delete S3 bucket archive-exports-2023 | arn:aws:s3:::archive-exports-2023 | $60/mo | line-item-computation | **low (window-too-short)** | no request-charge lines in 14d — not an access measurement and a window too short for a delete per Principle 3; re-check over 60–180d downstream |
 | 2 | Delete Kinesis stream orders-ingest | arn:aws:kinesis:ap-southeast-1:123456789012:stream/orders-ingest | $180/mo | line-item-computation | low | 0 IncomingRecords in 14d; registered consumers not yet swept |
 
 **Total estimated savings:** $240/mo claimed — both low-confidence, re-verify downstream before acting.
 
 ## Gaps
 
-- Both items were flagged on a 14d window. Item #1 needs a 60–180d re-check; item #2 needs an attachment sweep (EFO consumers / Lambda mappings) plus the longer window. Deferred to `cost-optimize-plan`.
+- Both items were flagged on a 14d window. Item #1 needs a 60–180d re-check with a real S3 activity source (object-level access was not measured here); item #2 needs an attachment sweep (EFO consumers / Lambda mappings) plus the longer window. Deferred to `cost-optimize-plan`.
 
 ## Next steps (informational)
 

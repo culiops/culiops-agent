@@ -1,0 +1,10 @@
+{
+  "_note": "Query 2 (item #1). Runs BEFORE the metrics query because the per-alias Invocations series needs the alias names. NOTE: delete-function without --qualifier removes ALL versions and aliases, so these are not a restore path.",
+  "Aliases": [{"name": "live", "version": "7"}],
+  "Versions": [
+    {"v": "$LATEST", "modified": "2026-02-14T08:42:18.000+0000"},
+    {"v": "5", "modified": "2025-09-02T03:10:00.000+0000"},
+    {"v": "6", "modified": "2025-11-20T07:31:00.000+0000"},
+    {"v": "7", "modified": "2026-02-14T08:42:18.000+0000"}
+  ]
+}

@@ -1,0 +1,5 @@
+{
+  "_note": "Query 3 (activity source 3a). No S3 request-metrics configuration, so CloudWatch request metrics are unavailable. Fall through to source 3b (server access logs).",
+  "MetricsConfigurationList": [],
+  "IsTruncated": false
+}

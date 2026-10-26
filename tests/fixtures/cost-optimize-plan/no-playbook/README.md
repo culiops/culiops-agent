@@ -14,6 +14,8 @@ Account `123456789012` (acme-prod), region ap-southeast-1. cloud-cost-investigat
 
 ## What this fixture exercises
 
+- **Aurora stays unsupported:** `examples/aws.md` lists Aurora (and RDS snapshot delete, ECS/Fargate rightsize, Kubernetes workloads) as unsupported, so the item goes to ❔ rather than being forced through `rightsize-rds` or a delete playbook that does not fit.
+- **No Query 0 on an empty batch:** no target check, no ownership probe; the plan header says the target is not sts-verified and `IaC repo(s)` is `none`.
 - **No-playbook detection:** at Step 2 (Plan Verification Batch), skill recognizes no matching `(aws, delete, aurora-cluster)` playbook.
 - **Graceful degradation:** item is routed to `manual-review-required` queue, NOT silently skipped.
 - **Empty verification batch at GATE 2:** skill surfaces "1 item considered; 0 items have matching playbooks; 1 item routed to manual review. No verification queries to run." Operator approves-to-skip.

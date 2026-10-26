@@ -1,0 +1,8 @@
+{
+  "_note": "Query 5. AWS/S3 daily metrics (period 86400), 90d, SUMMARIZED. NumberOfObjects grows (writes persisted); flat or falling would be the green reading. Reads leave no trace here, so this is the optional row only.",
+  "MetricDataResults": [
+    {"Id": "nobj", "Label": "NumberOfObjects AllStorageTypes", "StatusCode": "Complete", "_summary": {"first_2026-02-27": 38100, "last_2026-05-27": 41200, "net_growth_pct": 8.1}},
+    {"Id": "size", "Label": "BucketSizeBytes StandardStorage", "StatusCode": "Complete", "_summary": {"growth_90d_pct": 7.4}}
+  ],
+  "emptiness_check": {"command": "list-objects-v2 --max-keys 1 --query KeyCount", "KeyCount": 1, "note": "non-empty only; max-keys 1 returns the first key lexicographically, not the newest, so no last-modified claim is made from it"}
+}

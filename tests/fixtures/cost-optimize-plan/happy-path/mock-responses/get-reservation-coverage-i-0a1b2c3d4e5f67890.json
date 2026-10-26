@@ -1,0 +1,6 @@
+{
+  "_note": "Query 7b (item #1, Realizable column). ce get-reservation-coverage, 30d, filtered to m5.4xlarge in ap-southeast-1. 0% of running hours are reserved.",
+  "CoveragesByTime": [
+    {"Total": {"CoverageHours": {"OnDemandHours": "720", "ReservedHours": "0", "TotalRunningHours": "720", "CoverageHoursPercentage": "0.0"}}}
+  ]
+}

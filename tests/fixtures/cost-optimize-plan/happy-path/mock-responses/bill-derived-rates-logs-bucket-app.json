@@ -1,0 +1,27 @@
+{
+  "_note": "Query 14 (item #2, Principle 4). ce get-cost-and-usage, S3 line items for logs-bucket-app, 30d. FICTIONAL account: the effective rates below are fixture values chosen so the arithmetic is checkable. They are NOT AWS list prices. Standard-IA has no usage in this bucket's bill, so its rates come from the Pricing API fallback.",
+  "line_items": [
+    {
+      "usage_type": "TimedStorage-ByteHrs (Standard)",
+      "usage_GB_month": 4304,
+      "cost_usd": 232.4,
+      "effective_usd_per_GB_month": 0.054,
+      "label": "bill-derived"
+    },
+    {
+      "usage_type": "Standard-IA storage",
+      "effective_usd_per_GB_month": 0.029,
+      "label": "pricing-api-fallback (fixture value)"
+    },
+    {
+      "usage_type": "Standard-IA lifecycle transition requests",
+      "per_1000_requests_usd": 0.01,
+      "label": "pricing-api-fallback (fixture value)"
+    },
+    {
+      "usage_type": "Standard-IA retrieval",
+      "per_GB_usd": 0.01,
+      "label": "pricing-api-fallback (fixture value); expected volume 0 GB, see row 12"
+    }
+  ]
+}

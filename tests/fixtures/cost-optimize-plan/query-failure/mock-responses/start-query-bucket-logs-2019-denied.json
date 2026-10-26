@@ -1,0 +1,7 @@
+{
+  "__error__": true,
+  "_note": "Query 6 (item #1) - THE FAILING QUERY. cloudtrail start-query against the existing event data store from row 5. The principal can list and describe the store but is not allowed to run Lake queries. Fixture convention for an AWS error (the AWS CLI prints this to stderr). This is a query the playbook really uses (delete-s3-bucket.md activity source 3c), not an arbitrary denial.",
+  "code": "AccessDeniedException",
+  "message": "User: arn:aws:iam::123456789012:user/ops is not authorized to perform: cloudtrail:StartQuery on resource: arn:aws:cloudtrail:ap-southeast-1:123456789012:eventdatastore/11111111-2222-3333-4444-555555555555 because no identity-based policy allows the cloudtrail:StartQuery action",
+  "requestId": "abc12345-6789-abcd-ef01-234567890abc"
+}

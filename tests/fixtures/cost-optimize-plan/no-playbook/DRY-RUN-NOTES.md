@@ -1,29 +1,30 @@
-# Dry-run notes — no-playbook
+# Dry-run notes - no-playbook
 
 ## Gate transitions
 
-1. **GATE 1 (Scope)** — Operator provides path to upstream report (`operator-question.md`). Skill loads `upstream-report.md`, extracts 1-item Remediation list, reads `**Cloud:** aws` (single-cloud), `**Scope:** 123456789012 / acme-prod`. Applies $5/mo floor — 1 item passes ($420). No catalog at `.culiops/service-discovery/` — Dimension 4 will score ⚪ (treated as 🟡-equivalent). Skill presents scoping summary: 1 item, $420/mo, aws, single account, no catalog. Operator confirms. Approved.
+1. **GATE 1 (Scope)** - Operator provides the path to the upstream report. Skill loads `upstream-report.md`, extracts the 1-item Remediation list, reads `**Cloud:** aws` (single-cloud) and `**Scope:** 123456789012 / acme-prod`. Target = account 123456789012, region ap-southeast-1 (from the ARN). $5/mo floor: the item passes ($420). No catalog; no IaC repo supplied. Skill presents the scoping summary. Operator confirms. Approved.
 
-2. **GATE 2: empty verification batch.** Skill attempts to look up playbook for item #1 (delete Aurora cluster). No `(aws, delete, aurora-cluster)` playbook exists in v1 (`examples/aws/delete-aurora-cluster.md` is absent). Item is routed to `manual-review-required` queue. Skill surfaces: "1 item considered; 0 items have matching playbooks; 1 item routed to manual review. No verification queries to run." Operator can approve-to-skip (proceeding to Step 4) or trim (no-op since batch is empty). In this fixture: operator approves-to-skip.
+2. **GATE 2: empty verification batch.** Skill looks up a playbook for `(aws, delete, aurora-cluster)`. None exists (`examples/aws.md` lists Aurora under unsupported). The item is routed to `manual-review-required`. Because no item has a playbook, the batch is empty: there is no Query 0 either (the target check and ownership probe belong to a playbook batch). Skill surfaces "1 item considered; 0 items have matching playbooks; 1 item routed to manual review. No verification queries to run." Operator approves-to-skip.
 
-3. **Step 3 skipped** — no verification queries to execute (batch is empty).
+3. **Step 3 skipped** - no queries to run.
 
-4. **Step 4 (Triage)** — 1 item with no playbook match assigned to ❔ tier. Skill populates Reason column with: (a) explicit statement that no `delete-aurora-cluster` playbook exists in v1; (b) concrete manual-verification checklist covering 90d connection / query history (extending the upstream 30d window to catch quarterly jobs), Secrets Manager / SSM Parameter Store endpoint references, read-replica + cross-region replication relationships, ECS / Lambda / EC2 endpoint references, and final-snapshot guidance.
+4. **Step 4 (Triage)** - the item is assigned to ❔ with a Reason that carries a manual-verification checklist (90d hourly activity via `get-metric-data`, Secrets Manager / SSM references, replicas and global clusters, application endpoint references, ownership incl. the CloudFormation stop rule, final-snapshot guidance).
 
-5. **GATE 3 (Plan review)** — Plan drafted with ❔ section as the only populated section. All four actionable tiers (🟢/🟡/🔴/🚫) are present but empty. Operator reviews, approves. Plan written to `.culiops/cost-optimize-plan/acme-prod-20260528-1105.md`.
+5. **GATE 3 (Plan review)** - Plan drafted: ❔ is the only populated section; every actionable tier is present and empty. Operator approves. Plan written to `.culiops/cost-optimize-plan/acme-prod-20260528-1105.md`, uncommitted.
 
 ## What this fixture validates
 
-- **Spec Constraint #3: no-playbook items are NOT silently skipped** — they go to manual review with an explicit reason. The item appears in `## ❔ Manual review required` with a populated Reason column, not in a silent discard pile.
-- **Empty verification batch path:** GATE 2 is confirmable but is effectively a no-op when there are no playbook matches. The skill surfaces the empty-batch state to the operator explicitly ("0 items have matching playbooks; 1 item routed to manual review") rather than silently bypassing GATE 2.
-- **Plan compose handles zero-actionable-items case:** 🟢/🟡/🔴/🚫 sections all show "No items in this tier." ❔ section is the only populated one. Plan summary table shows 0 for all actionable tiers and 1 for ❔.
-- **❔ Reason column carries operator guidance** — not just "no playbook" but a specific manual-verification checklist (CloudWatch 90d activity, Secrets Manager / SSM, read replicas + Global Database, application endpoint references, final-snapshot pre-deletion guidance).
-- **No error on unknown action type:** the skill degrades gracefully when encountering an Aurora cluster delete recommendation rather than erroring out or producing a malformed plan.
+- **Constraint 3: no-playbook items are NOT silently skipped** - they land in ❔ with an explicit, populated Reason.
+- **Empty verification batch path:** GATE 2 is confirmable but effectively a no-op; the skill says so explicitly rather than bypassing it. No Query 0 is issued and the header says the target is "not sts-verified".
+- **The skill never invents a verification strategy** for an uncovered type; the checklist is guidance for the operator, not queries the skill runs.
+- **No ownership claim without a probe:** the plan states no owner for the item.
+- **Plan compose handles the zero-actionable case:** 🟢 / 🟡 / 🔵 / 🔴 / 🚫 show "No items in this tier."; summary 0 everywhere except ❔ = 1.
+- **No error on an unknown action type.**
 
 ## Acceptance check
 
-A reviewer confirms: (a) the skill does not error out when encountering an Aurora cluster delete recommendation; (b) the item appears in the plan's ❔ Manual review section with a specific reason; (c) no verification queries were attempted against RDS / Aurora APIs (the fixture's empty mock-responses/ directory is consistent with the skill's actual behavior); (d) the reason column gives the operator a concrete checklist of what to verify manually.
+A reviewer confirms: (a) the skill does not error on an Aurora cluster delete; (b) the item appears in ❔ with a specific reason; (c) no query of any kind (including sts / ownership) was attempted - the empty `mock-responses/` is consistent; (d) the Reason gives a concrete checklist; (e) header `Target` says it is not sts-verified; `IaC repo(s)` is `none`.
 
 ## History
 
-This fixture originally used a Lambda function delete (`idle-worker`) as the no-playbook scenario. In v0.9, `examples/aws/delete-lambda.md` was added, so the fixture was swapped to Aurora cluster delete — still uncovered in v1 — to preserve the "no playbook → manual review" test scenario. If a future release adds `delete-aurora-cluster.md`, swap this fixture again to a resource type that remains uncovered.
+This fixture originally used a Lambda delete as the no-playbook scenario; when `delete-lambda.md` was added it was swapped to an Aurora cluster delete, still uncovered. If a future release adds an Aurora playbook, swap this fixture to a resource type that remains uncovered.

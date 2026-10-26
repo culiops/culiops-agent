@@ -1,0 +1,11 @@
+{
+  "_note": "Query 2 (item #1). One get-metric-data call, 30d @ Period=3600 = 720 points per series (under the 1,440 cap). Window 2026-04-28 to 2026-05-28. The hourly series is SUMMARISED here (fixture convention: _summary is derived from the full 720-point series, which is not reproduced). Dimensions (InstanceId) come from the describe call (row 0b-1).",
+  "MetricDataResults": [
+    {"Id": "cpuavg", "Label": "CPUUtilization Average", "StatusCode": "Complete", "_points": 720, "_summary": {"mean": 4.0, "max_hour": 6.8}},
+    {"Id": "cpumax", "Label": "CPUUtilization Maximum", "StatusCode": "Complete", "_points": 720, "_summary": {"max": 13.8}},
+    {"Id": "cpup95", "Label": "CPUUtilization p95", "StatusCode": "Complete", "_points": 720, "_summary": {"max_hourly_p95": 9.1}},
+    {"Id": "netin", "Label": "NetworkIn Sum", "StatusCode": "Complete", "_points": 720, "_summary": {"peak_hour_bytes": 9437184, "peak_rate_bytes_per_s": 2621}},
+    {"Id": "netout", "Label": "NetworkOut Sum", "StatusCode": "Complete", "_points": 720, "_summary": {"peak_hour_bytes": 21000000, "peak_rate_bytes_per_s": 5833}}
+  ],
+  "_projection_onto_target": "m5.2xlarge has half the vCPUs: projected = observed x 16/8. mean 8.0%, p95 18.2%, max 27.6%."
+}

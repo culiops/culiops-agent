@@ -1,0 +1,9 @@
+{
+  "_note": "Query 10 (log-target sweep). None of the trails, LB access logs, CloudFront logs, flow logs or Config delivery channels name archive-exports-2023.",
+  "cloudtrail_describe_trails_include_shadow_trails": {"trails": 1, "S3BucketName_match": false},
+  "elbv2_access_logs_connection_logs_bucket": {"load_balancers_checked": 3, "match": false},
+  "elb_classic_access_log_bucket": {"load_balancers_checked": 0, "match": false},
+  "cloudfront_logging_and_s3_origins": {"distributions_checked": 2, "match": false},
+  "ec2_describe_flow_logs_destination": {"flow_logs_checked": 4, "match": false},
+  "config_describe_delivery_channels": {"channels": 1, "s3BucketName_match": false}
+}

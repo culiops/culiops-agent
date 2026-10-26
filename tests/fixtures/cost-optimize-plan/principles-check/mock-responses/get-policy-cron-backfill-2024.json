@@ -1,0 +1,9 @@
+{
+  "_note": "Query 6 (item #1). Resource-based policy: unqualified get-policy, get-policy --qualifier live, and list-function-url-configs. Summary of Principal / SourceArn pairs only. The 2 EventBridge rules are ATTACHMENT (Dimension 2 / 4), never activity (Principle 1): they say 'something would break', not 'something is used'.",
+  "unqualified": {"Error": {"Code": "ResourceNotFoundException", "Message": "The resource you requested does not exist."}},
+  "qualifier_live": {"Statements": [
+    {"Sid": "daily", "Principal": "events.amazonaws.com", "Action": "lambda:InvokeFunction", "SourceArn": "arn:aws:events:ap-southeast-1:123456789012:rule/legacy-backfill-daily-cron"},
+    {"Sid": "weekly", "Principal": "events.amazonaws.com", "Action": "lambda:InvokeFunction", "SourceArn": "arn:aws:events:ap-southeast-1:123456789012:rule/legacy-backfill-weekly-cleanup"}
+  ]},
+  "function_url_configs": {"FunctionUrlConfigs": []}
+}

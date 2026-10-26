@@ -1,0 +1,9 @@
+{
+  "_note": "Query 11 (item #2). AWS/S3 daily metrics (period 86400 is the playbook's exception to hourly), 90d. SUMMARISED. Dimensions BucketName + StorageType.",
+  "MetricDataResults": [
+    {"Id": "std", "Label": "BucketSizeBytes StandardStorage", "StatusCode": "Complete", "_summary": {"latest_2026-05-27": 4621440819200, "latest_TiB": 4.20, "growth_90d_pct": 6}},
+    {"Id": "nobj", "Label": "NumberOfObjects AllStorageTypes", "StatusCode": "Complete", "_summary": {"latest_2026-05-27": 541000}},
+    {"Id": "other", "Label": "BucketSizeBytes (all other StorageTypes)", "StatusCode": "Complete", "_summary": {"note": "no datapoints: no objects in IA / Glacier / Intelligent-Tiering classes"}}
+  ],
+  "_derived": "average object size = 4,621,440,819,200 / 541,000 = 8.5 MB"
+}

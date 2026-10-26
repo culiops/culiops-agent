@@ -1,0 +1,8 @@
+{
+  "_note": "Query 3b (item #1). mem_used_percent, 30d @ Period=3600, dimensions copied from the ListMetrics output. SUMMARISED (720 points per series).",
+  "MetricDataResults": [
+    {"Id": "memavg", "Label": "mem_used_percent Average", "StatusCode": "Complete", "_points": 720, "_summary": {"mean": 18.7}},
+    {"Id": "memmax", "Label": "mem_used_percent Maximum", "StatusCode": "Complete", "_points": 720, "_summary": {"max": 34.5}}
+  ],
+  "_projection_onto_target": "pct x current_RAM / target_RAM = 34.5 x 64/32 = 69.0% (threshold: < 75% green, >= 90% red)."
+}

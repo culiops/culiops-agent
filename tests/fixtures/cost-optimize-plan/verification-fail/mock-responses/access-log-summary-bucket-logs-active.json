@@ -1,0 +1,10 @@
+{
+  "_note": "Query 4b (source 3b). Read-only s3api list-objects-v2 on acme-s3-access-logs (prefix bucket-logs-active/YYYY-MM-DD, 90 daily prefixes) then s3api get-object on each log object (about 3,800 objects; the GET cost is itemized at GATE 2). Log rows are SUMMARIZED by a throwaway filter; raw rows, requester IPs and keys are NOT recorded (Secrets rule). The verifying principal (CostPlanReadOnly) and AWS log-delivery requesters were excluded. Server access logs are best-effort and not guaranteed complete, so the counts are a lower bound.",
+  "window": "2026-02-27 to 2026-05-28 (90d)",
+  "log_history_starts": "2025-11-10",
+  "totals_90d": {"REST.GET.OBJECT": 3694, "REST.HEAD.OBJECT": 118, "REST.PUT.OBJECT": 2311, "REST.DELETE.OBJECT": 0},
+  "last_30d": {"REST.GET.OBJECT": 1247},
+  "daily_GET_distribution_90d": {"min": 31, "median": 41, "max": 52, "days_with_zero": 0, "pattern": "steady every day; no single burst"},
+  "last_GET": "2026-05-27T14:32:18Z",
+  "requester_summary": {"REST.GET.OBJECT": "arn:aws:sts::123456789012:assumed-role/lambda-export-fn (100% of GETs)", "REST.PUT.OBJECT": "arn:aws:sts::123456789012:assumed-role/log-shipper (100% of PUTs)"}
+}

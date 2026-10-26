@@ -6,7 +6,9 @@
       "instanceName": "prod-api",
       "currentInstanceType": "m5.4xlarge",
       "finding": "OVER_PROVISIONED",
-      "findingReasonCodes": ["CPUOverprovisioned"],
+      "findingReasonCodes": [
+        "CPUOverprovisioned"
+      ],
       "utilizationMetrics": [
         {
           "name": "CPU",
@@ -61,5 +63,6 @@
       "lastRefreshTimestamp": "2026-05-28T06:00:00.000Z"
     }
   ],
-  "errors": []
+  "errors": [],
+  "_note": "Query 4 (item #1). Compute Optimizer is the SOURCE of the upstream recommendation. Its lookback is 14 days, shorter than the 30d rightsize requirement, so the tier thresholds are judged on the skill's own 30d CloudWatch data (rows 2 and 3), not on this output."
 }

@@ -14,57 +14,79 @@ Kinesis Data Streams is a textbook Principle 2 case: deletion is almost always t
 - `kinesis:ListShards`
 - `kinesis:ListStreamConsumers`
 - `lambda:ListEventSourceMappings`
-- `firehose:ListDeliveryStreams` (to check whether any Firehose stream sources from this Kinesis stream)
-- `cloudwatch:GetMetricStatistics`
+- `firehose:ListDeliveryStreams`, `firehose:DescribeDeliveryStream` (to check whether any Firehose stream sources from this Kinesis stream)
+- `cloudwatch:GetMetricData`
 
 ## Queries
 
-1. `aws kinesis describe-stream-summary --stream-name <name>` — captures `StreamStatus`, `StreamModeDetails.StreamMode` (`PROVISIONED` or `ON_DEMAND`), `OpenShardCount`, `RetentionPeriodHours`, `EnhancedMonitoring`.
+0. Run the shared **Target check** and **Ownership probe** (`../aws.md`). Apply the **Metrics rule** to every CloudWatch query below. `cloudformation` owner → ❔ `unsupported-owner`. `unmanaged` → "re-apply old IaC" rollback is unavailable (delete is 🔴 regardless). A stream owned by a Terraform module shared with other resources → delete via the owning IaC change, not the CLI.
+1. `aws kinesis describe-stream-summary --stream-name <name>` — captures `StreamStatus`, `StreamModeDetails.StreamMode` (`PROVISIONED` or `ON_DEMAND`), `OpenShardCount`, `RetentionPeriodHours`, `EnhancedMonitoring`. Its success is the "describe succeeded" precondition for treating empty metrics as zero.
 2. `aws kinesis list-shards --stream-name <name>` — confirms shard count, surfaces closed shards still within retention window.
-3. `aws cloudwatch get-metric-statistics --namespace AWS/Kinesis --metric-name IncomingRecords --dimensions Name=StreamName,Value=<name> --start-time <now-90d> --end-time <now> --period 3600 --statistics Sum` — 90d producer activity. **Activity signal, Principle 1.**
-4. `aws cloudwatch get-metric-statistics --namespace AWS/Kinesis --metric-name IncomingBytes --dimensions Name=StreamName,Value=<name> --start-time <now-90d> --end-time <now> --period 3600 --statistics Sum` — bytes-side producer activity (catches low-record-count, large-payload streams).
-5. `aws cloudwatch get-metric-statistics --namespace AWS/Kinesis --metric-name GetRecords.Records --dimensions Name=StreamName,Value=<name> --start-time <now-90d> --end-time <now> --period 3600 --statistics Sum` — consumer reads.
-6. `aws cloudwatch get-metric-statistics --namespace AWS/Kinesis --metric-name GetRecords.IteratorAgeMilliseconds --dimensions Name=StreamName,Value=<name> --start-time <now-90d> --end-time <now> --period 3600 --statistics Maximum` — high iterator age means active consumers falling behind (= active!) OR no consumer polling at all (= idle, but harmless). Cross-reference with `GetRecords.Records`: high age + zero records = no consumer; high age + records = backlogged consumer.
-7. `aws kinesis list-stream-consumers --stream-arn <arn>` — Enhanced Fan-Out (EFO) consumers. **Attachment signal — NOT activity.** EFO costs $0.015/consumer-shard-hour even with zero reads; surface for ladder fallback.
-8. `aws lambda list-event-source-mappings --event-source-arn <arn>` — Lambda triggers attached. Attachment, not activity.
-9. `aws firehose list-delivery-streams` then for each: `aws firehose describe-delivery-stream --delivery-stream-name <fh>` — check if any Firehose has `Source.KinesisStreamSourceConfiguration.KinesisStreamARN == <arn>`. Attachment, not activity.
-10. (Optional, opt-in at GATE 2) `aws cloudwatch get-metric-statistics --namespace AWS/Kinesis --metric-name WriteProvisionedThroughputExceeded --dimensions Name=StreamName,Value=<name> --start-time <now-90d> --end-time <now> --period 3600 --statistics Sum` — throttles signal under-provisioning, not waste. **🚫 trigger if ≥ 1.**
+3. **Activity metrics (one call, 90d @ 3600s).** 90d × 24 = 2,160 datapoints per metric exceeds the 1,440 `get-metric-statistics` cap, so use `get-metric-data` (limit 100,800 datapoints/call). Dimensions come from Query 1's `StreamName`:
 
-> **Window (Principle 3):** a delete decision reads the 60–180d band at hourly granularity (90d used here). Inspect the temporal distribution — a single historical burst is not steady use. Note: a stream that is genuinely idle over the delete window but still has live consumers wired (Queries 7–9) is *idle-ambiguous* — route to the 🔵 owner-confirmation tier, not a direct delete.
+   ```
+   aws cloudwatch get-metric-data --start-time <now-90d> --end-time <now> --scan-by TimestampAscending --metric-data-queries '[
+    {"Id":"inrec","MetricStat":{"Metric":{"Namespace":"AWS/Kinesis","MetricName":"IncomingRecords","Dimensions":[{"Name":"StreamName","Value":"<name>"}]},"Period":3600,"Stat":"Sum"}},
+    {"Id":"inbytes","MetricStat":{"Metric":{"Namespace":"AWS/Kinesis","MetricName":"IncomingBytes","Dimensions":[{"Name":"StreamName","Value":"<name>"}]},"Period":3600,"Stat":"Sum"}},
+    {"Id":"getrec","MetricStat":{"Metric":{"Namespace":"AWS/Kinesis","MetricName":"GetRecords.Records","Dimensions":[{"Name":"StreamName","Value":"<name>"}]},"Period":3600,"Stat":"Sum"}},
+    {"Id":"iterage","MetricStat":{"Metric":{"Namespace":"AWS/Kinesis","MetricName":"GetRecords.IteratorAgeMilliseconds","Dimensions":[{"Name":"StreamName","Value":"<name>"}]},"Period":3600,"Stat":"Maximum"}}]'
+   ```
+
+   - `inrec` / `inbytes` — producer activity (bytes catches low-record-count, large-payload streams). **Activity signal, Principle 1.**
+   - `getrec` — consumer reads.
+   - `iterage` — high age + zero `getrec` = no consumer polling (idle, harmless); high age + records = backlogged consumer (active).
+4. (Optional, opt-in at GATE 2) same call shape, `WriteProvisionedThroughputExceeded` (`Sum`) — throttles mean producers are attempting writes (activity).
+5. `aws kinesis list-stream-consumers --stream-arn <arn>` — Enhanced Fan-Out (EFO) consumers. **Attachment, not activity.** EFO consumers accrue a per-consumer-shard-hour charge even with zero reads; surface for the ladder fallback.
+6. `aws lambda list-event-source-mappings --event-source-arn <arn>` — Lambda triggers attached. Attachment, not activity.
+7. `aws firehose list-delivery-streams` then for each: `aws firehose describe-delivery-stream --delivery-stream-name <fh>` — check if any Firehose has `Source.KinesisStreamSourceConfiguration.KinesisStreamARN == <arn>`. Attachment, not activity.
+
+> **Window (Principle 3):** a delete decision reads the 60–180d band at hourly granularity (90d used here; the 455-day hourly retention allows up to 180d). Judge the **temporal distribution** of the hourly buckets, not the total.
 
 ## Evidence thresholds
 
-| Signal | 🟢 Threshold | 🚫 Trigger |
-|--------|--------------|------------|
-| 90d `IncomingRecords` (Sum) | `0` | ≥ 1 record — producers are still writing |
-| 90d `IncomingBytes` (Sum) | `0` bytes | ≥ 1 KB |
-| 90d `GetRecords.Records` (Sum) | `0` (or non-zero but `IteratorAge` near retention period → records read for retention compliance only) | sustained ≥ 1/hr — consumers actively reading |
-| 90d `WriteProvisionedThroughputExceeded` (Sum) | `0` | ≥ 1 — stream is under-provisioned, deletion masks a real workload |
-| EFO consumers registered | any count — **not a 🚫 trigger** (attachment ≠ activity) | n/a |
-| Lambda event source mappings | any count — **not a 🚫 trigger** | n/a |
-| Firehose delivery streams sourcing from this stream | any count — **not a 🚫 trigger** for activity, but bumps blast radius | n/a |
+Temporal rule for the activity rows (Principle 3): bucket the hourly series, then
+- any non-zero hour in the **last 30d**, or a **recurring pattern** (non-zero hours repeating across the window, e.g. daily/weekly cadence) → 🚫;
+- non-zero hours confined to **one contiguous burst (≤ 48 h) older than 30d**, zero since → **not 🚫**; row scores 🟢 and is annotated `historical-burst` (state the burst date and size in the evidence cell).
 
-**Principle 1 reminder:** registered EFO consumers, Lambda mappings, and Firehose sources are **attachment** — Dimension 2 (blast radius) input. A stream with 5 EFO consumers and zero `IncomingRecords` for 90d is idle; the consumers are paying $0.015/shard-hour each for nothing. Score Dimension 3 on `IncomingRecords` and `GetRecords.Records`, not on consumer count.
+| Signal | Req | 🟢 Threshold | 🚫 Trigger |
+|--------|-----|--------------|------------|
+| 90d hourly `IncomingRecords` (Sum) | required | `0`, or only a `historical-burst` | non-zero in last 30d, or recurring pattern — producers are writing |
+| 90d hourly `IncomingBytes` (Sum) | required | `0` bytes, or only a `historical-burst` | same rule |
+| 90d hourly `GetRecords.Records` (Sum) | required | `0`, or only a `historical-burst` | same rule — consumers actively reading |
+| 90d `WriteProvisionedThroughputExceeded` (Sum) | optional | `0` | non-zero in last 30d — producers attempting writes, deletion masks a real workload |
 
-**Keep-alive noise to subtract:** the AWS Console's stream-monitoring page polls `DescribeStream` (free, doesn't show up in records metrics) but some operator dashboards write a synthetic "heartbeat" record every N minutes. Tell: uniform inter-arrival times, constant tiny payload size. If `IncomingRecords` shows a flat per-hour rate that matches a known dashboard probe, subtract before judging activity.
+A `required` row that returns ⚪ (query failed, or empty with a failed Target check / describe) forces Evidence ⚪ → 🔴.
+
+**Keep-alive noise to subtract (Principle 1 rule 2):** some operator dashboards write a synthetic "heartbeat" record every N minutes. Tell: uniform inter-arrival times, constant tiny payload size. If `IncomingRecords` shows a flat per-hour rate matching a known probe, subtract it before judging activity.
+
+## Attachment (Dimension 2 / 4 input)
+
+Registered consumers are **attachment**, never activity (Principle 1). They never produce 🚫. A stream with 5 EFO consumers and zero activity for 90d is idle; the consumers are costing money for nothing.
+
+| Signal | Query | Effect |
+|--------|-------|--------|
+| EFO consumers registered | 5 | ≥ 1 → Blast ≥ 🟡; surface deregistration as ladder step 1 |
+| Lambda event source mappings (note `State`) | 6 | ≥ 1 → Blast ≥ 🟡; ≥ 1 mapping whose function is critical-path per catalog → Blast 🔴 |
+| Firehose delivery streams sourcing from this stream | 7 | ≥ 1 → Blast ≥ 🟡 (Firehose→S3 archival may be the durability copy) |
+| IaC reference to the stream ARN outside its own resource block (Dim 4 grep) | `code:` | ≥ 1 → Dependency 🟡; ≥ 3 → 🔴 |
+| Another item in the same plan depends on this stream | plan | Blast 🔴 + ordering hint (same-resource conflict) |
+
+**Idle-ambiguous:** a stream with Evidence 🟢 (idle) but live wiring (any row above ≥ 1) is exactly the idle-ambiguous class → the delete routes to 🔵 (owner confirms decommissioned vs. paused/seasonal).
 
 ## Reversibility classification
-- **Default:** 🔴 irreversible. `DeleteStream` is final; records older than the (new-stream-default) 24-hour retention are unrecoverable. Re-creating a stream with the same name returns a new ARN, breaking any consumer hard-coded to the old ARN.
+- **Default:** 🔴 irreversible. `DeleteStream` is final; retained records are lost. Re-creating a stream with the same name returns a new ARN, breaking any consumer hard-coded to the old ARN.
 
 ## Blast radius classification
-- **Default:** 🟡 — likely has at least one consumer (Lambda, EFO, Firehose, or KCL app outside AWS). Bump to 🟢 only if Queries 7 / 8 / 9 all return empty AND no IaC reference to the stream ARN exists outside the stream's own resource block. Bump to 🔴 if any attached consumer is itself in 🟢-fast-win tier of the same plan (deleting the stream while another item depends on it is a same-resource conflict — emit ordering hint).
+- **Default:** 🟡 — likely has at least one consumer (Lambda, EFO, Firehose, or a KCL app outside AWS that no query here can enumerate). Bump to 🟢 only if the Attachment rows are all empty AND no IaC reference exists outside the stream's own resource block. Bump to 🔴 per the Attachment table.
 
 ## Rollback note (informational, shown in plan)
 
-"Stream deletion is irreversible. Records in flight (within retention window) are lost. Re-creation produces a new ARN — any consumer hard-coded to the old ARN must be reconfigured.
+"Stream deletion is irreversible. Records in flight (within retention window) are lost. Re-creation produces a new ARN — any consumer hard-coded to the old ARN must be reconfigured. If Ownership is `unmanaged`, there is no IaC to re-apply.
 
 **Principle 2 ladder fallback (preferred over delete in almost all cases):** before recommending delete, surface these reversible alternatives in this order, each capturing partial savings while keeping the stream intact:
 
-1. **Deregister unused EFO consumers** (`DeregisterStreamConsumer`). Cost: $0.015/consumer-shard-hour. Reversible (re-register). Activity check first: query `EnhancedFanOut.OutgoingRecords` per consumer ARN; deregister any with zero 90d activity.
-2. **Reduce shard count** (provisioned mode, `UpdateShardCount`). Cost: $0.015/shard-hour. Compute target shard count from 90d p95 `IncomingBytes` (1 MB/s per shard) and `IncomingRecords` (1000 records/s per shard). Reversible via reshard; takes effect after split/merge sequence completes (~minutes).
-3. **Reduce retention period** (`DecreaseStreamRetentionPeriod`). Extended retention (> 24h) costs $0.02/shard-hour (provisioned) or per-GB (on-demand). Reducing retention **immediately deletes records older than the new period** — confirm no downstream consumer needs that history.
-4. **Mode switch (provisioned ↔ on-demand)**: one switch per 24h. **Principle 2 cost-direction check required.** Compute: provisioned cost = `OpenShardCount × $0.015/hr × 730` vs on-demand cost ≈ `IncomingBytes_GB × $0.04 + GetRecords_GB × $0.04 + IncomingRecords × $0.0000001`. Workload shapes:
-   - Steady high throughput → provisioned cheaper.
-   - Spiky / low-baseline → on-demand cheaper.
-   - Result must be expressed as `$X/mo current → $Y/mo proposed` with input numbers cited. Bare "switch mode to save" is rejected.
-5. **Delete** — only if 90d activity is genuinely zero AND ladder steps 1–4 do not capture sufficient savings AND no attached consumer remains (per Queries 7 / 8 / 9). Pre-delete: confirm retention window has elapsed since last write OR confirm consumers have committed their checkpoints past the last record."
+1. **Deregister unused EFO consumers** (`DeregisterStreamConsumer`). Billed per consumer-shard-hour even at zero reads (`efo_consumer_shard_hour_rate`). Reversible (re-register). Activity check first: per-consumer `SubscribeToShardEvent.Records` (dimensions `StreamName` + `ConsumerName`; verify metric name) over 90d via `get-metric-data`; deregister any with zero activity.
+2. **Reduce shard count** (provisioned mode, `UpdateShardCount`). Saves `shard_hour_rate` per shard-hour. Compute the target shard count from 90d p95 hourly `IncomingBytes` (1 MB/s per shard) and `IncomingRecords` (1000 records/s per shard). Reversible via reshard.
+3. **Reduce retention period** (`DecreaseStreamRetentionPeriod`). Retention above 24h is billed (provisioned: `extended_retention_shard_hour_rate`; on-demand: per GB-month). Reducing retention **immediately deletes records older than the new period** — confirm no downstream consumer needs that history.
+4. **Mode switch (provisioned ↔ on-demand)**: rate-limited (see `rightsize-kinesis-stream.md` lever (c)). **Principle 2 cost-direction check required**, using bill-derived rates (Principle 4) or the Pricing API (`AmazonKinesis`) for the region. Bare "switch mode to save" is rejected.
+5. **Delete** — only if 90d activity is genuinely zero (or a `historical-burst`) AND ladder steps 1–4 do not capture sufficient savings AND the owner has confirmed (🔵) when consumers remain wired. Pre-delete: confirm the retention window has elapsed since the last write OR that consumers have committed checkpoints past the last record."
