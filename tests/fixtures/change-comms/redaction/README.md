@@ -10,7 +10,7 @@ Exercises: every redaction rule, the redaction log, credential flagging (in a re
 
 | File | Sensitive content |
 |---|---|
-| `.culiops/iac-change-execution/orders-api-restrict-rds-ingress-20261027-1315.md` | account ID `123456789012`; ARN `arn:aws:rds:ap-southeast-1:123456789012:db:orders-db`; IP `10.20.30.40`; CIDR `10.20.0.0/16`; credential `AKIAIOSFODNN7EXAMPLE`; secret `AWS_SECRET_ACCESS_KEY=FAKEfakeFAKEfakeFAKEfakeFAKEfakeFAKEfake` (`#Evidence`); database URL with password `NotARealPassw0rd` (`#Change Plan`); GitHub token `ghp_FAKEtokenFAKEtokenFAKE0000` (`#Research Summary`); bucket `orders-backup-123456789012`; PR `https://github.com/acme/orders-infra/pull/490`; Ticket Reference `https://acme.atlassian.net/browse/OPS-123` |
+| `.culiops/iac-change-execution/orders-api-restrict-rds-ingress-20261027-1315.md` | account ID `123456789012`; ARN `arn:aws:rds:ap-southeast-1:123456789012:db:orders-db`; IP `10.20.30.40`; CIDR `10.20.0.0/16`; credential `AKIAIOSFODNN7EXAMPLE`; secret `AWS_SECRET_ACCESS_KEY=EXAMPLE-not-a-real-secret-key-0000` (`#Evidence`); database URL with password `NotARealPassw0rd` (`#Change Plan`); GitHub token `ghp_FAKEtokenFAKEtokenFAKE0000` (`#Research Summary`); bucket `orders-backup-123456789012`; PR `https://github.com/acme/orders-infra/pull/490`; Ticket Reference `https://acme.atlassian.net/browse/OPS-123` |
 | `.culiops/pre-flight/orders-api-restrict-rds-ingress-20261027-1300.md` | account ID in Target, the ARN, the CIDR, the access key and the secret access key again |
 
 ## MUST
@@ -33,7 +33,7 @@ Anywhere in `expected-output/` (drafts, fact table, redaction log, saved files),
 - `10.20.30.40`
 - `10.20.0.0/16`
 - `AKIAIOSFODNN7EXAMPLE`
-- `FAKEfakeFAKEfakeFAKEfakeFAKEfakeFAKEfake`
+- `EXAMPLE-not-a-real-secret-key-0000`
 - `NotARealPassw0rd`
 - `ghp_FAKEtokenFAKEtokenFAKE0000`
 - `xoxb-FAKE-not-a-real-token-0000`

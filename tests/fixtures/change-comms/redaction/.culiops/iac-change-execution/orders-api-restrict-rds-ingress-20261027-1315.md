@@ -17,7 +17,7 @@ No service-discovery catalog. Delivery model: CI applies on merge. Env selection
 | Current ingress source | `code: envs/prod.tfvars:22` → `0.0.0.0/0` | `code-only — not live-verified` | ⚠️ unverified |
 | Bastion host used by operators | `code: envs/prod.tfvars:24` → `10.20.30.40` | `code-only — not live-verified` | ⚠️ unverified |
 | Hard-coded credential in `scripts/deploy.sh:4` | `AWS_ACCESS_KEY_ID=AKIAIOSFODNN7EXAMPLE` | — | UNVERIFIED — flagged to operator, out of scope for this change |
-| CI secret in `.github/workflows/apply.yml:31` | `AWS_SECRET_ACCESS_KEY=FAKEfakeFAKEfakeFAKEfakeFAKEfakeFAKEfake` | — | UNVERIFIED — flagged to operator, out of scope for this change |
+| CI secret in `.github/workflows/apply.yml:31` | `AWS_SECRET_ACCESS_KEY=EXAMPLE-not-a-real-secret-key-0000` | — | UNVERIFIED — flagged to operator, out of scope for this change |
 
 ## Change Plan
 

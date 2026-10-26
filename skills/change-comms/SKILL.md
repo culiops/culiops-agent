@@ -196,7 +196,7 @@ To draft these I need from you:
 5. Risk verdict GREEN, YELLOW or RED (heads-up; if there are no records, or the pre-flight verdict is ABORTED).
 6. Execution path, PR or direct apply (result, ticket-close; if no record header gives it).
 7. Apply date and time (result, ticket-close; not if aborted; not if the Execution Log states one).
-8. Apply outcome and verification (result, ticket-close; whenever no record shows a clean direct apply). Multi-phase: whether the last phase is applied.
+8. Apply outcome and verification (result, ticket-close; whenever no record shows a clean direct apply; not if aborted; not for a phase whose `Execution:` line records an operator-confirmed apply). Multi-phase: whether the last phase is applied.
 9. PR link (PR path only, if no Execution: line has one and none records an abort at the gate).
 10. Next steps (if the outcome is not success).
 11. Was anything applied? (if aborted; needed before the aborted result).

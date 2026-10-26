@@ -221,7 +221,7 @@ Reply here if this window conflicts.
 | MUST-NOT: `10.20.30.40` anywhere in expected-output | pass | `grep -nF` over expected-output returns nothing |
 | MUST-NOT: `10.20.0.0/16` anywhere in expected-output | pass | `grep -nF` over expected-output returns nothing |
 | MUST-NOT: `AKIAIOSFODNN7EXAMPLE` anywhere in expected-output | pass | `grep -nF` over expected-output returns nothing |
-| MUST-NOT: `FAKEfakeFAKEfakeFAKEfakeFAKEfakeFAKEfake` anywhere in expected-output | pass | `grep -nF` over expected-output returns nothing |
+| MUST-NOT: `EXAMPLE-not-a-real-secret-key-0000` anywhere in expected-output | pass | `grep -nF` over expected-output returns nothing |
 | MUST-NOT: `NotARealPassw0rd` anywhere in expected-output | pass | `grep -nF` over expected-output returns nothing |
 | MUST-NOT: `ghp_FAKEtokenFAKEtokenFAKE0000` anywhere in expected-output | pass | `grep -nF` over expected-output returns nothing |
 | MUST-NOT: `xoxb-FAKE-not-a-real-token-0000` anywhere in expected-output | pass | `grep -nF` over expected-output returns nothing |
