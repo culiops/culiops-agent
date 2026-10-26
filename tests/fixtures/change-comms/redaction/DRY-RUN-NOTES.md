@@ -149,3 +149,38 @@ Reply here if this window conflicts.
 | Fix-round: header citation `#header`, no plan-count rows | pass | heads-up.md l.50 |
 
 Round 4: 10 pass, 0 FAIL (README lines plus fix-round checks). No skill change.
+
+## Round 5 (1465b19, hint-free scripts)
+
+Hint-free script. The full-record log covers identifiers only (ARN, account ID, account ID in a bucket name, CIDR, IPv4, access key), with no values. The operator's edit was re-scanned, masked, folded into the What line, and the operator was told the type only.
+
+Drafts as produced:
+
+heads-up (Google Chat), `expected-output/orders-api-restrict-rds-ingress-20261026-1500-heads-up.md`:
+
+```text
+*🔧 Heads-up: infra change on orders-api (prod)*
+When: 2026-10-27 14:00 ICT, 15 min
+What: restrict orders-db security group ingress to the app subnets, target host <ip>
+Impact: connections drop briefly if the rule is wrong, otherwise none
+Risk: YELLOW (pre-flight)
+Rollback: revert PR and re-apply, ~10 min
+Ticket: OPS-123 | PR: https://github.com/acme/orders-infra/pull/490
+Reply here if this window conflicts.
+```
+
+### Findings (round 5)
+
+| MUST/MUST-NOT line | pass/FAIL | evidence |
+|---|---|---|
+| MUST: `orders-db` kept | pass | heads-up.md l.11 |
+| MUST: PR 490 intact | pass | heads-up.md l.15 |
+| MUST: log lists account ID, ARN, IP, CIDR, bucket by type and location only | pass | heads-up.md l.43 |
+| MUST: credential flagged, not in a draft | pass | heads-up.md l.61 |
+| MUST: operator edit re-scanned and warned | pass | `redaction-r5.md` l.153 |
+| MUST: bucket with account ID masked or dropped | pass | heads-up.md l.43 |
+| MUST: `0.0.0.0/0` not asserted | pass | n/a |
+| MUST: date 2026-10-27 or `tomorrow` | pass | heads-up.md l.10 |
+| MUST-NOT: raw account ID, IP, CIDR, access key in expected-output | pass | leak grep returns nothing |
+
+Round 5: 9 pass, 0 FAIL (README lines plus fix-round-2 checks). No skill change.

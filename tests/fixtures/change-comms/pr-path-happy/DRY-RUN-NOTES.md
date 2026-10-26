@@ -217,3 +217,60 @@ Rollback: not needed. Revert PR + apply if required.
 | Fix-round: numbered batch | pass | `pr-path-happy-r4.md` l.48 |
 
 Round 4: 13 pass, 0 FAIL (README lines plus fix-round checks). No skill change.
+
+## Round 5 (1465b19, hint-free scripts)
+
+Hint-free script. GATE 1 named only the 1015 record and the 1000 pre-flight. The window arrived without a timezone, which batch item 1 had already asked for. The apply facts were asked in batch 2, before the result.
+
+Drafts as produced:
+
+heads-up (Google Chat), `expected-output/orders-api-resize-rds-20261026-1500-heads-up.md`:
+
+```text
+*🔧 Heads-up: infra change on orders-api (prod)*
+When: 2026-10-27 14:00 ICT, 15 min
+What: resize RDS orders-db db.t3.medium → db.t3.large
+Impact: ~30-60s Multi-AZ failover, writes may fail briefly
+Risk: YELLOW (pre-flight)
+Rollback: revert the PR and re-apply, ~10 min
+Ticket: OPS-123 | PR: https://github.com/acme/orders-infra/pull/482
+Reply here if this window conflicts.
+```
+
+result (Google Chat), `expected-output/orders-api-resize-rds-20261026-1500-result.md`:
+
+```text
+*✅ Done: orders-api RDS resize (prod), applied 14:12 ICT*
+Verified: connections + error rate normal 15 min
+Ticket: OPS-123
+```
+
+ticket-close (Jira comment), `expected-output/orders-api-resize-rds-20261026-1500-ticket-close.md`:
+
+```text
+Change completed
+What: RDS orders-db resized db.t3.medium → db.t3.large
+PR: https://github.com/acme/orders-infra/pull/482
+Applied: <TODO: apply date> 14:12 ICT
+Verification: connections + error rate normal 15 min
+Rollback: not needed. Revert PR + apply if required.
+```
+
+### Findings (round 5)
+
+| MUST/MUST-NOT line | pass/FAIL | evidence |
+|---|---|---|
+| MUST: confirm 1015 + 1000, not rotate-logs | pass | `pr-path-happy-r5.md` l.30 |
+| MUST: ask timezone when the window has none | pass | `pr-path-happy-r5.md` l.49 |
+| MUST: heads-up at most 8 lines with `YELLOW`, `OPS-123`, PR 482 | pass | heads-up.md l.15 |
+| MUST: operator impact; rollback cites `#Change Plan` | pass | heads-up.md l.12 |
+| MUST: apply facts asked BEFORE the result | pass | `pr-path-happy-r5.md` l.122 |
+| MUST: result contains `14:12 ICT` | pass | result.md l.9 |
+| MUST: ticket-close has PR URL, `14:12 ICT`, operator verification | pass | ticket-close.md l.12 |
+| MUST: `(UTC)` / record `Date` never the window timezone | pass | heads-up.md l.10 |
+| MUST: date 2026-10-27 or `tomorrow` | pass | heads-up.md l.10 |
+| MUST-NOT: apply claim from `Outcome: completed` | pass | result.md l.23 |
+| MUST-NOT: `10:15` as an apply time | pass | `10:15` absent from all three files |
+| MUST-NOT: stale rotate-logs record used | pass | rotate-logs is not in any Sources line or row |
+
+Round 5: 12 pass, 0 FAIL (README lines plus fix-round-2 checks). No skill change.

@@ -142,3 +142,38 @@ Reply here if this window conflicts.
 | Fix-round: no-records batch asks nothing twice | pass | `no-records-r4.md` l.30 |
 
 Round 4: 9 pass, 0 FAIL (README lines plus fix-round checks). No skill change.
+
+## Round 5 (1465b19, hint-free scripts)
+
+Hint-free script. GATE 1 and a numbered batch went out as one message: timezone, window, impact, rollback, then "also service, environment, what, ticket, PR link". Nothing was asked twice. Every Source cell starts with `operator-supplied`.
+
+Drafts as produced:
+
+heads-up (Google Chat), `expected-output/orders-api-rds-resize-20261026-1500-heads-up.md`:
+
+```text
+*🔧 Heads-up: infra change on orders-api (prod)*
+When: 2026-10-27 14:00 ICT, 15 min
+What: resize RDS orders-db db.t3.medium → db.t3.large
+Impact: ~30-60s Multi-AZ failover, writes may fail briefly
+Risk: <TODO: pre-flight verdict>
+Rollback: revert the PR and re-apply, ~10 min
+Ticket: OPS-123
+Reply here if this window conflicts.
+```
+
+### Findings (round 5)
+
+| MUST/MUST-NOT line | pass/FAIL | evidence |
+|---|---|---|
+| MUST: all missing fields asked in ONE batch | pass | `no-records-r5.md` l.38 |
+| MUST: every fact-table row `operator-supplied` | pass | heads-up.md l.23 |
+| MUST: a heads-up produced | pass | heads-up.md l.16 |
+| MUST: unsourced facts as visible TODOs | pass | heads-up.md l.13 |
+| MUST: date 2026-10-27 or `tomorrow` | pass | heads-up.md l.10 |
+| MUST-NOT: any `record:` source | pass | no `record:` in the file |
+| MUST-NOT: invented risk verdict | pass | heads-up.md l.13 |
+| MUST-NOT: guessed PR URL | pass | no PR URL; the operator said none raised, so the segment is omitted |
+| Fix-round 2: no-records batch asks nothing twice | pass | `no-records-r5.md` l.37 |
+
+Round 5: 9 pass, 0 FAIL (README lines plus fix-round-2 checks). No skill change.

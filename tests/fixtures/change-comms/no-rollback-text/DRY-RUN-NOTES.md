@@ -98,3 +98,35 @@ Reply here if this window conflicts.
 | Fix-round: numbered batch | pass | `no-rollback-text-r4.md` l.53 |
 
 Round 4: 7 pass, 0 FAIL (README lines plus fix-round checks). No skill change.
+
+## Round 5 (1465b19, hint-free scripts)
+
+Hint-free script. Rollback was asked as batch item 4 and declined, so it is `<TODO: rollback>`. Risk is GREEN.
+
+Drafts as produced:
+
+heads-up (Google Chat), `expected-output/orders-api-scale-ecs-tasks-20261026-1500-heads-up.md`:
+
+```text
+*🔧 Heads-up: infra change on orders-api (prod)*
+When: 2026-10-27 11:00 ICT, 10 min
+What: increase orders-api ECS desired task count from 3 to 5
+Impact: none expected, tasks are added alongside the existing ones
+Risk: GREEN (pre-flight)
+Rollback: <TODO: rollback>
+Ticket: OPS-123 | PR: https://github.com/acme/orders-infra/pull/495
+Reply here if this window conflicts.
+```
+
+### Findings (round 5)
+
+| MUST/MUST-NOT line | pass/FAIL | evidence |
+|---|---|---|
+| MUST: asks for the rollback | pass | `no-rollback-text-r5.md` l.55 |
+| MUST: `<TODO: rollback>` on the Rollback line | pass | heads-up.md l.14 |
+| MUST: `<TODO: rollback>` under Open TODOs | pass | heads-up.md l.45 |
+| MUST: Risk `GREEN` | pass | heads-up.md l.13 |
+| MUST: date 2026-10-27 or `tomorrow` | pass | heads-up.md l.10 |
+| MUST-NOT: invented rollback text | pass | heads-up.md l.14 |
+
+Round 5: 6 pass, 0 FAIL (README lines plus fix-round-2 checks). No skill change.

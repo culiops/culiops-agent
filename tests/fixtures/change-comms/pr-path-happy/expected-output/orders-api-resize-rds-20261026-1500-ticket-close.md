@@ -1,7 +1,7 @@
 **Change comms for:** `orders-api` / `prod`
 **Type:** `ticket-close`
 **Platform:** `Jira comment`
-**Sources:** `.culiops/iac-change-execution/orders-api-resize-rds-20261027-1015.md`, `.culiops/pre-flight/orders-api-resize-rds-20261027-1000.md`, operator-supplied
+**Sources:** `.culiops/iac-change-execution/orders-api-resize-rds-20261027-1015.md`, operator-supplied
 
 ## Draft
 
@@ -19,23 +19,26 @@ Rollback: not needed. Revert PR + apply if required.
 | Field | Value | Source |
 |-------|-------|--------|
 | Service / environment | orders-api / prod | `record: .culiops/iac-change-execution/orders-api-resize-rds-20261027-1015.md#header` |
+| Execution path | PR | `record: .culiops/iac-change-execution/orders-api-resize-rds-20261027-1015.md#header` |
 | What | RDS orders-db resized db.t3.medium → db.t3.large | `record: .culiops/iac-change-execution/orders-api-resize-rds-20261027-1015.md#header` (Change line) |
 | PR | https://github.com/acme/orders-infra/pull/482 | `record: .culiops/iac-change-execution/orders-api-resize-rds-20261027-1015.md#Execution Log` (Phase 1, Execution line) |
-| Apply date | not given | `operator-supplied (not given)` |
-| Apply time | 14:12 ICT | `operator-supplied` |
-| Verification | connections + error rate normal 15 min (as given) | `operator-supplied` |
-| Apply outcome | success (confirmed, so `Rollback: not needed` is allowed) | `operator-supplied` |
-| Rollback instruction | revert PR + apply if required (summarised) | `record: .culiops/iac-change-execution/orders-api-resize-rds-20261027-1015.md#Change Plan` (Phase 1, Rollback path) |
-| Ticket key (not a line in this shape; the comment is posted on it) | OPS-123 | `record: .culiops/iac-change-execution/orders-api-resize-rds-20261027-1015.md#Ticket Reference` |
-
-Operator-supplied facts: apply time, timezone, verification, apply outcome. The window date (2026-10-27) is not borrowed for the apply date.
+| Apply date | <TODO: apply date> | operator-supplied (not given) |
+| Apply time | 14:12 | operator-supplied |
+| Timezone | ICT | operator-supplied |
+| Apply outcome | success (confirmed) | operator-supplied |
+| Verification | connections + error rate normal 15 min | operator-supplied |
+| Rollback status | not needed (confirmed success) | operator-supplied |
+| Rollback instruction | revert the PR + apply if required | `record: .culiops/iac-change-execution/orders-api-resize-rds-20261027-1015.md#Change Plan` (Phase 1, Rollback path) |
+| Ticket | OPS-123 (from https://acme.atlassian.net/browse/OPS-123, not shown in draft) | `record: .culiops/iac-change-execution/orders-api-resize-rds-20261027-1015.md#Ticket Reference` |
 
 ## Redaction log
 
 Redaction log: nothing masked
 
 ## Open TODOs
-- `<TODO: apply date>` in the Applied line: the operator gave a time (14:12 ICT) but no date.
+
+- <TODO: apply date> (Applied line): the operator gave 14:12 ICT with no date; the window date is not borrowed.
 
 ## Flags
+
 none

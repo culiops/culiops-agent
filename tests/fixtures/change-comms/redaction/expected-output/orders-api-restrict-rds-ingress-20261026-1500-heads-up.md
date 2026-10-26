@@ -8,10 +8,10 @@
 ```text
 *🔧 Heads-up: infra change on orders-api (prod)*
 When: 2026-10-27 14:00 ICT, 15 min
-What: restrict orders-db security group ingress to the app subnets; target host <ip>
+What: restrict orders-db security group ingress to the app subnets, target host <ip>
 Impact: connections drop briefly if the rule is wrong, otherwise none
 Risk: YELLOW (pre-flight)
-Rollback: revert the PR and re-apply, ~10 min
+Rollback: revert PR and re-apply, ~10 min
 Ticket: OPS-123 | PR: https://github.com/acme/orders-infra/pull/490
 Reply here if this window conflicts.
 ```
@@ -22,18 +22,18 @@ Reply here if this window conflicts.
 |-------|-------|--------|
 | Service | orders-api | `record: .culiops/iac-change-execution/orders-api-restrict-rds-ingress-20261027-1315.md#header` |
 | Environment | prod | `record: .culiops/iac-change-execution/orders-api-restrict-rds-ingress-20261027-1315.md#header` |
-| Execution path | PR | `record: .culiops/iac-change-execution/orders-api-restrict-rds-ingress-20261027-1315.md#header` |
-| Platform | Google Chat | `operator-supplied` |
-| Window start | 2026-10-27 14:00 ("tomorrow" resolved against session date 2026-10-26) | `operator-supplied` |
-| Window duration | 15 min | `operator-supplied` |
-| Timezone | ICT | `operator-supplied` |
 | What | restrict orders-db security group ingress to the app subnets | `record: .culiops/iac-change-execution/orders-api-restrict-rds-ingress-20261027-1315.md#header` (Change line) |
-| Target host | `<ip>` (value typed by the operator at GATE 2, masked) | `operator-supplied` |
+| Window start | 2026-10-27 14:00 ("tomorrow 14:00" resolved against session date 2026-10-26) | `operator-supplied` |
+| Duration | 15 min (written as given, no `~` added) | `operator-supplied` |
+| Timezone | ICT | `operator-supplied` |
 | Impact | connections drop briefly if the rule is wrong, otherwise none (used as given) | `operator-supplied` |
 | Risk | YELLOW | `record: .culiops/pre-flight/orders-api-restrict-rds-ingress-20261027-1300.md#Verdict` |
-| Rollback | revert the PR and re-apply, ~10 min | `record: .culiops/iac-change-execution/orders-api-restrict-rds-ingress-20261027-1315.md#Change Plan` (Phase 1, Rollback path line) |
-| Ticket | OPS-123 (parsed from the Ticket Reference URL) | `record: .culiops/iac-change-execution/orders-api-restrict-rds-ingress-20261027-1315.md#Ticket Reference` |
+| Rollback | revert PR and re-apply, ~10 min (summarised) | `record: .culiops/iac-change-execution/orders-api-restrict-rds-ingress-20261027-1315.md#Change Plan` (Phase 1, Rollback path) |
+| Ticket | OPS-123 (key parsed from the Ticket Reference URL) | `record: .culiops/iac-change-execution/orders-api-restrict-rds-ingress-20261027-1315.md#Ticket Reference` |
 | PR | https://github.com/acme/orders-infra/pull/490 | `record: .culiops/iac-change-execution/orders-api-restrict-rds-ingress-20261027-1315.md#Execution Log` (Phase 1, Execution line) |
+| Target host | `<ip>` (value masked by the redaction pass) | `operator-supplied` |
+
+Operator-supplied: window start, duration, timezone, impact, target host.
 
 ## Redaction log
 
@@ -55,9 +55,7 @@ Reply here if this window conflicts.
 | 14 | IPv4 | operator edit (heads-up draft) | `<ip>` |
 
 ## Open TODOs
-
 none
 
 ## Flags
-
-- Flag: access key found in `.culiops/iac-change-execution/orders-api-restrict-rds-ingress-20261027-1315.md#Evidence` and `.culiops/pre-flight/orders-api-restrict-rds-ingress-20261027-1300.md#Evidence`. The value appears in a record, rotate it. It was masked and kept out of every draft.
+- Flag: access key found in a record, in `.culiops/iac-change-execution/orders-api-restrict-rds-ingress-20261027-1315.md#Evidence` and `.culiops/pre-flight/orders-api-restrict-rds-ingress-20261027-1300.md#Evidence`. The value appears in a record; rotate it. The value is masked and not repeated here.

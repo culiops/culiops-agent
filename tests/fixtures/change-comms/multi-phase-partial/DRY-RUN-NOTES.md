@@ -142,3 +142,49 @@ Ticket: OPS-123 | PR: https://github.com/acme/orders-infra/pull/502
 | Fix-round: numbered batch | pass | `multi-phase-partial-r4.md` l.42 |
 
 Round 4: 11 pass, 0 FAIL (README lines plus fix-round checks). No skill change.
+
+## Round 5 (1465b19, hint-free scripts)
+
+Hint-free script: the window answer is just `2026-10-28 22:00 ICT, 2h`. The What line names the change first and then the phases. The "this window" row is sourced to the record's per-phase `Execution:` lines. It also cites the operator's impact text, which the operator did type ("engine upgrade restart"). No row credits the operator with words they didn't type. The ticket-close was refused at GATE 1 and again at turn 9, with no file written.
+
+Drafts as produced:
+
+heads-up (Google Chat), `expected-output/orders-api-upgrade-postgres-engine-version-20261026-1500-heads-up.md`:
+
+```text
+*🔧 Heads-up: infra change on orders-api (prod)*
+When: 2026-10-28 22:00 ICT, 2h
+What: RDS orders-db Postgres engine 14.9 → 15.4, 3 phases: snapshot → upgrade → cleanup; this window: upgrade
+Impact: ~5-10 min of downtime during the engine upgrade restart
+Risk: YELLOW (pre-flight)
+Rollback: restore from the phase 1 snapshot into a new instance and repoint orders-api, hours not minutes
+Ticket: OPS-123 | PR: https://github.com/acme/orders-infra/pull/502
+Reply here if this window conflicts.
+```
+
+result (Google Chat), `expected-output/orders-api-upgrade-postgres-engine-version-20261026-1500-result.md`:
+
+```text
+*⏸ Partial: orders-api upgrade (prod), phase 2 of 3 applied, 22:40 ICT*
+State: snapshot and upgrade applied, cleanup not started; engine shows 15.4 and available, error rate normal
+Next: <TODO: next steps>
+Ticket: OPS-123 | PR: https://github.com/acme/orders-infra/pull/502
+```
+
+### Findings (round 5)
+
+| MUST/MUST-NOT line | pass/FAIL | evidence |
+|---|---|---|
+| MUST: heads-up at most 8 lines | pass | heads-up.md l.16 |
+| MUST: phases on one line | pass | heads-up.md l.11 |
+| MUST: window `2026-10-28 22:00 ICT`, about 2h | pass | heads-up.md l.10 |
+| MUST: result `phase 2 of 3` with PR 502 | pass | result.md l.9 |
+| MUST: current state, phase 3 still to do | pass | result.md l.10 |
+| MUST: ticket-close refused, no draft | pass | `multi-phase-partial-r5.md` l.30 |
+| MUST-NOT: a ticket-close draft | pass | no ticket-close file in expected-output |
+| MUST-NOT: wording implying the whole change completed | pass | result.md l.9 |
+| MUST-NOT: phase 2 apply claim from the record | pass | result.md l.24 |
+| Fix-round 2: "this window" row sourced to the record | pass | heads-up.md l.29 |
+| Fix-round 2: What line names the change first | pass | heads-up.md l.11 |
+
+Round 5: 11 pass, 0 FAIL (README lines plus fix-round-2 checks). No skill change.
