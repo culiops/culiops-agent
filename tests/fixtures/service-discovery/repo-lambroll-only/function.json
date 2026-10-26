@@ -10,7 +10,7 @@
     "Variables": {
       "ENV": "{{ env `ENV` }}",
       "REGION": "us-east-1",
-      "HMAC_KEY_ARN": "arn:aws:secretsmanager:us-east-1:111111111111:secret:webhook-handler/{{ env `ENV` }}/hmac-key",
+      "HMAC_KEY_ARN": "arn:aws:secretsmanager:us-east-1:123456789012:secret:webhook-handler/{{ env `ENV` }}/hmac-key",
       "LOG_LEVEL": "{{ env `LOG_LEVEL` }}"
     }
   },

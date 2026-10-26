@@ -1,0 +1,18 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: notifier-worker
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/example-org/notifier-deploy.git
+    targetRevision: main
+    path: manifests/worker
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: notifier-jobs
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true

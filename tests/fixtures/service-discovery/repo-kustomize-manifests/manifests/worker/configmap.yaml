@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: notifier-worker-config
+  labels:
+    app.kubernetes.io/name: notifier
+    app.kubernetes.io/component: worker
+data:
+  LOG_LEVEL: info
+  QUEUE_URL: https://sqs.eu-west-1.amazonaws.com/123456789012/notifier-jobs
+  API_TOKEN: REDACTED-FIXTURE-VALUE

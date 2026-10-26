@@ -1,6 +1,6 @@
 # Dry-run of `service-discovery` against `repo-unknown-tool`
 
-Simulated run of the 5-step skill against this fixture. Recorded on 2026-04-15.
+Simulated run of the IaC path against this fixture. First recorded 2026-04-15; re-run 2026-10-26 for secrets-by-projection.
 
 ## What the fixture exercised
 
@@ -24,7 +24,7 @@ After this answer, the skill proceeds with operator-supplied mappings:
 - Stack = `mycli.yml` + `services/api.json`
 - `services/api.json` is attributed to this stack (not a second unclassified file)
 - Resource inventory: 1 row — `mycli/service` (operator-supplied raw type); service name = `api`; image = `registry.example.com/api:2026.04.1`; cluster = `my-cluster-prod`
-- No `arn:`, `gs://`, or cloud-provider references detected → no cloud resource equivalents to record
+- No `arn:` or `s3://` references (the AWS markers the deploy-shape scan looks for) detected → no cloud resource equivalents to record
 - Naming fragment: `api` (no templating detected; static)
 - Identifying dimensions: replicas=4, ports=[8080]
 - Signal envelope: not declared
@@ -58,6 +58,6 @@ If other stacks had existed in the repo alongside the unknown tool, the catalog 
 
 The escape hatch correctly lists both `mycli.yml` and `services/api.json` as unclassified because neither was attributed to any loaded detector. In Path A, the operator explains that `services/api.json` is referenced by `mycli.yml` (via `service_definition: services/api.json`) and belongs to the same stack — after which the skill treats the JSON as part of the single `mycli` stack, not as a second independent deploy unit. The current prompt wording handles this correctly: the operator can name both files together in one "teach me" answer.
 
-### Observation — `DB_URL` in `services/api.json` contains a credentials-looking value *(no fix required)*
+### Observation — `DB_URL` in `services/api.json` is a connection string with inline credentials *(expected behaviour under secrets-by-projection)*
 
-The value `postgres://api:redacted@db.example.internal:5432/api` is hard-coded in the JSON, not behind a secrets-exclusion path. It's a plaintext connection string (the `redacted` placeholder makes the fixture safe). The skill would read this file in Path A (after operator approval), record the `DB_URL` key name, and flag the value as a credentials-shaped string in the "Assumptions and Caveats" section ("env var `DB_URL` appears to contain database credentials inline — recommend moving to a secrets manager reference"). This is correct behavior under the Iron Law (read what's there; surface what's concerning).
+`services/api.json:7` hard-codes `postgres://api:redacted@db.example.internal:5432/api` (the `redacted` placeholder keeps the fixture safe). Path A reads the file only after the operator's "teach me" answer, and then applies Constraint 5: the key name `DB_URL` is not on the secret-key list, but the value has the `user:password@host` shape, which the pre-write secret scan ("scan the draft for anything Constraint 5 forbids") catches. The catalog therefore records the key name with a placeholder, `DB_URL = <set in services/api.json:7>`, never the string, and the Assumptions section says: "env var `DB_URL` contains inline credentials — recommend moving them to a secrets manager reference." Acceptance check: the literal `postgres://api:` does not appear in the catalog.

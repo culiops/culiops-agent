@@ -17,6 +17,9 @@ Line-by-line text parsing of Mermaid diagram syntax.
 3. **Edges**: declared as `-->`, `---`, `-.->`, `==>`, with optional labels `-->|label|` or `-- label -->`. Extract source node, target node, and edge label.
 4. **Subgraphs**: `subgraph Title` ... `end` blocks. These may represent service boundaries, regions, or logical groupings. Subgraphs can nest.
 
+## Output
+**Output: hints only** — `source=doc`, confidence capped at Medium; only live evidence can raise it.
+
 ## What to extract
 - **Resource types**: from node shapes (cylinder = database), labels containing resource type keywords (e.g., "RDS", "Redis", "ALB"), and subgraph titles
 - **Resource names**: from node labels (prefer label over node ID; IDs are often shorthand)
@@ -65,5 +68,5 @@ flowchart LR
 - **Node ID vs label mismatch**: node IDs (e.g., `SvcA`) are programmer shorthand and may not appear in infrastructure; always prefer the label text
 - **Embedded in markdown**: when Mermaid is inside a `.md` file, only extract from ` ```mermaid ` blocks; ignore surrounding prose (the `markdown.md` detector handles that)
 - **Irrelevant diagram types**: sequence, class, Gantt, ER, and state diagrams rarely contain infrastructure topology; skip them to avoid false positives
-- **No standard cloud shapes**: Mermaid has no built-in AWS/GCP/Azure shape library, so resource types come entirely from label text — lower confidence than draw.io stencils
+- **No standard cloud shapes**: Mermaid has no built-in AWS shape library, so resource types come entirely from label text — lower confidence than draw.io stencils
 - **Direction declarations**: `LR`, `TB`, `RL`, `BT` are layout hints, not semantic content; ignore them

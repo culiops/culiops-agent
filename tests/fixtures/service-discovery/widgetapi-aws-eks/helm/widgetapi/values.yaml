@@ -82,6 +82,15 @@ secretEnv:
   enabled: true
   secretName: widgetapi
 
+# DB credentials via the Secrets Store CSI Driver (AWS provider). When enabled,
+# templates/secretproviderclass.yaml mounts Secrets Manager secret
+# widgetapi/<environment>/db and syncs DB_USERNAME / DB_PASSWORD into the
+# Kubernetes Secret "<release>-db". Needs the CSI driver + ASCP installed in the
+# cluster (not managed by this repo).
+secretsStore:
+  enabled: false
+  environment: ""    # set per env (prod, staging)
+
 # Third-party: Datadog agent (dependency chart) and PagerDuty alerting.
 datadog:
   enabled: true

@@ -1,42 +1,27 @@
 ---
 name: cloudformation
 url: https://aws.amazon.com/cloudformation/
-deploys: AWS resources via CloudFormation templates (covers AWS SAM)
+deploys: AWS resources via CloudFormation, SAM, Serverless Framework or CDK (recognition only)
 ---
 
 ## File signatures
-- `*.yaml` / `*.yml` with top-level `AWSTemplateFormatVersion:` or `Resources:`
-- `*.json` with top-level `"AWSTemplateFormatVersion"` or `"Resources"`
-- `template.yaml` / `template.yml` (SAM convention)
-- `samconfig.toml` (SAM CLI configuration)
+- **CloudFormation**: `*.yaml` / `*.yml` / `*.json` with `AWSTemplateFormatVersion`, or a top-level `Resources:` whose entries have `Type: AWS::...`
+- **SAM**: a template with `Transform: AWS::Serverless-2016-10-31`; `samconfig.toml`
+- **Serverless Framework**: `serverless.yml` / `serverless.yaml` / `serverless.ts` / `serverless.js` with `provider:` plus `functions:` or `service:`
+- **CDK**: `cdk.json`. Ignore generated `cdk.out/**` (synthesized templates are output, not source)
 
-## Stack boundary
-One stack = one template file (`template.yaml`, `template.json`, or any `*.yaml`/`*.json` with `AWSTemplateFormatVersion`).
+## Support level: recognition only
+List the stacks found (tool, file path, and stack/service name when the file states one), tell the operator these tools are not supported, and stop the IaC path for them. Do NOT extract resources, resolve parameters, or offer "teach me" — improvised support for an unsupported tool produces a catalog nobody has validated.
 
-Multi-instance is expressed via:
-- the `Parameters:` block with values supplied by `--parameters` / `--parameter-overrides`
-- separate parameter files passed via `--parameter-overrides file://...`
-- per-stage configurations in `samconfig.toml` (`[<stage>.deploy.parameters]`)
+## Offer: real-discovery against live AWS
+For the resources these stacks own, offer real-discovery (supported, live AWS). Ownership is read from the `aws:cloudformation:stack-name` tag (SAM, Serverless and CDK all deploy through CloudFormation); record it as `Owner: cloudformation (<stack>)`. A repo containing only these tools goes straight to this offer.
 
-## Parameter sources (highest to lowest priority)
-- `--parameter-overrides Key=Value` on the CLI
-- Parameter files passed via `--parameter-overrides file://path/params.json`
-- `samconfig.toml` per-stage `parameter_overrides`
-- `Parameters:` block default values
-- `Fn::ImportValue` from another stack's exported `Outputs` (cross-stack — record as dependency, do NOT chase)
-- AWS Systems Manager Parameter Store lookups via `{{resolve:ssm:...}}` (record as runtime reference)
-- AWS Secrets Manager lookups via `{{resolve:secretsmanager:...}}` (record reference, NEVER read)
+## Pre-import ownership check (read-only)
+Used so no skill imports or modifies a resource a stack owns. Run only after the operator approves the batch:
 
-## Resource extraction
-- Each entry under `Resources:` → one inventory entry; raw type is the AWS resource type (e.g., `AWS::ECS::Service`, `AWS::S3::Bucket`, `AWS::Lambda::Function`)
-- SAM transforms (`AWS::Serverless::Function`, `AWS::Serverless::Api`, etc.) → expand mentally to the underlying CloudFormation resources, but record the SAM type as the raw type
-- `Outputs:` with `Export:` → declares a cross-stack export; record the export name
-- `Conditions:` referenced by `Condition:` on resources → conditional resource (resolve the condition for the target instance)
+```
+aws cloudformation describe-stack-resources --stack-name <s> --profile {profile} --region {region} \
+  --query 'StackResources[].{Logical:LogicalResourceId,Physical:PhysicalResourceId,Type:ResourceType}'
+```
 
-## Naming pattern hints
-CloudFormation does not enforce a naming convention. If `Name:` properties use `!Sub` with a recurring template (e.g., `!Sub "${Service}-${Env}-${AWS::Region}"`), present that as the inferred pattern.
-
-## Typical cross-stack dependencies
-- Other CloudFormation stacks via `Fn::ImportValue` / `Outputs.Export`
-- SSM Parameter Store / Secrets Manager via `{{resolve:...}}` references
-- IAM roles / KMS keys referenced by ARN
+and check the tag on the candidate resource (`aws:cloudformation:stack-name`, `aws:cloudformation:logical-id`). If the resource appears in a stack, it is stack-owned: report the owner and do not import or modify it.

@@ -16,7 +16,7 @@ type: text
   - `*overview*` (system overview)
   - `*design*` (design document)
   - `*adr*`, `*decision*` (architecture decision record)
-  - `*ops*`, `*operations*` (operations)
+  - `runbook*`, `ops/`, `docs/ops*`, `oncall*` (operations; do not match a bare `*ops*`, which hits nearly any file)
   - `*network*` (network)
   - `*disaster*`, `*dr-*`, `*recovery*` (disaster recovery)
   - `*sla*`, `*slo*`, `*sli*` (service level)
@@ -25,19 +25,17 @@ type: text
 ## Parsing method
 Keyword and pattern extraction from prose text.
 
-1. **Cloud resource type keywords**: scan for mentions of cloud resource types. Comprehensive list by provider:
+1. **Cloud resource type keywords**: scan for mentions of cloud resource types. AWS keywords plus generic technologies:
    - **AWS**: RDS, Aurora, DynamoDB, ElastiCache, Redshift, S3, ECS, EKS, EC2, Lambda, Fargate, ALB, NLB, CLB, API Gateway, CloudFront, Route 53, SQS, SNS, Kinesis, EventBridge, Step Functions, CodePipeline, CodeBuild, IAM, KMS, Secrets Manager, Parameter Store, VPC, WAF, ACM, EFS, EBS, ECR, MSK, MQ, AppSync, Cognito, SES, CloudWatch, X-Ray, OpenSearch
-   - **GCP**: Cloud SQL, Cloud Spanner, Firestore, Bigtable, Memorystore, Cloud Storage, GKE, GCE, Cloud Run, Cloud Functions, Cloud Load Balancing, Cloud CDN, Cloud DNS, Pub/Sub, Cloud Tasks, Workflows, Cloud Build, IAM, KMS, Secret Manager, VPC, Cloud Armor, GCR, Artifact Registry, Dataflow, BigQuery, Cloud Logging, Cloud Trace
-   - **Azure**: Azure SQL, Cosmos DB, Azure Cache for Redis, Blob Storage, AKS, VMSS, Azure Functions, App Service, Application Gateway, Azure Front Door, Azure DNS, Service Bus, Event Hubs, Event Grid, Azure DevOps, Key Vault, Azure AD, VNet, Azure Firewall, ACR, Azure Monitor, Application Insights
-   - **Cross-cloud / generic**: PostgreSQL, MySQL, Redis, Memcached, Elasticsearch, Kafka, RabbitMQ, MongoDB, Cassandra, NGINX, HAProxy, Consul, Vault, Terraform, Kubernetes, Docker
+   - **Generic**: PostgreSQL, MySQL, Redis, Memcached, Elasticsearch, Kafka, RabbitMQ, MongoDB, Cassandra, NGINX, HAProxy, Consul, Vault, Terraform, Kubernetes, Docker
 2. **Resource names**: look for names adjacent to resource type keywords, especially:
    - Backtick-quoted: `` `orders-db` ``
    - Bold: `**orders-db**`
    - Following a type keyword: "RDS instance orders-db", "the ALB `api-lb`"
    - In headings near resource discussions
-3. **ARNs**: match the regex `arn:(aws|aws-cn|aws-us-gov):[a-zA-Z0-9-]+:[a-z0-9-]*:\d{12}:[a-zA-Z0-9-_/:.]+` — ARNs provide resource type, region, account, and name in a single string
-4. **Account and project IDs**: match 12-digit AWS account IDs, GCP project IDs (lowercase with hyphens), Azure subscription GUIDs
-5. **Regions**: match cloud region identifiers (e.g., `us-east-1`, `europe-west1`, `westus2`)
+3. **ARNs**: match the regex `arn:aws[a-z-]*:[a-z0-9-]+:[a-z0-9-]*:(\d{12}|aws)?:.+` (region and account may be empty, as for S3 ARNs; the account may be the literal `aws` for AWS-managed policies) — ARNs provide resource type, region, account, and name in a single string
+4. **Account IDs**: match 12-digit AWS account IDs
+5. **Regions**: match AWS region identifiers (e.g., `us-east-1`, `eu-west-1`)
 6. **Relationships from prose**: phrases indicating dependencies:
    - "connects to", "talks to", "calls", "invokes"
    - "depends on", "requires", "backed by", "fronted by"
@@ -45,10 +43,13 @@ Keyword and pattern extraction from prose text.
    - "proxies to", "routes to", "load balances across"
    - "deployed in", "runs on", "hosted on"
 
+## Output
+**Output: hints only** — `source=doc`, confidence capped at Medium; only live evidence can raise it.
+
 ## What to extract
 - **Resource types**: from keyword matches in prose
 - **Resource names**: from backtick-quoted or bold text adjacent to type keywords, from ARNs
-- **Account/project/subscription context**: from account IDs, project IDs, subscription GUIDs
+- **Account context**: from AWS account IDs
 - **Region context**: from region identifiers mentioned in text
 - **Relationships**: from dependency phrases linking two named resources or services
 - **ARNs**: full ARN strings provide type, region, account, and resource name simultaneously

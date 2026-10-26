@@ -128,6 +128,20 @@ data "aws_iam_policy_document" "widgetapi_workload" {
       data.terraform_remote_state.infra.outputs.db_secret_arn,
     ]
   }
+
+  # Secrets Store CSI (AWS provider) mounts widgetapi/<env>/db — the secret
+  # itself is created outside this repo; only the read grant lives here.
+  statement {
+    sid    = "SecretsManagerCSIDBCredentials"
+    effect = "Allow"
+    actions = [
+      "secretsmanager:GetSecretValue",
+      "secretsmanager:DescribeSecret",
+    ]
+    resources = [
+      "arn:aws:secretsmanager:${var.region}:*:secret:widgetapi/${var.environment}/db-*",
+    ]
+  }
 }
 
 resource "aws_iam_policy" "widgetapi_workload" {

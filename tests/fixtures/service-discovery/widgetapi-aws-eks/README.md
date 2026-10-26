@@ -13,7 +13,8 @@ A synthetic repo used to validate the `service-discovery` skill. Nothing here is
   - S3 bucket for user-uploaded widget images.
 - **Async:** an SQS queue for image-resize and webhook-delivery work, processed by a second Deployment in the same Helm release.
 - **Identity:** pods assume an IRSA role to read/write S3, consume SQS, and read the DB password from AWS Secrets Manager.
-- **Observability (third-party):** Datadog agent injected as a sidecar via a Helm subchart; alerts route to PagerDuty via the `PAGERDUTY_ROUTING_KEY` env var resolved from a Kubernetes Secret.
+- **Secrets (references only):** the RDS-managed master secret (`DB_SECRET_ARN` in `values-prod.yaml`), the out-of-band Kubernetes Secret `widgetapi` (External Secrets Operator), and, when `secretsStore.enabled`, a Secrets Manager secret `widgetapi/<env>/db` mounted through the Secrets Store CSI Driver (AWS provider) via `templates/secretproviderclass.yaml`. The catalog records secret names, ARNs and key names (`DB_USERNAME`, `DB_PASSWORD`), never values.
+- **Third-party (not in the repo's IaC):** Datadog (agent subchart + `docs/oncall.md`), PagerDuty (`pagerduty.enabled` in values + `docs/oncall.md`; routing key lives in the `widgetapi` Secret). Stripe, SendGrid and LaunchDarkly are mentioned **only** in `docs/oncall.md` (no Helm value or Terraform resource references them), so they are doc claims, not code facts.
 
 ## Environments
 
@@ -51,9 +52,9 @@ widgetapi-aws-eks/
 │       ├── values.yaml
 │       ├── values-prod.yaml
 │       ├── values-staging.yaml
-│       └── templates/
+│       └── templates/      # incl. secretproviderclass.yaml (CSI, gated by secretsStore.enabled)
 └── docs/
-    └── oncall.md       # third-party references (Datadog / PagerDuty)
+    └── oncall.md       # third-party references (Datadog, PagerDuty, Stripe, SendGrid, LaunchDarkly) + a 99.9% / 30d SLO claim
 ```
 
 `platform` references `infra` outputs via `terraform_remote_state`. The Helm chart is parameterised by the platform stack's outputs (cluster name, ALB DNS, IRSA role ARN) + the infra stack's outputs (RDS host, Redis host, S3 bucket, SQS URL) — those values are written into `values-<env>.yaml` by the operator during deploy.
@@ -77,5 +78,9 @@ All resources follow `widgetapi-<env>-<component>`:
 - **Parameter resolution:** `envs/<env>.tfvars`, `values-<env>.yaml`, and the TF → Helm handoff.
 - **Multi-instance:** two environments; skill must ask "which instance?" before cataloguing.
 - **Cloud × Kubernetes orthogonality:** runbook needs both `examples/aws.md` (for EKS control plane, ALB, RDS, CloudFront, etc.) AND `examples/kubernetes.md` (for the in-cluster Deployment, HPA, logs, Helm release).
-- **Third-party signals:** Datadog and PagerDuty are referenced only in Helm values + `docs/oncall.md`; the skill should surface them and ask the human where to look.
+- **Third-party signals:** Datadog and PagerDuty appear in Helm values and `docs/oncall.md`; Stripe, SendGrid and LaunchDarkly appear only in `docs/oncall.md`. The skill surfaces all five as "ask the team" entries and does not treat the doc-only three as code facts.
+- **Registry modules:** `module.vpc`, `module.eks`, `module.widgetapi_irsa` are `terraform-aws-modules` registry modules — recorded by source + version, not fetched.
+- **Secrets by projection:** secret references (Secrets Manager names/ARNs, the `widgetapi` Secret, the CSI-synced `<release>-db` Secret) are recorded by name and key names only.
+- **Doc-declared SLO:** `docs/oncall.md:22` declares 99.9% over 30 days. It is a doc claim (`source=doc`, Medium at most) for the signal envelope, to be verified in Datadog, not "no SLO declared".
+- **Step 2V live cross-check:** the verification batch (see DRY-RUN-NOTES) finds one cloud drift, one cluster drift and one resource not found live.
 - **Naming patterns:** the `widgetapi-<env>-<component>` convention should be inferred from the TF resource names.

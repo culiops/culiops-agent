@@ -1,18 +1,22 @@
 ---
 name: kubernetes
-identity-command: "kubectl config current-context && kubectl auth can-i get pods --all-namespaces"
+identity-command: "kubectl config current-context && kubectl --context {context} auth can-i get pods --all-namespaces"
 ---
 
 ## Prerequisites
 
 **CLI tools:** `kubectl` (≥ 1.28 recommended). `helm` (≥ 3.12) if Helm releases are in scope.
 
-**Authentication:** `kubectl` reads `~/.kube/config` by default. For managed clusters, obtain credentials via the cloud CLI (`aws eks update-kubeconfig`, `gcloud container clusters get-credentials`, `az aks get-credentials`). Confirm the active context before running anything:
+**Authentication:** `kubectl` reads `~/.kube/config` by default. For EKS clusters, obtain credentials via `aws eks update-kubeconfig --profile {profile} --region {region} --name {cluster}`; on-prem clusters usually get a kubeconfig from the cluster admin.
+
+**Identity check (before each batch of queries).** The current context can change between commands. Re-run this and abort the batch if it differs from the context the operator confirmed at the gate:
 
 ```
 kubectl config current-context
-kubectl auth can-i get pods --all-namespaces
+kubectl --context {context} auth can-i get pods --all-namespaces
 ```
+
+**Pin the context on every command.** Every `kubectl` command below carries `--context {context}`; every `helm` command carries `--kube-context {context}` (Helm's spelling of the same flag).
 
 **Least-privilege RBAC — all queries below are read-only.** The operator needs:
 
@@ -20,7 +24,21 @@ kubectl auth can-i get pods --all-namespaces
 
 This covers `get`/`list`/`watch` on standard resource kinds. Secrets are excluded from the `view` role by design.
 
-**Kubernetes discovery is orthogonal to cloud provider.** A service may run on EKS, GKE, AKS, or on-prem Kubernetes. Use this template alongside the matching cloud provider template (if any) to cover both the cluster-internal resources and the cloud-level resources (node groups, load balancers, managed databases, etc.).
+**Secrets: the skill skips them entirely.** If the operator's RBAC does grant `get`/`list` on `secrets` (a custom Role, `edit`/`admin`, or `cluster-admin`), every `get secret` response carries the secret `data` over the wire; `-o custom-columns` only controls what is *printed*. RBAC cannot grant metadata-only access to Secrets. So `secret` is not in any kind list below, and the skill records secret **references** taken from workload specs instead (see "Secret references from workloads").
+
+**Kubernetes discovery is orthogonal to where the cluster runs.** A service may run on EKS or on-prem Kubernetes. Use this template alongside `aws.md` for EKS clusters to cover both the cluster-internal resources and the AWS-level resources (node groups, load balancers, managed databases, etc.). On EKS, cluster access is granted by EKS access entries (`aws eks list-access-entries --cluster-name {cluster} --profile {profile} --region {region}`) or by the legacy `aws-auth` ConfigMap; check both when the caller is denied.
+
+## Rules that apply to every query here
+
+- **Projection only.** Output of these commands can reach the catalog. Use `-o custom-columns` (or `-o jsonpath`) with an explicit allowlist. **Never** `-o json` / `-o yaml` for discovery, including `get all -o json`: whole objects carry env values, annotations such as `last-applied-configuration`, and more.
+- **Default projection:**
+
+  ```
+  -o custom-columns=KIND:.kind,NAME:.metadata.name,NS:.metadata.namespace,LABELS:.metadata.labels
+  ```
+
+  UNVERIFIED that `.kind` is populated for every item in a multi-kind list; if the KIND column comes back empty, query each kind separately (one `kubectl get <kind>` per kind) and fill KIND from the command.
+- **Empty is not absent.** Record `not-found (queried <context>/<namespace>)`, `not-queried`, or `not-queryable (forbidden)`. A `Forbidden` error is `not-queryable`, not "does not exist".
 
 ## Broad discovery queries
 
@@ -29,10 +47,11 @@ This covers `get`/`list`/`watch` on standard resource kinds. Secrets are exclude
 Label-based search is the most reliable way to find Kubernetes resources belonging to a service.
 
 ```
-kubectl get all -n {namespace} -l app={service} -o json
+kubectl --context {context} get all -n {namespace} -l app={service} \
+  -o custom-columns=KIND:.kind,NAME:.metadata.name,NS:.metadata.namespace,LABELS:.metadata.labels
 ```
 
-Teams use different label key conventions. Try these common variations:
+Teams use different label key conventions. **Run all candidate keys** and record which key matched each resource:
 
 | Label key | Typical usage |
 |-----------|---------------|
@@ -45,62 +64,90 @@ Teams use different label key conventions. Try these common variations:
 For each variation, substitute the label selector:
 
 ```
-kubectl get all -n {namespace} -l app.kubernetes.io/name={service} -o json
+kubectl --context {context} get all -n {namespace} -l app.kubernetes.io/name={service} \
+  -o custom-columns=KIND:.kind,NAME:.metadata.name,NS:.metadata.namespace,LABELS:.metadata.labels
 ```
 
 ### 2. By namespace
 
-Many teams map one service to one namespace. If the namespace name matches the service, list everything in it:
+Many teams map one service to one namespace. If the namespace name matches the service, list everything in it. A namespace match is a membership signal only when it matches the naming pattern the operator confirmed.
 
 ```
-kubectl get all -n {service} -o json
+kubectl --context {context} get all -n {service} \
+  -o custom-columns=KIND:.kind,NAME:.metadata.name,NS:.metadata.namespace,LABELS:.metadata.labels
 ```
 
 ### 3. Broader resource types
 
-`kubectl get all` only returns a subset of resource types (pods, services, deployments, replicasets, statefulsets, daemonsets, jobs, cronjobs). Many important resource types are missed. Query them explicitly:
+`kubectl get all` only returns a subset of resource types (pods, services, deployments, replicasets, statefulsets, daemonsets, jobs, cronjobs). Many important resource types are missed. Query them explicitly. **No `secret` kind** (see Prerequisites). `cm` is listed by name only; the projection never prints `.data`.
 
 ```
-kubectl get deploy,sts,ds,cronjob,job,svc,ing,cm,secret,sa,hpa,pdb,pvc \
-  -n {namespace} -l app={service} -o json
+kubectl --context {context} get deploy,sts,ds,cronjob,job,svc,ing,cm,sa,hpa,pdb,pvc \
+  -n {namespace} -l app={service} \
+  -o custom-columns=KIND:.kind,NAME:.metadata.name,NS:.metadata.namespace,LABELS:.metadata.labels
 ```
 
 Without a label selector (namespace-based fallback):
 
 ```
-kubectl get deploy,sts,ds,cronjob,job,svc,ing,cm,secret,sa,hpa,pdb,pvc \
-  -n {service} -o json
+kubectl --context {context} get deploy,sts,ds,cronjob,job,svc,ing,cm,sa,hpa,pdb,pvc \
+  -n {service} \
+  -o custom-columns=KIND:.kind,NAME:.metadata.name,NS:.metadata.namespace,LABELS:.metadata.labels
 ```
 
-### 4. CRD-based resources
+### 4. Secret references from workloads
 
-Clusters with monitoring, certificate management, or advanced ingress controllers have custom resources that `get all` never includes. Query these if the relevant CRDs exist:
-
-```
-kubectl get servicemonitor,prometheusrule -n {namespace} -l app={service} -o json 2>/dev/null
-kubectl get certificate,certificaterequest -n {namespace} -l app={service} -o json 2>/dev/null
-kubectl get ingressroute -n {namespace} -l app={service} -o json 2>/dev/null
-```
-
-Check which CRDs are installed first to avoid errors:
+Instead of reading Secrets, record which Secrets the workloads *reference*: names only, from the workload specs (envFrom / secretKeyRef / secret volumes). Values are never touched.
 
 ```
-kubectl get crd | grep -E 'servicemonitor|prometheusrule|certificate|ingressroute'
+kubectl --context {context} get deploy,sts,ds -n {namespace} -l app={service} \
+  -o jsonpath='{range .items[*]}{.kind}{"/"}{.metadata.name}{"\tenvFrom: "}{.spec.template.spec.containers[*].envFrom[*].secretRef.name}{"\tsecretKeyRef: "}{.spec.template.spec.containers[*].env[*].valueFrom.secretKeyRef.name}{"\tvolumes: "}{.spec.template.spec.volumes[*].secret.secretName}{"\n"}{end}'
 ```
 
-### 5. Helm release discovery
+CronJobs keep the pod template under `.spec.jobTemplate.spec.template.spec`; use that path in the same jsonpath. Record the result as `references secret <name>`; do not look the Secret up.
 
-If the service is deployed via Helm, the release name often matches the service name. Helm stores release metadata as Secrets in the release namespace.
+### 5. CRD-based resources
 
-```
-helm list -n {namespace} --filter '{service}'
-```
-
-Once a release is found, extract its full manifest to identify all managed resources:
+Clusters with monitoring, certificate management, or advanced ingress controllers have custom resources that `get all` never includes. Check that the CRD exists first, then query **each kind separately**. Do not hide stderr (`2>/dev/null`): `Forbidden` (not queryable) and `the server doesn't have a resource type` (CRD absent) must stay distinguishable.
 
 ```
-helm get manifest {release} -n {namespace}
+kubectl --context {context} get crd servicemonitors.monitoring.coreos.com
+kubectl --context {context} get servicemonitor -n {namespace} -l app={service} \
+  -o custom-columns=KIND:.kind,NAME:.metadata.name,NS:.metadata.namespace,LABELS:.metadata.labels
+
+kubectl --context {context} get crd prometheusrules.monitoring.coreos.com
+kubectl --context {context} get prometheusrule -n {namespace} -l app={service} \
+  -o custom-columns=KIND:.kind,NAME:.metadata.name,NS:.metadata.namespace,LABELS:.metadata.labels
+
+kubectl --context {context} get crd certificates.cert-manager.io
+kubectl --context {context} get certificate -n {namespace} -l app={service} \
+  -o custom-columns=KIND:.kind,NAME:.metadata.name,NS:.metadata.namespace,LABELS:.metadata.labels
 ```
+
+Repeat the pattern (`get crd <name>`, then `get <kind>`) for `certificaterequest`, `ingressroute`, or any other CRD the docs hint at. To see what is installed, list CRD names only (`kubectl --context {context} get crd -o custom-columns=NAME:.metadata.name`) and filter client-side.
+
+### 6. Helm release discovery
+
+If the service is deployed via Helm, the release name often matches the service name.
+
+**Helm 3 stores releases as Secrets**, so `helm list` needs permission to read Secrets in the release namespace and fails under the `view` role. Try it only when the operator's role allows; use `-a` so failed and pending releases are shown, and `-A` when the namespace is not known:
+
+```
+helm list -a -n {namespace} --kube-context {context} --filter '{service}'
+helm list -a -A --kube-context {context} --filter '{service}'
+```
+
+**Fallback under `view`:** use the ownership label and annotation that Helm puts on every object it manages, projected to metadata only:
+
+```
+kubectl --context {context} get deploy,sts,ds,cronjob,svc,ing,cm,sa,hpa -n {namespace} \
+  -l app.kubernetes.io/managed-by=Helm \
+  -o custom-columns=KIND:.kind,NAME:.metadata.name,NS:.metadata.namespace,RELEASE:.metadata.annotations.meta\.helm\.sh/release-name,LABELS:.metadata.labels
+```
+
+Group the rows by the `RELEASE` column (`meta.helm.sh/release-name`) to reconstruct the release's resource set. Without a namespace, replace `-n {namespace}` with `-A`.
+
+`helm get manifest` and `helm get values` print rendered Secrets and values. The skill **never runs them** for discovery or enrichment; they are terminal-only runbook commands (see `examples/kubernetes.md`).
 
 ## Scoping mechanisms
 
@@ -108,18 +155,31 @@ helm get manifest {release} -n {namespace}
 |-------|--------------|
 | Label selector | `-l app={service}` or `-l app.kubernetes.io/name={service}` |
 | Namespace | `-n {namespace}` — if unknown, use `-A` (all namespaces) with a label selector |
-| Helm release | `helm list --filter '{service}'` — then `helm get manifest` for the full resource set |
+| Helm release | `helm list -a --kube-context {context} --filter '{service}'` where Secret read is allowed; otherwise the `managed-by=Helm` label query above |
 | Field selector | `--field-selector metadata.name={service}` — exact match on resource name |
 
 ## Result parsing
 
-Kubernetes API responses (JSON) map to resource hints as follows:
+Projected output maps to resource hints as follows:
 
-| API field | Maps to | Example |
-|-----------|---------|---------|
-| `metadata.name` | Resource name | `widgetapi-web` |
-| `kind` | Resource type | `Deployment`, `Service`, `Ingress` |
-| `metadata.namespace` | Namespace context | `widgetapi-prod` |
-| `metadata.labels` | Additional context (app, version, chart) | `{app: "widgetapi", version: "1.2.3"}` |
-| `metadata.annotations` | Deployment metadata (Helm release, last-applied-config) | `{meta.helm.sh/release-name: "widgetapi"}` |
-| `spec` | Resource configuration (replicas, containers, ports, volumes) | Used during enrichment, not discovery |
+| Column / field | Maps to | Example |
+|----------------|---------|---------|
+| `NAME` (`metadata.name`) | Resource name | `widgetapi-web` |
+| `KIND` (`kind`) | Resource type | `Deployment`, `Service`, `Ingress` |
+| `NS` (`metadata.namespace`) | Namespace context | `widgetapi-prod` |
+| `LABELS` (`metadata.labels`) | Additional context (app, version, chart) and Owner | `{app: "widgetapi", version: "1.2.3"}` |
+| `RELEASE` (`meta.helm.sh/release-name`) | Helm release | `widgetapi` |
+| Other `spec` fields | Used during enrichment through projected jsonpath only (see `examples/kubernetes.md`), never fetched whole | |
+
+**Owner detection (recognition only).** Read from the `LABELS` already fetched; no extra calls. First match wins; record the signal that matched.
+
+| Signal | Result |
+|--------|--------|
+| label `app.kubernetes.io/managed-by: Helm` (+ `meta.helm.sh/release-name`) | `Owner: helm (<release>)` |
+| label `argocd.argoproj.io/instance` (label tracking) or annotation `argocd.argoproj.io/tracking-id` (annotation tracking; add column `TRACKING:.metadata.annotations.argocd\.argoproj\.io/tracking-id`) | `Owner: argocd (<application>)` |
+| label `kustomize.toolkit.fluxcd.io/name` | `Owner: flux-kustomization (<name>)` |
+| label `helm.toolkit.fluxcd.io/name` | `Owner: flux-helmrelease (<name>)` |
+| label `app.kubernetes.io/managed-by` with another value | `Owner: <value>` as written |
+| none | `Owner: unknown` |
+
+A GitOps controller label means the desired state lives in Git, not in the cluster: record the owner and do not treat the live object as the source of truth.

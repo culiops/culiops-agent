@@ -37,15 +37,18 @@ A detector may omit any non-frontmatter section if it doesn't apply (the skill t
 
 ## Shipped detectors
 
-| Detector | Deploys | Notes |
-|----------|---------|-------|
-| [`terraform.md`](terraform.md) | Multi-cloud and on-prem infrastructure | Covers Terragrunt-on-Terraform |
-| [`cloudformation.md`](cloudformation.md) | AWS resources | Covers AWS SAM |
-| [`pulumi.md`](pulumi.md) | Multi-cloud infrastructure (general-purpose languages) | |
-| [`bicep.md`](bicep.md) | Azure resources | Compiles to ARM |
-| [`helm.md`](helm.md) | Kubernetes resources via templated charts | |
-| [`kustomize.md`](kustomize.md) | Kubernetes resources via overlays | |
-| [`jsonnet.md`](jsonnet.md) | (preprocessor only) | Always paired with a consuming tool |
-| [`ansible.md`](ansible.md) | Cloud and on-prem via playbooks | |
-| [`ecspresso.md`](ecspresso.md) | AWS ECS services and task definitions | |
-| [`lambroll.md`](lambroll.md) | AWS Lambda functions | |
+Supported stack: AWS, Terraform, Kubernetes, ecspresso, lambroll. Other tools are recognised so the skill can say so, never improvised.
+
+| Detector | Deploys | Support | Notes |
+|----------|---------|---------|-------|
+| [`terraform.md`](terraform.md) | AWS infrastructure (and anything else Terraform/OpenTofu manages) | full | Covers OpenTofu and Terragrunt-on-Terraform |
+| [`helm.md`](helm.md) | Kubernetes resources via templated charts | full | Also reads helmfile / Argo CD / Flux release objects |
+| [`kustomize.md`](kustomize.md) | Kubernetes resources via overlays | full | |
+| [`kubernetes.md`](kubernetes.md) | Kubernetes resources via raw manifests | full | Excludes Helm `templates/` and Kustomize-managed dirs |
+| [`ecspresso.md`](ecspresso.md) | AWS ECS services and task definitions | full | |
+| [`lambroll.md`](lambroll.md) | AWS Lambda functions | full | |
+| [`jsonnet.md`](jsonnet.md) | (preprocessor only) | full | Paired with ecspresso / lambroll |
+| [`cloudformation.md`](cloudformation.md) | AWS resources (CloudFormation, SAM, Serverless Framework, CDK) | recognition only | List stacks, say "not supported", offer real-discovery |
+| [`ansible.md`](ansible.md) | Hosts and cloud modules via playbooks | recognition only | Imperative, no state |
+
+Detectors for tools outside the supported stack are not shipped; "teach me" is not offered for recognised out-of-stack tools.
