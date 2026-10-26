@@ -8,7 +8,7 @@
 
 ## Research Summary
 
-No service-discovery catalog. Delivery model: CI applies on merge. Env selection: `-var-file=envs/prod.tfvars`. Target: account `123456789012`, region `ap-southeast-1`. Pre-change snapshots are exported to bucket `orders-backup-123456789012`. Repo: `github.com/acme/orders-infra`.
+No service-discovery catalog. Delivery model: CI applies on merge. Env selection: `-var-file=envs/prod.tfvars`. Target: account `123456789012`, region `ap-southeast-1`. Pre-change snapshots are exported to bucket `orders-backup-123456789012`. Repo: `github.com/acme/orders-infra`. The CI job pulls the shared module repo with token `ghp_FAKEtokenFAKEtokenFAKE0000`.
 
 ## Evidence
 
@@ -17,6 +17,7 @@ No service-discovery catalog. Delivery model: CI applies on merge. Env selection
 | Current ingress source | `code: envs/prod.tfvars:22` → `0.0.0.0/0` | `code-only — not live-verified` | ⚠️ unverified |
 | Bastion host used by operators | `code: envs/prod.tfvars:24` → `10.20.30.40` | `code-only — not live-verified` | ⚠️ unverified |
 | Hard-coded credential in `scripts/deploy.sh:4` | `AWS_ACCESS_KEY_ID=AKIAIOSFODNN7EXAMPLE` | — | UNVERIFIED — flagged to operator, out of scope for this change |
+| CI secret in `.github/workflows/apply.yml:31` | `AWS_SECRET_ACCESS_KEY=FAKEfakeFAKEfakeFAKEfakeFAKEfakeFAKEfake` | — | UNVERIFIED — flagged to operator, out of scope for this change |
 
 ## Change Plan
 
@@ -25,7 +26,7 @@ No service-discovery catalog. Delivery model: CI applies on merge. Env selection
 - Resources affected: 1 to change (`aws_security_group_rule.orders_db_ingress`) on `arn:aws:rds:ap-southeast-1:123456789012:db:orders-db`
 - Blast radius: connectivity between orders-api and `orders-db`; source narrows from `0.0.0.0/0` to `10.20.0.0/16`, bastion `10.20.30.40` keeps access
 - Rollback path: revert PR #490 and re-apply, ~10 min
-- Success criteria: `aws rds describe-db-instances --db-instance-identifier orders-db` → `DBInstanceStatus = available`; orders-api error rate unchanged
+- Success criteria: `aws rds describe-db-instances --db-instance-identifier orders-db` → `DBInstanceStatus = available`; orders-api error rate unchanged; connection check `psql postgres://orders_app:NotARealPassw0rd@orders-db.internal:5432/orders -c 'select 1'` → `1`
 
 **Execution path:** PR
 

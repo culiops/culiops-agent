@@ -2,7 +2,7 @@
 
 ## Dry-run (with skill)
 
-Run 2026-10-26 by a sonnet runner following SKILL.md. The runner confirmed the direct-apply record, asked the platform separately (Slack), asked the apply time ("don't know"), and saved a result and a ticket-close. Outcome and verification came from the record, as the direct-apply rule requires; the record `Date` 11:00 is never shown as the apply time. One README MUST failed: the Slack draft has no `*bold*`, because the skill treated bold as optional and the spec says both chat platforms use it.
+Simulated run 2026-10-26 following SKILL.md (run transcript not committed). The run confirmed the direct-apply record, asked the platform separately (Slack), asked the apply time ("don't know"), and saved a result and a ticket-close. Outcome and verification came from the record, as the direct-apply rule requires; the record `Date` 11:00 is never shown as the apply time. One README MUST failed: the Slack draft has no `*bold*`, because the skill treated bold as optional and the spec says both chat platforms use it.
 
 Drafts as produced:
 

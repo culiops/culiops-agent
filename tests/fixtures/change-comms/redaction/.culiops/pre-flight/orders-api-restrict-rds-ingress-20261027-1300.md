@@ -34,6 +34,7 @@
 | Target DB `arn:aws:rds:ap-southeast-1:123456789012:db:orders-db` | `plan` | — | code-only |
 | Ingress source CIDR `10.20.0.0/16` | `envs/prod.tfvars:22` | — | code-only |
 | Hard-coded credential `AWS_ACCESS_KEY_ID=AKIAIOSFODNN7EXAMPLE` | `scripts/deploy.sh:4` | — | UNVERIFIED — finding, not part of this change |
+| CI secret `AWS_SECRET_ACCESS_KEY=FAKEfakeFAKEfakeFAKEfakeFAKEfakeFAKEfake` | `.github/workflows/apply.yml:31` | — | UNVERIFIED — finding, not part of this change |
 
 ## Hard Blocks
 

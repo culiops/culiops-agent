@@ -23,3 +23,4 @@ None. `.culiops/.gitkeep` only.
 - Any fact sourced as `record: …` (no record exists).
 - An invented risk verdict (`GREEN` / `YELLOW` / `RED`) when no pre-flight record exists.
 - A guessed PR URL.
+- Any value that appears only in the skill's examples (`examples/messages.md`, `examples/redaction.md`), for example `billing-api`, `PAY-77`, `HKT`, `example-pay`, `2026-11-04`, `switch the node type back`, `logins may take a few seconds longer`. A hit means a value was copied from an example.

@@ -31,3 +31,4 @@ Exercises: source selection, the PR-path no-apply-claim rule, timezone elicitati
 - Any apply claim sourced from `Outcome: completed`.
 - The string `10:15` shown as an apply time (the record `Date` is when the record was written).
 - Use of the stale `orders-api-rotate-logs-20261019-0900.md` record as a source.
+- Any value that appears only in the skill's examples (`examples/messages.md`, `examples/redaction.md`), for example `billing-api`, `billing-sessions`, `PAY-77`, `HKT`, `example-pay`, `2026-11-04`, `21:47`. A hit means a value was copied from an example.

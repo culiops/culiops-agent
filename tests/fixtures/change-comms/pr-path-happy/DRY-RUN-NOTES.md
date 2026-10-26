@@ -2,7 +2,7 @@
 
 ## Baseline (no skill)
 
-A general assistant with no skill listed the three candidate records, left out the stale `rotate-logs` record as unrelated, and asked the operator to confirm the 1015 record and the 1000 pre-flight. It then asked for the timezone, the impact and the platform, and drafted all three messages in `text` blocks. It asked for the apply time, outcome and verification before the result draft. It did not claim the change was applied from `Outcome: completed`. The core flow is sound. The failures are in sourcing and in invented content: the heads-up has no record citation for the rollback, the impact and the other statements are embellished, and several assurances come from no source. Nothing is saved to `.culiops/change-comms/`, and there are no `<TODO: ...>` markers anywhere.
+A baseline run without the skill listed the three candidate records, left out the stale `rotate-logs` record as unrelated, and asked the operator to confirm the 1015 record and the 1000 pre-flight. It then asked for the timezone, the impact and the platform, and drafted all three messages in `text` blocks. It asked for the apply time, outcome and verification before the result draft. It did not claim the change was applied from `Outcome: completed`. The core flow is sound. The failures are in sourcing and in invented content: the heads-up has no record citation for the rollback, the impact and the other statements are embellished, and several assurances come from no source. Nothing is saved to `.culiops/change-comms/`, and there are no `<TODO: ...>` markers anywhere.
 
 | MUST/MUST-NOT line | Result (pass/FAIL) | Evidence (quoted from transcript) |
 |---|---|---|
@@ -14,21 +14,21 @@ A general assistant with no skill listed the three candidate records, left out t
 | MUST: ask apply time, outcome, verification BEFORE the result draft | pass | "Please give me: 1. When was it applied (time and timezone)? 2. Did it succeed? 3. What did you check afterwards" |
 | MUST: result draft contains `14:12 ICT` | pass | "*Applied:* 2026-10-27 at 14:12 ICT, inside the 14:00-14:15 window" |
 | MUST: ticket-close contains PR URL, `14:12 ICT`, operator's verification | pass | "Applied: 2026-10-27 14:12 ICT (window 14:00-14:15 ICT)." and "Verification: database connections and orders-api error rate normal for 15 minutes after the apply." plus the PR URL |
-| MUST: timezone never taken from records (pre-flight `(UTC)`, iac `Date`) | pass | Assistant noted "the records only have '2026-10-27 10:00/10:15', with no timezone" and asked the operator |
+| MUST: timezone never taken from records (pre-flight `(UTC)`, iac `Date`) | pass | The baseline run noted "the records only have '2026-10-27 10:00/10:15', with no timezone" and asked the operator |
 | MUST: date is 2026-10-27 or `tomorrow` | pass | "*When:* 2026-10-27, 14:00-14:15 ICT (15 min window)" |
-| MUST-NOT: apply claim sourced from `Outcome: completed` | pass | The apply claims come from the operator's turn 8. The assistant noted "The execution record still says 'Verification: pending' and 'Outcome: completed'" and did not use it |
+| MUST-NOT: apply claim sourced from `Outcome: completed` | pass | The apply claims come from the operator's turn 8. The baseline run noted "The execution record still says 'Verification: pending' and 'Outcome: completed'" and did not use it |
 | MUST-NOT: `10:15` shown as apply time | pass | `10:15` appears only inside the evidence filename `...-1015.md`, never as a time |
 | MUST-NOT: stale `rotate-logs` record used as a source | pass | "I'm leaving it out as unrelated." It was read "to check whether it is relevant" but not used |
 
 ### Behaviours the README does not list but the spec's anti-goals forbid
 
 - Unsourced facts presented as fact in drafts: heads-up "CI applies it on merge, which will be inside the window" (no source for merge timing); result "No further action is needed from anyone"; ticket-close "Planned and announced beforehand" (the heads-up was only drafted, never posted) and "Rollback: not needed".
-- Sourced content stated without a citation: "We are applying in a low-traffic window to limit exposure" comes from the pre-flight's "Mitigations Committed" ("Apply in an agreed low-traffic window", operator), and "no hard blocks" matches the pre-flight's "Hard Blocks: None". Neither is invented. But the draft states the mitigation as a present fact (the assistant admitted "I haven't seen traffic data") and cites neither record.
+- Sourced content stated without a citation: "We are applying in a low-traffic window to limit exposure" comes from the pre-flight's "Mitigations Committed" ("Apply in an agreed low-traffic window", operator), and "no hard blocks" matches the pre-flight's "Hard Blocks: None". Neither is invented. But the draft states the mitigation as a present fact (the baseline run admitted "I haven't seen traffic data") and cites neither record.
 - Ticket-close is not in plain `Label: value` lines: it opens with a prose sentence ("Closing OPS-123. orders-db (orders-api, prod) was resized ...") and uses "- " bullets. The spec's Jira format is plain `Label: value` lines.
-- Inference stated as fact: result "The expected Multi-AZ failover occurred as part of the resize". The assistant admitted the operator never said so, yet left it in.
+- Inference stated as fact: result "The expected Multi-AZ failover occurred as part of the resize". The baseline run admitted the operator never said so, yet left it in.
 - Missing facts were handled by asking the operator or inferring, never by a visible `<TODO: field>`.
 - Heads-up and result are long prose paragraphs, not tight messages (heads-up ends with an extra "Please tell us in this thread..." ask the operator never requested).
-- Ticket-close lists the repo-local `.culiops/...` record paths, which Jira readers cannot open. The assistant noticed this and only mentioned it in chat.
+- Ticket-close lists the repo-local `.culiops/...` record paths, which Jira readers cannot open. The baseline run noticed this and only mentioned it in chat.
 - Nothing is saved to `.culiops/change-comms/<service>-<action>-<ts>-<type>.md` and there is no review-gate fact table. The final message says "Done." and ends.
 - No blockquotes were used, and no raw plan output appeared in this case.
 
@@ -46,7 +46,7 @@ A general assistant with no skill listed the three candidate records, left out t
 
 ## Dry-run (with skill)
 
-Run 2026-10-26 by a sonnet runner following SKILL.md. The runner offered the 1015 record and the 1000 pre-flight at GATE 1 (the stale rotate-logs record was not offered), asked a heads-up batch (timezone, window, impact), then a separate post-apply batch (apply time, outcome, verification) before the result. The record `Outcome: completed` was never used as an apply claim. All README lines pass.
+Simulated run 2026-10-26 following SKILL.md (run transcript not committed). The run offered the 1015 record and the 1000 pre-flight at GATE 1 (the stale rotate-logs record was not offered), asked a heads-up batch (timezone, window, impact), then a separate post-apply batch (apply time, outcome, verification) before the result. The record `Outcome: completed` was never used as an apply claim. All README lines pass.
 
 Drafts as produced:
 
@@ -101,11 +101,11 @@ Rollback: not needed. Revert PR + apply if required.
 
 Round 1: 12 pass, 0 FAIL.
 
-No fix targeted a failure here. The runner's own choices (batch per point in time, a GATE 2 per message, `applied` in the title, the slug derivation) are now written into the skill. Re-run because the output changes: chat title lines bold and no fixed-shape fact-table rows.
+No fix targeted a failure here. The simulated run's own choices (batch per point in time, a GATE 2 per message, `applied` in the title, the slug derivation) are now written into the skill. Re-run because the output changes: chat title lines bold and no fixed-shape fact-table rows.
 
 ## Round 2
 
-Run against b76eccc. GATE 1 offered the 1015 record and the 1000 pre-flight; the stale rotate-logs record was not offered. The runner asked one batch before apply (timezone, window, impact) and one after apply (apply facts) before drafting the result. The ticket-close reads `Applied: <TODO: apply date> 14:12 ICT`. Ruling: correct. The operator script gives `applied 14:12 ICT` with no date, the window date is not an apply date, and Constraint 2 forbids inferring one. The skill now spells out this form in `messages.md` so runs agree.
+Run against b76eccc. GATE 1 offered the 1015 record and the 1000 pre-flight; the stale rotate-logs record was not offered. The run asked one batch before apply (timezone, window, impact) and one after apply (apply facts) before drafting the result. The ticket-close reads `Applied: <TODO: apply date> 14:12 ICT`. Ruling: correct. The operator script gives `applied 14:12 ICT` with no date, the window date is not an apply date, and Constraint 2 forbids inferring one. The skill now spells out this form in `messages.md` so runs agree.
 
 Drafts as produced:
 

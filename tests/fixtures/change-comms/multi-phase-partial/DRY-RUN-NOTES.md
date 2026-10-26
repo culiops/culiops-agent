@@ -2,7 +2,7 @@
 
 ## Dry-run (with skill)
 
-Run 2026-10-26 by a sonnet runner following SKILL.md. The runner refused the ticket-close at Step 1 and again at operator turn 9, wrote no ticket-close file, and drafted a phase 2 heads-up and a `⏸` phase 2 result with PR 502. The apply claim for phase 2 came from the operator. One README MUST failed: the heads-up `What:` line names only phase 2 instead of listing all phases, because the skill did not say what to do when the operator's window covers only some phases.
+Simulated run 2026-10-26 following SKILL.md (run transcript not committed). The run refused the ticket-close at Step 1 and again at operator turn 9, wrote no ticket-close file, and drafted a phase 2 heads-up and a `⏸` phase 2 result with PR 502. The apply claim for phase 2 came from the operator. One README MUST failed: the heads-up `What:` line names only phase 2 instead of listing all phases, because the skill did not say what to do when the operator's window covers only some phases.
 
 Drafts as produced:
 
@@ -44,7 +44,7 @@ Ticket: OPS-123 | PR: https://github.com/acme/orders-infra/pull/502
 
 Round 1: 8 pass, 1 FAIL.
 
-Other observations: the runner added fact-table rows sourced `skill template: examples/messages.md#...` for fixed shape text (outside the two allowed source forms), and asked the result facts after GATE 2 on the heads-up, which the "one batch" rule did not cover.
+Other observations: the run added fact-table rows sourced `skill template: examples/messages.md#...` for fixed shape text (outside the two allowed source forms), and asked the result facts after GATE 2 on the heads-up, which the "one batch" rule did not cover.
 
 Fixes made in the skill (re-run required):
 - A multi-phase heads-up always names every phase on the What line, then the phase(s) this window covers (SKILL.md multi-phase rule, Red Flag row, `messages.md#multi-phase`).

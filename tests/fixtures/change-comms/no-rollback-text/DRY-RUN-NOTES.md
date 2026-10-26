@@ -2,7 +2,7 @@
 
 ## Dry-run (with skill)
 
-Run 2026-10-26 by a sonnet runner following SKILL.md. The runner found no rollback text in the Change Plan, asked for it in the one batch, got "leave it open", and drafted an 8-line heads-up with `Rollback: <TODO: rollback>` and `Risk: GREEN (pre-flight)`. It did not borrow the pre-flight Reversibility finding as rollback text. All README lines pass.
+Simulated run 2026-10-26 following SKILL.md (run transcript not committed). The run found no rollback text in the Change Plan, asked for it in the one batch, got "leave it open", and drafted an 8-line heads-up with `Rollback: <TODO: rollback>` and `Risk: GREEN (pre-flight)`. It did not borrow the pre-flight Reversibility finding as rollback text. All README lines pass.
 
 Drafts as produced:
 
@@ -32,7 +32,7 @@ Reply here if this window conflicts.
 
 Round 1: 6 pass, 0 FAIL.
 
-No fix targeted this case. It is re-run because shared changes alter its output: chat title line bold, the platform stated at GATE 1, the batch shown as plain text (the runner used a `text` block, others used `>` blockquotes), and fixed shape text no longer gets a fact-table row.
+No fix targeted this case. It is re-run because shared changes alter its output: chat title line bold, the platform stated at GATE 1, the batch shown as plain text (the run used a `text` block, others used `>` blockquotes), and fixed shape text no longer gets a fact-table row.
 
 ## Round 2
 

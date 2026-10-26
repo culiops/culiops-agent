@@ -2,7 +2,7 @@
 
 ## Dry-run (with skill)
 
-Run 2026-10-26 by a sonnet runner following SKILL.md. With an empty `.culiops/`, the runner merged the Step 1 minimum fields into the Step 2 batch and asked everything once, then drafted an 8-line heads-up from operator-supplied facts with `Risk: <TODO: pre-flight verdict>`. The operator said no PR was raised yet, so the PR segment was dropped. One README MUST failed on a strict reading: not every fact-table row is labelled `operator-supplied` (the Risk TODO row says `none`, the title row cites the skill shape, and a "Saved at" row cites `session`).
+Simulated run 2026-10-26 following SKILL.md (run transcript not committed). With an empty `.culiops/`, the run merged the Step 1 minimum fields into the Step 2 batch and asked everything once, then drafted an 8-line heads-up from operator-supplied facts with `Risk: <TODO: pre-flight verdict>`. The operator said no PR was raised yet, so the PR segment was dropped. One README MUST failed on a strict reading: not every fact-table row is labelled `operator-supplied` (the Risk TODO row says `none`, the title row cites the skill shape, and a "Saved at" row cites `session`).
 
 Drafts as produced:
 

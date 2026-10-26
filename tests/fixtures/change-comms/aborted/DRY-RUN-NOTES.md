@@ -2,7 +2,7 @@
 
 ## Baseline (no skill)
 
-A general assistant with no skill read both records, asked which platform, and (good behaviour) asked whether anything had been merged or applied before saying "no change was made". It then drafted a result and a ticket-close that both state the change was aborted and nothing was applied. The facts of the abort are right: RED, replace of `orders-db`, no apply. The failures are the missing ❌ marker and, mainly, a large amount of invented content: a next-steps plan, a customer-impact statement and a promise to post a new window, none of which came from the records or the operator. Both drafts also carry raw plan counts, and the ticket-close shows record times with no timezone.
+A baseline run without the skill read both records, asked which platform, and (good behaviour) asked whether anything had been merged or applied before saying "no change was made". It then drafted a result and a ticket-close that both state the change was aborted and nothing was applied. The facts of the abort are right: RED, replace of `orders-db`, no apply. The failures are the missing ❌ marker and, mainly, a large amount of invented content: a next-steps plan, a customer-impact statement and a promise to post a new window, none of which came from the records or the operator. Both drafts also carry raw plan counts, and the ticket-close shows record times with no timezone.
 
 | MUST/MUST-NOT line | Result (pass/FAIL) | Evidence (quoted from transcript) |
 |---|---|---|
@@ -43,7 +43,7 @@ A general assistant with no skill read both records, asked which platform, and (
 
 ## Dry-run (with skill)
 
-Run 2026-10-26 by a sonnet runner following SKILL.md; transcript in the SDD dryrun folder. The runner confirmed the 1015 record and the 1000 pre-flight at GATE 1, asked one batch (timezone, apply time, PR link, next steps, anything applied, abort reason), took "Nothing was applied, the pre-flight blocked it" as the answer, and saved a result and a ticket-close. No invented next steps, no impact claim, no plan counts, plain `Label: value` Jira lines. Two README MUSTs failed, both caused by the skill: the skill told it to use `⛔` for an abort (the README and the spec say ❌), and its batch asked for the abort reason even though the record's `Execution:` line already states it, so the draft carries the operator's vaguer "the pre-flight blocked it" instead of RED and the replace of `orders-db`.
+Simulated run 2026-10-26 following SKILL.md (run transcript not committed). The run confirmed the 1015 record and the 1000 pre-flight at GATE 1, asked one batch (timezone, apply time, PR link, next steps, anything applied, abort reason), took "Nothing was applied, the pre-flight blocked it" as the answer, and saved a result and a ticket-close. No invented next steps, no impact claim, no plan counts, plain `Label: value` Jira lines. Two README MUSTs failed, both caused by the skill: the skill told it to use `⛔` for an abort (the README and the spec say ❌), and its batch asked for the abort reason even though the record's `Execution:` line already states it, so the draft carries the operator's vaguer "the pre-flight blocked it" instead of RED and the replace of `orders-db`.
 
 Drafts as produced:
 
@@ -96,7 +96,7 @@ Fixes made in the skill (re-run required):
 
 ## Round 2
 
-Run against b76eccc. The runner used ❌ and took the reason from the record's `Execution:` line. It left out the PR line because the abort happened at the gate. It asked no timezone or apply-time question. Two leftovers from the batch: it still asked for the PR link, and it logged plan counts as `dropped`. Both are closed by the round-2 skill edits (see the end).
+Run against b76eccc. The run used ❌ and took the reason from the record's `Execution:` line. It left out the PR line because the abort happened at the gate. It asked no timezone or apply-time question. Two leftovers from the batch: it still asked for the PR link, and it logged plan counts as `dropped`. Both are closed by the round-2 skill edits (see the end).
 
 Drafts as produced:
 
