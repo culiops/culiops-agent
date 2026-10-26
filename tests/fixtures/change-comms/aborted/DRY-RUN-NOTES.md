@@ -10,7 +10,7 @@ A general assistant with no skill read both records, asked which platform, and (
 | MUST: result uses the word `aborted` | pass | "RDS resize NOT applied (aborted)" |
 | MUST: result states nothing was applied | pass | "stopped before anything was applied. Prod is unchanged." and "Nothing was applied, so there is nothing to roll back." |
 | MUST: result gives the reason from the record (pre-flight RED, replace of `orders-db`) | pass | "the pre-flight check came back RED (hard block). The Terraform plan did not resize the instance in place. It would have destroyed and recreated aws_db_instance.orders (1 to destroy, 1 to add)" |
-| MUST: what happens next is a TODO or operator-supplied | FAIL | The operator gave no next steps. The draft invents them: "*Next:* the resize will not be retried until the replacement is understood and removed from the plan (and a manual snapshot is taken first as a safeguard). I'll post here when there's a new window." There is no `<TODO: next steps>` |
+| MUST: what happens next is a TODO or operator-supplied | FAIL | The operator gave no next steps. The draft supplies them: "*Next:* the resize will not be retried until the replacement is understood and removed from the plan (and a manual snapshot is taken first as a safeguard). I'll post here when there's a new window." The retry condition and the promised window have no source. The snapshot comes from the pre-flight mitigation but the operator never chose it. There is no `<TODO: next steps>` |
 | MUST: ticket-close produced | pass | Draft 2 is a Jira comment on OPS-123 |
 | MUST: ticket-close lists outcome `aborted` | pass | "Closing as not done: change aborted, nothing applied." and "Outcome: aborted." |
 | MUST: ticket-close has no applied time | pass | No applied time. It states "No apply was run. Prod was not changed." |
@@ -32,7 +32,7 @@ A general assistant with no skill read both records, asked which platform, and (
 ### Failures to answer in SKILL.md
 
 - Failure message had no ❌ marker, so it does not match the style the recorded outcome calls for.
-- What happens next was invented (retry conditions, snapshot, a promised new window) instead of being operator-supplied or `<TODO: next steps>`.
+- What happens next was not operator-supplied and not marked `<TODO: next steps>`: the retry condition ("will not be retried until ..."), the promised new window and the reopen route have no source. (The snapshot is sourced from the pre-flight mitigations, so it is not counted as invented.)
 - Impact was asserted ("No customer impact") although impact is always operator-supplied.
 - Pre-flight mitigations and L1 detail were turned into a decided retry sequence and a cause statement for a broad audience, and unsourced retry steps and commitments were added ("likely cause", "will not be retried until ...", "raise a new change or reopen this ticket").
 - Jira ticket-close used prose and "- " bullets instead of plain `Label: value` lines.
