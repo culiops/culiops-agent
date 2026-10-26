@@ -201,7 +201,8 @@ A narrowing (removed action, tighter resource or condition) is Green here. Wheth
 Category 11 is **fail-closed** (`SKILL.md` → Scoring Rules). A changed attribute is **not app-facing** only if it is on this list:
 
 - Tags / labels / annotations that nothing reads at runtime, descriptions, comments
-- Alarms, dashboards, metric filters, log groups and log retention
+- Dashboards, metric filters, log groups and log retention
+- Alarms whose actions only notify: no actions, or SNS topics whose subscriptions are all `email`, `email-json` or `sms`. Check this with the subscription-protocol query in `examples/aws.md`, reading protocols only and never endpoints. An alarm action that scales (Auto Scaling or Application Auto Scaling policy), stops, reboots, terminates or recovers EC2, starts SSM automation, or reaches a `lambda`, `sqs`, `firehose`, `http(s)` or `application` subscriber changes the system, so that alarm is **app-facing**. If the subscriber protocols were not checked, treat the alarm as app-facing (unsure means triggered)
 - Backup, snapshot and recovery-point schedules (score them under category 2)
 - Scaling counts alone: desired count, replicas, min / max size (score them under category 1)
 - IAM for humans and CI/CD roles (not a role the workload runs as)
