@@ -17,8 +17,8 @@ A Terraform change that destroys an RDS instance and replaces it with an Aurora 
 ## Expected pre-flight scores
 
 Multiple Reds:
-- Blast radius: **Red** (shared database used by 3 services, user-facing data path)
-- Reversibility: **Red + HARD BLOCK** (data migration — old RDS instance destroyed with data)
+- Blast radius: **Red** (shared database used by 3 services, user-facing data path; the SG rule is recreated → brief DB ingress gap)
+- Reversibility: **Red + HARD BLOCK** (data migration — old RDS instance destroyed with data; whether a final snapshot is taken depends on `skip_final_snapshot` in state, which this plan doesn't show → `UNVERIFIED`)
 - Change velocity: Yellow (2 changes in last 7 days — recent schema migration)
 - Dependency impact: **Red** (3 downstream services have hard dependency on this database)
 - Timing context: Green (normal hours, no freeze, no incidents)
@@ -26,7 +26,7 @@ Multiple Reds:
 - Observability readiness: Yellow (RDS alarms exist but no Aurora-specific alarms in the plan)
 - Cost impact: Yellow (Aurora pricing differs from RDS — moderate cost change)
 - Security posture: Yellow (new IAM role, security group modification — within VPC)
-- Resource health: Green (service is healthy)
+- Resource health: Green (live evidence — L3 approved: instance `available`, CPU / connections normal, no alarm in `ALARM`)
 
 Overall: **RED — HARD BLOCK** (irreversible data change)
 
@@ -35,4 +35,5 @@ Overall: **RED — HARD BLOCK** (irreversible data change)
 - **Multiple Red scores:** verifies the skill handles compounding Reds correctly
 - **Hard block on reversibility:** `destroy` of stateful `aws_db_instance` is irreversible data loss
 - **Dependency impact from shared infrastructure:** 3 downstream services affected
-- **Actionable mitigations:** skill must recommend: take RDS snapshot, notify downstream teams, consider parallel-run strategy (expand-and-contract)
+- **Actionable mitigations:** skill must recommend (as operator actions — pre-flight never runs them): take RDS snapshot, notify downstream teams, consider parallel-run strategy (expand-and-contract)
+- **Evidence rule:** `UNVERIFIED` final-snapshot behaviour cannot clear the destroy; live `describe-db-instances` / `describe-db-snapshots` give the recovery evidence

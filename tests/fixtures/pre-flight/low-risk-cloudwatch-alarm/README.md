@@ -22,7 +22,7 @@ All Green:
 - Observability readiness: Green (adding monitoring improves observability)
 - Cost impact: Green (CloudWatch alarm cost is negligible)
 - Security posture: Green (no IAM/network/encryption changes)
-- Resource health: Green (service is healthy, confirmed via L2)
+- Resource health: Green (live evidence — L3 approved: `ecs describe-services` running = desired, no alarm in `ALARM` on the service's dimensions)
 
 ## What this fixture exercises
 
@@ -30,3 +30,4 @@ All Green:
 - **All-Green scoring:** verifies the skill can produce a clean "proceed" verdict
 - **L1 analysis:** simple plan output with 1 addition, 0 modifications, 0 deletions
 - **Observability readiness:** adding monitoring should improve, not degrade, the score
+- **Evidence rule:** GREEN needs live health evidence. Variant: with L3 declined, resource health is ⚪ and the verdict is capped at **YELLOW**

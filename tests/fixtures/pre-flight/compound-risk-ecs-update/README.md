@@ -16,22 +16,22 @@ Three changes bundled in one deploy:
 ## Expected pre-flight scores
 
 Multiple Yellows → escalation:
-- Blast radius: **Yellow** (health check path change affects ALB routing for the service)
+- Blast radius: **Yellow** (scale-down 4→2 halves capacity and redundancy; the container `healthCheck` path change decides whether ECS keeps the new tasks)
 - Reversibility: Green (ecspresso rollback available, image tags are immutable)
 - Change velocity: **Yellow** (2nd change to this service this week — image update on Monday)
 - Dependency impact: Green (no downstream consumers of this service's outputs)
 - Timing context: Green (normal hours, no freeze, no incidents)
 - Operator familiarity: **Yellow** (first time changing this specific service)
 - Observability readiness: Green (CloudWatch alarms exist for the ECS service)
-- Cost impact: **Yellow** (scaling from 4 to 2 tasks — 50% capacity reduction)
+- Cost impact: Green (cost decreases; the capacity risk is scored under blast radius, not here)
 - Security posture: Green (no IAM/network/encryption changes)
-- Resource health: Green (service is healthy)
+- Resource health: Green (live evidence — L3 approved: 4/4 tasks running, no alarm in `ALARM` on the service)
 
-4 Yellows → **multi-Yellow escalation → RED — SOFT BLOCK**
+3 Yellows → **multi-Yellow escalation → RED — SOFT BLOCK**
 
 ## What this fixture exercises
 
 - **Multi-Yellow escalation rule:** verifies that 3+ Yellows escalate to Red soft block
 - **ecspresso assessor path:** validates iac-change assessor works with ecspresso diff output
 - **Bundled changes:** multiple changes in one deploy amplify compound risk
-- **Capacity reduction risk:** scaling down during normal traffic is a capacity risk
+- **Capacity reduction risk:** scaling down during normal traffic is a capacity risk, scored under blast radius (a cost decrease is cost-Green)

@@ -32,7 +32,7 @@ Per-category extraction rules specific to this action type:
 Additional questions beyond the standard 7 that are specific to this action type.
 
 ## L3 — Live Query Hooks
-Which signals from `examples/<cloud>.md` to run, and how to interpret results for scoring.
+Which signals from `examples/aws.md` / `examples/kubernetes.md` to run, and how to interpret results for scoring.
 
 ## Rationalization Prevention
 Action-type-specific traps.
@@ -44,4 +44,4 @@ An assessor may omit any non-frontmatter section if it doesn't apply (the skill 
 
 | Assessor | Evaluates | Notes |
 |----------|-----------|-------|
-| [`iac-change.md`](iac-change.md) | IaC plan/diff outputs (Terraform, Helm, Pulumi, CloudFormation, Bicep, Ecspresso, Lambroll) | v1 assessor |
+| [`iac-change.md`](iac-change.md) | IaC plan/diff outputs (Terraform, Helm, Kustomize / raw manifests via `kubectl diff`, Argo CD / Flux, ecspresso, lambroll) | v1 assessor. CloudFormation / Serverless / CDK / Pulumi / Bicep are not supported |
