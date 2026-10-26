@@ -96,7 +96,8 @@ Rules:
 - **Failed** states whether it was rolled back (operator-supplied or record-cited; otherwise `State: <TODO: rolled back or not>`) and the next step.
 - **Next** is operator-supplied only. Pre-flight mitigations and L1 cause detail are not next steps until the operator chooses them. Do not add a retry condition, a promised new window, a "reopen this ticket" route, or a stated cause ("likely...").
 - **Aborted** is only written after the operator confirms nothing was applied. If anything was applied, use the failed or partial shape. `Reason:` summarises the record's `Execution:` line (for example `aborted at GATE — pre-flight RED (replace of orders-db)`), cited in the fact table; only when the record gives none is it operator-supplied, else `Reason: <TODO: reason>`. An aborted result carries no apply time.
-- **Partial** says "phase N of M" and names the current state in one line.
+- **Partial** says "phase N of M" and names the current state in one line. Operator-supplied verification goes in that `State:` line.
+- **No verification done.** If the operator says nothing was checked, write `Verified: pending`; if verification was not given at all, `Verified: <TODO: verification>`.
 - A result carries no `Rollback:` line. A failed result states the rollback outcome in its `State:` line; any other rollback detail goes in only if the operator asks for it.
 
 ## Ticket-close
@@ -116,7 +117,7 @@ Rules:
 - Lines are exactly `What`, `PR`, `Applied`, `Verification`, `Rollback`, in that order, under a one-line title. Add `Outcome:` (after the title) when the outcome is not success.
 - `PR` is the real URL, parsed from the `Execution:` line or given by the operator. Otherwise `PR: <TODO: PR link>`. Omit the `PR` line when no PR exists (direct apply, abort before a PR was created).
 - On a direct apply, the revert instruction after `Rollback: not needed.` is summarised from the Change Plan rollback path (no PR to revert, no CLI command).
-- `Applied` and `Verification` come from the record only on the direct-apply path; on the PR path they come from the operator.
+- `Applied` and `Verification` come from the record only on the direct-apply path; on the PR path they come from the operator. A time given with no date is written `Applied: <TODO: apply date> 14:12 ICT`; never borrow the window date.
 - `Rollback: not needed` is allowed only when the outcome is a confirmed success, or a confirmed abort where nothing was applied (write `Rollback: not needed, nothing was applied`). On success, the revert instruction after it must cite the Change Plan in the fact table, or become `<TODO: rollback>`.
 - The ticket key comes from the Ticket Reference URL, or from the operator when the reference is "none".
 

@@ -1,6 +1,6 @@
 # Examples: Redaction Rules for `change-comms`
 
-Reference for the redaction pass of the `change-comms` skill. Run it on every draft, after drafting and again after every operator edit, and once over the full text of every source record read (so an identifier that was summarised away is still logged, as `dropped`). All sample values below are obviously fake.
+Reference for the redaction pass of the `change-comms` skill. Run it on every draft, after drafting and again after every operator edit, and once over the full text of every source record read with patterns 1-7 (so an identifier that was summarised away is still logged, as `dropped`). Pattern 8 applies to drafts only; plan text in a record gets no log row. All sample values below are obviously fake.
 
 ## Patterns
 
@@ -8,10 +8,10 @@ Apply in this order (ARNs first, so an account ID inside an ARN is never half-ma
 
 | # | Identifier | Match (guide) | Replace with |
 |---|---|---|---|
-| 1 | ARN | `arn:aws[a-z-]*:[a-z0-9-]+:[a-z0-9-]*:[0-9]*:[^\s,;)]*[^\s.,;)]` | its resource name: the last segment after `/` or `:`. Trailing punctuation (`.`, `,`, `)`, `;`) stays outside the match and is kept |
+| 1 | ARN | ``arn:aws[a-z-]*:[a-z0-9-]+:[a-z0-9-]*:[0-9]*:[^\s,;)`]*[^\s.,;)`]`` | its resource name: the last segment after `/` or `:`. Trailing punctuation (`.`, `,`, `)`, `;`, a closing backtick) stays outside the match and is kept |
 | 2 | 12-digit account ID | `(?<![0-9])[0-9]{12}(?![0-9])` | `<account-id>` |
 | 3 | CIDR | IPv4 or IPv6 address followed by `/<prefix>` | `<cidr>` |
-| 4 | IPv4 / IPv6 | `\b(?:[0-9]{1,3}\.){3}[0-9]{1,3}\b`; IPv6 = a colon-separated hex form that contains `::` or at least one hex letter `a-f` (covers `::1`, `fe80::1`, `2001:db8::8a2e:370:7334`). Not IPv6: `HH:mm` or `HH:mm:ss` times (digits only) and MAC-like values (`00:1a:2b:3c:4d:5e`, six 2-digit groups) | `<ip>` |
+| 4 | IPv4 / IPv6 | `\b(?:[0-9]{1,3}\.){3}[0-9]{1,3}\b`; IPv6 = a colon-separated hex form that contains `::` or at least one hex letter `a-f` (covers `::1`, `fe80::1`, `2001:db8::8a2e:370:7334`). Not IPv6: `HH:mm` or `HH:mm:ss` times (digits only) MAC-like values (`00:1a:2b:3c:4d:5e`, six 2-digit groups) and hash prefixes (`sha256:7a1c…`) | `<ip>` |
 | 5 | Access key | `\b(AKIA\|ASIA)[A-Z0-9]{16}\b` | `<redacted-secret>` |
 | 6 | JWT-shaped token | `eyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+`, and `Bearer \S+` | `<redacted-secret>` |
 | 7 | Inline credential | `(?i)(password\|secret\|token)\s*[=:]\s*\S+` | `<redacted-secret>` |
