@@ -284,6 +284,8 @@ Check for a reusable pre-flight record in `.culiops/pre-flight/`:
 
 #### 4c: Execute
 
+Offer: draft a heads-up for the dev / EM with `change-comms` before the apply or merge (draft-only; the operator sends it).
+
 **PR path (default):**
 1. Follow the repo's conventions: branch name from the ticket or the repo's pattern (fallback `iac-change/<service>-<short-description>`), its commit-message style, and its PR / MR template. Works with any Git host (GitHub PR, GitLab MR, Bitbucket, Azure DevOps).
 2. Present the PR action:
@@ -385,6 +387,8 @@ Write to `.culiops/iac-change-execution/<service>-<action>-<YYYYMMDD-HHmm>.md`:
 
 **GATE 5:** Offer to commit the record:
 > "Execution record written to `<path>`. Commit it?"
+
+Offer: draft the result message and Jira ticket-close (with the PR URL) with `change-comms` (draft-only; the operator sends them).
 
 ---
 
