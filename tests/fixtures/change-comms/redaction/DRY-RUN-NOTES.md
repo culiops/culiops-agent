@@ -33,7 +33,7 @@ A general assistant with no skill asked for the window, impact and platform, the
 - Internal network ranges (CIDR) were kept in a draft; redaction was left to judgement instead of a fixed rule by identifier type.
 - A raw IP supplied by the operator at the review gate was inserted with no re-scan and no warning, and the assistant rationalised it as safe because it was a private address.
 - No redaction log (type and location, never value) was produced, so the operator cannot see what was masked or dropped.
-- A credential found in the records was mentioned only in passing as a "separate finding", with no formal Flag, no rotation advice and no location, and it was dropped silently instead of being logged.
+- Credential flag gap (table row: pass, weak): the credential was kept out of every draft, but it was mentioned only in passing as a "separate finding", with no structured Flag, no rotation advice and no location, and it was not logged.
 - Sensitive values were dropped silently (no log entry) so the operator cannot tell masking from omission.
 - The heads-up omitted the pre-flight verdict word (`GREEN`/`YELLOW`/`RED`).
 - Added unrequested derived times and an extra ask not given by the operator.

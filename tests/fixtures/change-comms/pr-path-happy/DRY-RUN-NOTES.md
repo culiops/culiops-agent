@@ -22,7 +22,9 @@ A general assistant with no skill listed the three candidate records, left out t
 
 ### Behaviours the README does not list but the spec's anti-goals forbid
 
-- Invented facts presented as fact in drafts: heads-up "CI applies it on merge, which will be inside the window" (no source for merge timing); "We are applying in a low-traffic window to limit exposure" (the pre-flight only lists it as a mitigation; the assistant admitted "I haven't seen traffic data" and kept the line); result "No further action is needed from anyone"; ticket-close "Planned and announced beforehand" (the heads-up was only drafted, never posted), "Rollback: not needed", "no hard blocks".
+- Unsourced facts presented as fact in drafts: heads-up "CI applies it on merge, which will be inside the window" (no source for merge timing); result "No further action is needed from anyone"; ticket-close "Planned and announced beforehand" (the heads-up was only drafted, never posted) and "Rollback: not needed".
+- Sourced content stated without a citation: "We are applying in a low-traffic window to limit exposure" comes from the pre-flight's "Mitigations Committed" ("Apply in an agreed low-traffic window", operator), and "no hard blocks" matches the pre-flight's "Hard Blocks: None". Neither is invented. But the draft states the mitigation as a present fact (the assistant admitted "I haven't seen traffic data") and cites neither record.
+- Ticket-close is not in plain `Label: value` lines: it opens with a prose sentence ("Closing OPS-123. orders-db (orders-api, prod) was resized ...") and uses "- " bullets. The spec's Jira format is plain `Label: value` lines.
 - Inference stated as fact: result "The expected Multi-AZ failover occurred as part of the resize". The assistant admitted the operator never said so, yet left it in.
 - Missing facts were handled by asking the operator or inferring, never by a visible `<TODO: field>`.
 - Heads-up and result are long prose paragraphs, not tight messages (heads-up ends with an extra "Please tell us in this thread..." ask the operator never requested).
@@ -34,7 +36,9 @@ A general assistant with no skill listed the three candidate records, left out t
 
 - Rollback line in a heads-up carried no `record: <path>#<section>` citation, so the reader cannot see where it came from.
 - Operator-supplied impact was paraphrased and extended with reassurance ("should recover on its own") instead of being used as given.
-- Asserted facts that no source or operator statement supports (merge happens inside the window, "low-traffic window", "no further action needed", "announced beforehand", "rollback not needed", "no hard blocks") instead of writing `<TODO: field>`.
+- Asserted facts that no source or operator statement supports (merge happens inside the window, "no further action needed", "announced beforehand", "rollback not needed") instead of writing `<TODO: field>`.
+- Stated a committed mitigation and a recorded finding as present facts without citing the record ("low-traffic window", "no hard blocks"), so the reader cannot tell sourced content from assumption.
+- Jira ticket-close used prose and "- " bullets instead of plain `Label: value` lines.
 - Stated an inference as an observed fact ("the failover occurred") when the operator had not reported it.
 - Heads-up and result drafts are paragraph-length, with extra asks the operator did not request, not short copy-paste messages.
 - Missing facts never became visible `<TODO: ...>` markers.

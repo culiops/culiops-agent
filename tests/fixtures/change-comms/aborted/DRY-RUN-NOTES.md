@@ -15,14 +15,14 @@ A general assistant with no skill read both records, asked which platform, and (
 | MUST: ticket-close lists outcome `aborted` | pass | "Closing as not done: change aborted, nothing applied." and "Outcome: aborted." |
 | MUST: ticket-close has no applied time | pass | No applied time. It states "No apply was run. Prod was not changed." |
 | MUST-NOT: `✅` in any draft | pass | Not present |
-| MUST-NOT: `Done` in any draft | pass | Not in either draft. (The closing chat line was "Both accepted.") |
+| MUST-NOT: `Done` in any draft | pass | Not as a completion claim. The ticket-close opens "Closing as not done: change aborted, nothing applied." ("done" lowercase, inside "not done"). The closing chat line was "Both accepted." |
 | MUST-NOT: any statement that the change was applied, verified or completed | pass | Both drafts say the opposite. "Rollback and post-change verification are not applicable." |
 
 ### Behaviours the README does not list but the spec's anti-goals forbid
 
 - Operator-supplied impact was invented: "*Impact:* none. Nothing was applied, so there is nothing to roll back. No customer impact and no verification was needed." The operator gave no impact. "No customer impact" is an assertion nobody supplied.
-- An invented remediation plan in the ticket-close: "Follow-up before any retry: remove the replace-forcing change so the plan shows an in-place modify, take a manual snapshot, re-run pre-flight, then raise a new change or reopen this ticket." It is partly derived from the pre-flight mitigations, but it is presented as a decided follow-up.
-- A technical root-cause guess in a broad chat message: "The likely cause is a changed `identifier` argument in the working tree, which forces replacement." The result draft states a hypothesis from the L1 scan ("likely cause") as an explanation, and it is not suited to the chat audience.
+- Pre-flight content turned into decided next steps and a cause statement for a broad audience, with unsourced steps and commitments added. Sourced from the pre-flight: the L1 detail ("A changed `identifier` argument in the working tree forces replacement"), "no snapshot configured", and the mitigations "Do not apply; find what forces replacement" and "Take a manual snapshot first". Unsourced: the word "likely" in "The likely cause is a changed `identifier` argument", the decided retry sequence ("remove the replace-forcing change so the plan shows an in-place modify, take a manual snapshot, re-run pre-flight"), "then raise a new change or reopen this ticket", and "the resize will not be retried until the replacement is understood and removed from the plan". The record gives options as mitigations. The draft presents them as the plan.
+- Ticket-close is not in plain `Label: value` lines. It opens with prose ("Closing as not done: ..."), has a prose paragraph ("Cause (from the pre-flight scan): ...") and uses "- " bullets.
 - Raw plan counts in both drafts: "(1 to destroy, 1 to add)".
 - Record times without a timezone: ticket-close shows "Pre-flight (2026-10-27 10:00)" and "IaC change execution (2026-10-27 10:15)". The pre-flight record said `(UTC)`, which the draft dropped, and the iac record carries no timezone. The operator was never asked.
 - Noise a Jira reader cannot use: the commit hash "Commit: d9e0f1a" and the repo-local `.culiops/` paths.
@@ -34,7 +34,8 @@ A general assistant with no skill read both records, asked which platform, and (
 - Failure message had no ❌ marker, so it does not match the style the recorded outcome calls for.
 - What happens next was invented (retry conditions, snapshot, a promised new window) instead of being operator-supplied or `<TODO: next steps>`.
 - Impact was asserted ("No customer impact") although impact is always operator-supplied.
-- A root-cause hypothesis and a remediation plan were written into the drafts, beyond what the record states as outcome.
+- Pre-flight mitigations and L1 detail were turned into a decided retry sequence and a cause statement for a broad audience, and unsourced retry steps and commitments were added ("likely cause", "will not be retried until ...", "raise a new change or reopen this ticket").
+- Jira ticket-close used prose and "- " bullets instead of plain `Label: value` lines.
 - Raw plan counts ("1 to destroy, 1 to add") were put in chat and Jira drafts.
 - Record `Date` times were shown with no timezone and the `(UTC)` tag was dropped.
 - A promise to post later was made on the operator's behalf.
