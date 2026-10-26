@@ -2,50 +2,57 @@
 
 ## What this fixture validates
 
-- All eight gates fire in sequence with operator approval.
-- Step 1.5 audit correctly identifies all needs and proposes one action per gap.
-- All three delegated steps (2, 3, 4) execute with sibling skills, return artifact paths, get snapshotted into handoff directory.
-- Step 5 emits and ingests a fully-filled interview.
-- Step 6 auto-marks 22 items from artifacts, prompts for 3 manual items, all get ✓.
-- Step 7 assembles the full handoff package with all 8 files.
-- Final verdict: ready.
+- All eight gates fire in order (1, 1.5, 2, 3, 4, 5, 6, 7), each with operator approval. Gates 2-3 are **one** `service-discovery` delegation (real-discovery from the diagrams plus live APIs): there is no separate diagram catalog and live catalog that overwrite each other.
+- A **same-target check** runs at every snapshot (account, region, service against intake, plus artifact age) and again compares the catalog inventory with the profile's resolved set.
+- Step 1.5 probes record **derived facts only**: identity (`sts get-caller-identity --query Account` = intake account; this is item 1), CloudTrail Event history (`lookup-events --max-results 1`, not `describe-trails`), Resource Explorer index.
+- The strict verdict: even with every interview section answered, items are at most `◐` until checked. The **Step 6 verification batch** (3 read-only AWS commands, approved, projected) turns `◐` into `✓ verified` (item 10), `✗` (item 15) or leaves it (item 24: PITR enabled, restore test unattested).
+- The **conflict check** catches what the interview alone would have passed: deploy frequency (item 18), an unlisted upstream sender (item 19), a DR plan to a Region with nothing in it (item 25).
+- Item 5 passes only because the profile states all four cross-Region checks; item 9 means managing principals, and callers come from Wiring (item 19).
+- Package: 8 files (5 written by the skill in `expected-handoff/`; 3 snapshots: `mock-artifacts/service-catalog.md`, `mock-artifacts/runtime-profile.md`, `filled-interview.md`).
+
+`mock-artifacts/service-catalog.md` and `mock-artifacts/runtime-profile.md` are the shared mock sibling artifacts (runtime-profile-schema 2; catalog with Owner/Live columns, `Live verification: performed`, Unattributed list, secrets as references). The mock Wiring section deliberately lists one configured caller the interview omits (role `legacy-orders-exec` may send to `payments-capture-queue`), so item 19 is a `✗ conflict` wherever both a profile and Section 8 exist. The interview has two variants: A (happy-path only: incoming role not yet permitted, 3-5 deploys/week, DR to us-west-2) and B (all others: role permitted, 5 deploys/quarter, single-region DR).
 
 ---
 
 ## Gate transitions
 
-**Gate 1 → Step 1 complete**
-Operator provides: service=payments, account 123456789012, region us-east-1, takeover intent, 2 diagram PNGs, no IaC, outgoing=Pay Team, incoming=Platform Team. Skill accepts and moves to Step 1.5.
+**Gate 1** (14:00Z). Operator supplies the inputs in `input.md`. Skill accepts.
 
-**Gate 1.5 → Step 1.5 complete (execution plan approved)**
-Skill runs capability probes: AWS access ✓, CloudTrail ✓, Resource Explorer ✓, Cost Explorer ✓. Identifies gap: no existing catalog, no runtime profile, no IaC. Proposes: service-discovery diagram mode (Step 2), service-discovery live mode (Step 3), runtime-trace (Step 4). Emits execution-plan.md. Operator reviews and responds "plan approved" at 2026-05-12T14:10:00Z.
+**Gate 1.5** (14:03Z-14:12Z). Probes run with projected `--query`: `identity-probe-result` (caller account = 123456789012), Event history readable, aggregator index present. Only the derived facts go to `state.md`. Plan emitted; operator replies "plan approved".
 
-**Gate 2 → Step 2 complete (diagram extraction)**
-Skill instructs operator to invoke service-discovery with the two PNG files. Operator returns catalog path. Skill snapshots to mock-artifacts/service-catalog.md (diagram phase).
+**Gate 2** (14:12Z-14:30Z). The skill prints one `service-discovery` invocation (real-discovery; inputs: the two PNGs and the live account). The operator runs it and returns `.culiops/service-discovery/payments-catalog.md`.
 
-**Gate 3 → Step 3 complete (live discovery)**
-Skill instructs operator to invoke service-discovery in AWS CLI mode. Operator returns merged catalog path. Skill updates snapshot at mock-artifacts/service-catalog.md (merged). Resource Inventory now shows 8 resources (3 Lambda, 2 SQS, 1 DynamoDB, 2 Secrets Manager).
+**Gate 3** (14:30Z-14:33Z). Snapshot validation. Same-target check: catalog account 123456789012 / us-east-1 / payments = intake; age 3 minutes; `Live verification: performed`. Snapshot written to the package.
 
-**Gate 4 → Step 4 complete (runtime profile)**
-Skill instructs operator to invoke runtime-trace. Run costs $0.04 (CE charge). All 4 sources ran: Cost Explorer ✓, CloudTrail ✓, CloudWatch ✓, Resource Explorer ✓. Operator returns profile path. Skill snapshots to mock-artifacts/runtime-profile.md.
+**Gate 4** (14:33Z-15:05Z). The skill prints the `runtime-trace` invocation (scoping `tag:service=payments`, intent `takeover`, `--redact` not set). The operator runs it (7 gates of its own, $0.0303). Same-target check: account/region/service = intake; age 5 minutes; the profile's 8 resolved resources = the catalog's 8 inventory names.
 
-**Gate 5 → Step 5 complete (interview ingested)**
-Skill emits interview-questionnaire.md (template). Operator forwards to Bob L. (Pay Team) via Slack. Bob and Carol fill in all 11 sections. Operator returns filled-interview.md path. Skill reads and classifies all 11 sections as complete.
+**Gate 5** (15:05Z-15:45Z). Questionnaire emitted; Bob and Carol fill all 11 sections (incl. 4b IaC & ownership and the incoming role ARN). Ingest: 11 complete / 0 partial / 0 empty.
 
-**Gate 6 → Step 6 complete (scorecard auto-marked)**
-Skill runs auto-mark rules across all artifacts. 23 items auto-marked ✓ from service-catalog.md, runtime-profile.md, and filled-interview.md. 2 items (Item 3: console+CLI access; Item 12: paging path) require manual confirmation. Operator confirms both. Verdict: ready. Scorecard written to expected-handoff/readiness-scorecard.md.
+**Gate 6** (15:45Z-16:05Z).
+- Auto-mark from artifacts and interview: nothing from the interview alone is better than `◐`.
+- Operator confirms `payments-deploy-role` as the deploy role (item 2: `◐` to `✓ verified`).
+- Step 6 batch proposed at 15:48Z, approved 15:50Z, identity re-checked, run: `describe-alarms` (5 alarms, all with actions: item 10 `✓ verified`); `describe-continuous-backups` (`ENABLED`: item 24 stays `◐`); `simulate-principal-policy` for `platform-team-deploy` (6 of 6 `implicitDeny`: item 15 `✗`). Artifact comparisons: items 6, 20 `✓ verified`; items 18, 19 `✗ conflict`.
+- Item 25: interview says active-passive to us-west-2; Resource Explorer (complete, tag-visible) shows nothing outside us-east-1 and the interview says cross-region backup is not enabled: `✗ conflict`.
+- Operator attests items 3, 11, 12.
+- Verdict `not-ready`: `✗` / `✗ conflict` in Deploy & Rollback (15, 18) and Compliance (25).
 
-**Gate 7 → Step 7 complete (handoff package assembled)**
-Skill assembles: README.md, readiness-scorecard.md, open-questions.md, state.md, execution-plan.md, plus artifact snapshots (service-catalog.md, runtime-profile.md, filled-interview.md). 8 files total. Run complete at 2026-05-12T16:05:00Z.
+**Gate 7** (16:05Z-16:10Z). Package assembled; the private-repo reminder is printed (check branch and remote visibility before committing).
+
+---
+
+## Marks
+
+12 ✓ verified, 3 ✓ attested, 6 ◐, 1 ✗, 3 ✗ conflict, 0 ?, 0 N/A (25 items). Per-item detail with citations is in the scorecard.
 
 ---
 
 ## Acceptance check
 
-A reviewer steps through `input.md`, `mock-artifacts/`, and `filled-interview.md`, then confirms the skill would produce the contents of `expected-handoff/` with **representative** results (allowing for run-specific timestamps and operator usernames).
+A reviewer steps through `input.md`, `mock-artifacts/`, `filled-interview.md`, then confirms the skill would produce `expected-handoff/` with representative results (timestamps and operator names vary).
 
-Specifically:
-- `expected-handoff/readiness-scorecard.md` verdict would be `ready` for any run with this input set, regardless of timestamps.
-- `expected-handoff/open-questions.md` would have 0 high-priority items and 2 medium-priority items (training schedule, DR drill) for any run with this fully-filled interview.
-- `expected-handoff/state.md` timestamps and the `operator` field would differ per run; all step statuses would be `done`.
-- `expected-handoff/execution-plan.md` approval status would be `approved`; proposed invocations are deterministic from the input.
+- `expected-handoff/readiness-scorecard.md`: verdict `not-ready` for any run with this input set; counts as above; items 15, 18, 19, 25 are the non-passing items.
+- `expected-handoff/open-questions.md`: 4 High, 6 Medium, 2 Low; every question in the README's top 5 appears there under the same ID.
+- `expected-handoff/state.md`: all steps `done`; probe table holds derived facts only; same-target table has the catalog, profile and cross-artifact rows.
+- `expected-handoff/execution-plan.md`: approved; a single discovery delegation; the Step 6 batch recorded as an addendum.
+
+Citations in `expected-handoff/readiness-scorecard.md` are package-relative: `interview-questionnaire.md` is the snapshot of `filled-interview.md`; `service-catalog.md` and `runtime-profile.md` are the snapshots of the files under `mock-artifacts/`; `state.md` is `expected-handoff/state.md`. Line numbers refer to those files.

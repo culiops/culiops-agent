@@ -1,66 +1,89 @@
 ---
-open-questions-schema: 1
+open-questions-schema: 2
 service: payments
-generated-at: 2026-05-12T15:45:00Z
+generated-at: 2026-05-12T15:35:00Z
 high-priority-count: 1
-medium-priority-count: 2
-low-priority-count: 0
+medium-priority-count: 4
+low-priority-count: 1
 ---
 
 # Open Questions — payments
 
-**Generated:** 2026-05-12T15:45:00Z
+**Generated:** 2026-05-12T15:35:00Z
 
 ## Summary
 
 | Priority | Count |
 |---|---|
 | High | 1 |
-| Medium | 2 |
-| Low | 0 |
+| Medium | 4 |
+| Low | 1 |
 
-One high-priority blocker: IAM gap prevents runtime baseline capture. Takeover verdict is not-ready until this is resolved. Two medium-priority items should be resolved before or shortly after the handoff date of 2026-06-15.
+Runtime-trace was skipped by the operator (time constraint), not because anything was denied.
 
----
-
-## High Priority (blockers — must resolve before handoff)
-
-### HIGH-1 — Activity baseline unavailable — recommend escalating IAM for ce:* read and re-running
-
-- **Source:** expected-handoff/state.md → Step 1.5: capability-probe-result: Cost Explorer DENIED
-- **Detail:** Cost Explorer access (`ce:*`) is blocked by corporate IAM policy in account 123456789012. Step 4 (runtime-trace) was skipped at operator request. As a result, no `runtime-profile.md` was produced and scorecard items 7-9 (Runtime category) plus items 2 (deploy role) and 5 (cross-region footprint) are all unresolved (?). The takeover readiness verdict is not-ready.
-- **Suggested action:** Request `ce:GetCostAndUsage` and `ce:GetCostForecast` read access on account 123456789012 from your IAM admin (reference: corporate policy exception process). Once granted, re-run `service-takeover` from Step 4. Alternatively, if deploy role and cross-region footprint can be confirmed manually (direct IAM lookup / AWS console), operator can manually mark items 2 and 5; items 7-9 still require runtime-trace.
-- **Owner:** alice (Platform Team)
-- **Target date:** Before 2026-06-15 handoff date
+Every `✗ conflict` in the scorecard is High by rule. `◐` and `?` items are listed in the scorecard with the check that would settle each; only the ones that need someone else's action appear here.
 
 ---
 
-## Medium Priority (important — should resolve within 30 days of handoff)
+## High Priority (blockers — resolve before sign-off)
 
-### MED-1 — Training schedule not yet confirmed
+### HIGH-1 — No runtime profile: items 5, 7, 8, 9 are `?`; items 2, 16, 18, 19, 25 cannot be cross-checked
 
-- **Source:** General handoff planning
-- **Detail:** The interview documents the deploy process, runbooks, landmines, and DR procedure thoroughly. However, no structured knowledge-transfer session between Pay Team and Platform Team has been scheduled. An informal walkthrough risks missing nuanced operational knowledge (e.g., cold-start behavior, Stripe webhook fragility, DLQ triage procedure).
-- **Suggested action:** Schedule a 2-hour walkthrough session between Bob/Carol (outgoing) and the Platform Team before 2026-06-15. Cover: live deploy demo, runbook walkthrough, DR scenario tabletop.
+- **Source:** state.md Step 4 (skipped); readiness-scorecard.md items 2, 5, 7, 8, 9, 16, 18, 19, 25
+- **Detail:** The operator skipped runtime-trace for time. The cross-Region footprint, activity baseline, deploy-event history, managing principals and configured callers (Wiring) are all unknown, and the interview claims on deploy frequency, callers and DR cannot be checked.
+- **Suggested action:** Run runtime-trace (about 30 minutes of gate approvals, about $0.03; Cost Explorer is not required for the other sections) and resume at Step 4; re-score.
 - **Owner:** alice (Platform Team)
-- **Target date:** 2026-06-08 (one week before handoff)
+- **Target date:** 2026-06-01
 
-### MED-2 — DR test not yet scheduled for incoming team
+---
 
-- **Source:** filled-interview.md → Section 10 → DR drill last run 2025-11-01
-- **Detail:** The last DR drill was 2025-11-01 (>6 months ago) and was conducted by the Pay Team. The Platform Team has not yet verified they can execute the DR runbook (https://docs.example.com/payments/dr-runbook). RTO of 30 min requires the on-call operator to be familiar with the failover steps.
-- **Suggested action:** Schedule a DR tabletop or partial failover drill with the Platform Team before or within 30 days after handoff. Carol (outgoing) should walk through the DR runbook once with the Platform Team on-call representative.
-- **Owner:** alice (Platform Team) + Carol P. (outgoing SRE)
-- **Target date:** 2026-07-15 (within 30 days of handoff)
+## Medium Priority (should resolve within 30 days of handoff)
+
+### MED-1 — Restore test is operator-stated, not attested (item 24)
+
+- **Source:** readiness-scorecard.md item 24; interview Section 10; catalog PITR row
+- **Detail:** Backups are in place on `payments-ledger` (PITR). The 2026-02-15 restore test was run by the Pay Team; nobody on the incoming team has witnessed one.
+- **Suggested action:** Witness a PITR restore into a scratch table (Carol repeats it), then attest the date.
+- **Owner:** alice (Platform Team) and Carol P.
+- **Target date:** 2026-07-15
+
+### MED-2 — Runbook, postmortem and rollback links not yet opened (items 13, 14, 17)
+
+- **Source:** readiness-scorecard.md items 13, 14, 17
+- **Detail:** 5 runbooks, 2 postmortems and the rollback runbook are listed under docs.example.com; none has been opened by the incoming team.
+- **Suggested action:** Open each link and confirm it matches its symptom; cite the paths in the scorecard.
+- **Owner:** alice (Platform Team)
+- **Target date:** 2026-06-08
+
+### MED-3 — Stripe contract owner and PII scope need confirmation (items 21, 22)
+
+- **Source:** readiness-scorecard.md items 21, 22; interview Sections 8 and 10
+- **Detail:** Contract ownership (Bob L., renewal 2027-03) and the PII scope are policy statements AWS cannot confirm.
+- **Suggested action:** Confirm the contract owner with procurement and the PII scope with the security contact.
+- **Owner:** alice (Platform Team)
+- **Target date:** 2026-06-15
+
+### MED-4 — alice's console read access to Secrets Manager should be revoked after handoff
+
+- **Source:** interview-questionnaire.md Sections 9 and 11
+- **Detail:** alice has console read access to the payments secrets for debugging.
+- **Suggested action:** Revoke after the 2026-06-15 handoff.
+- **Owner:** alice and Pay Team
+- **Target date:** 2026-06-16
 
 ---
 
 ## Low Priority
 
-*None.*
+### LOW-1 — API Gateway `abc123def456` ownership and spend; SNS `payments-events` unattributed
+
+- **Source:** service-catalog.md Unattributed list; runtime-profile.md Spend (account context)
+- **Detail:** Neither carries the `service` tag; the gateway also fronts other services.
+- **Suggested action:** Decide whether to tag them or keep them as dependencies.
+- **Owner:** alice (Platform Team)
 
 ---
 
 ## Resolved items
 
-*None at this time. Items resolved during scorecard review are tracked in expected-handoff/readiness-scorecard.md Manual override log.*
+*None at this time.*

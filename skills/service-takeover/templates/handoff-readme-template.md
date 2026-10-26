@@ -11,12 +11,14 @@ incoming-team: <team-name>
 
 # Service Takeover — <service-name>
 
+> **Private repo only.** This package holds the account ID, IAM ARNs, escalation chains and incident detail. Record references (where a secret lives, who owns it), never values. No tokens/signed links in URLs. Prefer role/team aliases over personal phone numbers. Check the repo is private before committing.
+
 ## TL;DR
 
 - **Handoff date:** <date>
 - **From:** <outgoing team>
 - **To:** <incoming team>
-- **Readiness verdict:** <ready / not-ready / partial>
+- **Readiness verdict:** <ready / not-ready / partial> — `ready` only if every item is ✓ verified / ✓ attested / N/A; any ◐ or ? → partial; any ✗ in Access, Runtime, Deploy & Rollback or Compliance → not-ready. To reach ready: <n> checks (listed in `readiness-scorecard.md`).
 - **Open questions count:** <high>/<medium>/<low>
 - **Top 5 open questions:**
   1. <question>
@@ -30,9 +32,9 @@ incoming-team: <team-name>
 | File | What it is |
 |---|---|
 | `service-catalog.md` | Snapshot of the `service-discovery` catalog at handoff time — what resources exist, naming patterns, dependency map. |
-| `runtime-profile.md` | Snapshot of the `runtime-trace` runtime profile at handoff time — what's billing, who's calling, activity baselines, cross-region inventory. |
+| `runtime-profile.md` | Snapshot of the `runtime-trace` runtime profile at handoff time — spend (attributed only if tag-scoped), who managed it (management events), what is wired to call it, activity baselines, cross-region footprint. |
 | `interview-questionnaire.md` | Filled-in outgoing-team interview — tribal knowledge that doesn't live in code. |
-| `readiness-scorecard.md` | Production Readiness Review scorecard — 25 items across 8 categories, evidence-backed. |
+| `readiness-scorecard.md` | Production Readiness Review scorecard — 25 items across 8 categories. Each mark is ✓ verified, ✓ attested, ◐ operator-stated, ✗, ✗ conflict, ? or N/A, with a cited source. |
 | `open-questions.md` | Consolidated unresolved questions across all artifacts, prioritized. |
 | `execution-plan.md` | Record of how this package was assembled (Step 1.5 audit + actions taken). |
 | `state.md` | Workflow state — which steps ran, when, gate sign-offs. |
@@ -40,7 +42,7 @@ incoming-team: <team-name>
 ## First-day actions for <incoming team>
 
 - [ ] Read this README in full.
-- [ ] Skim `readiness-scorecard.md` and note any **✗** or **?** items in your team's tracker.
+- [ ] Skim `readiness-scorecard.md` and note any **✗**, **◐** or **?** items in your team's tracker. Treat **✗ conflict** as high priority: the interview and the artifacts disagree.
 - [ ] Schedule a 30-minute follow-up with **<outgoing-team primary contact>** to cover the top-3 open questions above.
 - [ ] Verify your team's IAM identities have console + CLI access to AWS account **<account-id>** in region **<region>**.
 - [ ] Subscribe to the alerts listed in `interview-questionnaire.md` Section 5 on your team's paging tool.
@@ -60,30 +62,32 @@ This handoff package was assembled following these recognized industry patterns:
 
 ## How this package was generated
 
-This package was assembled by the `service-takeover` skill (culiops plugin, version <skill-version>). The skill orchestrated an operator through eight gates:
+This package was assembled by the `service-takeover` skill (culiops plugin, version <skill-version>). The skill orchestrated an operator through these gates:
 
-1. **Intake** — gathered scoping primitives.
-2. **Information audit** — surveyed available materials, proposed cheapest action per gap.
-3. **Diagram extraction** — delegated to `service-discovery` (real-discovery mode).
-4. **Live discovery** — delegated to `service-discovery` (real-discovery mode, AWS CLI).
-5. **Runtime profile** — delegated to `runtime-trace`.
-6. **Interview** — emitted questionnaire, ingested filled version.
-7. **Readiness scorecard** — auto-marked items from prior artifacts; operator marked the rest.
-8. **Handoff package** — assembled this directory.
+1. **Gate 1 — Intake** — gathered scoping primitives.
+2. **Gate 1.5 — Information audit** — surveyed available materials, proposed the cheapest action per gap.
+3. **Gates 2–3 — Discovery** — one delegation to `service-discovery` (IaC path with live cross-check if IaC was supplied; otherwise real-discovery from docs and live APIs).
+4. **Gate 4 — Runtime profile** — delegated to `runtime-trace`.
+5. **Gate 5 — Interview** — emitted questionnaire, ingested filled version.
+6. **Gate 6 — Readiness scorecard** — marked items from prior artifacts, with an optional read-only verification batch for operator-stated items.
+7. **Gate 7 — Handoff package** — assembled this directory.
 
 To reproduce this package, see `state.md` for the gate sign-offs and `execution-plan.md` for the actions taken.
 
 ## What this package does NOT contain
 
 - **Cost optimization recommendations.** Use `cloud-cost-investigate` after takeover if needed.
-- **Generated IaC.** Use a separate IaC-import tool (e.g., Terraformer).
+- **Generated IaC.** Use `terraform import` blocks if you need to bring unmanaged resources under Terraform.
 - **Real-time monitoring.** Subscribe to alerts and dashboards listed in the interview.
-- **Trace data (X-Ray / OTel).** Out of scope for `runtime-trace` v1.
+- **Trace data (X-Ray / OTel).** Out of scope for `runtime-trace`.
+
+## Committing this package
+
+The package is sensitive. Before committing, check the current branch and the remote's visibility (`git branch --show-current`, `git remote -v`, and the host's repo-visibility setting). Commit only to a private repo, never to a public one. If the package may be shared outside the incoming team, review every file; `--redact` on `runtime-trace` covers the runtime profile only.
 
 ## Questions about this package itself
 
 If something in this package looks wrong, refer to:
 
-- The design spec: `docs/superpowers/specs/2026-05-12-service-takeover-design.md` in the culiops-agent repo.
 - The skill source: `skills/service-takeover/SKILL.md` in the culiops-agent repo.
 - The `state.md` file in this directory for the audit trail.

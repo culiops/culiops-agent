@@ -2,24 +2,22 @@
 
 ## Scenario
 
-The operator does not have `ce:*` IAM perms in the target account (corporate IAM policy restriction). At Step 1.5's capability probes, Cost Explorer access check fails. Operator chooses to accept the gap rather than escalate IAM.
+The handoff meeting is moved up to 2026-05-14. The operator decides to **skip `runtime-trace` for this run** (time constraint: it takes about 30 minutes of gate approvals) and to do everything else, including the Step 6 read-only batch. Nothing is denied: `runtime-trace` now runs without Cost Explorer access, so a missing `ce:*` would only change the spend section, never skip the whole source.
 
 ## Operator inputs
 
-Same as happy-path.
+Same as happy-path. Interview variant B.
 
 ## Expected gate behavior
 
-- Gate 1.5: capability probes detect Cost Explorer ACCESS DENIED. Execution-plan row for "Activity baseline (Step 4)" shows three options: escalate IAM and re-probe / proceed without runtime data / abort takeover.
-- Operator selects "proceed without runtime data".
-- Plan is updated to skip Step 4 entirely.
-- Gates 2 and 3 run normally (service-discovery doesn't need ce:*).
-- Step 4 is marked `skipped` in state.md. No `runtime-profile.md` snapshot in handoff directory.
-- Step 5 (interview) and Step 7 (handoff) proceed.
-- Step 6: scorecard auto-marks items 7-9 (Runtime category) all ? because no runtime-profile.md exists. Operator can mark items 2 (deploy role) and 9 (principals) manually if they have alternative evidence — fixture shows operator leaving them as ?.
+- Gate 1.5: only the identity probe runs (the CloudTrail and Resource Explorer probes exist to plan Step 4, which is skipped). The plan's Step 4 row shows SKIPPED (operator choice) and its consequences.
+- Gates 2-3 run normally.
+- Step 4: `skipped` in `state.md` with the reason; no `runtime-profile.md`; the placeholder `mock-artifacts/.runtime-trace-not-run` states why.
+- Step 6: items 5, 7, 8, 9 are `?` (no profile). Items 2, 16, 18, 19, 25 cannot be cross-checked, so they stay `◐`. The batch still runs.
+- Verdict: **partial** (7 ✓ verified, 3 ✓ attested, 11 ◐, 0 ✗, 0 ✗ conflict, 4 ?, 0 N/A). The package has 7 files.
 
 ## Notable findings
 
-- Verdict: not-ready (Runtime category empty + scorecard reports the gap as "no runtime-profile.md available").
-- open-questions.md surfaces "Activity baseline unavailable — recommend escalating IAM for ce:* read and re-running" as high priority.
-- Handoff README first-day actions include "address IAM gap before signing off on takeover".
+- `?` count: 4 (5, 7, 8, 9). The rows of the scorecard summary sum to 25.
+- No Cost Explorer permission is requested and nothing is attributed to an access policy.
+- HIGH-1 in `open-questions.md` is to run runtime-trace and resume at Step 4.
