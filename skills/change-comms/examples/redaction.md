@@ -8,10 +8,10 @@ Apply in this order (ARNs first, so an account ID inside an ARN is never half-ma
 
 | # | Identifier | Match (guide) | Replace with |
 |---|---|---|---|
-| 1 | ARN | `arn:aws[a-z-]*:[a-z0-9-]+:[a-z0-9-]*:[0-9]*:\S+` | its resource name: the last segment after `/` or `:` |
+| 1 | ARN | `arn:aws[a-z-]*:[a-z0-9-]+:[a-z0-9-]*:[0-9]*:\S+` | its resource name: the last segment after `/` or `:`. Trailing punctuation (`.`, `,`, `)`, `;`) stays outside the match and is kept |
 | 2 | 12-digit account ID | `(?<![0-9])[0-9]{12}(?![0-9])` | `<account-id>` |
 | 3 | CIDR | IPv4 or IPv6 address followed by `/<prefix>` | `<cidr>` |
-| 4 | IPv4 / IPv6 | `\b(?:[0-9]{1,3}\.){3}[0-9]{1,3}\b`; IPv6 = 3 or more colon-separated hex groups (a time such as `14:12` is not IPv6) | `<ip>` |
+| 4 | IPv4 / IPv6 | `\b(?:[0-9]{1,3}\.){3}[0-9]{1,3}\b`; IPv6 = a colon-separated hex form that contains `::` or at least one hex letter `a-f` (covers `::1`, `fe80::1`, `2001:db8::8a2e:370:7334`). Not IPv6: `HH:mm` or `HH:mm:ss` times (digits only) and MAC-like values (`00:1a:2b:3c:4d:5e`, six 2-digit groups) | `<ip>` |
 | 5 | Access key | `\b(AKIA\|ASIA)[A-Z0-9]{16}\b` | `<redacted-secret>` |
 | 6 | JWT-shaped token | `eyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+`, and `Bearer \S+` | `<redacted-secret>` |
 | 7 | Inline credential | `(?i)(password\|secret\|token)\s*[=:]\s*\S+` | `<redacted-secret>` |

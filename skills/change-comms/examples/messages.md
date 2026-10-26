@@ -10,6 +10,7 @@ Reference shapes for the `change-comms` skill. The skill reads this file when it
 - A fact with no source is written as a visible `<TODO: field>`, for example `<TODO: impact>`. Never infer it, soften it, or fill it with reassurance.
 - Operator-supplied text (impact, next steps) is used as given. Do not extend it ("should recover on its own") and do not promise follow-ups on the operator's behalf ("I'll post here when...").
 - Messages stay short and contain no extra asks beyond the closing line the shape defines.
+- In the examples, `<link>` stands for a real URL parsed from the record or given by the operator. Where the URL is missing, the draft says `<TODO: PR link>`.
 
 ## Heads-up
 
@@ -31,7 +32,7 @@ Rules:
 - **Required, in this order:** env (in the title), window with timezone, what, impact, risk, rollback, ticket (and PR if known), then the closing line `Reply here if this window conflicts.`
 - **Risk** is the pre-flight verdict word exactly: `GREEN`, `YELLOW` or `RED`. If there is no pre-flight record, write `Risk: <TODO: pre-flight verdict>`.
 - **Impact** is always operator-supplied. No record has an impact field. If the operator has not given it, write `Impact: <TODO: impact>`; do not reuse a pre-flight blast-radius sentence as impact.
-- **Rollback** cites the record: `record: <path>#Change Plan`. Rollback text taken from the Change Plan is summarised, never copied wholesale. No text found, no operator answer: `Rollback: <TODO: rollback>`.
+- **Rollback** cites the record: `record: <path>#Change Plan`. Rollback text taken from the Change Plan is summarised, never copied wholesale. The `record: <path>#Change Plan` citation goes in the fact table, never in the draft text. No text found, no operator answer: `Rollback: <TODO: rollback>`.
 - **PR** is shown only when parsed from an `Execution:` line or given by the operator. Otherwise write `PR: <TODO: PR link>` or drop it if the PR does not exist yet. Never build a URL from the remote and branch.
 - **Committed mitigations** (for example "low-traffic window") may appear only as facts cited to the pre-flight `Mitigations Committed` section.
 
@@ -93,7 +94,7 @@ Rules:
 - **Next** is operator-supplied only. Pre-flight mitigations and L1 cause detail are not next steps until the operator chooses them. Do not add a retry condition, a promised new window, a "reopen this ticket" route, or a stated cause ("likely...").
 - **Aborted** is only written after the operator confirms nothing was applied. If anything was applied, use the failed or partial shape.
 - **Partial** says "phase N of M" and names the current state in one line.
-- A result carries no rollback line unless the outcome is failed or the operator asks for it.
+- A result carries no `Rollback:` line. A failed result states the rollback outcome in its `State:` line; any other rollback detail goes in only if the operator asks for it.
 
 ## Ticket-close
 
@@ -112,7 +113,7 @@ Rules:
 - Lines are exactly `What`, `PR`, `Applied`, `Verification`, `Rollback`, in that order, under a one-line title. Add `Outcome:` (after the title) when the outcome is not success.
 - `PR` is the real URL, parsed from the `Execution:` line or given by the operator. Otherwise `PR: <TODO: PR link>`.
 - `Applied` and `Verification` come from the record only on the direct-apply path; on the PR path they come from the operator.
-- `Rollback: not needed` is allowed only when the outcome is a confirmed success. The revert instruction after it must cite the Change Plan, or become `<TODO: rollback>`.
+- `Rollback: not needed` is allowed only when the outcome is a confirmed success, or a confirmed abort where nothing was applied (write `Rollback: not needed, nothing was applied`). On success, the revert instruction after it must cite the Change Plan in the fact table, or become `<TODO: rollback>`.
 - The ticket key comes from the Ticket Reference URL, or from the operator when the reference is "none".
 
 Not completed:
@@ -141,16 +142,21 @@ The shapes above show plain text. If the operator wants bold labels in chat, wra
 
 - **Heads-up:** one message for the whole change. `What` lists the phases on one line, for example `What: 3 phases: snapshot → upgrade → cleanup`, and the window covers all of them. One heads-up per phase only if the operator says the phases fall in separate windows.
 - **Result:** one message per phase, saying `phase N of M`. The PR link is that phase's PR. A partial or aborted outcome says which phase stopped and the current state.
-- **Ticket-close:** only after the last phase or after an abort. It lists every phase's PR URL and outcome, one `Label: value` line per phase:
+- **Ticket-close:** only after the last phase is applied, or after an abort. It lists every phase's PR URL and its outcome, one `Label: value` line each, so every phase gets both a `PR (phase N of M)` line and an `Outcome (phase N of M)` line:
 
 ```text
-Change partially completed (phase 2 of 3)
-Outcome: partially completed, cleanup not applied
+Change completed
 What: orders-api upgrade: snapshot, upgrade, cleanup
 PR (phase 1 of 3): https://github.com/acme/orders-infra/pull/40
+Outcome (phase 1 of 3): applied
 PR (phase 2 of 3): https://github.com/acme/orders-infra/pull/41
-PR (phase 3 of 3): <TODO: PR link>
-Applied: phase 1 <TODO: apply time>; phase 2 <TODO: apply time>
+Outcome (phase 2 of 3): applied
+PR (phase 3 of 3): https://github.com/acme/orders-infra/pull/42
+Outcome (phase 3 of 3): applied
+Applied: phase 1 <TODO: apply time>; phase 2 <TODO: apply time>; phase 3 <TODO: apply time>
 Verification: <TODO: verification>
-Rollback: <TODO: rollback>
+Rollback: not needed. Revert each PR + apply if required, <TODO: rollback order>
 ```
+
+- **Abort across phases:** title `Change aborted`, `Outcome: aborted at phase N of M, <state>`, and the same per-phase `PR` and `Outcome` lines (`applied`, `not applied`). Use `Rollback: not needed, nothing was applied` only if no phase was applied.
+- **Partial with phases remaining:** a partial outcome gets a `⏸` result only. The skill refuses to write a ticket-close and says why: the ticket-close is posted when the work is finished, and the work is not. Offer it again after the last phase or an abort.
