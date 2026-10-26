@@ -2,6 +2,8 @@
 **Action:** Increase replica count from 2 to 4
 **Date:** 2026-04-24 10:30
 **Commit:** `d4e5f6g`
+**Target:** context `prod-cluster` / namespace `notifyapi-prod`
+**Plan hash:** `sha256:9f2c4e…` (SHA-256 of the `helm diff upgrade` output assessed)
 **Assessor used:** iac-change
 **Layers evaluated:** L1 (static) + L2 (human)
 
