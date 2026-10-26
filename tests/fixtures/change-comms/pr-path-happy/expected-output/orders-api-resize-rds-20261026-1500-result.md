@@ -1,7 +1,7 @@
 **Change comms for:** `orders-api` / `prod`
 **Type:** `result`
 **Platform:** `Google Chat`
-**Sources:** `.culiops/iac-change-execution/orders-api-resize-rds-20261027-1015.md`, operator-supplied
+**Sources:** `.culiops/iac-change-execution/orders-api-resize-rds-20261027-1015.md`, `.culiops/pre-flight/orders-api-resize-rds-20261027-1000.md`, operator-supplied
 
 ## Draft
 
@@ -15,16 +15,16 @@ Ticket: OPS-123
 
 | Field | Value | Source |
 |-------|-------|--------|
-| Service / env | orders-api / prod | `record: .culiops/iac-change-execution/orders-api-resize-rds-20261027-1015.md#Header` |
-| Change label | RDS resize (from the Change line "Resize RDS orders-db from db.t3.medium to db.t3.large") | `record: .culiops/iac-change-execution/orders-api-resize-rds-20261027-1015.md#Header` |
-| Apply outcome | success | operator-supplied |
-| Apply time | 14:12 | operator-supplied |
-| Timezone | ICT | operator-supplied |
-| Verification | connections + error rate normal 15 min (used as given) | operator-supplied |
+| Service / environment | orders-api / prod | `record: .culiops/iac-change-execution/orders-api-resize-rds-20261027-1015.md#header` |
+| What (used in title) | RDS resize | `record: .culiops/iac-change-execution/orders-api-resize-rds-20261027-1015.md#header` (Change line) |
+| Apply outcome | success | `operator-supplied` |
+| Apply time | 14:12 | `operator-supplied` |
+| Timezone | ICT | `operator-supplied` |
+| Verification | connections + error rate normal 15 min (as given) | `operator-supplied` |
 | Ticket key | OPS-123 (parsed from the Ticket Reference URL) | `record: .culiops/iac-change-execution/orders-api-resize-rds-20261027-1015.md#Ticket Reference` |
-| Execution path (not in draft) | PR | `record: .culiops/iac-change-execution/orders-api-resize-rds-20261027-1015.md#Header` |
-| Record Outcome (not in draft) | completed. On the PR path this means the PR was created; it is not used as the apply outcome | `record: .culiops/iac-change-execution/orders-api-resize-rds-20261027-1015.md#Outcome` |
-| Record Verification (not in draft) | "pending — pipeline applies after merge"; not used, the operator's verification replaces it | `record: .culiops/iac-change-execution/orders-api-resize-rds-20261027-1015.md#Execution Log` |
+| Context, not in draft: record Outcome | completed = PR created, pipeline applies on merge; not used as an apply claim | `record: .culiops/iac-change-execution/orders-api-resize-rds-20261027-1015.md#Outcome` |
+
+Operator-supplied facts: apply outcome, apply time, timezone, verification. Execution path is PR, so none of these come from the record.
 
 ## Redaction log
 

@@ -96,3 +96,49 @@ Ticket: OPS-123 | PR: https://github.com/acme/orders-infra/pull/502
 | MUST-NOT: phase 2 apply claim sourced from the record | pass | result.md: l.25-28 `operator-supplied` |
 
 Round 2: 9 pass, 0 FAIL. File key: `result.md` / `ticket-close.md` / `heads-up.md` = the matching `expected-output/` file.
+
+## Round 4 (final skill 51fdbe8)
+
+The heads-up What line is `3 phases: snapshot → upgrade → cleanup; this window: upgrade`. The pending phase comes from the record's per-phase `Execution:` lines (the "Phase state" row cites `#Execution Log`). The ticket-close was refused at GATE 1 and at turn 9, and no file was written. One fixture-harness note: the "Phase this window covers" row is credited `operator-supplied`, but that came from the operator-script annotation "(window for phase 2, the only pending phase)", not from the operator's words. The record says the same, so no draft fact is wrong.
+
+Drafts as produced:
+
+heads-up (Google Chat), `expected-output/orders-api-upgrade-postgres-engine-version-20261026-1500-heads-up.md`:
+
+```text
+*🔧 Heads-up: infra change on orders-api (prod)*
+When: 2026-10-28 22:00 ICT, 2h
+What: 3 phases: snapshot → upgrade → cleanup; this window: upgrade
+Impact: ~5-10 min of downtime during the engine upgrade restart
+Risk: YELLOW (pre-flight)
+Rollback: restore from the phase 1 snapshot into a new instance and repoint orders-api (hours, not minutes)
+Ticket: OPS-123 | PR: https://github.com/acme/orders-infra/pull/502
+Reply here if this window conflicts.
+```
+
+result (Google Chat), `expected-output/orders-api-upgrade-postgres-engine-version-20261026-1500-result.md`:
+
+```text
+*⏸ Partial: orders-api Postgres engine upgrade (prod), phase 2 of 3 applied, 22:40 ICT*
+State: snapshot and upgrade applied, cleanup not started; engine shows 15.4 and available, error rate normal
+Next: <TODO: next steps>
+Ticket: OPS-123 | PR: https://github.com/acme/orders-infra/pull/502
+```
+
+### Findings (round 4)
+
+| MUST/MUST-NOT line | pass/FAIL | evidence |
+|---|---|---|
+| MUST: heads-up at most 8 lines | pass | heads-up.md l.16 |
+| MUST: phases on one line | pass | heads-up.md l.11 |
+| MUST: window `2026-10-28 22:00 ICT`, about 2h | pass | heads-up.md l.10 |
+| MUST: result `phase 2 of 3` with PR 502 | pass | result.md l.9 |
+| MUST: current state, phase 3 still to do | pass | result.md l.10 |
+| MUST: ticket-close refused, no draft | pass | `multi-phase-partial-r4.md` l.28 |
+| MUST-NOT: a ticket-close draft | pass | no ticket-close file in expected-output |
+| MUST-NOT: wording implying the whole change completed | pass | result.md l.9 |
+| MUST-NOT: phase 2 apply claim from the record | pass | result.md l.27: Phase 2 apply outcome sourced `operator-supplied` |
+| Fix-round: pending phase from the record | pass | heads-up.md l.30 |
+| Fix-round: numbered batch | pass | `multi-phase-partial-r4.md` l.42 |
+
+Round 4: 11 pass, 0 FAIL (README lines plus fix-round checks). No skill change.

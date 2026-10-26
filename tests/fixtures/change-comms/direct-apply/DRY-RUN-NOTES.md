@@ -84,3 +84,42 @@ Rollback: not needed. Remove the alarm and re-apply if required.
 | MUST-NOT: invented apply time | pass | both: TODO only |
 
 Round 2: 7 pass, 0 FAIL. File key: `result.md` / `ticket-close.md` / `heads-up.md` = the matching `expected-output/` file.
+
+## Round 4 (final skill 51fdbe8)
+
+The Slack title is bold. Outcome and verification come from the record. The PR line is omitted (direct apply). The apply time is a TODO. Citations use `#header`, and the batch is numbered.
+
+Drafts as produced:
+
+result (Slack), `expected-output/orders-api-add-5xx-alarm-20261026-1500-result.md`:
+
+```text
+*✅ Done: orders-api ALB 5xx alarm (prod), applied <TODO: apply time>*
+Verified: re-plan showed no changes, alarm state OK
+Ticket: OPS-123
+```
+
+ticket-close (Jira comment), `expected-output/orders-api-add-5xx-alarm-20261026-1500-ticket-close.md`:
+
+```text
+Change completed
+What: CloudWatch alarm added for orders-api ALB 5xx rate
+Applied: <TODO: apply time>
+Verification: re-plan showed no changes, alarm state OK
+Rollback: not needed. Remove the alarm resource and re-apply if required.
+```
+
+### Findings (round 4)
+
+| MUST/MUST-NOT line | pass/FAIL | evidence |
+|---|---|---|
+| MUST: Slack formatting (`*bold*`, no wiki markup) | pass | result.md l.9 |
+| MUST: verification cited `...-20261027-1100.md#Execution Log` | pass | result.md l.21 |
+| MUST: outcome taken from the record | pass | result.md l.21 |
+| MUST: apply time omitted or TODO, listed under Open TODOs | pass | result.md l.9 |
+| MUST: result and ticket-close produced | pass | ticket-close.md l.9 |
+| MUST-NOT: `11:00` as the apply time | pass | `11:00` absent from both files |
+| MUST-NOT: invented apply time | pass | ticket-close.md l.11 |
+| Fix-round: numbered batch | pass | `direct-apply-r4.md` l.54 |
+
+Round 4: 8 pass, 0 FAIL (README lines plus fix-round checks). No skill change.

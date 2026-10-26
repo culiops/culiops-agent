@@ -20,22 +20,19 @@ Reply here if this window conflicts.
 
 | Field | Value | Source |
 |-------|-------|--------|
-| Service / env | orders-api / prod | `record: .culiops/iac-change-execution/orders-api-resize-rds-20261027-1015.md#Header` |
-| Window start | 2026-10-27 14:00 (operator said "tomorrow 14:00"; resolved against session date 2026-10-26) | operator-supplied |
-| Timezone | ICT | operator-supplied |
-| Duration | 15 min (written as given, no `~` added) | operator-supplied |
-| What (Change line) | resize RDS orders-db db.t3.medium → db.t3.large | `record: .culiops/iac-change-execution/orders-api-resize-rds-20261027-1015.md#Header` |
-| Impact | ~30-60s Multi-AZ failover, writes may fail briefly (used as given) | operator-supplied |
+| Service / environment | orders-api / prod | `record: .culiops/iac-change-execution/orders-api-resize-rds-20261027-1015.md#header` |
+| What | resize RDS orders-db db.t3.medium → db.t3.large | `record: .culiops/iac-change-execution/orders-api-resize-rds-20261027-1015.md#header` (Change line) |
+| Window start | 2026-10-27 14:00 | `operator-supplied` ("tomorrow 14:00", resolved against session date 2026-10-26) |
+| Window duration | 15 min (written as given, no `~`) | `operator-supplied` |
+| Timezone | ICT | `operator-supplied` |
+| Impact | ~30-60s Multi-AZ failover, writes may fail briefly | `operator-supplied` |
 | Risk | YELLOW | `record: .culiops/pre-flight/orders-api-resize-rds-20261027-1000.md#Verdict` |
-| Rollback | revert PR + apply, ~10 min (summarised from "revert PR #482 and re-apply, ~10 min") | `record: .culiops/iac-change-execution/orders-api-resize-rds-20261027-1015.md#Change Plan` |
+| Rollback | revert PR + apply, ~10 min (summarised) | `record: .culiops/iac-change-execution/orders-api-resize-rds-20261027-1015.md#Change Plan` (Phase 1, Rollback path) |
 | Ticket key | OPS-123 (parsed from the Ticket Reference URL) | `record: .culiops/iac-change-execution/orders-api-resize-rds-20261027-1015.md#Ticket Reference` |
-| PR | https://github.com/acme/orders-infra/pull/482 | `record: .culiops/iac-change-execution/orders-api-resize-rds-20261027-1015.md#Execution Log` |
-| Execution path (not in draft) | PR | `record: .culiops/iac-change-execution/orders-api-resize-rds-20261027-1015.md#Header` |
-| Record Date (not in draft; no timezone, time the record was written, not an event time) | 2026-10-27 10:15 | `record: .culiops/iac-change-execution/orders-api-resize-rds-20261027-1015.md#Header` |
-| Pre-flight Date (not in draft) | 2026-10-27 10:00 (UTC) | `record: .culiops/pre-flight/orders-api-resize-rds-20261027-1000.md#Header` |
-| Plan summary (not in draft) | 0 to add, 1 to change, 0 to destroy | `record: .culiops/iac-change-execution/orders-api-resize-rds-20261027-1015.md#Execution Log` |
-| Plan hash (not in draft) | sha256:7a1c9e… (truncated in the record) | `record: .culiops/iac-change-execution/orders-api-resize-rds-20261027-1015.md#Execution Log` |
-| Commit (not in draft) | e7f8a9b | `record: .culiops/iac-change-execution/orders-api-resize-rds-20261027-1015.md#Header` |
+| PR | https://github.com/acme/orders-infra/pull/482 | `record: .culiops/iac-change-execution/orders-api-resize-rds-20261027-1015.md#Execution Log` (Phase 1, Execution line) |
+| Context, not in draft: commit, plan summary, plan hash | e7f8a9b; 1 to change, 0 to add, 0 to destroy; sha256:7a1c9e… | `record: .culiops/iac-change-execution/orders-api-resize-rds-20261027-1015.md#header and #Execution Log` |
+
+Operator-supplied facts: window start and duration, timezone, impact. Record `Date` (2026-10-27 10:15, no timezone) is the time the record was written and is not used as any event time.
 
 ## Redaction log
 

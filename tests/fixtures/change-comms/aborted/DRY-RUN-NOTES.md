@@ -181,3 +181,50 @@ Rollback: not needed, nothing was applied
 | MUST-NOT: statement of applied/verified/completed | pass | both: TC l.12-14 |
 
 Round 3: 11 pass, 0 FAIL. No skill change.
+
+## Round 4 (final skill 51fdbe8)
+
+The ticket-close now carries `Reason: stopped before apply: pre-flight check failed (replace of orders-db)`: plain words, no GATE or HARD BLOCK jargon. The result uses the same reason. The batch is numbered and asks only Next steps and "Was anything applied?". There is no PR line. Citations use `#header`.
+
+Drafts as produced:
+
+result (Google Chat), `expected-output/orders-api-resize-rds-20261026-1500-result.md`:
+
+```text
+*❌ Aborted: orders-api RDS resize (prod), nothing applied*
+Reason: stopped before apply: pre-flight check failed (replace of orders-db)
+Next: <TODO: next steps>
+Ticket: OPS-123
+```
+
+ticket-close (Jira comment), `expected-output/orders-api-resize-rds-20261026-1500-ticket-close.md`:
+
+```text
+Change aborted
+Outcome: aborted, nothing applied
+Reason: stopped before apply: pre-flight check failed (replace of orders-db)
+What: RDS orders-db resize db.t3.medium → db.t3.large
+Applied: not applied
+Verification: not run
+Rollback: not needed, nothing was applied
+```
+
+### Findings (round 4)
+
+| MUST/MUST-NOT line | pass/FAIL | evidence |
+|---|---|---|
+| MUST: result uses ❌ | pass | result.md l.9 |
+| MUST: result uses the word `aborted` | pass | result.md l.9 |
+| MUST: result states nothing was applied | pass | result.md l.9 |
+| MUST: reason from the record (pre-flight RED, replace of `orders-db`) | pass | result.md l.10 |
+| MUST: next steps TODO or operator-supplied | pass | result.md l.11 |
+| MUST: ticket-close produced | pass | ticket-close.md l.9 |
+| MUST: ticket-close outcome `aborted` | pass | ticket-close.md l.10 |
+| MUST: ticket-close has no applied time | pass | ticket-close.md l.13 |
+| MUST-NOT: `✅` in any draft | pass | `grep -rn '✅\|Done' aborted/expected-output` returns nothing |
+| MUST-NOT: `Done` in any draft | pass | `grep -rn '✅\|Done' aborted/expected-output` returns nothing |
+| MUST-NOT: applied/verified/completed claim | pass | ticket-close.md l.15 |
+| Fix-round: ticket-close `Reason:` in plain words, no jargon | pass | ticket-close.md l.11 |
+| Fix-round: numbered batch | pass | `aborted-r4.md` l.62 |
+
+Round 4: 13 pass, 0 FAIL (README lines plus fix-round checks). No skill change.

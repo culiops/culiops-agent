@@ -8,10 +8,10 @@
 ```text
 *🔧 Heads-up: infra change on orders-api (prod)*
 When: 2026-10-28 22:00 ICT, 2h
-What: orders-db Postgres 14.9 → 15.4, 3 phases: snapshot → upgrade → cleanup; this window: upgrade
+What: 3 phases: snapshot → upgrade → cleanup; this window: upgrade
 Impact: ~5-10 min of downtime during the engine upgrade restart
 Risk: YELLOW (pre-flight)
-Rollback: restore from the phase 1 snapshot into a new instance and repoint orders-api, hours not minutes
+Rollback: restore from the phase 1 snapshot into a new instance and repoint orders-api (hours, not minutes)
 Ticket: OPS-123 | PR: https://github.com/acme/orders-infra/pull/502
 Reply here if this window conflicts.
 ```
@@ -20,24 +20,27 @@ Reply here if this window conflicts.
 
 | Field | Value | Source |
 |-------|-------|--------|
-| Service | orders-api | `record: .culiops/iac-change-execution/orders-api-upgrade-postgres-engine-version-20261027-1600.md#Header` |
-| Environment | prod | `record: .culiops/iac-change-execution/orders-api-upgrade-postgres-engine-version-20261027-1600.md#Header` |
-| Execution path | PR (heads-up runs before the merge that triggers apply) | `record: .culiops/iac-change-execution/orders-api-upgrade-postgres-engine-version-20261027-1600.md#Header` |
-| Window start | 2026-10-28 22:00 | operator-supplied |
+| Service | orders-api | `record: .culiops/iac-change-execution/orders-api-upgrade-postgres-engine-version-20261027-1600.md#header` |
+| Environment | prod | `record: .culiops/iac-change-execution/orders-api-upgrade-postgres-engine-version-20261027-1600.md#header` |
+| Execution path | PR | `record: .culiops/iac-change-execution/orders-api-upgrade-postgres-engine-version-20261027-1600.md#header` |
+| Platform | Google Chat | operator-supplied |
 | Timezone | ICT | operator-supplied |
-| Duration | 2h (written as given, no `~` added) | operator-supplied |
-| What (change) | RDS orders-db Postgres engine 14.9 → 15.4 | `record: .culiops/iac-change-execution/orders-api-upgrade-postgres-engine-version-20261027-1600.md#Header` |
-| Phases | 3: snapshot → upgrade → cleanup | `record: .culiops/iac-change-execution/orders-api-upgrade-postgres-engine-version-20261027-1600.md#Change Plan` |
-| Phase this window covers | upgrade (phase 2 of 3). Taken from the record, not stated by the operator: phase 1 applied, phase 2 PR open and applies on merge, phase 3 not started | `record: .culiops/iac-change-execution/orders-api-upgrade-postgres-engine-version-20261027-1600.md#Execution Log` |
-| Impact | ~5-10 min of downtime during the engine upgrade restart (used as given) | operator-supplied |
-| Risk | YELLOW (phase 2 `Pre-flight verdict` line; header `Pre-flight record` also says YELLOW; no pre-flight record file on disk) | `record: .culiops/iac-change-execution/orders-api-upgrade-postgres-engine-version-20261027-1600.md#Execution Log` |
-| Rollback | restore from the phase 1 snapshot into a new instance and repoint orders-api, hours not minutes (phase 2 rollback path, summarised) | `record: .culiops/iac-change-execution/orders-api-upgrade-postgres-engine-version-20261027-1600.md#Change Plan` |
-| Ticket | OPS-123 (key parsed from the Ticket Reference URL) | `record: .culiops/iac-change-execution/orders-api-upgrade-postgres-engine-version-20261027-1600.md#Ticket Reference` |
-| PR (phase 2) | https://github.com/acme/orders-infra/pull/502 | `record: .culiops/iac-change-execution/orders-api-upgrade-postgres-engine-version-20261027-1600.md#Execution Log` |
+| Window | 2026-10-28 22:00 ICT, 2h (written as given) | operator-supplied |
+| Phases (names) | snapshot → upgrade → cleanup (3 phases) | `record: .culiops/iac-change-execution/orders-api-upgrade-postgres-engine-version-20261027-1600.md#Change Plan` |
+| Phase state | phase 1 applied; phase 2 PR created, pipeline applies on merge (pending); phase 3 not started | `record: .culiops/iac-change-execution/orders-api-upgrade-postgres-engine-version-20261027-1600.md#Execution Log (each phase, Execution line)` |
+| Phase this window covers | upgrade (phase 2) | operator-supplied |
+| Impact | ~5-10 min of downtime during the engine upgrade restart (as given) | operator-supplied |
+| Risk | YELLOW | `record: .culiops/iac-change-execution/orders-api-upgrade-postgres-engine-version-20261027-1600.md#Execution Log (Phase 2, Pre-flight verdict line); also #header Pre-flight record line` |
+| Rollback | restore from the phase 1 snapshot into a new instance and repoint orders-api (hours, not minutes); summarised from the Phase 2 rollback path | `record: .culiops/iac-change-execution/orders-api-upgrade-postgres-engine-version-20261027-1600.md#Change Plan (Phase 2, Rollback path)` |
+| Ticket key | OPS-123 | `record: .culiops/iac-change-execution/orders-api-upgrade-postgres-engine-version-20261027-1600.md#Ticket Reference` (key parsed from the URL) |
+| PR | https://github.com/acme/orders-infra/pull/502 (phase 2 PR) | `record: .culiops/iac-change-execution/orders-api-upgrade-postgres-engine-version-20261027-1600.md#Execution Log (Phase 2, Execution line)` |
+| Record Date (not shown in draft) | 2026-10-27 16:00, no timezone, time the record was written; not used as an event time | `record: .culiops/iac-change-execution/orders-api-upgrade-postgres-engine-version-20261027-1600.md#header` |
 
 ## Redaction log
 
 Redaction log: nothing masked
+
+(Patterns 1-7 scanned over the full text of the iac record, and the full pattern pass over the draft; no matches. `sha256:11aa22…` is a hash prefix and `16:00` is a time, both excluded from the IPv6 pattern.)
 
 ## Open TODOs
 

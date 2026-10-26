@@ -113,3 +113,39 @@ Reply here if this window conflicts.
 | MUST-NOT: raw account ID, IP, CIDR, access key in expected-output | pass | all: `grep -rnE '123456789012\|10\.20\.30\.40\|10\.20\.0\.0/16\|AKIAIOSFODNN7EXAMPLE' redaction/expected-output` returns nothing |
 
 Round 2: 9 pass, 0 FAIL. File key: `result.md` / `ticket-close.md` / `heads-up.md` = the matching `expected-output/` file.
+
+## Round 4 (final skill 51fdbe8)
+
+The record scan logs identifiers only; there are no plan-count rows. ARN rows read `orders-db` (dropped). The account-ID and bucket rows are present, and the pre-flight Target line is cited `#header`. The operator's edit was re-scanned and the operator was told the type only. The leak grep is empty.
+
+Drafts as produced:
+
+heads-up (Google Chat), `expected-output/orders-api-restrict-rds-ingress-20261026-1500-heads-up.md`:
+
+```text
+*🔧 Heads-up: infra change on orders-api (prod)*
+When: 2026-10-27 14:00 ICT, 15 min
+What: restrict orders-db security group ingress to the app subnets; target host <ip>
+Impact: connections drop briefly if the rule is wrong, otherwise none
+Risk: YELLOW (pre-flight)
+Rollback: revert the PR and re-apply, ~10 min
+Ticket: OPS-123 | PR: https://github.com/acme/orders-infra/pull/490
+Reply here if this window conflicts.
+```
+
+### Findings (round 4)
+
+| MUST/MUST-NOT line | pass/FAIL | evidence |
+|---|---|---|
+| MUST: `orders-db` kept | pass | heads-up.md l.11 |
+| MUST: PR 490 intact | pass | heads-up.md l.15 |
+| MUST: log lists account ID, ARN, IP, CIDR, bucket by type and location only | pass | heads-up.md l.43 |
+| MUST: credential flagged, not in a draft | pass | heads-up.md l.63 |
+| MUST: operator edit re-scanned and warned | pass | `redaction-r4.md` l.137 |
+| MUST: bucket with account ID masked or dropped | pass | heads-up.md l.43 |
+| MUST: `0.0.0.0/0` not asserted | pass | n/a |
+| MUST: date 2026-10-27 or `tomorrow` | pass | heads-up.md l.10 |
+| MUST-NOT: raw account ID, IP, CIDR, access key in expected-output | pass | leak grep returns nothing |
+| Fix-round: header citation `#header`, no plan-count rows | pass | heads-up.md l.50 |
+
+Round 4: 10 pass, 0 FAIL (README lines plus fix-round checks). No skill change.
