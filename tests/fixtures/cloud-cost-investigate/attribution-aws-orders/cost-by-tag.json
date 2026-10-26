@@ -1,0 +1,458 @@
+{
+  "_note": "aws ce get-cost-and-usage --time-period Start=2026-03-01,End=2026-05-01 --granularity MONTHLY --metrics AmortizedCost --filter <same Service=orders + usage-record-types filter> --group-by Type=TAG,Key=Component Type=DIMENSION,Key=USAGE_TYPE. This is how the fixture gets per-resource numbers: Cost Explorer MONTHLY data is NOT per-resource, and get-cost-and-usage-with-resources only covers the last 14 days (opt-in), so a full-month, per-resource breakdown exists only through the activated cost-allocation tag Component (value = catalog resource name). The breakdown is only as good as the tagging: a resource missing the tag would appear as Component$ (empty value). None does in this window.",
+  "ResultsByTime": [
+    {
+      "TimePeriod": {
+        "Start": "2026-03-01",
+        "End": "2026-04-01"
+      },
+      "Total": {},
+      "Groups": [
+        {
+          "Keys": [
+            "Component$orders-api",
+            "USE1-Fargate-vCPU-Hours:perCPU"
+          ],
+          "Metrics": {
+            "AmortizedCost": {
+              "Amount": "421.64",
+              "Unit": "USD"
+            }
+          }
+        },
+        {
+          "Keys": [
+            "Component$orders-api",
+            "USE1-Fargate-GB-Hours"
+          ],
+          "Metrics": {
+            "AmortizedCost": {
+              "Amount": "92.60",
+              "Unit": "USD"
+            }
+          }
+        },
+        {
+          "Keys": [
+            "Component$orders-api",
+            "USE1-DataTransfer-Out-Bytes"
+          ],
+          "Metrics": {
+            "AmortizedCost": {
+              "Amount": "97.20",
+              "Unit": "USD"
+            }
+          }
+        },
+        {
+          "Keys": [
+            "Component$orders-worker",
+            "USE1-Fargate-vCPU-Hours:perCPU"
+          ],
+          "Metrics": {
+            "AmortizedCost": {
+              "Amount": "180.70",
+              "Unit": "USD"
+            }
+          }
+        },
+        {
+          "Keys": [
+            "Component$orders-worker",
+            "USE1-Fargate-GB-Hours"
+          ],
+          "Metrics": {
+            "AmortizedCost": {
+              "Amount": "39.68",
+              "Unit": "USD"
+            }
+          }
+        },
+        {
+          "Keys": [
+            "Component$orders-prod-db",
+            "USE1-Multi-AZUsage:db.r6g.xlarge"
+          ],
+          "Metrics": {
+            "AmortizedCost": {
+              "Amount": "714.24",
+              "Unit": "USD"
+            }
+          }
+        },
+        {
+          "Keys": [
+            "Component$orders-prod-db",
+            "USE1-RDS:Multi-AZ-GP3-Storage"
+          ],
+          "Metrics": {
+            "AmortizedCost": {
+              "Amount": "179.40",
+              "Unit": "USD"
+            }
+          }
+        },
+        {
+          "Keys": [
+            "Component$orders-prod-db",
+            "USE1-RDS:ChargedBackupUsage"
+          ],
+          "Metrics": {
+            "AmortizedCost": {
+              "Amount": "45.60",
+              "Unit": "USD"
+            }
+          }
+        },
+        {
+          "Keys": [
+            "Component$orders-dev-db",
+            "USE1-InstanceUsage:db.t4g.medium"
+          ],
+          "Metrics": {
+            "AmortizedCost": {
+              "Amount": "22.78",
+              "Unit": "USD"
+            }
+          }
+        },
+        {
+          "Keys": [
+            "Component$orders-dev-db",
+            "USE1-RDS:GP3-Storage"
+          ],
+          "Metrics": {
+            "AmortizedCost": {
+              "Amount": "4.82",
+              "Unit": "USD"
+            }
+          }
+        },
+        {
+          "Keys": [
+            "Component$orders-events",
+            "TimedStorage-ByteHrs"
+          ],
+          "Metrics": {
+            "AmortizedCost": {
+              "Amount": "89.70",
+              "Unit": "USD"
+            }
+          }
+        },
+        {
+          "Keys": [
+            "Component$orders-events",
+            "Requests-Tier1"
+          ],
+          "Metrics": {
+            "AmortizedCost": {
+              "Amount": "55.00",
+              "Unit": "USD"
+            }
+          }
+        },
+        {
+          "Keys": [
+            "Component$orders-events",
+            "Requests-Tier2"
+          ],
+          "Metrics": {
+            "AmortizedCost": {
+              "Amount": "11.20",
+              "Unit": "USD"
+            }
+          }
+        },
+        {
+          "Keys": [
+            "Component$orders-archives",
+            "TimedStorage-GDA-ByteHrs"
+          ],
+          "Metrics": {
+            "AmortizedCost": {
+              "Amount": "57.42",
+              "Unit": "USD"
+            }
+          }
+        },
+        {
+          "Keys": [
+            "Component$orders-archives",
+            "Requests-GDA-Tier1"
+          ],
+          "Metrics": {
+            "AmortizedCost": {
+              "Amount": "70.00",
+              "Unit": "USD"
+            }
+          }
+        },
+        {
+          "Keys": [
+            "Component$orders-events-queue",
+            "USE1-Requests-Tier1"
+          ],
+          "Metrics": {
+            "AmortizedCost": {
+              "Amount": "152.00",
+              "Unit": "USD"
+            }
+          }
+        },
+        {
+          "Keys": [
+            "Component$orders-fulfillment",
+            "USE1-StateTransitions"
+          ],
+          "Metrics": {
+            "AmortizedCost": {
+              "Amount": "135.00",
+              "Unit": "USD"
+            }
+          }
+        },
+        {
+          "Keys": [
+            "Component$shared-nat",
+            "USE1-NatGateway-Hours"
+          ],
+          "Metrics": {
+            "AmortizedCost": {
+              "Amount": "33.48",
+              "Unit": "USD"
+            }
+          }
+        },
+        {
+          "Keys": [
+            "Component$shared-nat",
+            "USE1-NatGateway-Bytes"
+          ],
+          "Metrics": {
+            "AmortizedCost": {
+              "Amount": "76.50",
+              "Unit": "USD"
+            }
+          }
+        }
+      ],
+      "Estimated": false
+    },
+    {
+      "TimePeriod": {
+        "Start": "2026-04-01",
+        "End": "2026-05-01"
+      },
+      "Total": {},
+      "Groups": [
+        {
+          "Keys": [
+            "Component$orders-api",
+            "USE1-Fargate-vCPU-Hours:perCPU"
+          ],
+          "Metrics": {
+            "AmortizedCost": {
+              "Amount": "466.33",
+              "Unit": "USD"
+            }
+          }
+        },
+        {
+          "Keys": [
+            "Component$orders-api",
+            "USE1-Fargate-GB-Hours"
+          ],
+          "Metrics": {
+            "AmortizedCost": {
+              "Amount": "102.41",
+              "Unit": "USD"
+            }
+          }
+        },
+        {
+          "Keys": [
+            "Component$orders-api",
+            "USE1-DataTransfer-Out-Bytes"
+          ],
+          "Metrics": {
+            "AmortizedCost": {
+              "Amount": "108.00",
+              "Unit": "USD"
+            }
+          }
+        },
+        {
+          "Keys": [
+            "Component$orders-worker",
+            "USE1-Fargate-vCPU-Hours:perCPU"
+          ],
+          "Metrics": {
+            "AmortizedCost": {
+              "Amount": "291.46",
+              "Unit": "USD"
+            }
+          }
+        },
+        {
+          "Keys": [
+            "Component$orders-worker",
+            "USE1-Fargate-GB-Hours"
+          ],
+          "Metrics": {
+            "AmortizedCost": {
+              "Amount": "64.01",
+              "Unit": "USD"
+            }
+          }
+        },
+        {
+          "Keys": [
+            "Component$orders-prod-db",
+            "USE1-Multi-AZUsage:db.r6g.xlarge"
+          ],
+          "Metrics": {
+            "AmortizedCost": {
+              "Amount": "691.20",
+              "Unit": "USD"
+            }
+          }
+        },
+        {
+          "Keys": [
+            "Component$orders-prod-db",
+            "USE1-RDS:Multi-AZ-GP3-Storage"
+          ],
+          "Metrics": {
+            "AmortizedCost": {
+              "Amount": "184.00",
+              "Unit": "USD"
+            }
+          }
+        },
+        {
+          "Keys": [
+            "Component$orders-prod-db",
+            "USE1-RDS:ChargedBackupUsage"
+          ],
+          "Metrics": {
+            "AmortizedCost": {
+              "Amount": "47.50",
+              "Unit": "USD"
+            }
+          }
+        },
+        {
+          "Keys": [
+            "Component$orders-events",
+            "TimedStorage-ByteHrs"
+          ],
+          "Metrics": {
+            "AmortizedCost": {
+              "Amount": "92.00",
+              "Unit": "USD"
+            }
+          }
+        },
+        {
+          "Keys": [
+            "Component$orders-events",
+            "Requests-Tier1"
+          ],
+          "Metrics": {
+            "AmortizedCost": {
+              "Amount": "60.00",
+              "Unit": "USD"
+            }
+          }
+        },
+        {
+          "Keys": [
+            "Component$orders-events",
+            "Requests-Tier2"
+          ],
+          "Metrics": {
+            "AmortizedCost": {
+              "Amount": "12.00",
+              "Unit": "USD"
+            }
+          }
+        },
+        {
+          "Keys": [
+            "Component$orders-archives",
+            "TimedStorage-GDA-ByteHrs"
+          ],
+          "Metrics": {
+            "AmortizedCost": {
+              "Amount": "59.40",
+              "Unit": "USD"
+            }
+          }
+        },
+        {
+          "Keys": [
+            "Component$orders-archives",
+            "Requests-GDA-Tier1"
+          ],
+          "Metrics": {
+            "AmortizedCost": {
+              "Amount": "75.00",
+              "Unit": "USD"
+            }
+          }
+        },
+        {
+          "Keys": [
+            "Component$orders-events-queue",
+            "USE1-Requests-Tier1"
+          ],
+          "Metrics": {
+            "AmortizedCost": {
+              "Amount": "180.00",
+              "Unit": "USD"
+            }
+          }
+        },
+        {
+          "Keys": [
+            "Component$orders-fulfillment",
+            "USE1-StateTransitions"
+          ],
+          "Metrics": {
+            "AmortizedCost": {
+              "Amount": "150.00",
+              "Unit": "USD"
+            }
+          }
+        },
+        {
+          "Keys": [
+            "Component$shared-nat",
+            "USE1-NatGateway-Hours"
+          ],
+          "Metrics": {
+            "AmortizedCost": {
+              "Amount": "32.40",
+              "Unit": "USD"
+            }
+          }
+        },
+        {
+          "Keys": [
+            "Component$shared-nat",
+            "USE1-NatGateway-Bytes"
+          ],
+          "Metrics": {
+            "AmortizedCost": {
+              "Amount": "83.25",
+              "Unit": "USD"
+            }
+          }
+        }
+      ],
+      "Estimated": false
+    }
+  ],
+  "DimensionValueAttributes": []
+}

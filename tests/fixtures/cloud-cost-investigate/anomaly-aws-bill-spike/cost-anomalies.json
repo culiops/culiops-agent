@@ -1,0 +1,30 @@
+{
+  "_note": "Query 5: aws ce get-anomalies --date-interval StartDate=2026-04-04,EndDate=2026-05-06. A Cost Anomaly Detection monitor (AWS services) exists. It surfaced the p3 spend as one anomaly (ongoing, includes the two estimated days). It did NOT surface the Savings Plan expiry as a separate anomaly. Native findings are a lead, not the full explanation; an empty or partial result never means 'no anomaly'.",
+  "Anomalies": [
+    {
+      "AnomalyId": "a1b2c3d4-5e6f-4a7b-8c9d-0e1f2a3b4c5d",
+      "AnomalyStartDate": "2026-04-26",
+      "DimensionValue": "Amazon Elastic Compute Cloud - Compute",
+      "RootCauses": [
+        {
+          "Service": "Amazon Elastic Compute Cloud - Compute",
+          "Region": "us-east-1",
+          "LinkedAccount": "123456789012",
+          "UsageType": "BoxUsage:p3.8xlarge"
+        }
+      ],
+      "AnomalyScore": {
+        "MaxScore": 97.4,
+        "CurrentScore": 97.4
+      },
+      "Impact": {
+        "MaxImpact": 2361.2,
+        "TotalImpact": 18211.17,
+        "TotalActualSpend": 37924.95,
+        "TotalExpectedSpend": 19713.78,
+        "TotalImpactPercentage": 92.38
+      },
+      "MonitorArn": "arn:aws:ce::123456789012:anomalymonitor/9d8c7b6a-5f4e-4d3c-b2a1-0f9e8d7c6b5a"
+    }
+  ]
+}

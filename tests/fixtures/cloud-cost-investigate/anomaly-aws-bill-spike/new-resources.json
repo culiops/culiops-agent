@@ -1,4 +1,5 @@
 {
+  "_note": "Query 11: aws ec2 describe-instances --region us-east-1 --filters Name=instance-state-name,Values=running,stopped, projected to instances with LaunchTime >= 2026-04-04. 8 p3.8xlarge instances match. None carries a Service or Owner tag (3 + 1 + 1 have only Environment=staging). CAUTION: LaunchTime resets on stop/start, so a match is a candidate, not proof of creation. i-00b4169a51c38d72e shows LaunchTime 2026-04-28 but its root volume was attached on 2026-03-12 (BlockDeviceMappings AttachTime does not reset on stop/start) and CloudTrail has no RunInstances for it in the window (cloudtrail-run-instances.json): it is a restart of an older instance, which already cost money in the previous window (2026-03-12..03-20).",
   "Reservations": [
     {
       "ReservationId": "r-0a1b2c3d4e5f60001",
@@ -28,6 +29,17 @@
               "Key": "Environment",
               "Value": "staging"
             }
+          ],
+          "BlockDeviceMappings": [
+            {
+              "DeviceName": "/dev/sda1",
+              "Ebs": {
+                "AttachTime": "2026-04-26T14:32:15.000Z",
+                "DeleteOnTermination": true,
+                "Status": "attached",
+                "VolumeId": "vol-0e000005a1c0d90e5"
+              }
+            }
           ]
         },
         {
@@ -53,6 +65,17 @@
               "Key": "Environment",
               "Value": "staging"
             }
+          ],
+          "BlockDeviceMappings": [
+            {
+              "DeviceName": "/dev/sda1",
+              "Ebs": {
+                "AttachTime": "2026-04-26T14:35:51.000Z",
+                "DeleteOnTermination": true,
+                "Status": "attached",
+                "VolumeId": "vol-0e000005a1c0d90e6"
+              }
+            }
           ]
         },
         {
@@ -77,6 +100,17 @@
             {
               "Key": "Environment",
               "Value": "staging"
+            }
+          ],
+          "BlockDeviceMappings": [
+            {
+              "DeviceName": "/dev/sda1",
+              "Ebs": {
+                "AttachTime": "2026-04-26T14:38:26.000Z",
+                "DeleteOnTermination": true,
+                "Status": "attached",
+                "VolumeId": "vol-0e000005a1c0d90e7"
+              }
             }
           ]
         }
@@ -105,7 +139,18 @@
           "PublicIpAddress": "3.218.44.127",
           "ImageId": "ami-0abcdef1234567890",
           "KeyName": "ml-team-keypair",
-          "Tags": []
+          "Tags": [],
+          "BlockDeviceMappings": [
+            {
+              "DeviceName": "/dev/sda1",
+              "Ebs": {
+                "AttachTime": "2026-04-27T09:14:59.000Z",
+                "DeleteOnTermination": true,
+                "Status": "attached",
+                "VolumeId": "vol-0e000005a1c0d90e8"
+              }
+            }
+          ]
         },
         {
           "InstanceId": "i-0e71d3628050f49b2",
@@ -125,7 +170,18 @@
           "PublicIpAddress": "54.91.13.89",
           "ImageId": "ami-0abcdef1234567890",
           "KeyName": "ml-team-keypair",
-          "Tags": []
+          "Tags": [],
+          "BlockDeviceMappings": [
+            {
+              "DeviceName": "/dev/sda1",
+              "Ebs": {
+                "AttachTime": "2026-04-27T09:17:37.000Z",
+                "DeleteOnTermination": true,
+                "Status": "attached",
+                "VolumeId": "vol-0e000005a1c0d90e9"
+              }
+            }
+          ]
         },
         {
           "InstanceId": "i-0f82e4739116a50c3",
@@ -145,7 +201,18 @@
           "PublicIpAddress": "3.218.45.140",
           "ImageId": "ami-0abcdef1234567890",
           "KeyName": "ml-team-keypair",
-          "Tags": []
+          "Tags": [],
+          "BlockDeviceMappings": [
+            {
+              "DeviceName": "/dev/sda1",
+              "Ebs": {
+                "AttachTime": "2026-04-27T09:21:12.000Z",
+                "DeleteOnTermination": true,
+                "Status": "attached",
+                "VolumeId": "vol-0e000005a1c0d90ea"
+              }
+            }
+          ]
         }
       ]
     },
@@ -177,8 +244,26 @@
               "Key": "Environment",
               "Value": "staging"
             }
+          ],
+          "BlockDeviceMappings": [
+            {
+              "DeviceName": "/dev/sda1",
+              "Ebs": {
+                "AttachTime": "2026-04-28T16:44:23.000Z",
+                "DeleteOnTermination": true,
+                "Status": "attached",
+                "VolumeId": "vol-0e000005a1c0d90eb"
+              }
+            }
           ]
-        },
+        }
+      ]
+    },
+    {
+      "ReservationId": "r-0d4e5f6a7b8c90004",
+      "OwnerId": "123456789012",
+      "Groups": [],
+      "Instances": [
         {
           "InstanceId": "i-00b4169a51c38d72e",
           "InstanceType": "p3.8xlarge",
@@ -201,6 +286,17 @@
             {
               "Key": "Environment",
               "Value": "staging"
+            }
+          ],
+          "BlockDeviceMappings": [
+            {
+              "DeviceName": "/dev/sda1",
+              "Ebs": {
+                "AttachTime": "2026-03-12T10:00:03.000Z",
+                "DeleteOnTermination": true,
+                "Status": "attached",
+                "VolumeId": "vol-0e000005a1c0d90ec"
+              }
             }
           ]
         }

@@ -1,9 +1,9 @@
 {
-  "_note": "Aurora writer acme-prod-aurora-writer (db.r6g.4xlarge, 128 GB RAM). A naive line-item instinct sees 12% avg CPU and flags it as a downsize candidate. Principle 3 (#7): the BINDING CONSTRAINT for a DB is memory/connections, not CPU. FreeableMemory sits at ~1.7 GB (of 128 GB) and DatabaseConnections is rising toward the max — the instance is memory- and connection-bound, NOT downsizeable. Compute Optimizer correctly reports 'Optimized'. Window: 30d, 2026-04-08 to 2026-05-07.",
-  "_window": "2026-04-08 to 2026-05-07 (30d)",
+  "_note": "Aurora writer acme-prod-aurora-writer (us-east-1, db.r6g.4xlarge, 128 GB RAM). Queries 20 (CPUUtilization, FreeableMemory, DatabaseConnections, --period 3600) and 21 (list-metrics existence check). A raw-CPU instinct sees 12% average CPU and flags a downsize. The BINDING CONSTRAINT for a database is memory/connections, not CPU: FreeableMemory sits near 1.7 GB of 128 GB and DatabaseConnections rises toward the parameter-group max, so the instance is memory- and connection-bound and NOT downsizeable. Compute Optimizer (query 7) reports Optimized. Excluded from the remediation table; reported under Informational / excluded.",
+  "_window": "2026-04-08 to 2026-05-08 (30d, hourly: 720 datapoints per metric)",
   "instance": "acme-prod-aurora-writer",
   "instanceClass": "db.r6g.4xlarge",
-  "computeOptimizerFinding": "Optimized",
+  "computeOptimizerFinding": "Optimized (query 7)",
   "metrics": {
     "CPUUtilization": {
       "Label": "CPUUtilization",
@@ -11,22 +11,44 @@
       "avg": 12.1,
       "max": 24.8,
       "_sample": [
-        {"Timestamp": "2026-04-08T00:00:00Z", "Average": 11.8},
-        {"Timestamp": "2026-04-24T00:00:00Z", "Average": 12.4},
-        {"Timestamp": "2026-05-07T00:00:00Z", "Average": 12.0}
-      ]
+        {
+          "Timestamp": "2026-04-08T00:00:00Z",
+          "Average": 11.8
+        },
+        {
+          "Timestamp": "2026-04-24T00:00:00Z",
+          "Average": 12.4
+        },
+        {
+          "Timestamp": "2026-05-07T00:00:00Z",
+          "Average": 12.0
+        }
+      ],
+      "Period": 3600,
+      "datapointCount": 720
     },
     "FreeableMemory": {
       "Label": "FreeableMemory",
       "unit": "Bytes",
       "min": 1717986918,
       "avg": 2040109465,
-      "_note": "min ~1.6 GB, avg ~1.9 GB free of 128 GB total — the instance is memory-bound.",
+      "_note": "min ~1.6 GB, avg ~1.9 GB free of 128 GB total \u2014 the instance is memory-bound.",
       "_sample": [
-        {"Timestamp": "2026-04-08T00:00:00Z", "Minimum": 2147483648},
-        {"Timestamp": "2026-04-24T00:00:00Z", "Minimum": 1825361100},
-        {"Timestamp": "2026-05-07T00:00:00Z", "Minimum": 1717986918}
-      ]
+        {
+          "Timestamp": "2026-04-08T00:00:00Z",
+          "Minimum": 2147483648
+        },
+        {
+          "Timestamp": "2026-04-24T00:00:00Z",
+          "Minimum": 1825361100
+        },
+        {
+          "Timestamp": "2026-05-07T00:00:00Z",
+          "Minimum": 1717986918
+        }
+      ],
+      "Period": 3600,
+      "datapointCount": 720
     },
     "DatabaseConnections": {
       "Label": "DatabaseConnections",
@@ -35,10 +57,22 @@
       "max": 2210,
       "_note": "rising trend across the 30d window, approaching the parameter-group max_connections; connection-bound.",
       "_sample": [
-        {"Timestamp": "2026-04-08T00:00:00Z", "Average": 1520},
-        {"Timestamp": "2026-04-24T00:00:00Z", "Average": 1790},
-        {"Timestamp": "2026-05-07T00:00:00Z", "Average": 2050}
-      ]
+        {
+          "Timestamp": "2026-04-08T00:00:00Z",
+          "Average": 1520
+        },
+        {
+          "Timestamp": "2026-04-24T00:00:00Z",
+          "Average": 1790
+        },
+        {
+          "Timestamp": "2026-05-07T00:00:00Z",
+          "Average": 2050
+        }
+      ],
+      "Period": 3600,
+      "datapointCount": 720
     }
-  }
+  },
+  "listMetricsCheck": "metric exists for all three (DBInstanceIdentifier=acme-prod-aurora-writer)"
 }

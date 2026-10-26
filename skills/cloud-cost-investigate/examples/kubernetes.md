@@ -4,17 +4,21 @@ Read-only commands per workflow step. All commands use `get`, `describe`, `top`,
 
 **Prerequisite:** Kubernetes cost investigation requires either OpenCost or Kubecost to be installed in the cluster. Without one of these, the skill cannot report cost allocation and will flag the gap rather than proceed.
 
+**Dollars here are an allocation model, not the bill.** OpenCost / Kubecost price nodes from list or custom pricing unless cloud billing integration is configured. Label every K8s figure `allocation-model` (Principle 4). On EKS, the same node spend appears in the AWS bill as EC2 — never add an AWS report's EC2 line and a K8s allocation together.
+
+**Never copy pod specs or kubeconfig into the report** (Constraint 10): `kubectl describe pod` and `get pods -o json` print literal `env:` values, and `kubectl config view` prints exec-plugin args / env. Use the projected forms below.
+
 ## Step 1 — Detect & Scope: cloud detection
 
 ```bash
-# Detect current cluster context
+# Detect current cluster context, and the cluster / server it points at (projected — no credentials)
 kubectl config current-context
+kubectl config view --minify -o jsonpath='{.clusters[0].name}{"  "}{.clusters[0].cluster.server}{"\n"}'
 
-# Show full kubeconfig to identify cluster and namespace context
-kubectl config view
-
-# Detect whether OpenCost or Kubecost is installed in any namespace
-kubectl get pods -A | grep -E 'opencost|kubecost'
+# Detect whether OpenCost or Kubecost is installed in any namespace, and its version
+kubectl get pods -A -l 'app.kubernetes.io/name in (opencost,cost-analyzer)' \
+  -o jsonpath='{range .items[*]}{.metadata.namespace}{"  "}{.metadata.name}{"  "}{.spec.containers[0].image}{"\n"}{end}'
+# Label selectors vary by chart — fall back to: kubectl get pods -A --no-headers | grep -E 'opencost|kubecost'
 ```
 
 **If neither OpenCost nor Kubecost is detected:** the skill MUST flag this gap explicitly and tell the operator:
@@ -33,8 +37,10 @@ The skill stops at this point and does not attempt to install, configure, or ena
 `kubectl port-forward` opens a local TCP tunnel to the in-cluster service. It does **not** mutate cluster state — no resources are created, modified, or deleted. It is a read-only proxy and acceptable under the Iron Law.
 
 ```bash
-# Open a local proxy to the OpenCost service (runs in the foreground; use & to background)
+# Open a local proxy to the OpenCost service. Pick a free local port, and stop the
+# tunnel when the batch finishes (kill %1, or kill the recorded PID).
 kubectl port-forward -n opencost svc/opencost 9003:9003 &
+PF_PID=$!
 
 # Total allocation by namespace, last 30 days (accumulate=true collapses to one row per namespace)
 curl 'http://localhost:9003/allocation?window=30d&aggregate=namespace&accumulate=true'
@@ -69,76 +75,56 @@ curl 'http://localhost:9090/model/allocation?window=30d&aggregate=namespace&accu
 curl 'http://kubecost.example/model/allocation?window=30d&aggregate=namespace&accumulate=true'
 ```
 
-**Kubecost license caveat:** The free tier of Kubecost retains 15 days of data by default. Queries with `window` values beyond 15 days may return incomplete results unless a paid license is active. The skill MUST surface this caveat when the query window exceeds 15 days.
+**Retention caveat:** how far back allocation data goes depends on the installed product, version, licence and Prometheus retention — and these change between releases. Before a window longer than ~2 weeks, check the earliest window the API actually returns (query `window=<N>d` and compare the first returned `start` with the one requested) and surface any shortfall. A truncated window fails the Principle 3 window rule; it does not become a shorter "≥ 30d" claim.
 
 **RBAC:** `port-forward` requires `pods/portforward` permission on the `kubecost` namespace.
 **API cost:** none (in-cluster query).
 
 ## Step 2B — Waste mode
 
-### Idle workloads
+### Over-requested / idle workloads — over the window, not a snapshot
+
+`kubectl top` is one instant from Metrics Server: it cannot show "consistently low over 30 days" (Principle 3). Use the allocation API's efficiency fields over the window instead:
 
 ```bash
-# Pods sorted by CPU consumption (highest to lowest) — identify low-utilization candidates
-kubectl top pods -A --sort-by=cpu
-
-# Pods sorted by memory consumption
-kubectl top pods -A --sort-by=memory
-
-# Inspect declared resource requests for a specific pod (compare to top output above)
-kubectl describe pod <pod-name> -n <namespace>
-
-# List all pods with their resource requests across all namespaces
-kubectl get pods -A -o json | \
-  python3 -c "
-import json, sys
-data = json.load(sys.stdin)
-for item in data['items']:
-  ns = item['metadata']['namespace']
-  name = item['metadata']['name']
-  for c in item['spec'].get('containers', []):
-    req = c.get('resources', {}).get('requests', {})
-    print(f\"{ns}/{name}/{c['name']}: cpu={req.get('cpu','—')} mem={req.get('memory','—')}\")
-"
+# Per-controller usage vs requests over 30d (port-forward as in Step 2A)
+curl -s 'http://localhost:9003/allocation?window=30d&aggregate=controller&accumulate=true' \
+  | jq '.data[0] | to_entries[] | {name: .key,
+        cpuEff: .value.cpuEfficiency, ramEff: .value.ramEfficiency,
+        cpuReq: .value.cpuCoreRequestAverage, ramReq: .value.ramByteRequestAverage,
+        cost: .value.totalCost}'
+# Field names follow the OpenCost allocation schema — confirm against the installed
+# version's API docs; a missing field is UNVERIFIED, not 0.
 ```
 
-Pods where `kubectl top` shows CPU/memory consistently below 10% of their declared `resources.requests` over a sustained period are flagged as idle candidates. The skill compares the `top` snapshot against `describe` output — it does not set any metrics baselines or modify any resource.
+A controller whose CPU **and** memory efficiency stay low over ≥ 30d is a **rightsize-requests** candidate (`allocation-model`, confidence ≤ `medium`). A low average with a high peak is not one — check the peak before calling it over-requested. "Idle → delete a workload" is never inferred from usage alone: zero-traffic services may be standbys or batch. That is an owner question.
 
-### Orphaned PVCs
+`kubectl top pods -A` remains useful only to spot-check a live moment; never cite it as window evidence.
+
+Declared requests, projected (no env values):
 
 ```bash
-# List all PersistentVolumeClaims across all namespaces with their status
-kubectl get pvc -A
-
-# Filter to PVCs in a specific status (Pending means unbound; Lost means backing PV is gone)
-kubectl get pvc -A --field-selector=status.phase=Pending
-kubectl get pvc -A --field-selector=status.phase=Lost
-
-# Inspect a specific PVC
-kubectl describe pvc <pvc-name> -n <namespace>
+kubectl get pods -A -o jsonpath='{range .items[*]}{.metadata.namespace}{"/"}{.metadata.name}{range .spec.containers[*]}{"  "}{.name}{" cpu="}{.resources.requests.cpu}{" mem="}{.resources.requests.memory}{end}{"\n"}{end}'
 ```
 
-PVCs in `Pending` (never bound) or `Lost` (backing PV removed) status are flagged as orphaned. PVCs in `Bound` status that are not mounted by any pod are a secondary signal — the skill cross-references `kubectl get pods -A -o json` to identify those.
-
-### Unattached PersistentVolumes
+### PersistentVolumes and claims — what actually costs money
 
 ```bash
-# List all PersistentVolumes with their reclaim policy and status
-kubectl get pv
-
-# PVs in Released status (were bound, PVC deleted, not yet reclaimed)
-kubectl get pv --field-selector=status.phase=Released
-
-# PVs in Available status (never bound to any PVC)
-kubectl get pv --field-selector=status.phase=Available
-
-# Inspect a specific PV for storage class, capacity, and timestamps
-kubectl describe pv <pv-name>
+kubectl get pv -o custom-columns='NAME:.metadata.name,PHASE:.status.phase,RECLAIM:.spec.persistentVolumeReclaimPolicy,SIZE:.spec.capacity.storage,CLASS:.spec.storageClassName,CLAIM:.spec.claimRef.namespace,CLAIMNAME:.spec.claimRef.name,VOLUME:.spec.csi.volumeHandle'
+kubectl get pvc -A -o custom-columns='NS:.metadata.namespace,NAME:.metadata.name,PHASE:.status.phase,VOLUME:.spec.volumeName,SIZE:.status.capacity.storage'
+# Which claims a pod mounts (projected):
+kubectl get pods -A -o jsonpath='{range .items[*]}{.metadata.namespace}{" "}{range .spec.volumes[*]}{.persistentVolumeClaim.claimName}{" "}{end}{"\n"}{end}'
 ```
 
-PVs in `Released` or `Available` phase are incurring storage cost with no active workload consuming them. These are flagged as waste candidates.
+| State | Costs money? | Report as |
+|---|---|---|
+| PV `Released`, reclaim `Retain` | **Yes** — the backing volume (e.g. EBS) still exists | Remediation candidate; cross-check the volume in the AWS sweep (`VOLUME` column = EBS volume ID for the EBS CSI driver), price it from the bill |
+| PV `Available` (pre-provisioned, never claimed) | **Yes** | Remediation candidate — confirm intent with the owner |
+| PVC `Bound`, mounted by no pod | **Yes** | **Data — owner confirm.** Typically a StatefulSet scaled to 0 or a paused job. Never a delete row on usage alone (`low`) |
+| PVC `Pending` | **No** — nothing provisioned yet (often `WaitForFirstConsumer`) | Informational (hygiene), $0 |
+| PVC `Lost` | **No** — the backing PV is gone | Informational (hygiene), $0 |
 
-**RBAC:** `kubectl top` requires the Metrics Server to be installed; `get pods`, `get pvc`, `get pv`, `describe` require standard read permissions.
+**RBAC:** `get pods`, `get pvc`, `get pv` require standard read permissions; the allocation API needs `pods/portforward` (Step 2A). `kubectl top` additionally requires Metrics Server.
 **API cost:** none.
 
 ## Step 2C — Attribution mode
@@ -186,7 +172,8 @@ cat .culiops/cloud-cost-investigate/<scope-slug>-<mode>-<YYYYMMDD-HHmm>.md
 ## Iron Law reminders
 
 - `kubectl` has many mutating verbs — `apply`, `create`, `delete`, `edit`, `patch`, `replace`, `scale`, `rollout`, `cordon`, `drain`, `taint`, `label`, `annotate`. The skill MUST refuse all of these. Permitted verbs are `get`, `describe`, `top`, `logs`, `port-forward`, and `config view`/`config current-context` only.
-- `kubectl port-forward` is a read-only local proxy. It opens a TCP tunnel to an in-cluster service and does not create, modify, or delete any Kubernetes resource. It is permitted under the Iron Law. The tunnel should be closed when the investigation is complete.
-- Kubecost free-tier retains only 15 days of allocation data by default. Before querying with a window longer than 15 days, the skill MUST surface this caveat and confirm with the operator whether a paid license is active.
+- `kubectl port-forward` is a read-only local proxy. It opens a TCP tunnel to an in-cluster service and does not create, modify, or delete any Kubernetes resource. It is permitted under the Iron Law. The tunnel is closed at the end of each Step 3 batch.
+- Allocation-data retention depends on the installed product, version, licence and Prometheus retention. Before a window longer than ~2 weeks, check what the API actually returns and surface any shortfall (see Step 2A).
+- `kubectl describe pod`, `get pods -o json/yaml` and `config view` (unprojected) can print secrets. Use the projected forms in this file; never copy their output into the report.
 - If neither OpenCost nor Kubecost is installed, the skill MUST stop and flag the gap. It does NOT install or configure any software — that is an operator action.
 - `kubectl exec` is explicitly out of scope. Even in read-only usage (e.g. `kubectl exec -- cat /proc/meminfo`), exec is not a permitted verb in this skill.

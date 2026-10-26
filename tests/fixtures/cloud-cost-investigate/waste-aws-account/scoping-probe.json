@@ -1,0 +1,71 @@
+{
+  "_note": "Scoping probe (GATE 1a): 4 read-only calls, 1 Cost Explorer request (~$0.01). Each key holds the (projected) output of one call. Cost figures in this fixture are the three usage record types (Usage, DiscountedUsage, SavingsPlanCoveredUsage) at AmortizedCost; the m5 Savings Plan usage is therefore included at its effective rate.",
+  "1_sts_get-caller-identity": {
+    "UserId": "AROAEXAMPLEFIXTURE01:cost-investigator",
+    "Account": "123456789012",
+    "Arn": "arn:aws:sts::123456789012:assumed-role/CostInvestigatorReadOnly/cost-investigator"
+  },
+  "2_iam_list-account-aliases": [
+    "acme-prod"
+  ],
+  "3_organizations_describe-organization": {
+    "Organization": {
+      "Id": "o-acmeorg1234",
+      "Arn": "arn:aws:organizations::999988887777:organization/o-acmeorg1234",
+      "FeatureSet": "ALL",
+      "MasterAccountArn": "arn:aws:organizations::999988887777:account/o-acmeorg1234/999988887777",
+      "MasterAccountId": "999988887777",
+      "MasterAccountEmail": "aws-payer@example.com"
+    }
+  },
+  "3_interpretation": "caller account 123456789012 != MasterAccountId 999988887777 -> MEMBER account. Cost Explorer from a member account returns only this account, so no LINKED_ACCOUNT filter is added. Payer variant (not this fixture): when the caller account equals MasterAccountId, every CE call must be wrapped as {\"And\":[{\"Dimensions\":{\"Key\":\"LINKED_ACCOUNT\",\"Values\":[\"123456789012\"]}}, <other filter>]}, otherwise the numbers are the whole organization.",
+  "4_ce_get-cost-and-usage_by_REGION": {
+    "_command": "aws ce get-cost-and-usage --time-period Start=2026-04-01,End=2026-05-01 --granularity MONTHLY --metrics AmortizedCost --filter '{\"Dimensions\":{\"Key\":\"RECORD_TYPE\",\"Values\":[\"Usage\",\"DiscountedUsage\",\"SavingsPlanCoveredUsage\"]}}' --group-by Type=DIMENSION,Key=REGION",
+    "ResultsByTime": [
+      {
+        "TimePeriod": {
+          "Start": "2026-04-01",
+          "End": "2026-05-01"
+        },
+        "Total": {},
+        "Groups": [
+          {
+            "Keys": [
+              "us-east-1"
+            ],
+            "Metrics": {
+              "AmortizedCost": {
+                "Amount": "29760.00",
+                "Unit": "USD"
+              }
+            }
+          },
+          {
+            "Keys": [
+              "eu-west-1"
+            ],
+            "Metrics": {
+              "AmortizedCost": {
+                "Amount": "16800.00",
+                "Unit": "USD"
+              }
+            }
+          },
+          {
+            "Keys": [
+              "NoRegion"
+            ],
+            "Metrics": {
+              "AmortizedCost": {
+                "Amount": "1440.00",
+                "Unit": "USD"
+              }
+            }
+          }
+        ],
+        "Estimated": false
+      }
+    ],
+    "DimensionValueAttributes": []
+  }
+}

@@ -1,0 +1,63 @@
+{
+  "_note": "Query 12: aws cloudtrail lookup-events --region us-east-1 --lookup-attributes AttributeKey=EventName,AttributeValue=RunInstances --start-time 2026-04-04T00:00:00Z --end-time 2026-05-06T00:00:00Z (Event history keeps 90 days). Three RunInstances calls cover 7 of the 8 p3 instances. There is NO RunInstances event for i-00b4169a51c38d72e in this window: its LaunchTime is a restart (original RunInstances 2026-03-12 is outside the lookup window; a wider <= 90-day lookup would find it). The CloudTrailEvent payload string is omitted.",
+  "Events": [
+    {
+      "EventId": "00001eef-1111-4222-8333-000000019919",
+      "EventName": "RunInstances",
+      "ReadOnly": "false",
+      "EventTime": "2026-04-26T14:31:58+00:00",
+      "EventSource": "ec2.amazonaws.com",
+      "Username": "ml-platform-bot",
+      "Resources": [
+        {
+          "ResourceType": "AWS::EC2::Instance",
+          "ResourceName": "i-0a3f7d92c84e61b05"
+        },
+        {
+          "ResourceType": "AWS::EC2::Instance",
+          "ResourceName": "i-0b4e8a03d95f72c16"
+        },
+        {
+          "ResourceType": "AWS::EC2::Instance",
+          "ResourceName": "i-0c5fa914e06b83d27"
+        }
+      ]
+    },
+    {
+      "EventId": "00003dde-1111-4222-8333-000000033232",
+      "EventName": "RunInstances",
+      "ReadOnly": "false",
+      "EventTime": "2026-04-27T09:14:41+00:00",
+      "EventSource": "ec2.amazonaws.com",
+      "Username": "ml-platform-bot",
+      "Resources": [
+        {
+          "ResourceType": "AWS::EC2::Instance",
+          "ResourceName": "i-0d60c25f17894e38a"
+        },
+        {
+          "ResourceType": "AWS::EC2::Instance",
+          "ResourceName": "i-0e71d3628050f49b2"
+        },
+        {
+          "ResourceType": "AWS::EC2::Instance",
+          "ResourceName": "i-0f82e4739116a50c3"
+        }
+      ]
+    },
+    {
+      "EventId": "00005ccd-1111-4222-8333-00000004cb4b",
+      "EventName": "RunInstances",
+      "ReadOnly": "false",
+      "EventTime": "2026-04-28T16:44:05+00:00",
+      "EventSource": "ec2.amazonaws.com",
+      "Username": "agarcia",
+      "Resources": [
+        {
+          "ResourceType": "AWS::EC2::Instance",
+          "ResourceName": "i-09a3f58140b27c61d"
+        }
+      ]
+    }
+  ]
+}

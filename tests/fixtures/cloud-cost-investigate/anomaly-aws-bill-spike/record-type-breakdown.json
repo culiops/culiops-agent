@@ -1,0 +1,441 @@
+{
+ "_note": "Query 7: aws ce get-cost-and-usage --time-period Start=2026-03-05,End=2026-05-06 --granularity DAILY --metrics AmortizedCost UnblendedCost --group-by Type=DIMENSION,Key=RECORD_TYPE (no filter). Both views of the same bill. Usage + SavingsPlanCoveredUsage are the usage record types (they equal the sum of billing-data.json for the day). Everything else is non-usage: SavingsPlanRecurringFee (Unblended: the hourly commitment of the m5 and r5 plans; Amortized: UNUSED commitment only - here the all-upfront SageMaker plan, 9000/365 = 24.66 per day, since no SageMaker usage appears in the account), SavingsPlanNegation (Unblended only; cancels the on-demand value of covered usage), SavingsPlanUpfrontFee (Unblended: 9000.00 on 2026-04-21, one day; Amortized: 0.00 because the cost is spread), Support. Summed over all record types, Unblended and Amortized differ only by the upfront payment not yet amortized. Estimated days (05-04, 05-05) are partial.",
+ "ResultsByTime": [
+  {"TimePeriod": {"Start": "2026-03-05", "End": "2026-03-06"}, "Total": {}, "Groups": [
+    {"Keys": ["Usage"], "Metrics": {"AmortizedCost": {"Amount": "1665.62", "Unit": "USD"}, "UnblendedCost": {"Amount": "1665.62", "Unit": "USD"}}},
+    {"Keys": ["SavingsPlanCoveredUsage"], "Metrics": {"AmortizedCost": {"Amount": "460.80", "Unit": "USD"}, "UnblendedCost": {"Amount": "640.00", "Unit": "USD"}}},
+    {"Keys": ["SavingsPlanNegation"], "Metrics": {"AmortizedCost": {"Amount": "0.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "-640.00", "Unit": "USD"}}},
+    {"Keys": ["SavingsPlanRecurringFee"], "Metrics": {"AmortizedCost": {"Amount": "0.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "460.80", "Unit": "USD"}}},
+    {"Keys": ["Support"], "Metrics": {"AmortizedCost": {"Amount": "51.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "51.00", "Unit": "USD"}}}
+  ], "Estimated": false},
+  {"TimePeriod": {"Start": "2026-03-06", "End": "2026-03-07"}, "Total": {}, "Groups": [
+    {"Keys": ["Usage"], "Metrics": {"AmortizedCost": {"Amount": "1665.51", "Unit": "USD"}, "UnblendedCost": {"Amount": "1665.51", "Unit": "USD"}}},
+    {"Keys": ["SavingsPlanCoveredUsage"], "Metrics": {"AmortizedCost": {"Amount": "460.80", "Unit": "USD"}, "UnblendedCost": {"Amount": "640.00", "Unit": "USD"}}},
+    {"Keys": ["SavingsPlanNegation"], "Metrics": {"AmortizedCost": {"Amount": "0.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "-640.00", "Unit": "USD"}}},
+    {"Keys": ["SavingsPlanRecurringFee"], "Metrics": {"AmortizedCost": {"Amount": "0.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "460.80", "Unit": "USD"}}},
+    {"Keys": ["Support"], "Metrics": {"AmortizedCost": {"Amount": "51.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "51.00", "Unit": "USD"}}}
+  ], "Estimated": false},
+  {"TimePeriod": {"Start": "2026-03-07", "End": "2026-03-08"}, "Total": {}, "Groups": [
+    {"Keys": ["Usage"], "Metrics": {"AmortizedCost": {"Amount": "1657.77", "Unit": "USD"}, "UnblendedCost": {"Amount": "1657.77", "Unit": "USD"}}},
+    {"Keys": ["SavingsPlanCoveredUsage"], "Metrics": {"AmortizedCost": {"Amount": "460.80", "Unit": "USD"}, "UnblendedCost": {"Amount": "640.00", "Unit": "USD"}}},
+    {"Keys": ["SavingsPlanNegation"], "Metrics": {"AmortizedCost": {"Amount": "0.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "-640.00", "Unit": "USD"}}},
+    {"Keys": ["SavingsPlanRecurringFee"], "Metrics": {"AmortizedCost": {"Amount": "0.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "460.80", "Unit": "USD"}}},
+    {"Keys": ["Support"], "Metrics": {"AmortizedCost": {"Amount": "51.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "51.00", "Unit": "USD"}}}
+  ], "Estimated": false},
+  {"TimePeriod": {"Start": "2026-03-08", "End": "2026-03-09"}, "Total": {}, "Groups": [
+    {"Keys": ["Usage"], "Metrics": {"AmortizedCost": {"Amount": "1667.47", "Unit": "USD"}, "UnblendedCost": {"Amount": "1667.47", "Unit": "USD"}}},
+    {"Keys": ["SavingsPlanCoveredUsage"], "Metrics": {"AmortizedCost": {"Amount": "460.80", "Unit": "USD"}, "UnblendedCost": {"Amount": "640.00", "Unit": "USD"}}},
+    {"Keys": ["SavingsPlanNegation"], "Metrics": {"AmortizedCost": {"Amount": "0.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "-640.00", "Unit": "USD"}}},
+    {"Keys": ["SavingsPlanRecurringFee"], "Metrics": {"AmortizedCost": {"Amount": "0.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "460.80", "Unit": "USD"}}},
+    {"Keys": ["Support"], "Metrics": {"AmortizedCost": {"Amount": "51.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "51.00", "Unit": "USD"}}}
+  ], "Estimated": false},
+  {"TimePeriod": {"Start": "2026-03-09", "End": "2026-03-10"}, "Total": {}, "Groups": [
+    {"Keys": ["Usage"], "Metrics": {"AmortizedCost": {"Amount": "1658.38", "Unit": "USD"}, "UnblendedCost": {"Amount": "1658.38", "Unit": "USD"}}},
+    {"Keys": ["SavingsPlanCoveredUsage"], "Metrics": {"AmortizedCost": {"Amount": "460.80", "Unit": "USD"}, "UnblendedCost": {"Amount": "640.00", "Unit": "USD"}}},
+    {"Keys": ["SavingsPlanNegation"], "Metrics": {"AmortizedCost": {"Amount": "0.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "-640.00", "Unit": "USD"}}},
+    {"Keys": ["SavingsPlanRecurringFee"], "Metrics": {"AmortizedCost": {"Amount": "0.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "460.80", "Unit": "USD"}}},
+    {"Keys": ["Support"], "Metrics": {"AmortizedCost": {"Amount": "51.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "51.00", "Unit": "USD"}}}
+  ], "Estimated": false},
+  {"TimePeriod": {"Start": "2026-03-10", "End": "2026-03-11"}, "Total": {}, "Groups": [
+    {"Keys": ["Usage"], "Metrics": {"AmortizedCost": {"Amount": "1667.42", "Unit": "USD"}, "UnblendedCost": {"Amount": "1667.42", "Unit": "USD"}}},
+    {"Keys": ["SavingsPlanCoveredUsage"], "Metrics": {"AmortizedCost": {"Amount": "460.80", "Unit": "USD"}, "UnblendedCost": {"Amount": "640.00", "Unit": "USD"}}},
+    {"Keys": ["SavingsPlanNegation"], "Metrics": {"AmortizedCost": {"Amount": "0.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "-640.00", "Unit": "USD"}}},
+    {"Keys": ["SavingsPlanRecurringFee"], "Metrics": {"AmortizedCost": {"Amount": "0.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "460.80", "Unit": "USD"}}},
+    {"Keys": ["Support"], "Metrics": {"AmortizedCost": {"Amount": "51.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "51.00", "Unit": "USD"}}}
+  ], "Estimated": false},
+  {"TimePeriod": {"Start": "2026-03-11", "End": "2026-03-12"}, "Total": {}, "Groups": [
+    {"Keys": ["Usage"], "Metrics": {"AmortizedCost": {"Amount": "1674.89", "Unit": "USD"}, "UnblendedCost": {"Amount": "1674.89", "Unit": "USD"}}},
+    {"Keys": ["SavingsPlanCoveredUsage"], "Metrics": {"AmortizedCost": {"Amount": "460.80", "Unit": "USD"}, "UnblendedCost": {"Amount": "640.00", "Unit": "USD"}}},
+    {"Keys": ["SavingsPlanNegation"], "Metrics": {"AmortizedCost": {"Amount": "0.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "-640.00", "Unit": "USD"}}},
+    {"Keys": ["SavingsPlanRecurringFee"], "Metrics": {"AmortizedCost": {"Amount": "0.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "460.80", "Unit": "USD"}}},
+    {"Keys": ["Support"], "Metrics": {"AmortizedCost": {"Amount": "51.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "51.00", "Unit": "USD"}}}
+  ], "Estimated": false},
+  {"TimePeriod": {"Start": "2026-03-12", "End": "2026-03-13"}, "Total": {}, "Groups": [
+    {"Keys": ["Usage"], "Metrics": {"AmortizedCost": {"Amount": "1839.53", "Unit": "USD"}, "UnblendedCost": {"Amount": "1839.53", "Unit": "USD"}}},
+    {"Keys": ["SavingsPlanCoveredUsage"], "Metrics": {"AmortizedCost": {"Amount": "460.80", "Unit": "USD"}, "UnblendedCost": {"Amount": "640.00", "Unit": "USD"}}},
+    {"Keys": ["SavingsPlanNegation"], "Metrics": {"AmortizedCost": {"Amount": "0.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "-640.00", "Unit": "USD"}}},
+    {"Keys": ["SavingsPlanRecurringFee"], "Metrics": {"AmortizedCost": {"Amount": "0.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "460.80", "Unit": "USD"}}},
+    {"Keys": ["Support"], "Metrics": {"AmortizedCost": {"Amount": "51.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "51.00", "Unit": "USD"}}}
+  ], "Estimated": false},
+  {"TimePeriod": {"Start": "2026-03-13", "End": "2026-03-14"}, "Total": {}, "Groups": [
+    {"Keys": ["Usage"], "Metrics": {"AmortizedCost": {"Amount": "1950.90", "Unit": "USD"}, "UnblendedCost": {"Amount": "1950.90", "Unit": "USD"}}},
+    {"Keys": ["SavingsPlanCoveredUsage"], "Metrics": {"AmortizedCost": {"Amount": "460.80", "Unit": "USD"}, "UnblendedCost": {"Amount": "640.00", "Unit": "USD"}}},
+    {"Keys": ["SavingsPlanNegation"], "Metrics": {"AmortizedCost": {"Amount": "0.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "-640.00", "Unit": "USD"}}},
+    {"Keys": ["SavingsPlanRecurringFee"], "Metrics": {"AmortizedCost": {"Amount": "0.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "460.80", "Unit": "USD"}}},
+    {"Keys": ["Support"], "Metrics": {"AmortizedCost": {"Amount": "51.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "51.00", "Unit": "USD"}}}
+  ], "Estimated": false},
+  {"TimePeriod": {"Start": "2026-03-14", "End": "2026-03-15"}, "Total": {}, "Groups": [
+    {"Keys": ["Usage"], "Metrics": {"AmortizedCost": {"Amount": "1961.56", "Unit": "USD"}, "UnblendedCost": {"Amount": "1961.56", "Unit": "USD"}}},
+    {"Keys": ["SavingsPlanCoveredUsage"], "Metrics": {"AmortizedCost": {"Amount": "460.80", "Unit": "USD"}, "UnblendedCost": {"Amount": "640.00", "Unit": "USD"}}},
+    {"Keys": ["SavingsPlanNegation"], "Metrics": {"AmortizedCost": {"Amount": "0.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "-640.00", "Unit": "USD"}}},
+    {"Keys": ["SavingsPlanRecurringFee"], "Metrics": {"AmortizedCost": {"Amount": "0.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "460.80", "Unit": "USD"}}},
+    {"Keys": ["Support"], "Metrics": {"AmortizedCost": {"Amount": "51.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "51.00", "Unit": "USD"}}}
+  ], "Estimated": false},
+  {"TimePeriod": {"Start": "2026-03-15", "End": "2026-03-16"}, "Total": {}, "Groups": [
+    {"Keys": ["Usage"], "Metrics": {"AmortizedCost": {"Amount": "1954.19", "Unit": "USD"}, "UnblendedCost": {"Amount": "1954.19", "Unit": "USD"}}},
+    {"Keys": ["SavingsPlanCoveredUsage"], "Metrics": {"AmortizedCost": {"Amount": "460.80", "Unit": "USD"}, "UnblendedCost": {"Amount": "640.00", "Unit": "USD"}}},
+    {"Keys": ["SavingsPlanNegation"], "Metrics": {"AmortizedCost": {"Amount": "0.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "-640.00", "Unit": "USD"}}},
+    {"Keys": ["SavingsPlanRecurringFee"], "Metrics": {"AmortizedCost": {"Amount": "0.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "460.80", "Unit": "USD"}}},
+    {"Keys": ["Support"], "Metrics": {"AmortizedCost": {"Amount": "51.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "51.00", "Unit": "USD"}}}
+  ], "Estimated": false},
+  {"TimePeriod": {"Start": "2026-03-16", "End": "2026-03-17"}, "Total": {}, "Groups": [
+    {"Keys": ["Usage"], "Metrics": {"AmortizedCost": {"Amount": "1956.03", "Unit": "USD"}, "UnblendedCost": {"Amount": "1956.03", "Unit": "USD"}}},
+    {"Keys": ["SavingsPlanCoveredUsage"], "Metrics": {"AmortizedCost": {"Amount": "460.80", "Unit": "USD"}, "UnblendedCost": {"Amount": "640.00", "Unit": "USD"}}},
+    {"Keys": ["SavingsPlanNegation"], "Metrics": {"AmortizedCost": {"Amount": "0.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "-640.00", "Unit": "USD"}}},
+    {"Keys": ["SavingsPlanRecurringFee"], "Metrics": {"AmortizedCost": {"Amount": "0.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "460.80", "Unit": "USD"}}},
+    {"Keys": ["Support"], "Metrics": {"AmortizedCost": {"Amount": "51.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "51.00", "Unit": "USD"}}}
+  ], "Estimated": false},
+  {"TimePeriod": {"Start": "2026-03-17", "End": "2026-03-18"}, "Total": {}, "Groups": [
+    {"Keys": ["Usage"], "Metrics": {"AmortizedCost": {"Amount": "1957.68", "Unit": "USD"}, "UnblendedCost": {"Amount": "1957.68", "Unit": "USD"}}},
+    {"Keys": ["SavingsPlanCoveredUsage"], "Metrics": {"AmortizedCost": {"Amount": "460.80", "Unit": "USD"}, "UnblendedCost": {"Amount": "640.00", "Unit": "USD"}}},
+    {"Keys": ["SavingsPlanNegation"], "Metrics": {"AmortizedCost": {"Amount": "0.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "-640.00", "Unit": "USD"}}},
+    {"Keys": ["SavingsPlanRecurringFee"], "Metrics": {"AmortizedCost": {"Amount": "0.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "460.80", "Unit": "USD"}}},
+    {"Keys": ["Support"], "Metrics": {"AmortizedCost": {"Amount": "51.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "51.00", "Unit": "USD"}}}
+  ], "Estimated": false},
+  {"TimePeriod": {"Start": "2026-03-18", "End": "2026-03-19"}, "Total": {}, "Groups": [
+    {"Keys": ["Usage"], "Metrics": {"AmortizedCost": {"Amount": "1949.96", "Unit": "USD"}, "UnblendedCost": {"Amount": "1949.96", "Unit": "USD"}}},
+    {"Keys": ["SavingsPlanCoveredUsage"], "Metrics": {"AmortizedCost": {"Amount": "460.80", "Unit": "USD"}, "UnblendedCost": {"Amount": "640.00", "Unit": "USD"}}},
+    {"Keys": ["SavingsPlanNegation"], "Metrics": {"AmortizedCost": {"Amount": "0.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "-640.00", "Unit": "USD"}}},
+    {"Keys": ["SavingsPlanRecurringFee"], "Metrics": {"AmortizedCost": {"Amount": "0.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "460.80", "Unit": "USD"}}},
+    {"Keys": ["Support"], "Metrics": {"AmortizedCost": {"Amount": "51.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "51.00", "Unit": "USD"}}}
+  ], "Estimated": false},
+  {"TimePeriod": {"Start": "2026-03-19", "End": "2026-03-20"}, "Total": {}, "Groups": [
+    {"Keys": ["Usage"], "Metrics": {"AmortizedCost": {"Amount": "1965.18", "Unit": "USD"}, "UnblendedCost": {"Amount": "1965.18", "Unit": "USD"}}},
+    {"Keys": ["SavingsPlanCoveredUsage"], "Metrics": {"AmortizedCost": {"Amount": "460.80", "Unit": "USD"}, "UnblendedCost": {"Amount": "640.00", "Unit": "USD"}}},
+    {"Keys": ["SavingsPlanNegation"], "Metrics": {"AmortizedCost": {"Amount": "0.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "-640.00", "Unit": "USD"}}},
+    {"Keys": ["SavingsPlanRecurringFee"], "Metrics": {"AmortizedCost": {"Amount": "0.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "460.80", "Unit": "USD"}}},
+    {"Keys": ["Support"], "Metrics": {"AmortizedCost": {"Amount": "51.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "51.00", "Unit": "USD"}}}
+  ], "Estimated": false},
+  {"TimePeriod": {"Start": "2026-03-20", "End": "2026-03-21"}, "Total": {}, "Groups": [
+    {"Keys": ["Usage"], "Metrics": {"AmortizedCost": {"Amount": "1881.01", "Unit": "USD"}, "UnblendedCost": {"Amount": "1881.01", "Unit": "USD"}}},
+    {"Keys": ["SavingsPlanCoveredUsage"], "Metrics": {"AmortizedCost": {"Amount": "460.80", "Unit": "USD"}, "UnblendedCost": {"Amount": "640.00", "Unit": "USD"}}},
+    {"Keys": ["SavingsPlanNegation"], "Metrics": {"AmortizedCost": {"Amount": "0.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "-640.00", "Unit": "USD"}}},
+    {"Keys": ["SavingsPlanRecurringFee"], "Metrics": {"AmortizedCost": {"Amount": "0.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "460.80", "Unit": "USD"}}},
+    {"Keys": ["Support"], "Metrics": {"AmortizedCost": {"Amount": "51.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "51.00", "Unit": "USD"}}}
+  ], "Estimated": false},
+  {"TimePeriod": {"Start": "2026-03-21", "End": "2026-03-22"}, "Total": {}, "Groups": [
+    {"Keys": ["Usage"], "Metrics": {"AmortizedCost": {"Amount": "1661.08", "Unit": "USD"}, "UnblendedCost": {"Amount": "1661.08", "Unit": "USD"}}},
+    {"Keys": ["SavingsPlanCoveredUsage"], "Metrics": {"AmortizedCost": {"Amount": "460.80", "Unit": "USD"}, "UnblendedCost": {"Amount": "640.00", "Unit": "USD"}}},
+    {"Keys": ["SavingsPlanNegation"], "Metrics": {"AmortizedCost": {"Amount": "0.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "-640.00", "Unit": "USD"}}},
+    {"Keys": ["SavingsPlanRecurringFee"], "Metrics": {"AmortizedCost": {"Amount": "0.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "460.80", "Unit": "USD"}}},
+    {"Keys": ["Support"], "Metrics": {"AmortizedCost": {"Amount": "51.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "51.00", "Unit": "USD"}}}
+  ], "Estimated": false},
+  {"TimePeriod": {"Start": "2026-03-22", "End": "2026-03-23"}, "Total": {}, "Groups": [
+    {"Keys": ["Usage"], "Metrics": {"AmortizedCost": {"Amount": "1664.65", "Unit": "USD"}, "UnblendedCost": {"Amount": "1664.65", "Unit": "USD"}}},
+    {"Keys": ["SavingsPlanCoveredUsage"], "Metrics": {"AmortizedCost": {"Amount": "460.80", "Unit": "USD"}, "UnblendedCost": {"Amount": "640.00", "Unit": "USD"}}},
+    {"Keys": ["SavingsPlanNegation"], "Metrics": {"AmortizedCost": {"Amount": "0.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "-640.00", "Unit": "USD"}}},
+    {"Keys": ["SavingsPlanRecurringFee"], "Metrics": {"AmortizedCost": {"Amount": "0.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "460.80", "Unit": "USD"}}},
+    {"Keys": ["Support"], "Metrics": {"AmortizedCost": {"Amount": "51.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "51.00", "Unit": "USD"}}}
+  ], "Estimated": false},
+  {"TimePeriod": {"Start": "2026-03-23", "End": "2026-03-24"}, "Total": {}, "Groups": [
+    {"Keys": ["Usage"], "Metrics": {"AmortizedCost": {"Amount": "1659.55", "Unit": "USD"}, "UnblendedCost": {"Amount": "1659.55", "Unit": "USD"}}},
+    {"Keys": ["SavingsPlanCoveredUsage"], "Metrics": {"AmortizedCost": {"Amount": "460.80", "Unit": "USD"}, "UnblendedCost": {"Amount": "640.00", "Unit": "USD"}}},
+    {"Keys": ["SavingsPlanNegation"], "Metrics": {"AmortizedCost": {"Amount": "0.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "-640.00", "Unit": "USD"}}},
+    {"Keys": ["SavingsPlanRecurringFee"], "Metrics": {"AmortizedCost": {"Amount": "0.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "460.80", "Unit": "USD"}}},
+    {"Keys": ["Support"], "Metrics": {"AmortizedCost": {"Amount": "51.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "51.00", "Unit": "USD"}}}
+  ], "Estimated": false},
+  {"TimePeriod": {"Start": "2026-03-24", "End": "2026-03-25"}, "Total": {}, "Groups": [
+    {"Keys": ["Usage"], "Metrics": {"AmortizedCost": {"Amount": "1668.32", "Unit": "USD"}, "UnblendedCost": {"Amount": "1668.32", "Unit": "USD"}}},
+    {"Keys": ["SavingsPlanCoveredUsage"], "Metrics": {"AmortizedCost": {"Amount": "460.80", "Unit": "USD"}, "UnblendedCost": {"Amount": "640.00", "Unit": "USD"}}},
+    {"Keys": ["SavingsPlanNegation"], "Metrics": {"AmortizedCost": {"Amount": "0.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "-640.00", "Unit": "USD"}}},
+    {"Keys": ["SavingsPlanRecurringFee"], "Metrics": {"AmortizedCost": {"Amount": "0.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "460.80", "Unit": "USD"}}},
+    {"Keys": ["Support"], "Metrics": {"AmortizedCost": {"Amount": "51.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "51.00", "Unit": "USD"}}}
+  ], "Estimated": false},
+  {"TimePeriod": {"Start": "2026-03-25", "End": "2026-03-26"}, "Total": {}, "Groups": [
+    {"Keys": ["Usage"], "Metrics": {"AmortizedCost": {"Amount": "1668.48", "Unit": "USD"}, "UnblendedCost": {"Amount": "1668.48", "Unit": "USD"}}},
+    {"Keys": ["SavingsPlanCoveredUsage"], "Metrics": {"AmortizedCost": {"Amount": "460.80", "Unit": "USD"}, "UnblendedCost": {"Amount": "640.00", "Unit": "USD"}}},
+    {"Keys": ["SavingsPlanNegation"], "Metrics": {"AmortizedCost": {"Amount": "0.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "-640.00", "Unit": "USD"}}},
+    {"Keys": ["SavingsPlanRecurringFee"], "Metrics": {"AmortizedCost": {"Amount": "0.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "460.80", "Unit": "USD"}}},
+    {"Keys": ["Support"], "Metrics": {"AmortizedCost": {"Amount": "51.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "51.00", "Unit": "USD"}}}
+  ], "Estimated": false},
+  {"TimePeriod": {"Start": "2026-03-26", "End": "2026-03-27"}, "Total": {}, "Groups": [
+    {"Keys": ["Usage"], "Metrics": {"AmortizedCost": {"Amount": "1666.65", "Unit": "USD"}, "UnblendedCost": {"Amount": "1666.65", "Unit": "USD"}}},
+    {"Keys": ["SavingsPlanCoveredUsage"], "Metrics": {"AmortizedCost": {"Amount": "460.80", "Unit": "USD"}, "UnblendedCost": {"Amount": "640.00", "Unit": "USD"}}},
+    {"Keys": ["SavingsPlanNegation"], "Metrics": {"AmortizedCost": {"Amount": "0.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "-640.00", "Unit": "USD"}}},
+    {"Keys": ["SavingsPlanRecurringFee"], "Metrics": {"AmortizedCost": {"Amount": "0.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "460.80", "Unit": "USD"}}},
+    {"Keys": ["Support"], "Metrics": {"AmortizedCost": {"Amount": "51.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "51.00", "Unit": "USD"}}}
+  ], "Estimated": false},
+  {"TimePeriod": {"Start": "2026-03-27", "End": "2026-03-28"}, "Total": {}, "Groups": [
+    {"Keys": ["Usage"], "Metrics": {"AmortizedCost": {"Amount": "1678.46", "Unit": "USD"}, "UnblendedCost": {"Amount": "1678.46", "Unit": "USD"}}},
+    {"Keys": ["SavingsPlanCoveredUsage"], "Metrics": {"AmortizedCost": {"Amount": "460.80", "Unit": "USD"}, "UnblendedCost": {"Amount": "640.00", "Unit": "USD"}}},
+    {"Keys": ["SavingsPlanNegation"], "Metrics": {"AmortizedCost": {"Amount": "0.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "-640.00", "Unit": "USD"}}},
+    {"Keys": ["SavingsPlanRecurringFee"], "Metrics": {"AmortizedCost": {"Amount": "0.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "460.80", "Unit": "USD"}}},
+    {"Keys": ["Support"], "Metrics": {"AmortizedCost": {"Amount": "51.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "51.00", "Unit": "USD"}}}
+  ], "Estimated": false},
+  {"TimePeriod": {"Start": "2026-03-28", "End": "2026-03-29"}, "Total": {}, "Groups": [
+    {"Keys": ["Usage"], "Metrics": {"AmortizedCost": {"Amount": "1658.69", "Unit": "USD"}, "UnblendedCost": {"Amount": "1658.69", "Unit": "USD"}}},
+    {"Keys": ["SavingsPlanCoveredUsage"], "Metrics": {"AmortizedCost": {"Amount": "460.80", "Unit": "USD"}, "UnblendedCost": {"Amount": "640.00", "Unit": "USD"}}},
+    {"Keys": ["SavingsPlanNegation"], "Metrics": {"AmortizedCost": {"Amount": "0.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "-640.00", "Unit": "USD"}}},
+    {"Keys": ["SavingsPlanRecurringFee"], "Metrics": {"AmortizedCost": {"Amount": "0.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "460.80", "Unit": "USD"}}},
+    {"Keys": ["Support"], "Metrics": {"AmortizedCost": {"Amount": "51.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "51.00", "Unit": "USD"}}}
+  ], "Estimated": false},
+  {"TimePeriod": {"Start": "2026-03-29", "End": "2026-03-30"}, "Total": {}, "Groups": [
+    {"Keys": ["Usage"], "Metrics": {"AmortizedCost": {"Amount": "1653.19", "Unit": "USD"}, "UnblendedCost": {"Amount": "1653.19", "Unit": "USD"}}},
+    {"Keys": ["SavingsPlanCoveredUsage"], "Metrics": {"AmortizedCost": {"Amount": "460.80", "Unit": "USD"}, "UnblendedCost": {"Amount": "640.00", "Unit": "USD"}}},
+    {"Keys": ["SavingsPlanNegation"], "Metrics": {"AmortizedCost": {"Amount": "0.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "-640.00", "Unit": "USD"}}},
+    {"Keys": ["SavingsPlanRecurringFee"], "Metrics": {"AmortizedCost": {"Amount": "0.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "460.80", "Unit": "USD"}}},
+    {"Keys": ["Support"], "Metrics": {"AmortizedCost": {"Amount": "51.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "51.00", "Unit": "USD"}}}
+  ], "Estimated": false},
+  {"TimePeriod": {"Start": "2026-03-30", "End": "2026-03-31"}, "Total": {}, "Groups": [
+    {"Keys": ["Usage"], "Metrics": {"AmortizedCost": {"Amount": "1670.15", "Unit": "USD"}, "UnblendedCost": {"Amount": "1670.15", "Unit": "USD"}}},
+    {"Keys": ["SavingsPlanCoveredUsage"], "Metrics": {"AmortizedCost": {"Amount": "460.80", "Unit": "USD"}, "UnblendedCost": {"Amount": "640.00", "Unit": "USD"}}},
+    {"Keys": ["SavingsPlanNegation"], "Metrics": {"AmortizedCost": {"Amount": "0.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "-640.00", "Unit": "USD"}}},
+    {"Keys": ["SavingsPlanRecurringFee"], "Metrics": {"AmortizedCost": {"Amount": "0.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "460.80", "Unit": "USD"}}},
+    {"Keys": ["Support"], "Metrics": {"AmortizedCost": {"Amount": "51.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "51.00", "Unit": "USD"}}}
+  ], "Estimated": false},
+  {"TimePeriod": {"Start": "2026-03-31", "End": "2026-04-01"}, "Total": {}, "Groups": [
+    {"Keys": ["Usage"], "Metrics": {"AmortizedCost": {"Amount": "1657.80", "Unit": "USD"}, "UnblendedCost": {"Amount": "1657.80", "Unit": "USD"}}},
+    {"Keys": ["SavingsPlanCoveredUsage"], "Metrics": {"AmortizedCost": {"Amount": "460.80", "Unit": "USD"}, "UnblendedCost": {"Amount": "640.00", "Unit": "USD"}}},
+    {"Keys": ["SavingsPlanNegation"], "Metrics": {"AmortizedCost": {"Amount": "0.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "-640.00", "Unit": "USD"}}},
+    {"Keys": ["SavingsPlanRecurringFee"], "Metrics": {"AmortizedCost": {"Amount": "0.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "460.80", "Unit": "USD"}}},
+    {"Keys": ["Support"], "Metrics": {"AmortizedCost": {"Amount": "51.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "51.00", "Unit": "USD"}}}
+  ], "Estimated": false},
+  {"TimePeriod": {"Start": "2026-04-01", "End": "2026-04-02"}, "Total": {}, "Groups": [
+    {"Keys": ["Usage"], "Metrics": {"AmortizedCost": {"Amount": "1664.25", "Unit": "USD"}, "UnblendedCost": {"Amount": "1664.25", "Unit": "USD"}}},
+    {"Keys": ["SavingsPlanCoveredUsage"], "Metrics": {"AmortizedCost": {"Amount": "460.80", "Unit": "USD"}, "UnblendedCost": {"Amount": "640.00", "Unit": "USD"}}},
+    {"Keys": ["SavingsPlanNegation"], "Metrics": {"AmortizedCost": {"Amount": "0.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "-640.00", "Unit": "USD"}}},
+    {"Keys": ["SavingsPlanRecurringFee"], "Metrics": {"AmortizedCost": {"Amount": "0.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "460.80", "Unit": "USD"}}},
+    {"Keys": ["Support"], "Metrics": {"AmortizedCost": {"Amount": "51.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "51.00", "Unit": "USD"}}}
+  ], "Estimated": false},
+  {"TimePeriod": {"Start": "2026-04-02", "End": "2026-04-03"}, "Total": {}, "Groups": [
+    {"Keys": ["Usage"], "Metrics": {"AmortizedCost": {"Amount": "1661.59", "Unit": "USD"}, "UnblendedCost": {"Amount": "1661.59", "Unit": "USD"}}},
+    {"Keys": ["SavingsPlanCoveredUsage"], "Metrics": {"AmortizedCost": {"Amount": "460.80", "Unit": "USD"}, "UnblendedCost": {"Amount": "640.00", "Unit": "USD"}}},
+    {"Keys": ["SavingsPlanNegation"], "Metrics": {"AmortizedCost": {"Amount": "0.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "-640.00", "Unit": "USD"}}},
+    {"Keys": ["SavingsPlanRecurringFee"], "Metrics": {"AmortizedCost": {"Amount": "0.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "460.80", "Unit": "USD"}}},
+    {"Keys": ["Support"], "Metrics": {"AmortizedCost": {"Amount": "51.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "51.00", "Unit": "USD"}}}
+  ], "Estimated": false},
+  {"TimePeriod": {"Start": "2026-04-03", "End": "2026-04-04"}, "Total": {}, "Groups": [
+    {"Keys": ["Usage"], "Metrics": {"AmortizedCost": {"Amount": "1660.22", "Unit": "USD"}, "UnblendedCost": {"Amount": "1660.22", "Unit": "USD"}}},
+    {"Keys": ["SavingsPlanCoveredUsage"], "Metrics": {"AmortizedCost": {"Amount": "460.80", "Unit": "USD"}, "UnblendedCost": {"Amount": "640.00", "Unit": "USD"}}},
+    {"Keys": ["SavingsPlanNegation"], "Metrics": {"AmortizedCost": {"Amount": "0.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "-640.00", "Unit": "USD"}}},
+    {"Keys": ["SavingsPlanRecurringFee"], "Metrics": {"AmortizedCost": {"Amount": "0.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "460.80", "Unit": "USD"}}},
+    {"Keys": ["Support"], "Metrics": {"AmortizedCost": {"Amount": "51.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "51.00", "Unit": "USD"}}}
+  ], "Estimated": false},
+  {"TimePeriod": {"Start": "2026-04-04", "End": "2026-04-05"}, "Total": {}, "Groups": [
+    {"Keys": ["Usage"], "Metrics": {"AmortizedCost": {"Amount": "1669.99", "Unit": "USD"}, "UnblendedCost": {"Amount": "1669.99", "Unit": "USD"}}},
+    {"Keys": ["SavingsPlanCoveredUsage"], "Metrics": {"AmortizedCost": {"Amount": "460.80", "Unit": "USD"}, "UnblendedCost": {"Amount": "640.00", "Unit": "USD"}}},
+    {"Keys": ["SavingsPlanNegation"], "Metrics": {"AmortizedCost": {"Amount": "0.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "-640.00", "Unit": "USD"}}},
+    {"Keys": ["SavingsPlanRecurringFee"], "Metrics": {"AmortizedCost": {"Amount": "0.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "460.80", "Unit": "USD"}}},
+    {"Keys": ["Support"], "Metrics": {"AmortizedCost": {"Amount": "51.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "51.00", "Unit": "USD"}}}
+  ], "Estimated": false},
+  {"TimePeriod": {"Start": "2026-04-05", "End": "2026-04-06"}, "Total": {}, "Groups": [
+    {"Keys": ["Usage"], "Metrics": {"AmortizedCost": {"Amount": "1661.46", "Unit": "USD"}, "UnblendedCost": {"Amount": "1661.46", "Unit": "USD"}}},
+    {"Keys": ["SavingsPlanCoveredUsage"], "Metrics": {"AmortizedCost": {"Amount": "460.80", "Unit": "USD"}, "UnblendedCost": {"Amount": "640.00", "Unit": "USD"}}},
+    {"Keys": ["SavingsPlanNegation"], "Metrics": {"AmortizedCost": {"Amount": "0.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "-640.00", "Unit": "USD"}}},
+    {"Keys": ["SavingsPlanRecurringFee"], "Metrics": {"AmortizedCost": {"Amount": "0.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "460.80", "Unit": "USD"}}},
+    {"Keys": ["Support"], "Metrics": {"AmortizedCost": {"Amount": "51.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "51.00", "Unit": "USD"}}}
+  ], "Estimated": false},
+  {"TimePeriod": {"Start": "2026-04-06", "End": "2026-04-07"}, "Total": {}, "Groups": [
+    {"Keys": ["Usage"], "Metrics": {"AmortizedCost": {"Amount": "1666.58", "Unit": "USD"}, "UnblendedCost": {"Amount": "1666.58", "Unit": "USD"}}},
+    {"Keys": ["SavingsPlanCoveredUsage"], "Metrics": {"AmortizedCost": {"Amount": "460.80", "Unit": "USD"}, "UnblendedCost": {"Amount": "640.00", "Unit": "USD"}}},
+    {"Keys": ["SavingsPlanNegation"], "Metrics": {"AmortizedCost": {"Amount": "0.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "-640.00", "Unit": "USD"}}},
+    {"Keys": ["SavingsPlanRecurringFee"], "Metrics": {"AmortizedCost": {"Amount": "0.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "460.80", "Unit": "USD"}}},
+    {"Keys": ["Support"], "Metrics": {"AmortizedCost": {"Amount": "51.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "51.00", "Unit": "USD"}}}
+  ], "Estimated": false},
+  {"TimePeriod": {"Start": "2026-04-07", "End": "2026-04-08"}, "Total": {}, "Groups": [
+    {"Keys": ["Usage"], "Metrics": {"AmortizedCost": {"Amount": "1667.47", "Unit": "USD"}, "UnblendedCost": {"Amount": "1667.47", "Unit": "USD"}}},
+    {"Keys": ["SavingsPlanCoveredUsage"], "Metrics": {"AmortizedCost": {"Amount": "460.80", "Unit": "USD"}, "UnblendedCost": {"Amount": "640.00", "Unit": "USD"}}},
+    {"Keys": ["SavingsPlanNegation"], "Metrics": {"AmortizedCost": {"Amount": "0.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "-640.00", "Unit": "USD"}}},
+    {"Keys": ["SavingsPlanRecurringFee"], "Metrics": {"AmortizedCost": {"Amount": "0.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "460.80", "Unit": "USD"}}},
+    {"Keys": ["Support"], "Metrics": {"AmortizedCost": {"Amount": "51.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "51.00", "Unit": "USD"}}}
+  ], "Estimated": false},
+  {"TimePeriod": {"Start": "2026-04-08", "End": "2026-04-09"}, "Total": {}, "Groups": [
+    {"Keys": ["Usage"], "Metrics": {"AmortizedCost": {"Amount": "1669.59", "Unit": "USD"}, "UnblendedCost": {"Amount": "1669.59", "Unit": "USD"}}},
+    {"Keys": ["SavingsPlanCoveredUsage"], "Metrics": {"AmortizedCost": {"Amount": "460.80", "Unit": "USD"}, "UnblendedCost": {"Amount": "640.00", "Unit": "USD"}}},
+    {"Keys": ["SavingsPlanNegation"], "Metrics": {"AmortizedCost": {"Amount": "0.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "-640.00", "Unit": "USD"}}},
+    {"Keys": ["SavingsPlanRecurringFee"], "Metrics": {"AmortizedCost": {"Amount": "0.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "460.80", "Unit": "USD"}}},
+    {"Keys": ["Support"], "Metrics": {"AmortizedCost": {"Amount": "51.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "51.00", "Unit": "USD"}}}
+  ], "Estimated": false},
+  {"TimePeriod": {"Start": "2026-04-09", "End": "2026-04-10"}, "Total": {}, "Groups": [
+    {"Keys": ["Usage"], "Metrics": {"AmortizedCost": {"Amount": "1667.15", "Unit": "USD"}, "UnblendedCost": {"Amount": "1667.15", "Unit": "USD"}}},
+    {"Keys": ["SavingsPlanCoveredUsage"], "Metrics": {"AmortizedCost": {"Amount": "460.80", "Unit": "USD"}, "UnblendedCost": {"Amount": "640.00", "Unit": "USD"}}},
+    {"Keys": ["SavingsPlanNegation"], "Metrics": {"AmortizedCost": {"Amount": "0.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "-640.00", "Unit": "USD"}}},
+    {"Keys": ["SavingsPlanRecurringFee"], "Metrics": {"AmortizedCost": {"Amount": "0.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "460.80", "Unit": "USD"}}},
+    {"Keys": ["Support"], "Metrics": {"AmortizedCost": {"Amount": "51.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "51.00", "Unit": "USD"}}}
+  ], "Estimated": false},
+  {"TimePeriod": {"Start": "2026-04-10", "End": "2026-04-11"}, "Total": {}, "Groups": [
+    {"Keys": ["Usage"], "Metrics": {"AmortizedCost": {"Amount": "1644.47", "Unit": "USD"}, "UnblendedCost": {"Amount": "1644.47", "Unit": "USD"}}},
+    {"Keys": ["SavingsPlanCoveredUsage"], "Metrics": {"AmortizedCost": {"Amount": "460.80", "Unit": "USD"}, "UnblendedCost": {"Amount": "640.00", "Unit": "USD"}}},
+    {"Keys": ["SavingsPlanNegation"], "Metrics": {"AmortizedCost": {"Amount": "0.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "-640.00", "Unit": "USD"}}},
+    {"Keys": ["SavingsPlanRecurringFee"], "Metrics": {"AmortizedCost": {"Amount": "0.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "460.80", "Unit": "USD"}}},
+    {"Keys": ["Support"], "Metrics": {"AmortizedCost": {"Amount": "51.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "51.00", "Unit": "USD"}}}
+  ], "Estimated": false},
+  {"TimePeriod": {"Start": "2026-04-11", "End": "2026-04-12"}, "Total": {}, "Groups": [
+    {"Keys": ["Usage"], "Metrics": {"AmortizedCost": {"Amount": "1643.85", "Unit": "USD"}, "UnblendedCost": {"Amount": "1643.85", "Unit": "USD"}}},
+    {"Keys": ["SavingsPlanCoveredUsage"], "Metrics": {"AmortizedCost": {"Amount": "460.80", "Unit": "USD"}, "UnblendedCost": {"Amount": "640.00", "Unit": "USD"}}},
+    {"Keys": ["SavingsPlanNegation"], "Metrics": {"AmortizedCost": {"Amount": "0.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "-640.00", "Unit": "USD"}}},
+    {"Keys": ["SavingsPlanRecurringFee"], "Metrics": {"AmortizedCost": {"Amount": "0.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "460.80", "Unit": "USD"}}},
+    {"Keys": ["Support"], "Metrics": {"AmortizedCost": {"Amount": "51.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "51.00", "Unit": "USD"}}}
+  ], "Estimated": false},
+  {"TimePeriod": {"Start": "2026-04-12", "End": "2026-04-13"}, "Total": {}, "Groups": [
+    {"Keys": ["Usage"], "Metrics": {"AmortizedCost": {"Amount": "1630.98", "Unit": "USD"}, "UnblendedCost": {"Amount": "1630.98", "Unit": "USD"}}},
+    {"Keys": ["SavingsPlanCoveredUsage"], "Metrics": {"AmortizedCost": {"Amount": "460.80", "Unit": "USD"}, "UnblendedCost": {"Amount": "640.00", "Unit": "USD"}}},
+    {"Keys": ["SavingsPlanNegation"], "Metrics": {"AmortizedCost": {"Amount": "0.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "-640.00", "Unit": "USD"}}},
+    {"Keys": ["SavingsPlanRecurringFee"], "Metrics": {"AmortizedCost": {"Amount": "0.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "460.80", "Unit": "USD"}}},
+    {"Keys": ["Support"], "Metrics": {"AmortizedCost": {"Amount": "51.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "51.00", "Unit": "USD"}}}
+  ], "Estimated": false},
+  {"TimePeriod": {"Start": "2026-04-13", "End": "2026-04-14"}, "Total": {}, "Groups": [
+    {"Keys": ["Usage"], "Metrics": {"AmortizedCost": {"Amount": "1653.03", "Unit": "USD"}, "UnblendedCost": {"Amount": "1653.03", "Unit": "USD"}}},
+    {"Keys": ["SavingsPlanCoveredUsage"], "Metrics": {"AmortizedCost": {"Amount": "460.80", "Unit": "USD"}, "UnblendedCost": {"Amount": "640.00", "Unit": "USD"}}},
+    {"Keys": ["SavingsPlanNegation"], "Metrics": {"AmortizedCost": {"Amount": "0.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "-640.00", "Unit": "USD"}}},
+    {"Keys": ["SavingsPlanRecurringFee"], "Metrics": {"AmortizedCost": {"Amount": "0.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "460.80", "Unit": "USD"}}},
+    {"Keys": ["Support"], "Metrics": {"AmortizedCost": {"Amount": "51.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "51.00", "Unit": "USD"}}}
+  ], "Estimated": false},
+  {"TimePeriod": {"Start": "2026-04-14", "End": "2026-04-15"}, "Total": {}, "Groups": [
+    {"Keys": ["Usage"], "Metrics": {"AmortizedCost": {"Amount": "1650.42", "Unit": "USD"}, "UnblendedCost": {"Amount": "1650.42", "Unit": "USD"}}},
+    {"Keys": ["SavingsPlanCoveredUsage"], "Metrics": {"AmortizedCost": {"Amount": "460.80", "Unit": "USD"}, "UnblendedCost": {"Amount": "640.00", "Unit": "USD"}}},
+    {"Keys": ["SavingsPlanNegation"], "Metrics": {"AmortizedCost": {"Amount": "0.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "-640.00", "Unit": "USD"}}},
+    {"Keys": ["SavingsPlanRecurringFee"], "Metrics": {"AmortizedCost": {"Amount": "0.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "460.80", "Unit": "USD"}}},
+    {"Keys": ["Support"], "Metrics": {"AmortizedCost": {"Amount": "51.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "51.00", "Unit": "USD"}}}
+  ], "Estimated": false},
+  {"TimePeriod": {"Start": "2026-04-15", "End": "2026-04-16"}, "Total": {}, "Groups": [
+    {"Keys": ["Usage"], "Metrics": {"AmortizedCost": {"Amount": "1652.16", "Unit": "USD"}, "UnblendedCost": {"Amount": "1652.16", "Unit": "USD"}}},
+    {"Keys": ["SavingsPlanCoveredUsage"], "Metrics": {"AmortizedCost": {"Amount": "460.80", "Unit": "USD"}, "UnblendedCost": {"Amount": "640.00", "Unit": "USD"}}},
+    {"Keys": ["SavingsPlanNegation"], "Metrics": {"AmortizedCost": {"Amount": "0.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "-640.00", "Unit": "USD"}}},
+    {"Keys": ["SavingsPlanRecurringFee"], "Metrics": {"AmortizedCost": {"Amount": "0.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "460.80", "Unit": "USD"}}},
+    {"Keys": ["Support"], "Metrics": {"AmortizedCost": {"Amount": "51.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "51.00", "Unit": "USD"}}}
+  ], "Estimated": false},
+  {"TimePeriod": {"Start": "2026-04-16", "End": "2026-04-17"}, "Total": {}, "Groups": [
+    {"Keys": ["Usage"], "Metrics": {"AmortizedCost": {"Amount": "2152.86", "Unit": "USD"}, "UnblendedCost": {"Amount": "2152.86", "Unit": "USD"}}},
+    {"Keys": ["SavingsPlanCoveredUsage"], "Metrics": {"AmortizedCost": {"Amount": "100.80", "Unit": "USD"}, "UnblendedCost": {"Amount": "140.00", "Unit": "USD"}}},
+    {"Keys": ["SavingsPlanNegation"], "Metrics": {"AmortizedCost": {"Amount": "0.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "-140.00", "Unit": "USD"}}},
+    {"Keys": ["SavingsPlanRecurringFee"], "Metrics": {"AmortizedCost": {"Amount": "0.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "100.80", "Unit": "USD"}}},
+    {"Keys": ["Support"], "Metrics": {"AmortizedCost": {"Amount": "51.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "51.00", "Unit": "USD"}}}
+  ], "Estimated": false},
+  {"TimePeriod": {"Start": "2026-04-17", "End": "2026-04-18"}, "Total": {}, "Groups": [
+    {"Keys": ["Usage"], "Metrics": {"AmortizedCost": {"Amount": "2150.69", "Unit": "USD"}, "UnblendedCost": {"Amount": "2150.69", "Unit": "USD"}}},
+    {"Keys": ["SavingsPlanCoveredUsage"], "Metrics": {"AmortizedCost": {"Amount": "100.80", "Unit": "USD"}, "UnblendedCost": {"Amount": "140.00", "Unit": "USD"}}},
+    {"Keys": ["SavingsPlanNegation"], "Metrics": {"AmortizedCost": {"Amount": "0.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "-140.00", "Unit": "USD"}}},
+    {"Keys": ["SavingsPlanRecurringFee"], "Metrics": {"AmortizedCost": {"Amount": "0.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "100.80", "Unit": "USD"}}},
+    {"Keys": ["Support"], "Metrics": {"AmortizedCost": {"Amount": "51.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "51.00", "Unit": "USD"}}}
+  ], "Estimated": false},
+  {"TimePeriod": {"Start": "2026-04-18", "End": "2026-04-19"}, "Total": {}, "Groups": [
+    {"Keys": ["Usage"], "Metrics": {"AmortizedCost": {"Amount": "2148.29", "Unit": "USD"}, "UnblendedCost": {"Amount": "2148.29", "Unit": "USD"}}},
+    {"Keys": ["SavingsPlanCoveredUsage"], "Metrics": {"AmortizedCost": {"Amount": "100.80", "Unit": "USD"}, "UnblendedCost": {"Amount": "140.00", "Unit": "USD"}}},
+    {"Keys": ["SavingsPlanNegation"], "Metrics": {"AmortizedCost": {"Amount": "0.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "-140.00", "Unit": "USD"}}},
+    {"Keys": ["SavingsPlanRecurringFee"], "Metrics": {"AmortizedCost": {"Amount": "0.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "100.80", "Unit": "USD"}}},
+    {"Keys": ["Support"], "Metrics": {"AmortizedCost": {"Amount": "51.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "51.00", "Unit": "USD"}}}
+  ], "Estimated": false},
+  {"TimePeriod": {"Start": "2026-04-19", "End": "2026-04-20"}, "Total": {}, "Groups": [
+    {"Keys": ["Usage"], "Metrics": {"AmortizedCost": {"Amount": "2138.50", "Unit": "USD"}, "UnblendedCost": {"Amount": "2138.50", "Unit": "USD"}}},
+    {"Keys": ["SavingsPlanCoveredUsage"], "Metrics": {"AmortizedCost": {"Amount": "100.80", "Unit": "USD"}, "UnblendedCost": {"Amount": "140.00", "Unit": "USD"}}},
+    {"Keys": ["SavingsPlanNegation"], "Metrics": {"AmortizedCost": {"Amount": "0.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "-140.00", "Unit": "USD"}}},
+    {"Keys": ["SavingsPlanRecurringFee"], "Metrics": {"AmortizedCost": {"Amount": "0.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "100.80", "Unit": "USD"}}},
+    {"Keys": ["Support"], "Metrics": {"AmortizedCost": {"Amount": "51.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "51.00", "Unit": "USD"}}}
+  ], "Estimated": false},
+  {"TimePeriod": {"Start": "2026-04-20", "End": "2026-04-21"}, "Total": {}, "Groups": [
+    {"Keys": ["Usage"], "Metrics": {"AmortizedCost": {"Amount": "2148.36", "Unit": "USD"}, "UnblendedCost": {"Amount": "2148.36", "Unit": "USD"}}},
+    {"Keys": ["SavingsPlanCoveredUsage"], "Metrics": {"AmortizedCost": {"Amount": "100.80", "Unit": "USD"}, "UnblendedCost": {"Amount": "140.00", "Unit": "USD"}}},
+    {"Keys": ["SavingsPlanNegation"], "Metrics": {"AmortizedCost": {"Amount": "0.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "-140.00", "Unit": "USD"}}},
+    {"Keys": ["SavingsPlanRecurringFee"], "Metrics": {"AmortizedCost": {"Amount": "0.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "100.80", "Unit": "USD"}}},
+    {"Keys": ["Support"], "Metrics": {"AmortizedCost": {"Amount": "51.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "51.00", "Unit": "USD"}}}
+  ], "Estimated": false},
+  {"TimePeriod": {"Start": "2026-04-21", "End": "2026-04-22"}, "Total": {}, "Groups": [
+    {"Keys": ["Usage"], "Metrics": {"AmortizedCost": {"Amount": "2133.22", "Unit": "USD"}, "UnblendedCost": {"Amount": "2133.22", "Unit": "USD"}}},
+    {"Keys": ["SavingsPlanCoveredUsage"], "Metrics": {"AmortizedCost": {"Amount": "100.80", "Unit": "USD"}, "UnblendedCost": {"Amount": "140.00", "Unit": "USD"}}},
+    {"Keys": ["SavingsPlanNegation"], "Metrics": {"AmortizedCost": {"Amount": "0.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "-140.00", "Unit": "USD"}}},
+    {"Keys": ["SavingsPlanRecurringFee"], "Metrics": {"AmortizedCost": {"Amount": "24.66", "Unit": "USD"}, "UnblendedCost": {"Amount": "100.80", "Unit": "USD"}}},
+    {"Keys": ["SavingsPlanUpfrontFee"], "Metrics": {"AmortizedCost": {"Amount": "0.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "9000.00", "Unit": "USD"}}},
+    {"Keys": ["Support"], "Metrics": {"AmortizedCost": {"Amount": "51.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "51.00", "Unit": "USD"}}}
+  ], "Estimated": false},
+  {"TimePeriod": {"Start": "2026-04-22", "End": "2026-04-23"}, "Total": {}, "Groups": [
+    {"Keys": ["Usage"], "Metrics": {"AmortizedCost": {"Amount": "2139.65", "Unit": "USD"}, "UnblendedCost": {"Amount": "2139.65", "Unit": "USD"}}},
+    {"Keys": ["SavingsPlanCoveredUsage"], "Metrics": {"AmortizedCost": {"Amount": "100.80", "Unit": "USD"}, "UnblendedCost": {"Amount": "140.00", "Unit": "USD"}}},
+    {"Keys": ["SavingsPlanNegation"], "Metrics": {"AmortizedCost": {"Amount": "0.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "-140.00", "Unit": "USD"}}},
+    {"Keys": ["SavingsPlanRecurringFee"], "Metrics": {"AmortizedCost": {"Amount": "24.66", "Unit": "USD"}, "UnblendedCost": {"Amount": "100.80", "Unit": "USD"}}},
+    {"Keys": ["Support"], "Metrics": {"AmortizedCost": {"Amount": "51.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "51.00", "Unit": "USD"}}}
+  ], "Estimated": false},
+  {"TimePeriod": {"Start": "2026-04-23", "End": "2026-04-24"}, "Total": {}, "Groups": [
+    {"Keys": ["Usage"], "Metrics": {"AmortizedCost": {"Amount": "2139.44", "Unit": "USD"}, "UnblendedCost": {"Amount": "2139.44", "Unit": "USD"}}},
+    {"Keys": ["SavingsPlanCoveredUsage"], "Metrics": {"AmortizedCost": {"Amount": "100.80", "Unit": "USD"}, "UnblendedCost": {"Amount": "140.00", "Unit": "USD"}}},
+    {"Keys": ["SavingsPlanNegation"], "Metrics": {"AmortizedCost": {"Amount": "0.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "-140.00", "Unit": "USD"}}},
+    {"Keys": ["SavingsPlanRecurringFee"], "Metrics": {"AmortizedCost": {"Amount": "24.66", "Unit": "USD"}, "UnblendedCost": {"Amount": "100.80", "Unit": "USD"}}},
+    {"Keys": ["Support"], "Metrics": {"AmortizedCost": {"Amount": "51.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "51.00", "Unit": "USD"}}}
+  ], "Estimated": false},
+  {"TimePeriod": {"Start": "2026-04-24", "End": "2026-04-25"}, "Total": {}, "Groups": [
+    {"Keys": ["Usage"], "Metrics": {"AmortizedCost": {"Amount": "2141.01", "Unit": "USD"}, "UnblendedCost": {"Amount": "2141.01", "Unit": "USD"}}},
+    {"Keys": ["SavingsPlanCoveredUsage"], "Metrics": {"AmortizedCost": {"Amount": "100.80", "Unit": "USD"}, "UnblendedCost": {"Amount": "140.00", "Unit": "USD"}}},
+    {"Keys": ["SavingsPlanNegation"], "Metrics": {"AmortizedCost": {"Amount": "0.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "-140.00", "Unit": "USD"}}},
+    {"Keys": ["SavingsPlanRecurringFee"], "Metrics": {"AmortizedCost": {"Amount": "24.66", "Unit": "USD"}, "UnblendedCost": {"Amount": "100.80", "Unit": "USD"}}},
+    {"Keys": ["Support"], "Metrics": {"AmortizedCost": {"Amount": "51.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "51.00", "Unit": "USD"}}}
+  ], "Estimated": false},
+  {"TimePeriod": {"Start": "2026-04-25", "End": "2026-04-26"}, "Total": {}, "Groups": [
+    {"Keys": ["Usage"], "Metrics": {"AmortizedCost": {"Amount": "2134.64", "Unit": "USD"}, "UnblendedCost": {"Amount": "2134.64", "Unit": "USD"}}},
+    {"Keys": ["SavingsPlanCoveredUsage"], "Metrics": {"AmortizedCost": {"Amount": "100.80", "Unit": "USD"}, "UnblendedCost": {"Amount": "140.00", "Unit": "USD"}}},
+    {"Keys": ["SavingsPlanNegation"], "Metrics": {"AmortizedCost": {"Amount": "0.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "-140.00", "Unit": "USD"}}},
+    {"Keys": ["SavingsPlanRecurringFee"], "Metrics": {"AmortizedCost": {"Amount": "24.66", "Unit": "USD"}, "UnblendedCost": {"Amount": "100.80", "Unit": "USD"}}},
+    {"Keys": ["Support"], "Metrics": {"AmortizedCost": {"Amount": "51.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "51.00", "Unit": "USD"}}}
+  ], "Estimated": false},
+  {"TimePeriod": {"Start": "2026-04-26", "End": "2026-04-27"}, "Total": {}, "Groups": [
+    {"Keys": ["Usage"], "Metrics": {"AmortizedCost": {"Amount": "2486.99", "Unit": "USD"}, "UnblendedCost": {"Amount": "2486.99", "Unit": "USD"}}},
+    {"Keys": ["SavingsPlanCoveredUsage"], "Metrics": {"AmortizedCost": {"Amount": "100.80", "Unit": "USD"}, "UnblendedCost": {"Amount": "140.00", "Unit": "USD"}}},
+    {"Keys": ["SavingsPlanNegation"], "Metrics": {"AmortizedCost": {"Amount": "0.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "-140.00", "Unit": "USD"}}},
+    {"Keys": ["SavingsPlanRecurringFee"], "Metrics": {"AmortizedCost": {"Amount": "24.66", "Unit": "USD"}, "UnblendedCost": {"Amount": "100.80", "Unit": "USD"}}},
+    {"Keys": ["Support"], "Metrics": {"AmortizedCost": {"Amount": "51.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "51.00", "Unit": "USD"}}}
+  ], "Estimated": false},
+  {"TimePeriod": {"Start": "2026-04-27", "End": "2026-04-28"}, "Total": {}, "Groups": [
+    {"Keys": ["Usage"], "Metrics": {"AmortizedCost": {"Amount": "3555.93", "Unit": "USD"}, "UnblendedCost": {"Amount": "3555.93", "Unit": "USD"}}},
+    {"Keys": ["SavingsPlanCoveredUsage"], "Metrics": {"AmortizedCost": {"Amount": "100.80", "Unit": "USD"}, "UnblendedCost": {"Amount": "140.00", "Unit": "USD"}}},
+    {"Keys": ["SavingsPlanNegation"], "Metrics": {"AmortizedCost": {"Amount": "0.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "-140.00", "Unit": "USD"}}},
+    {"Keys": ["SavingsPlanRecurringFee"], "Metrics": {"AmortizedCost": {"Amount": "24.66", "Unit": "USD"}, "UnblendedCost": {"Amount": "100.80", "Unit": "USD"}}},
+    {"Keys": ["Support"], "Metrics": {"AmortizedCost": {"Amount": "51.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "51.00", "Unit": "USD"}}}
+  ], "Estimated": false},
+  {"TimePeriod": {"Start": "2026-04-28", "End": "2026-04-29"}, "Total": {}, "Groups": [
+    {"Keys": ["Usage"], "Metrics": {"AmortizedCost": {"Amount": "4080.93", "Unit": "USD"}, "UnblendedCost": {"Amount": "4080.93", "Unit": "USD"}}},
+    {"Keys": ["SavingsPlanCoveredUsage"], "Metrics": {"AmortizedCost": {"Amount": "100.80", "Unit": "USD"}, "UnblendedCost": {"Amount": "140.00", "Unit": "USD"}}},
+    {"Keys": ["SavingsPlanNegation"], "Metrics": {"AmortizedCost": {"Amount": "0.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "-140.00", "Unit": "USD"}}},
+    {"Keys": ["SavingsPlanRecurringFee"], "Metrics": {"AmortizedCost": {"Amount": "24.66", "Unit": "USD"}, "UnblendedCost": {"Amount": "100.80", "Unit": "USD"}}},
+    {"Keys": ["Support"], "Metrics": {"AmortizedCost": {"Amount": "51.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "51.00", "Unit": "USD"}}}
+  ], "Estimated": false},
+  {"TimePeriod": {"Start": "2026-04-29", "End": "2026-04-30"}, "Total": {}, "Groups": [
+    {"Keys": ["Usage"], "Metrics": {"AmortizedCost": {"Amount": "4503.36", "Unit": "USD"}, "UnblendedCost": {"Amount": "4503.36", "Unit": "USD"}}},
+    {"Keys": ["SavingsPlanCoveredUsage"], "Metrics": {"AmortizedCost": {"Amount": "100.80", "Unit": "USD"}, "UnblendedCost": {"Amount": "140.00", "Unit": "USD"}}},
+    {"Keys": ["SavingsPlanNegation"], "Metrics": {"AmortizedCost": {"Amount": "0.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "-140.00", "Unit": "USD"}}},
+    {"Keys": ["SavingsPlanRecurringFee"], "Metrics": {"AmortizedCost": {"Amount": "24.66", "Unit": "USD"}, "UnblendedCost": {"Amount": "100.80", "Unit": "USD"}}},
+    {"Keys": ["Support"], "Metrics": {"AmortizedCost": {"Amount": "51.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "51.00", "Unit": "USD"}}}
+  ], "Estimated": false},
+  {"TimePeriod": {"Start": "2026-04-30", "End": "2026-05-01"}, "Total": {}, "Groups": [
+    {"Keys": ["Usage"], "Metrics": {"AmortizedCost": {"Amount": "4497.34", "Unit": "USD"}, "UnblendedCost": {"Amount": "4497.34", "Unit": "USD"}}},
+    {"Keys": ["SavingsPlanCoveredUsage"], "Metrics": {"AmortizedCost": {"Amount": "100.80", "Unit": "USD"}, "UnblendedCost": {"Amount": "140.00", "Unit": "USD"}}},
+    {"Keys": ["SavingsPlanNegation"], "Metrics": {"AmortizedCost": {"Amount": "0.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "-140.00", "Unit": "USD"}}},
+    {"Keys": ["SavingsPlanRecurringFee"], "Metrics": {"AmortizedCost": {"Amount": "24.66", "Unit": "USD"}, "UnblendedCost": {"Amount": "100.80", "Unit": "USD"}}},
+    {"Keys": ["Support"], "Metrics": {"AmortizedCost": {"Amount": "51.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "51.00", "Unit": "USD"}}}
+  ], "Estimated": false},
+  {"TimePeriod": {"Start": "2026-05-01", "End": "2026-05-02"}, "Total": {}, "Groups": [
+    {"Keys": ["Usage"], "Metrics": {"AmortizedCost": {"Amount": "4492.61", "Unit": "USD"}, "UnblendedCost": {"Amount": "4492.61", "Unit": "USD"}}},
+    {"Keys": ["SavingsPlanCoveredUsage"], "Metrics": {"AmortizedCost": {"Amount": "100.80", "Unit": "USD"}, "UnblendedCost": {"Amount": "140.00", "Unit": "USD"}}},
+    {"Keys": ["SavingsPlanNegation"], "Metrics": {"AmortizedCost": {"Amount": "0.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "-140.00", "Unit": "USD"}}},
+    {"Keys": ["SavingsPlanRecurringFee"], "Metrics": {"AmortizedCost": {"Amount": "24.66", "Unit": "USD"}, "UnblendedCost": {"Amount": "100.80", "Unit": "USD"}}},
+    {"Keys": ["Support"], "Metrics": {"AmortizedCost": {"Amount": "51.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "51.00", "Unit": "USD"}}}
+  ], "Estimated": false},
+  {"TimePeriod": {"Start": "2026-05-02", "End": "2026-05-03"}, "Total": {}, "Groups": [
+    {"Keys": ["Usage"], "Metrics": {"AmortizedCost": {"Amount": "4484.80", "Unit": "USD"}, "UnblendedCost": {"Amount": "4484.80", "Unit": "USD"}}},
+    {"Keys": ["SavingsPlanCoveredUsage"], "Metrics": {"AmortizedCost": {"Amount": "100.80", "Unit": "USD"}, "UnblendedCost": {"Amount": "140.00", "Unit": "USD"}}},
+    {"Keys": ["SavingsPlanNegation"], "Metrics": {"AmortizedCost": {"Amount": "0.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "-140.00", "Unit": "USD"}}},
+    {"Keys": ["SavingsPlanRecurringFee"], "Metrics": {"AmortizedCost": {"Amount": "24.66", "Unit": "USD"}, "UnblendedCost": {"Amount": "100.80", "Unit": "USD"}}},
+    {"Keys": ["Support"], "Metrics": {"AmortizedCost": {"Amount": "51.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "51.00", "Unit": "USD"}}}
+  ], "Estimated": false},
+  {"TimePeriod": {"Start": "2026-05-03", "End": "2026-05-04"}, "Total": {}, "Groups": [
+    {"Keys": ["Usage"], "Metrics": {"AmortizedCost": {"Amount": "4493.73", "Unit": "USD"}, "UnblendedCost": {"Amount": "4493.73", "Unit": "USD"}}},
+    {"Keys": ["SavingsPlanCoveredUsage"], "Metrics": {"AmortizedCost": {"Amount": "100.80", "Unit": "USD"}, "UnblendedCost": {"Amount": "140.00", "Unit": "USD"}}},
+    {"Keys": ["SavingsPlanNegation"], "Metrics": {"AmortizedCost": {"Amount": "0.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "-140.00", "Unit": "USD"}}},
+    {"Keys": ["SavingsPlanRecurringFee"], "Metrics": {"AmortizedCost": {"Amount": "24.66", "Unit": "USD"}, "UnblendedCost": {"Amount": "100.80", "Unit": "USD"}}},
+    {"Keys": ["Support"], "Metrics": {"AmortizedCost": {"Amount": "51.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "51.00", "Unit": "USD"}}}
+  ], "Estimated": false},
+  {"TimePeriod": {"Start": "2026-05-04", "End": "2026-05-05"}, "Total": {}, "Groups": [
+    {"Keys": ["Usage"], "Metrics": {"AmortizedCost": {"Amount": "4184.63", "Unit": "USD"}, "UnblendedCost": {"Amount": "4184.63", "Unit": "USD"}}},
+    {"Keys": ["SavingsPlanCoveredUsage"], "Metrics": {"AmortizedCost": {"Amount": "93.74", "Unit": "USD"}, "UnblendedCost": {"Amount": "130.20", "Unit": "USD"}}},
+    {"Keys": ["SavingsPlanNegation"], "Metrics": {"AmortizedCost": {"Amount": "0.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "-130.20", "Unit": "USD"}}},
+    {"Keys": ["SavingsPlanRecurringFee"], "Metrics": {"AmortizedCost": {"Amount": "24.66", "Unit": "USD"}, "UnblendedCost": {"Amount": "100.80", "Unit": "USD"}}},
+    {"Keys": ["Support"], "Metrics": {"AmortizedCost": {"Amount": "51.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "51.00", "Unit": "USD"}}}
+  ], "Estimated": true},
+  {"TimePeriod": {"Start": "2026-05-05", "End": "2026-05-06"}, "Total": {}, "Groups": [
+    {"Keys": ["Usage"], "Metrics": {"AmortizedCost": {"Amount": "2781.71", "Unit": "USD"}, "UnblendedCost": {"Amount": "2781.71", "Unit": "USD"}}},
+    {"Keys": ["SavingsPlanCoveredUsage"], "Metrics": {"AmortizedCost": {"Amount": "62.50", "Unit": "USD"}, "UnblendedCost": {"Amount": "86.80", "Unit": "USD"}}},
+    {"Keys": ["SavingsPlanNegation"], "Metrics": {"AmortizedCost": {"Amount": "0.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "-86.80", "Unit": "USD"}}},
+    {"Keys": ["SavingsPlanRecurringFee"], "Metrics": {"AmortizedCost": {"Amount": "24.66", "Unit": "USD"}, "UnblendedCost": {"Amount": "100.80", "Unit": "USD"}}},
+    {"Keys": ["Support"], "Metrics": {"AmortizedCost": {"Amount": "51.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "51.00", "Unit": "USD"}}}
+  ], "Estimated": true}
+ ],
+ "DimensionValueAttributes": []
+}

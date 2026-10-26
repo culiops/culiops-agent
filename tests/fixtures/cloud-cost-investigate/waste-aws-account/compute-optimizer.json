@@ -6,7 +6,9 @@
       "instanceName": "prod-api-worker-01",
       "currentInstanceType": "m5.4xlarge",
       "finding": "OVER_PROVISIONED",
-      "findingReasonCodes": ["CPUUnderprovisioned"],
+      "findingReasonCodes": [
+        "CPUUnderprovisioned"
+      ],
       "utilizationMetrics": [
         {
           "name": "CPU_UTILIZATION_PERCENTAGE",
@@ -53,9 +55,11 @@
       "instanceArn": "arn:aws:ec2:us-east-1:123456789012:instance/i-0bbbb3333cccc4444",
       "accountId": "123456789012",
       "instanceName": "prod-api-worker-02",
-      "currentInstanceType": "m5.2xlarge",
+      "currentInstanceType": "c5.2xlarge",
       "finding": "OVER_PROVISIONED",
-      "findingReasonCodes": ["CPUUnderprovisioned"],
+      "findingReasonCodes": [
+        "CPUUnderprovisioned"
+      ],
       "utilizationMetrics": [
         {
           "name": "CPU_UTILIZATION_PERCENTAGE",
@@ -71,7 +75,7 @@
       "lookBackPeriodInDays": 14,
       "recommendationOptions": [
         {
-          "instanceType": "m5.xlarge",
+          "instanceType": "c5.xlarge",
           "projectedUtilizationMetrics": [
             {
               "name": "CPU_UTILIZATION_PERCENTAGE",
@@ -84,7 +88,7 @@
             "savingsOpportunityPercentage": 50.0,
             "estimatedMonthlySavings": {
               "currency": "USD",
-              "value": 140.0
+              "value": 124.0
             }
           },
           "performanceRisk": 1
@@ -99,12 +103,14 @@
       "lastRefreshTimestamp": "2026-05-07T10:00:00.000Z"
     },
     {
-      "instanceArn": "arn:aws:ec2:us-east-1:123456789012:instance/i-0cccc5555dddd6666",
+      "instanceArn": "arn:aws:ec2:eu-west-1:123456789012:instance/i-0cccc5555dddd6666",
       "accountId": "123456789012",
       "instanceName": "prod-batch-runner-01",
       "currentInstanceType": "m5.xlarge",
       "finding": "OVER_PROVISIONED",
-      "findingReasonCodes": ["CPUUnderprovisioned"],
+      "findingReasonCodes": [
+        "CPUUnderprovisioned"
+      ],
       "utilizationMetrics": [
         {
           "name": "CPU_UTILIZATION_PERCENTAGE",
@@ -133,7 +139,7 @@
             "savingsOpportunityPercentage": 50.0,
             "estimatedMonthlySavings": {
               "currency": "USD",
-              "value": 70.0
+              "value": 78.0
             }
           },
           "performanceRisk": 1
@@ -141,7 +147,7 @@
       ],
       "recommendationSources": [
         {
-          "recommendationSourceArn": "arn:aws:ec2:us-east-1:123456789012:instance/i-0cccc5555dddd6666",
+          "recommendationSourceArn": "arn:aws:ec2:eu-west-1:123456789012:instance/i-0cccc5555dddd6666",
           "recommendationSourceType": "Ec2Instance"
         }
       ],
@@ -160,7 +166,9 @@
         "volumeBurstThroughput": 125
       },
       "finding": "OVER_PROVISIONED",
-      "findingReasonCodes": ["VolumeUnderprovisioned"],
+      "findingReasonCodes": [
+        "VolumeUnderprovisioned"
+      ],
       "utilizationMetrics": [
         {
           "name": "VOLUME_BYTES_USED",
@@ -183,13 +191,41 @@
             "savingsOpportunityPercentage": 75.0,
             "estimatedMonthlySavings": {
               "currency": "USD",
-              "value": 48.0
+              "value": 60.0
             }
           },
           "performanceRisk": 0
         }
       ],
-      "lastRefreshTimestamp": "2026-05-07T10:00:00.000Z"
+      "lastRefreshTimestamp": "2026-05-07T10:00:00.000Z",
+      "_note": "vol-0xxxx1234abcd5678 is ALSO in unattached-volumes.json (detached 2026-05-05, 3 days ago). Compute Optimizer's 14-day lookback ended 2026-05-07 and still saw the volume attached until 05-05, so it produced a resize recommendation. The resize is the cheaper alternative to deleting, not a reason to hide the delete candidate: the skill keeps ONE row (delete) and notes the resize as an alternative."
     }
-  ]
+  ],
+  "rdsRecommendations": [
+    {
+      "resourceArn": "arn:aws:rds:us-east-1:123456789012:db:acme-prod-aurora-writer",
+      "instanceFinding": "Optimized",
+      "instanceFindingReasonCodes": [
+        "CPUOverprovisioned"
+      ],
+      "currentDBInstanceClass": "db.r6g.4xlarge",
+      "engine": "aurora-postgresql",
+      "utilizationMetrics": [
+        {
+          "name": "CPU",
+          "statistic": "AVERAGE",
+          "value": 12.1
+        },
+        {
+          "name": "FreeMemory",
+          "statistic": "MINIMUM",
+          "value": 1.6
+        }
+      ],
+      "lookbackPeriodInDays": 14,
+      "lastRefreshTimestamp": "2026-05-07T10:00:00.000Z",
+      "_note": "Compute Optimizer reports Optimized (memory-bound) although average CPU is low; this is the case the raw-CPU instinct gets wrong."
+    }
+  ],
+  "_note": "Combined fixture of three CO calls, each run in both sweep regions: get-ec2-instance-recommendations (queries 5), get-ebs-volume-recommendations (6), get-rds-database-recommendations (7). Region = the region in each ARN. Savings are priced at on-demand list price (savings-estimation mode with discounts is not enabled), based on a 14-day lookback: treat as rate basis list-price, confidence low until the 30d hourly drill-down and commitment coverage are known."
 }

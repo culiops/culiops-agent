@@ -1,0 +1,80 @@
+{
+  "_note": "aws ce get-cost-and-usage --time-period Start=2026-04-01,End=2026-05-01 --granularity MONTHLY --metrics AmortizedCost UsageQuantity --filter '{\"And\":[{\"Dimensions\":{\"Key\":\"RECORD_TYPE\",\"Values\":[\"Usage\",\"DiscountedUsage\",\"SavingsPlanCoveredUsage\"]}},{\"Dimensions\":{\"Key\":\"USAGE_TYPE\",\"Values\":[\"EBS:VolumeUsage.gp3\",\"EUW1-EBS:VolumeUsage.gp3\",\"EBS:SnapshotUsage\",\"EUW1-EBS:SnapshotUsage\"]}}]}' --group-by Type=DIMENSION,Key=REGION Type=DIMENSION,Key=USAGE_TYPE. No commitment applies to EBS, so AmortizedCost equals the unblended charge here. Bill-derived rate = AmortizedCost / UsageQuantity per region: gp3 us-east-1 3300.00/41250 = 0.0800, eu-west-1 1980.00/22500 = 0.0880 USD per GB-Mo. Snapshot rows are shown for completeness: per-snapshot cost comes from the resource-level call (snapshot-cost-by-resource.json), never from VolumeSize x this rate.",
+  "ResultsByTime": [
+    {
+      "TimePeriod": {
+        "Start": "2026-04-01",
+        "End": "2026-05-01"
+      },
+      "Total": {},
+      "Groups": [
+        {
+          "Keys": [
+            "us-east-1",
+            "EBS:VolumeUsage.gp3"
+          ],
+          "Metrics": {
+            "AmortizedCost": {
+              "Amount": "3300.00",
+              "Unit": "USD"
+            },
+            "UsageQuantity": {
+              "Amount": "41250",
+              "Unit": "GB-Mo"
+            }
+          }
+        },
+        {
+          "Keys": [
+            "eu-west-1",
+            "EUW1-EBS:VolumeUsage.gp3"
+          ],
+          "Metrics": {
+            "AmortizedCost": {
+              "Amount": "1980.00",
+              "Unit": "USD"
+            },
+            "UsageQuantity": {
+              "Amount": "22500",
+              "Unit": "GB-Mo"
+            }
+          }
+        },
+        {
+          "Keys": [
+            "us-east-1",
+            "EBS:SnapshotUsage"
+          ],
+          "Metrics": {
+            "AmortizedCost": {
+              "Amount": "900.00",
+              "Unit": "USD"
+            },
+            "UsageQuantity": {
+              "Amount": "18000",
+              "Unit": "GB-Mo"
+            }
+          }
+        },
+        {
+          "Keys": [
+            "eu-west-1",
+            "EUW1-EBS:SnapshotUsage"
+          ],
+          "Metrics": {
+            "AmortizedCost": {
+              "Amount": "440.00",
+              "Unit": "USD"
+            },
+            "UsageQuantity": {
+              "Amount": "8000",
+              "Unit": "GB-Mo"
+            }
+          }
+        }
+      ],
+      "Estimated": false
+    }
+  ],
+  "DimensionValueAttributes": []
+}

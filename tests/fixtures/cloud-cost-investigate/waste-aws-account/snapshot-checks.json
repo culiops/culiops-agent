@@ -1,0 +1,59 @@
+{
+  "_note": "Inputs for the three orphan checks. (a) liveVolumeIds = aws ec2 describe-volumes --query 'Volumes[].VolumeId' (ALL volume states, per region): a snapshot whose VolumeId is in this list has a live source volume. (b) amiSnapshotRefs = aws ec2 describe-images --owners self --query 'Images[].BlockDeviceMappings[].Ebs.SnapshotId': a snapshot in this list backs an AMI. (c) managed-by-policy is read from each snapshot's own Tags/Description in snapshots-older-than-30d.json: tag aws:backup:source-resource or Description 'This snapshot is created by the AWS Backup service' (AWS Backup); tag dlm:managed=true or Description starting 'Created for policy:' (DLM). A snapshot is an ORPHAN CANDIDATE only if it fails all three: source volume gone, no AMI reference, not policy-managed.",
+  "liveVolumeIds": {
+    "us-east-1": [
+      "vol-4b9cad4a882dc8624",
+      "vol-33a5f3cc579281f55",
+      "vol-d11bf988d7adbbddb",
+      "vol-f321daab36d641b3e",
+      "vol-68e6cf527fe969325",
+      "vol-427e65b980c9d1e86",
+      "vol-f6714a819af410446",
+      "vol-9bb6120ddf2a07860",
+      "vol-16536fd53a7d2b818",
+      "vol-04e36f6f6920a5f1c",
+      "vol-d144b3b7e1ef88964",
+      "vol-b98b66c1d0a27daa1",
+      "vol-f459e29d1c3c88896",
+      "vol-0317c62d132baac67",
+      "vol-c27288c081795273f",
+      "vol-860c0f246bc042a94",
+      "vol-3d69fcc6a658fa525",
+      "vol-c807447715e5cf09f",
+      "vol-111c69801336d5d53",
+      "vol-9d9573cfa2c852073",
+      "vol-0xxxx1234abcd5678",
+      "vol-0aaaa0001bbbb0001",
+      "vol-0aaaa0002bbbb0002",
+      "vol-0aaaa0003bbbb0003",
+      "vol-0aaaa0004bbbb0004",
+      "vol-0aaaa0005bbbb0005",
+      "vol-0aaaa0006bbbb0006",
+      "vol-0aaaa000bbbbb000b"
+    ],
+    "eu-west-1": [
+      "vol-7c8f1a6fcda3102c3",
+      "vol-43507af347c02e1ae",
+      "vol-5dc635e9c40d224e5",
+      "vol-15ad51fbe6ca49b84",
+      "vol-a1f4f70491ecd2a04",
+      "vol-8cc8d2396443055ad",
+      "vol-fafb7296811c48da9",
+      "vol-16cdfd5025b687e7a",
+      "vol-0aaaa0007bbbb0007",
+      "vol-0aaaa0008bbbb0008",
+      "vol-0aaaa0009bbbb0009",
+      "vol-0aaaa000abbbb000a"
+    ]
+  },
+  "amiSnapshotRefs": {
+    "us-east-1": [
+      "snap-1b4bd5ce9db63edc3",
+      "snap-8d47c46fb424eaac5",
+      "snap-e210eaffa67df3926"
+    ],
+    "eu-west-1": [
+      "snap-36e36e8e85c356867"
+    ]
+  }
+}
