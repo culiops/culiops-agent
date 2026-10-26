@@ -31,7 +31,7 @@ No service-discovery catalog (`none — proceeding without catalog`). Delivery m
 ### Phase 1: Scale orders-api
 - Files changed: `envs/prod.tfvars`
 - Plan output summary: 0 to add, 1 to change, 0 to destroy
-- Plan hash: `sha256:5c6d7e…`
+- Plan hash: `sha256:7a1c9e…`
 - Pre-flight verdict: GREEN
 - Execution: PR https://github.com/acme/orders-infra/pull/495 created; pipeline applies on merge
 - Verification: pending — pipeline applies after merge

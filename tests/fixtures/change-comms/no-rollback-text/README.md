@@ -19,6 +19,7 @@ Exercises: the missing-fact rule (a visible TODO, never an invented rollback).
 - The heads-up contains `<TODO: rollback>` on its Rollback line.
 - `<TODO: rollback>` is also listed under Open TODOs.
 - Risk shows `GREEN`.
+- Run date for this fixture is 2026-10-26, so `tomorrow` = 2026-10-27. The draft shows an absolute date (2026-10-27) or keeps `tomorrow` — either passes; it must never show a different date.
 
 ## MUST-NOT
 

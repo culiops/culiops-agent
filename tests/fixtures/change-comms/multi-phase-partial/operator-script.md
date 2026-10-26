@@ -4,7 +4,7 @@ Message types requested: heads-up, result, ticket-close. Platform: Google Chat (
 
 1. `change-comms: heads-up, result and ticket-close for the orders-api Postgres engine upgrade.`
 2. `Yes, that record.` (confirms `orders-api-upgrade-postgres-engine-version-20261027-1600.md`)
-3. `2026-10-28 22:00 ICT, 2h` (window, covers all three phases; timezone given up front)
+3. `2026-10-28 22:00 ICT, 2h` (window for phase 2, the only pending phase; timezone given up front)
 4. `~5-10 min of downtime during the engine upgrade restart` (impact)
 5. `Google Chat` (platform)
 6. `Accept the heads-up.`

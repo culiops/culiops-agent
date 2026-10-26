@@ -20,7 +20,7 @@ No service-discovery catalog (`none — proceeding without catalog`). Delivery m
 
 **Phase 1 of 1: Resize orders-db**
 - Files: `envs/prod.tfvars`, `rds.tf`
-- Resources affected: 1 to replace (`aws_db_instance.orders`) — expected 1 to change
+- Resources affected: 1 to replace (`aws_db_instance.orders`)
 - Rollback path: not applicable, nothing was applied
 
 **Execution path:** PR
@@ -30,7 +30,7 @@ No service-discovery catalog (`none — proceeding without catalog`). Delivery m
 ### Phase 1: Resize orders-db
 - Files changed: `envs/prod.tfvars`, `rds.tf`
 - Plan output summary: 1 to add, 0 to change, 1 to destroy
-- Plan hash: `sha256:9e8d7c…`
+- Plan hash: `sha256:7a1c9e…`
 - Pre-flight verdict: RED — HARD BLOCK (replace of orders-db)
 - Execution: aborted at GATE — pre-flight RED (replace of orders-db)
 - Verification: n/a — nothing applied

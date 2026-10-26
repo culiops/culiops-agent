@@ -16,6 +16,7 @@ None. `.culiops/.gitkeep` only.
 - Every row of the fact table is labelled `operator-supplied`.
 - A heads-up draft is produced.
 - Facts with no source (for example the PR link, or the pre-flight risk word) appear as visible `<TODO: …>` placeholders, not invented values.
+- Run date for this fixture is 2026-10-26, so `tomorrow` = 2026-10-27. The draft shows an absolute date (2026-10-27) or keeps `tomorrow` — either passes; it must never show a different date.
 
 ## MUST-NOT
 

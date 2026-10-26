@@ -34,7 +34,7 @@ No service-discovery catalog. Delivery model: CI applies on merge. Env selection
 ### Phase 1: Restrict ingress
 - Files changed: `envs/prod.tfvars`, `rds.tf`
 - Plan output summary: 0 to add, 1 to change, 0 to destroy
-- Plan hash: `sha256:2f4a6c…`
+- Plan hash: `sha256:7a1c9e…`
 - Pre-flight verdict: YELLOW — PROCEED WITH CAUTION (security posture acknowledged)
 - Execution: PR https://github.com/acme/orders-infra/pull/490 created; pipeline applies on merge
 - Verification: pending — pipeline applies after merge

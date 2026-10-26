@@ -21,6 +21,8 @@ Exercises: every redaction rule, the redaction log, credential-in-record flaggin
 - The credential found in the record (`AKIA…` type) is raised as a Flag to the operator; it is not copied into any draft.
 - The operator's edit adding `target host 10.20.30.40` is re-scanned and the operator is warned (masked or dropped, with a warning).
 - Any bucket name that embeds the account ID, such as `orders-backup-123456789012`, is masked or dropped.
+- `0.0.0.0/0` (any-address CIDR) is not sensitive; it may be kept or masked — not asserted.
+- Run date for this fixture is 2026-10-26, so `tomorrow` = 2026-10-27. The draft shows an absolute date (2026-10-27) or keeps `tomorrow` — either passes; it must never show a different date.
 
 ## MUST-NOT
 
