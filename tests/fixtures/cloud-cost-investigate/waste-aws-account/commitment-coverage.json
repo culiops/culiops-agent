@@ -1,0 +1,120 @@
+{
+  "_note": "Query 13: aws savingsplans describe-savings-plans + aws ec2 describe-reserved-instances (both regions). Query 14: aws ce get-savings-plans-coverage --time-period Start=2026-04-01,End=2026-05-01 --granularity MONTHLY --filter '{\"Dimensions\":{\"Key\":\"SERVICE\",\"Values\":[\"Amazon Elastic Compute Cloud - Compute\"]}}' --group-by Type=DIMENSION,Key=REGION Type=DIMENSION,Key=INSTANCE_FAMILY, and aws ce get-reservation-coverage for the same window. Coverage amounts are on-demand equivalent (the plan itself bills its $4.20/hr commitment = $3,024.00 for 720 h). EC2 Instance Savings Plans are bound to one family in one region: the m5 plan covers m5 in us-east-1 only, so the eu-west-1 m5.xlarge is NOT covered.",
+  "describe-savings-plans": {
+    "savingsPlans": [
+      {
+        "savingsPlanId": "7f3a1c2e-0b4d-4a6e-9f10-2d8e5c7b9a41",
+        "savingsPlanArn": "arn:aws:savingsplans::123456789012:savingsplan/7f3a1c2e-0b4d-4a6e-9f10-2d8e5c7b9a41",
+        "savingsPlanType": "EC2Instance",
+        "state": "active",
+        "start": "2026-02-15T00:00:00Z",
+        "end": "2027-02-14T23:59:59Z",
+        "region": "us-east-1",
+        "ec2InstanceFamily": "m5",
+        "paymentOption": "No Upfront",
+        "termDurationInSeconds": 31536000,
+        "commitment": "4.20000000",
+        "currency": "USD",
+        "productTypes": [
+          "EC2"
+        ]
+      }
+    ]
+  },
+  "describe-reserved-instances": {
+    "us-east-1": {
+      "ReservedInstances": []
+    },
+    "eu-west-1": {
+      "ReservedInstances": []
+    }
+  },
+  "amortizedView": {
+    "_note": "How the covered m5 us-east-1 usage reads in the skill's cost view (usage record types at AmortizedCost). Derived from query 13 + 14, no extra call: a fully used plan costs its commitment, $4.20/hr x 720 h = $3,024.00, and Savings Plans coverage reports the same usage at its on-demand value, $4,200.00. Resizing one covered instance therefore frees about $0 until the plan ends: the $3,024.00 commitment is paid either way, and Compute Optimizer's $280.00 is an on-demand list-price figure that does not exist on this bill.",
+    "m5_us-east-1": {
+      "SavingsPlanCoveredUsage_AmortizedCost": "3024.00",
+      "SavingsPlanCoveredUsage_UnblendedCost": "4200.00",
+      "coverage_onDemandEquivalent": "4200.00",
+      "unused_commitment_SavingsPlanRecurringFee_AmortizedCost": "0.00",
+      "commitment": "4.20/hr",
+      "term_end": "2027-02-14"
+    }
+  },
+  "get-savings-plans-coverage": {
+    "SavingsPlansCoverages": [
+      {
+        "Attributes": {
+          "REGION": "us-east-1",
+          "INSTANCE_FAMILY": "m5"
+        },
+        "Coverage": {
+          "SpendCoveredBySavingsPlans": "4200.00",
+          "OnDemandCost": "0.00",
+          "TotalCost": "4200.00",
+          "CoveragePercentage": "100.0"
+        },
+        "TimePeriod": {
+          "Start": "2026-04-01",
+          "End": "2026-05-01"
+        }
+      },
+      {
+        "Attributes": {
+          "REGION": "us-east-1",
+          "INSTANCE_FAMILY": "c5"
+        },
+        "Coverage": {
+          "SpendCoveredBySavingsPlans": "0.00",
+          "OnDemandCost": "2640.00",
+          "TotalCost": "2640.00",
+          "CoveragePercentage": "0.0"
+        },
+        "TimePeriod": {
+          "Start": "2026-04-01",
+          "End": "2026-05-01"
+        }
+      },
+      {
+        "Attributes": {
+          "REGION": "eu-west-1",
+          "INSTANCE_FAMILY": "m5"
+        },
+        "Coverage": {
+          "SpendCoveredBySavingsPlans": "0.00",
+          "OnDemandCost": "1860.00",
+          "TotalCost": "1860.00",
+          "CoveragePercentage": "0.0"
+        },
+        "TimePeriod": {
+          "Start": "2026-04-01",
+          "End": "2026-05-01"
+        }
+      }
+    ],
+    "Total": {
+      "SpendCoveredBySavingsPlans": "4200.00",
+      "OnDemandCost": "4500.00",
+      "TotalCost": "8700.00",
+      "CoveragePercentage": "48.3"
+    }
+  },
+  "get-reservation-coverage": {
+    "CoveragesByTime": [
+      {
+        "TimePeriod": {
+          "Start": "2026-04-01",
+          "End": "2026-05-01"
+        },
+        "Total": {
+          "CoverageHours": {
+            "OnDemandHours": "0",
+            "ReservedHours": "0",
+            "TotalRunningHours": "0",
+            "CoverageHoursPercentage": "0"
+          }
+        }
+      }
+    ],
+    "_note": "No active RIs, so RI coverage is 0% for every family."
+  }
+}

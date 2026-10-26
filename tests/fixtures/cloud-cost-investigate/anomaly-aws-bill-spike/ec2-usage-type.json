@@ -1,0 +1,501 @@
+{
+ "_note": "Query 10: aws ce get-cost-and-usage --time-period Start=2026-03-05,End=2026-05-06 --granularity DAILY --metrics AmortizedCost UnblendedCost UsageQuantity --filter '{\"And\":[{\"Dimensions\":{\"Key\":\"SERVICE\",\"Values\":[\"Amazon Elastic Compute Cloud - Compute\"]}},{\"Dimensions\":{\"Key\":\"RECORD_TYPE\",\"Values\":[\"Usage\",\"DiscountedUsage\",\"SavingsPlanCoveredUsage\"]}}]}' --group-by Type=DIMENSION,Key=USAGE_TYPE Type=DIMENSION,Key=RECORD_TYPE. Drill into the top-delta service; grouping by RECORD_TYPE as well shows HOW each usage type is billed. The rows sum to the EC2 line of billing-data.json for every day, in both metrics. Read the r5 rows: until 2026-04-15 r5.4xlarge is 496.03 h of SavingsPlanCoveredUsage (amortized 360.00 = the plan's effective cost; unblended 500.00 = on-demand value) plus 39.68 h of on-demand Usage (40.00); from 2026-04-16 the same 535.71 h is all on-demand Usage (540.00). Hours are unchanged: only the rate changed. Bill-derived p3 rate = Usage cost / hours = 12.24 USD per instance-hour.",
+ "ResultsByTime": [
+  {"TimePeriod": {"Start": "2026-03-05", "End": "2026-03-06"}, "Total": {}, "Groups": [
+    {"Keys": ["BoxUsage:r5.4xlarge", "SavingsPlanCoveredUsage"], "Metrics": {"AmortizedCost": {"Amount": "360.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "500.00", "Unit": "USD"}, "UsageQuantity": {"Amount": "496.03", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:r5.4xlarge", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "40.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "40.00", "Unit": "USD"}, "UsageQuantity": {"Amount": "39.68", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:m5.2xlarge", "SavingsPlanCoveredUsage"], "Metrics": {"AmortizedCost": {"Amount": "100.80", "Unit": "USD"}, "UnblendedCost": {"Amount": "140.00", "Unit": "USD"}, "UsageQuantity": {"Amount": "364.58", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:c5.2xlarge", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "645.57", "Unit": "USD"}, "UnblendedCost": {"Amount": "645.57", "Unit": "USD"}, "UsageQuantity": {"Amount": "1898.74", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:m6i.xlarge", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "409.17", "Unit": "USD"}, "UnblendedCost": {"Amount": "409.17", "Unit": "USD"}, "UsageQuantity": {"Amount": "2131.09", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:t3.large", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "276.83", "Unit": "USD"}, "UnblendedCost": {"Amount": "276.83", "Unit": "USD"}, "UsageQuantity": {"Amount": "3327.28", "Unit": "Hrs"}}}
+  ], "Estimated": false},
+  {"TimePeriod": {"Start": "2026-03-06", "End": "2026-03-07"}, "Total": {}, "Groups": [
+    {"Keys": ["BoxUsage:r5.4xlarge", "SavingsPlanCoveredUsage"], "Metrics": {"AmortizedCost": {"Amount": "360.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "500.00", "Unit": "USD"}, "UsageQuantity": {"Amount": "496.03", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:r5.4xlarge", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "40.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "40.00", "Unit": "USD"}, "UsageQuantity": {"Amount": "39.68", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:m5.2xlarge", "SavingsPlanCoveredUsage"], "Metrics": {"AmortizedCost": {"Amount": "100.80", "Unit": "USD"}, "UnblendedCost": {"Amount": "140.00", "Unit": "USD"}, "UsageQuantity": {"Amount": "364.58", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:c5.2xlarge", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "644.82", "Unit": "USD"}, "UnblendedCost": {"Amount": "644.82", "Unit": "USD"}, "UsageQuantity": {"Amount": "1896.53", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:m6i.xlarge", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "406.63", "Unit": "USD"}, "UnblendedCost": {"Amount": "406.63", "Unit": "USD"}, "UsageQuantity": {"Amount": "2117.86", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:t3.large", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "280.50", "Unit": "USD"}, "UnblendedCost": {"Amount": "280.50", "Unit": "USD"}, "UsageQuantity": {"Amount": "3371.39", "Unit": "Hrs"}}}
+  ], "Estimated": false},
+  {"TimePeriod": {"Start": "2026-03-07", "End": "2026-03-08"}, "Total": {}, "Groups": [
+    {"Keys": ["BoxUsage:r5.4xlarge", "SavingsPlanCoveredUsage"], "Metrics": {"AmortizedCost": {"Amount": "360.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "500.00", "Unit": "USD"}, "UsageQuantity": {"Amount": "496.03", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:r5.4xlarge", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "40.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "40.00", "Unit": "USD"}, "UsageQuantity": {"Amount": "39.68", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:m5.2xlarge", "SavingsPlanCoveredUsage"], "Metrics": {"AmortizedCost": {"Amount": "100.80", "Unit": "USD"}, "UnblendedCost": {"Amount": "140.00", "Unit": "USD"}, "UsageQuantity": {"Amount": "364.58", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:c5.2xlarge", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "637.49", "Unit": "USD"}, "UnblendedCost": {"Amount": "637.49", "Unit": "USD"}, "UsageQuantity": {"Amount": "1874.97", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:m6i.xlarge", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "406.77", "Unit": "USD"}, "UnblendedCost": {"Amount": "406.77", "Unit": "USD"}, "UsageQuantity": {"Amount": "2118.59", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:t3.large", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "278.24", "Unit": "USD"}, "UnblendedCost": {"Amount": "278.24", "Unit": "USD"}, "UsageQuantity": {"Amount": "3344.23", "Unit": "Hrs"}}}
+  ], "Estimated": false},
+  {"TimePeriod": {"Start": "2026-03-08", "End": "2026-03-09"}, "Total": {}, "Groups": [
+    {"Keys": ["BoxUsage:r5.4xlarge", "SavingsPlanCoveredUsage"], "Metrics": {"AmortizedCost": {"Amount": "360.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "500.00", "Unit": "USD"}, "UsageQuantity": {"Amount": "496.03", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:r5.4xlarge", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "40.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "40.00", "Unit": "USD"}, "UsageQuantity": {"Amount": "39.68", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:m5.2xlarge", "SavingsPlanCoveredUsage"], "Metrics": {"AmortizedCost": {"Amount": "100.80", "Unit": "USD"}, "UnblendedCost": {"Amount": "140.00", "Unit": "USD"}, "UsageQuantity": {"Amount": "364.58", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:c5.2xlarge", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "646.34", "Unit": "USD"}, "UnblendedCost": {"Amount": "646.34", "Unit": "USD"}, "UsageQuantity": {"Amount": "1901.00", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:m6i.xlarge", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "408.39", "Unit": "USD"}, "UnblendedCost": {"Amount": "408.39", "Unit": "USD"}, "UsageQuantity": {"Amount": "2127.03", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:t3.large", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "278.78", "Unit": "USD"}, "UnblendedCost": {"Amount": "278.78", "Unit": "USD"}, "UsageQuantity": {"Amount": "3350.72", "Unit": "Hrs"}}}
+  ], "Estimated": false},
+  {"TimePeriod": {"Start": "2026-03-09", "End": "2026-03-10"}, "Total": {}, "Groups": [
+    {"Keys": ["BoxUsage:r5.4xlarge", "SavingsPlanCoveredUsage"], "Metrics": {"AmortizedCost": {"Amount": "360.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "500.00", "Unit": "USD"}, "UsageQuantity": {"Amount": "496.03", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:r5.4xlarge", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "40.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "40.00", "Unit": "USD"}, "UsageQuantity": {"Amount": "39.68", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:m5.2xlarge", "SavingsPlanCoveredUsage"], "Metrics": {"AmortizedCost": {"Amount": "100.80", "Unit": "USD"}, "UnblendedCost": {"Amount": "140.00", "Unit": "USD"}, "UsageQuantity": {"Amount": "364.58", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:c5.2xlarge", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "637.25", "Unit": "USD"}, "UnblendedCost": {"Amount": "637.25", "Unit": "USD"}, "UsageQuantity": {"Amount": "1874.26", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:m6i.xlarge", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "408.10", "Unit": "USD"}, "UnblendedCost": {"Amount": "408.10", "Unit": "USD"}, "UsageQuantity": {"Amount": "2125.52", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:t3.large", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "277.77", "Unit": "USD"}, "UnblendedCost": {"Amount": "277.77", "Unit": "USD"}, "UsageQuantity": {"Amount": "3338.58", "Unit": "Hrs"}}}
+  ], "Estimated": false},
+  {"TimePeriod": {"Start": "2026-03-10", "End": "2026-03-11"}, "Total": {}, "Groups": [
+    {"Keys": ["BoxUsage:r5.4xlarge", "SavingsPlanCoveredUsage"], "Metrics": {"AmortizedCost": {"Amount": "360.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "500.00", "Unit": "USD"}, "UsageQuantity": {"Amount": "496.03", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:r5.4xlarge", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "40.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "40.00", "Unit": "USD"}, "UsageQuantity": {"Amount": "39.68", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:m5.2xlarge", "SavingsPlanCoveredUsage"], "Metrics": {"AmortizedCost": {"Amount": "100.80", "Unit": "USD"}, "UnblendedCost": {"Amount": "140.00", "Unit": "USD"}, "UsageQuantity": {"Amount": "364.58", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:c5.2xlarge", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "643.43", "Unit": "USD"}, "UnblendedCost": {"Amount": "643.43", "Unit": "USD"}, "UsageQuantity": {"Amount": "1892.44", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:m6i.xlarge", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "409.79", "Unit": "USD"}, "UnblendedCost": {"Amount": "409.79", "Unit": "USD"}, "UsageQuantity": {"Amount": "2134.32", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:t3.large", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "277.76", "Unit": "USD"}, "UnblendedCost": {"Amount": "277.76", "Unit": "USD"}, "UsageQuantity": {"Amount": "3338.46", "Unit": "Hrs"}}}
+  ], "Estimated": false},
+  {"TimePeriod": {"Start": "2026-03-11", "End": "2026-03-12"}, "Total": {}, "Groups": [
+    {"Keys": ["BoxUsage:r5.4xlarge", "SavingsPlanCoveredUsage"], "Metrics": {"AmortizedCost": {"Amount": "360.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "500.00", "Unit": "USD"}, "UsageQuantity": {"Amount": "496.03", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:r5.4xlarge", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "40.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "40.00", "Unit": "USD"}, "UsageQuantity": {"Amount": "39.68", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:m5.2xlarge", "SavingsPlanCoveredUsage"], "Metrics": {"AmortizedCost": {"Amount": "100.80", "Unit": "USD"}, "UnblendedCost": {"Amount": "140.00", "Unit": "USD"}, "UsageQuantity": {"Amount": "364.58", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:c5.2xlarge", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "645.88", "Unit": "USD"}, "UnblendedCost": {"Amount": "645.88", "Unit": "USD"}, "UsageQuantity": {"Amount": "1899.65", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:m6i.xlarge", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "412.24", "Unit": "USD"}, "UnblendedCost": {"Amount": "412.24", "Unit": "USD"}, "UsageQuantity": {"Amount": "2147.08", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:t3.large", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "282.20", "Unit": "USD"}, "UnblendedCost": {"Amount": "282.20", "Unit": "USD"}, "UsageQuantity": {"Amount": "3391.83", "Unit": "Hrs"}}}
+  ], "Estimated": false},
+  {"TimePeriod": {"Start": "2026-03-12", "End": "2026-03-13"}, "Total": {}, "Groups": [
+    {"Keys": ["BoxUsage:p3.8xlarge", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "171.36", "Unit": "USD"}, "UnblendedCost": {"Amount": "171.36", "Unit": "USD"}, "UsageQuantity": {"Amount": "14.00", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:r5.4xlarge", "SavingsPlanCoveredUsage"], "Metrics": {"AmortizedCost": {"Amount": "360.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "500.00", "Unit": "USD"}, "UsageQuantity": {"Amount": "496.03", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:r5.4xlarge", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "40.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "40.00", "Unit": "USD"}, "UsageQuantity": {"Amount": "39.68", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:m5.2xlarge", "SavingsPlanCoveredUsage"], "Metrics": {"AmortizedCost": {"Amount": "100.80", "Unit": "USD"}, "UnblendedCost": {"Amount": "140.00", "Unit": "USD"}, "UsageQuantity": {"Amount": "364.58", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:c5.2xlarge", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "641.85", "Unit": "USD"}, "UnblendedCost": {"Amount": "641.85", "Unit": "USD"}, "UsageQuantity": {"Amount": "1887.79", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:m6i.xlarge", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "409.16", "Unit": "USD"}, "UnblendedCost": {"Amount": "409.16", "Unit": "USD"}, "UsageQuantity": {"Amount": "2131.04", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:t3.large", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "282.46", "Unit": "USD"}, "UnblendedCost": {"Amount": "282.46", "Unit": "USD"}, "UsageQuantity": {"Amount": "3394.95", "Unit": "Hrs"}}}
+  ], "Estimated": false},
+  {"TimePeriod": {"Start": "2026-03-13", "End": "2026-03-14"}, "Total": {}, "Groups": [
+    {"Keys": ["BoxUsage:p3.8xlarge", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "293.76", "Unit": "USD"}, "UnblendedCost": {"Amount": "293.76", "Unit": "USD"}, "UsageQuantity": {"Amount": "24.00", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:r5.4xlarge", "SavingsPlanCoveredUsage"], "Metrics": {"AmortizedCost": {"Amount": "360.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "500.00", "Unit": "USD"}, "UsageQuantity": {"Amount": "496.03", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:r5.4xlarge", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "40.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "40.00", "Unit": "USD"}, "UsageQuantity": {"Amount": "39.68", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:m5.2xlarge", "SavingsPlanCoveredUsage"], "Metrics": {"AmortizedCost": {"Amount": "100.80", "Unit": "USD"}, "UnblendedCost": {"Amount": "140.00", "Unit": "USD"}, "UsageQuantity": {"Amount": "364.58", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:c5.2xlarge", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "633.62", "Unit": "USD"}, "UnblendedCost": {"Amount": "633.62", "Unit": "USD"}, "UsageQuantity": {"Amount": "1863.59", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:m6i.xlarge", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "408.13", "Unit": "USD"}, "UnblendedCost": {"Amount": "408.13", "Unit": "USD"}, "UsageQuantity": {"Amount": "2125.68", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:t3.large", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "281.93", "Unit": "USD"}, "UnblendedCost": {"Amount": "281.93", "Unit": "USD"}, "UsageQuantity": {"Amount": "3388.58", "Unit": "Hrs"}}}
+  ], "Estimated": false},
+  {"TimePeriod": {"Start": "2026-03-14", "End": "2026-03-15"}, "Total": {}, "Groups": [
+    {"Keys": ["BoxUsage:p3.8xlarge", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "293.76", "Unit": "USD"}, "UnblendedCost": {"Amount": "293.76", "Unit": "USD"}, "UsageQuantity": {"Amount": "24.00", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:r5.4xlarge", "SavingsPlanCoveredUsage"], "Metrics": {"AmortizedCost": {"Amount": "360.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "500.00", "Unit": "USD"}, "UsageQuantity": {"Amount": "496.03", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:r5.4xlarge", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "40.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "40.00", "Unit": "USD"}, "UsageQuantity": {"Amount": "39.68", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:m5.2xlarge", "SavingsPlanCoveredUsage"], "Metrics": {"AmortizedCost": {"Amount": "100.80", "Unit": "USD"}, "UnblendedCost": {"Amount": "140.00", "Unit": "USD"}, "UsageQuantity": {"Amount": "364.58", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:c5.2xlarge", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "640.85", "Unit": "USD"}, "UnblendedCost": {"Amount": "640.85", "Unit": "USD"}, "UsageQuantity": {"Amount": "1884.85", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:m6i.xlarge", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "410.95", "Unit": "USD"}, "UnblendedCost": {"Amount": "410.95", "Unit": "USD"}, "UsageQuantity": {"Amount": "2140.36", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:t3.large", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "280.52", "Unit": "USD"}, "UnblendedCost": {"Amount": "280.52", "Unit": "USD"}, "UsageQuantity": {"Amount": "3371.63", "Unit": "Hrs"}}}
+  ], "Estimated": false},
+  {"TimePeriod": {"Start": "2026-03-15", "End": "2026-03-16"}, "Total": {}, "Groups": [
+    {"Keys": ["BoxUsage:p3.8xlarge", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "293.76", "Unit": "USD"}, "UnblendedCost": {"Amount": "293.76", "Unit": "USD"}, "UsageQuantity": {"Amount": "24.00", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:r5.4xlarge", "SavingsPlanCoveredUsage"], "Metrics": {"AmortizedCost": {"Amount": "360.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "500.00", "Unit": "USD"}, "UsageQuantity": {"Amount": "496.03", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:r5.4xlarge", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "40.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "40.00", "Unit": "USD"}, "UsageQuantity": {"Amount": "39.68", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:m5.2xlarge", "SavingsPlanCoveredUsage"], "Metrics": {"AmortizedCost": {"Amount": "100.80", "Unit": "USD"}, "UnblendedCost": {"Amount": "140.00", "Unit": "USD"}, "UsageQuantity": {"Amount": "364.58", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:c5.2xlarge", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "635.66", "Unit": "USD"}, "UnblendedCost": {"Amount": "635.66", "Unit": "USD"}, "UsageQuantity": {"Amount": "1869.59", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:m6i.xlarge", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "409.24", "Unit": "USD"}, "UnblendedCost": {"Amount": "409.24", "Unit": "USD"}, "UsageQuantity": {"Amount": "2131.46", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:t3.large", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "278.28", "Unit": "USD"}, "UnblendedCost": {"Amount": "278.28", "Unit": "USD"}, "UsageQuantity": {"Amount": "3344.71", "Unit": "Hrs"}}}
+  ], "Estimated": false},
+  {"TimePeriod": {"Start": "2026-03-16", "End": "2026-03-17"}, "Total": {}, "Groups": [
+    {"Keys": ["BoxUsage:p3.8xlarge", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "293.76", "Unit": "USD"}, "UnblendedCost": {"Amount": "293.76", "Unit": "USD"}, "UsageQuantity": {"Amount": "24.00", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:r5.4xlarge", "SavingsPlanCoveredUsage"], "Metrics": {"AmortizedCost": {"Amount": "360.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "500.00", "Unit": "USD"}, "UsageQuantity": {"Amount": "496.03", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:r5.4xlarge", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "40.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "40.00", "Unit": "USD"}, "UsageQuantity": {"Amount": "39.68", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:m5.2xlarge", "SavingsPlanCoveredUsage"], "Metrics": {"AmortizedCost": {"Amount": "100.80", "Unit": "USD"}, "UnblendedCost": {"Amount": "140.00", "Unit": "USD"}, "UsageQuantity": {"Amount": "364.58", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:c5.2xlarge", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "640.08", "Unit": "USD"}, "UnblendedCost": {"Amount": "640.08", "Unit": "USD"}, "UsageQuantity": {"Amount": "1882.59", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:m6i.xlarge", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "408.81", "Unit": "USD"}, "UnblendedCost": {"Amount": "408.81", "Unit": "USD"}, "UsageQuantity": {"Amount": "2129.22", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:t3.large", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "277.39", "Unit": "USD"}, "UnblendedCost": {"Amount": "277.39", "Unit": "USD"}, "UsageQuantity": {"Amount": "3334.01", "Unit": "Hrs"}}}
+  ], "Estimated": false},
+  {"TimePeriod": {"Start": "2026-03-17", "End": "2026-03-18"}, "Total": {}, "Groups": [
+    {"Keys": ["BoxUsage:p3.8xlarge", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "293.76", "Unit": "USD"}, "UnblendedCost": {"Amount": "293.76", "Unit": "USD"}, "UsageQuantity": {"Amount": "24.00", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:r5.4xlarge", "SavingsPlanCoveredUsage"], "Metrics": {"AmortizedCost": {"Amount": "360.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "500.00", "Unit": "USD"}, "UsageQuantity": {"Amount": "496.03", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:r5.4xlarge", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "40.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "40.00", "Unit": "USD"}, "UsageQuantity": {"Amount": "39.68", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:m5.2xlarge", "SavingsPlanCoveredUsage"], "Metrics": {"AmortizedCost": {"Amount": "100.80", "Unit": "USD"}, "UnblendedCost": {"Amount": "140.00", "Unit": "USD"}, "UsageQuantity": {"Amount": "364.58", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:c5.2xlarge", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "636.88", "Unit": "USD"}, "UnblendedCost": {"Amount": "636.88", "Unit": "USD"}, "UsageQuantity": {"Amount": "1873.18", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:m6i.xlarge", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "410.32", "Unit": "USD"}, "UnblendedCost": {"Amount": "410.32", "Unit": "USD"}, "UsageQuantity": {"Amount": "2137.08", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:t3.large", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "281.30", "Unit": "USD"}, "UnblendedCost": {"Amount": "281.30", "Unit": "USD"}, "UsageQuantity": {"Amount": "3381.01", "Unit": "Hrs"}}}
+  ], "Estimated": false},
+  {"TimePeriod": {"Start": "2026-03-18", "End": "2026-03-19"}, "Total": {}, "Groups": [
+    {"Keys": ["BoxUsage:p3.8xlarge", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "293.76", "Unit": "USD"}, "UnblendedCost": {"Amount": "293.76", "Unit": "USD"}, "UsageQuantity": {"Amount": "24.00", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:r5.4xlarge", "SavingsPlanCoveredUsage"], "Metrics": {"AmortizedCost": {"Amount": "360.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "500.00", "Unit": "USD"}, "UsageQuantity": {"Amount": "496.03", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:r5.4xlarge", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "40.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "40.00", "Unit": "USD"}, "UsageQuantity": {"Amount": "39.68", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:m5.2xlarge", "SavingsPlanCoveredUsage"], "Metrics": {"AmortizedCost": {"Amount": "100.80", "Unit": "USD"}, "UnblendedCost": {"Amount": "140.00", "Unit": "USD"}, "UsageQuantity": {"Amount": "364.58", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:c5.2xlarge", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "633.08", "Unit": "USD"}, "UnblendedCost": {"Amount": "633.08", "Unit": "USD"}, "UsageQuantity": {"Amount": "1862.00", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:m6i.xlarge", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "409.66", "Unit": "USD"}, "UnblendedCost": {"Amount": "409.66", "Unit": "USD"}, "UsageQuantity": {"Amount": "2133.65", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:t3.large", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "278.04", "Unit": "USD"}, "UnblendedCost": {"Amount": "278.04", "Unit": "USD"}, "UsageQuantity": {"Amount": "3341.83", "Unit": "Hrs"}}}
+  ], "Estimated": false},
+  {"TimePeriod": {"Start": "2026-03-19", "End": "2026-03-20"}, "Total": {}, "Groups": [
+    {"Keys": ["BoxUsage:p3.8xlarge", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "293.76", "Unit": "USD"}, "UnblendedCost": {"Amount": "293.76", "Unit": "USD"}, "UsageQuantity": {"Amount": "24.00", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:r5.4xlarge", "SavingsPlanCoveredUsage"], "Metrics": {"AmortizedCost": {"Amount": "360.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "500.00", "Unit": "USD"}, "UsageQuantity": {"Amount": "496.03", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:r5.4xlarge", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "40.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "40.00", "Unit": "USD"}, "UsageQuantity": {"Amount": "39.68", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:m5.2xlarge", "SavingsPlanCoveredUsage"], "Metrics": {"AmortizedCost": {"Amount": "100.80", "Unit": "USD"}, "UnblendedCost": {"Amount": "140.00", "Unit": "USD"}, "UsageQuantity": {"Amount": "364.58", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:c5.2xlarge", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "639.35", "Unit": "USD"}, "UnblendedCost": {"Amount": "639.35", "Unit": "USD"}, "UsageQuantity": {"Amount": "1880.44", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:m6i.xlarge", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "413.86", "Unit": "USD"}, "UnblendedCost": {"Amount": "413.86", "Unit": "USD"}, "UsageQuantity": {"Amount": "2155.52", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:t3.large", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "280.78", "Unit": "USD"}, "UnblendedCost": {"Amount": "280.78", "Unit": "USD"}, "UsageQuantity": {"Amount": "3374.76", "Unit": "Hrs"}}}
+  ], "Estimated": false},
+  {"TimePeriod": {"Start": "2026-03-20", "End": "2026-03-21"}, "Total": {}, "Groups": [
+    {"Keys": ["BoxUsage:p3.8xlarge", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "220.32", "Unit": "USD"}, "UnblendedCost": {"Amount": "220.32", "Unit": "USD"}, "UsageQuantity": {"Amount": "18.00", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:r5.4xlarge", "SavingsPlanCoveredUsage"], "Metrics": {"AmortizedCost": {"Amount": "360.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "500.00", "Unit": "USD"}, "UsageQuantity": {"Amount": "496.03", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:r5.4xlarge", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "40.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "40.00", "Unit": "USD"}, "UsageQuantity": {"Amount": "39.68", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:m5.2xlarge", "SavingsPlanCoveredUsage"], "Metrics": {"AmortizedCost": {"Amount": "100.80", "Unit": "USD"}, "UnblendedCost": {"Amount": "140.00", "Unit": "USD"}, "UsageQuantity": {"Amount": "364.58", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:c5.2xlarge", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "633.79", "Unit": "USD"}, "UnblendedCost": {"Amount": "633.79", "Unit": "USD"}, "UsageQuantity": {"Amount": "1864.09", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:m6i.xlarge", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "411.66", "Unit": "USD"}, "UnblendedCost": {"Amount": "411.66", "Unit": "USD"}, "UsageQuantity": {"Amount": "2144.06", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:t3.large", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "281.17", "Unit": "USD"}, "UnblendedCost": {"Amount": "281.17", "Unit": "USD"}, "UsageQuantity": {"Amount": "3379.45", "Unit": "Hrs"}}}
+  ], "Estimated": false},
+  {"TimePeriod": {"Start": "2026-03-21", "End": "2026-03-22"}, "Total": {}, "Groups": [
+    {"Keys": ["BoxUsage:r5.4xlarge", "SavingsPlanCoveredUsage"], "Metrics": {"AmortizedCost": {"Amount": "360.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "500.00", "Unit": "USD"}, "UsageQuantity": {"Amount": "496.03", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:r5.4xlarge", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "40.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "40.00", "Unit": "USD"}, "UsageQuantity": {"Amount": "39.68", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:m5.2xlarge", "SavingsPlanCoveredUsage"], "Metrics": {"AmortizedCost": {"Amount": "100.80", "Unit": "USD"}, "UnblendedCost": {"Amount": "140.00", "Unit": "USD"}, "UsageQuantity": {"Amount": "364.58", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:c5.2xlarge", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "638.05", "Unit": "USD"}, "UnblendedCost": {"Amount": "638.05", "Unit": "USD"}, "UsageQuantity": {"Amount": "1876.62", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:m6i.xlarge", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "406.08", "Unit": "USD"}, "UnblendedCost": {"Amount": "406.08", "Unit": "USD"}, "UsageQuantity": {"Amount": "2115.00", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:t3.large", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "281.68", "Unit": "USD"}, "UnblendedCost": {"Amount": "281.68", "Unit": "USD"}, "UsageQuantity": {"Amount": "3385.58", "Unit": "Hrs"}}}
+  ], "Estimated": false},
+  {"TimePeriod": {"Start": "2026-03-22", "End": "2026-03-23"}, "Total": {}, "Groups": [
+    {"Keys": ["BoxUsage:r5.4xlarge", "SavingsPlanCoveredUsage"], "Metrics": {"AmortizedCost": {"Amount": "360.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "500.00", "Unit": "USD"}, "UsageQuantity": {"Amount": "496.03", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:r5.4xlarge", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "40.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "40.00", "Unit": "USD"}, "UsageQuantity": {"Amount": "39.68", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:m5.2xlarge", "SavingsPlanCoveredUsage"], "Metrics": {"AmortizedCost": {"Amount": "100.80", "Unit": "USD"}, "UnblendedCost": {"Amount": "140.00", "Unit": "USD"}, "UsageQuantity": {"Amount": "364.58", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:c5.2xlarge", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "634.94", "Unit": "USD"}, "UnblendedCost": {"Amount": "634.94", "Unit": "USD"}, "UsageQuantity": {"Amount": "1867.47", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:m6i.xlarge", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "413.29", "Unit": "USD"}, "UnblendedCost": {"Amount": "413.29", "Unit": "USD"}, "UsageQuantity": {"Amount": "2152.55", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:t3.large", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "280.26", "Unit": "USD"}, "UnblendedCost": {"Amount": "280.26", "Unit": "USD"}, "UsageQuantity": {"Amount": "3368.51", "Unit": "Hrs"}}}
+  ], "Estimated": false},
+  {"TimePeriod": {"Start": "2026-03-23", "End": "2026-03-24"}, "Total": {}, "Groups": [
+    {"Keys": ["BoxUsage:r5.4xlarge", "SavingsPlanCoveredUsage"], "Metrics": {"AmortizedCost": {"Amount": "360.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "500.00", "Unit": "USD"}, "UsageQuantity": {"Amount": "496.03", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:r5.4xlarge", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "40.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "40.00", "Unit": "USD"}, "UsageQuantity": {"Amount": "39.68", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:m5.2xlarge", "SavingsPlanCoveredUsage"], "Metrics": {"AmortizedCost": {"Amount": "100.80", "Unit": "USD"}, "UnblendedCost": {"Amount": "140.00", "Unit": "USD"}, "UsageQuantity": {"Amount": "364.58", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:c5.2xlarge", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "634.03", "Unit": "USD"}, "UnblendedCost": {"Amount": "634.03", "Unit": "USD"}, "UsageQuantity": {"Amount": "1864.79", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:m6i.xlarge", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "407.45", "Unit": "USD"}, "UnblendedCost": {"Amount": "407.45", "Unit": "USD"}, "UsageQuantity": {"Amount": "2122.14", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:t3.large", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "282.56", "Unit": "USD"}, "UnblendedCost": {"Amount": "282.56", "Unit": "USD"}, "UsageQuantity": {"Amount": "3396.15", "Unit": "Hrs"}}}
+  ], "Estimated": false},
+  {"TimePeriod": {"Start": "2026-03-24", "End": "2026-03-25"}, "Total": {}, "Groups": [
+    {"Keys": ["BoxUsage:r5.4xlarge", "SavingsPlanCoveredUsage"], "Metrics": {"AmortizedCost": {"Amount": "360.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "500.00", "Unit": "USD"}, "UsageQuantity": {"Amount": "496.03", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:r5.4xlarge", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "40.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "40.00", "Unit": "USD"}, "UsageQuantity": {"Amount": "39.68", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:m5.2xlarge", "SavingsPlanCoveredUsage"], "Metrics": {"AmortizedCost": {"Amount": "100.80", "Unit": "USD"}, "UnblendedCost": {"Amount": "140.00", "Unit": "USD"}, "UsageQuantity": {"Amount": "364.58", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:c5.2xlarge", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "638.30", "Unit": "USD"}, "UnblendedCost": {"Amount": "638.30", "Unit": "USD"}, "UsageQuantity": {"Amount": "1877.35", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:m6i.xlarge", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "414.36", "Unit": "USD"}, "UnblendedCost": {"Amount": "414.36", "Unit": "USD"}, "UsageQuantity": {"Amount": "2158.13", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:t3.large", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "279.50", "Unit": "USD"}, "UnblendedCost": {"Amount": "279.50", "Unit": "USD"}, "UsageQuantity": {"Amount": "3359.38", "Unit": "Hrs"}}}
+  ], "Estimated": false},
+  {"TimePeriod": {"Start": "2026-03-25", "End": "2026-03-26"}, "Total": {}, "Groups": [
+    {"Keys": ["BoxUsage:r5.4xlarge", "SavingsPlanCoveredUsage"], "Metrics": {"AmortizedCost": {"Amount": "360.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "500.00", "Unit": "USD"}, "UsageQuantity": {"Amount": "496.03", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:r5.4xlarge", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "40.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "40.00", "Unit": "USD"}, "UsageQuantity": {"Amount": "39.68", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:m5.2xlarge", "SavingsPlanCoveredUsage"], "Metrics": {"AmortizedCost": {"Amount": "100.80", "Unit": "USD"}, "UnblendedCost": {"Amount": "140.00", "Unit": "USD"}, "UsageQuantity": {"Amount": "364.58", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:c5.2xlarge", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "644.43", "Unit": "USD"}, "UnblendedCost": {"Amount": "644.43", "Unit": "USD"}, "UsageQuantity": {"Amount": "1895.38", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:m6i.xlarge", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "411.46", "Unit": "USD"}, "UnblendedCost": {"Amount": "411.46", "Unit": "USD"}, "UsageQuantity": {"Amount": "2143.02", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:t3.large", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "276.92", "Unit": "USD"}, "UnblendedCost": {"Amount": "276.92", "Unit": "USD"}, "UsageQuantity": {"Amount": "3328.37", "Unit": "Hrs"}}}
+  ], "Estimated": false},
+  {"TimePeriod": {"Start": "2026-03-26", "End": "2026-03-27"}, "Total": {}, "Groups": [
+    {"Keys": ["BoxUsage:r5.4xlarge", "SavingsPlanCoveredUsage"], "Metrics": {"AmortizedCost": {"Amount": "360.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "500.00", "Unit": "USD"}, "UsageQuantity": {"Amount": "496.03", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:r5.4xlarge", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "40.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "40.00", "Unit": "USD"}, "UsageQuantity": {"Amount": "39.68", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:m5.2xlarge", "SavingsPlanCoveredUsage"], "Metrics": {"AmortizedCost": {"Amount": "100.80", "Unit": "USD"}, "UnblendedCost": {"Amount": "140.00", "Unit": "USD"}, "UsageQuantity": {"Amount": "364.58", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:c5.2xlarge", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "634.51", "Unit": "USD"}, "UnblendedCost": {"Amount": "634.51", "Unit": "USD"}, "UsageQuantity": {"Amount": "1866.21", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:m6i.xlarge", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "414.01", "Unit": "USD"}, "UnblendedCost": {"Amount": "414.01", "Unit": "USD"}, "UsageQuantity": {"Amount": "2156.30", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:t3.large", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "283.27", "Unit": "USD"}, "UnblendedCost": {"Amount": "283.27", "Unit": "USD"}, "UsageQuantity": {"Amount": "3404.69", "Unit": "Hrs"}}}
+  ], "Estimated": false},
+  {"TimePeriod": {"Start": "2026-03-27", "End": "2026-03-28"}, "Total": {}, "Groups": [
+    {"Keys": ["BoxUsage:r5.4xlarge", "SavingsPlanCoveredUsage"], "Metrics": {"AmortizedCost": {"Amount": "360.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "500.00", "Unit": "USD"}, "UsageQuantity": {"Amount": "496.03", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:r5.4xlarge", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "40.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "40.00", "Unit": "USD"}, "UsageQuantity": {"Amount": "39.68", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:m5.2xlarge", "SavingsPlanCoveredUsage"], "Metrics": {"AmortizedCost": {"Amount": "100.80", "Unit": "USD"}, "UnblendedCost": {"Amount": "140.00", "Unit": "USD"}, "UsageQuantity": {"Amount": "364.58", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:c5.2xlarge", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "647.35", "Unit": "USD"}, "UnblendedCost": {"Amount": "647.35", "Unit": "USD"}, "UsageQuantity": {"Amount": "1903.97", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:m6i.xlarge", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "411.73", "Unit": "USD"}, "UnblendedCost": {"Amount": "411.73", "Unit": "USD"}, "UsageQuantity": {"Amount": "2144.43", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:t3.large", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "282.26", "Unit": "USD"}, "UnblendedCost": {"Amount": "282.26", "Unit": "USD"}, "UsageQuantity": {"Amount": "3392.55", "Unit": "Hrs"}}}
+  ], "Estimated": false},
+  {"TimePeriod": {"Start": "2026-03-28", "End": "2026-03-29"}, "Total": {}, "Groups": [
+    {"Keys": ["BoxUsage:r5.4xlarge", "SavingsPlanCoveredUsage"], "Metrics": {"AmortizedCost": {"Amount": "360.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "500.00", "Unit": "USD"}, "UsageQuantity": {"Amount": "496.03", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:r5.4xlarge", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "40.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "40.00", "Unit": "USD"}, "UsageQuantity": {"Amount": "39.68", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:m5.2xlarge", "SavingsPlanCoveredUsage"], "Metrics": {"AmortizedCost": {"Amount": "100.80", "Unit": "USD"}, "UnblendedCost": {"Amount": "140.00", "Unit": "USD"}, "UsageQuantity": {"Amount": "364.58", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:c5.2xlarge", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "633.19", "Unit": "USD"}, "UnblendedCost": {"Amount": "633.19", "Unit": "USD"}, "UsageQuantity": {"Amount": "1862.32", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:m6i.xlarge", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "406.82", "Unit": "USD"}, "UnblendedCost": {"Amount": "406.82", "Unit": "USD"}, "UsageQuantity": {"Amount": "2118.85", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:t3.large", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "282.23", "Unit": "USD"}, "UnblendedCost": {"Amount": "282.23", "Unit": "USD"}, "UsageQuantity": {"Amount": "3392.19", "Unit": "Hrs"}}}
+  ], "Estimated": false},
+  {"TimePeriod": {"Start": "2026-03-29", "End": "2026-03-30"}, "Total": {}, "Groups": [
+    {"Keys": ["BoxUsage:r5.4xlarge", "SavingsPlanCoveredUsage"], "Metrics": {"AmortizedCost": {"Amount": "360.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "500.00", "Unit": "USD"}, "UsageQuantity": {"Amount": "496.03", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:r5.4xlarge", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "40.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "40.00", "Unit": "USD"}, "UsageQuantity": {"Amount": "39.68", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:m5.2xlarge", "SavingsPlanCoveredUsage"], "Metrics": {"AmortizedCost": {"Amount": "100.80", "Unit": "USD"}, "UnblendedCost": {"Amount": "140.00", "Unit": "USD"}, "UsageQuantity": {"Amount": "364.58", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:c5.2xlarge", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "633.73", "Unit": "USD"}, "UnblendedCost": {"Amount": "633.73", "Unit": "USD"}, "UsageQuantity": {"Amount": "1863.91", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:m6i.xlarge", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "406.33", "Unit": "USD"}, "UnblendedCost": {"Amount": "406.33", "Unit": "USD"}, "UsageQuantity": {"Amount": "2116.30", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:t3.large", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "277.36", "Unit": "USD"}, "UnblendedCost": {"Amount": "277.36", "Unit": "USD"}, "UsageQuantity": {"Amount": "3333.65", "Unit": "Hrs"}}}
+  ], "Estimated": false},
+  {"TimePeriod": {"Start": "2026-03-30", "End": "2026-03-31"}, "Total": {}, "Groups": [
+    {"Keys": ["BoxUsage:r5.4xlarge", "SavingsPlanCoveredUsage"], "Metrics": {"AmortizedCost": {"Amount": "360.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "500.00", "Unit": "USD"}, "UsageQuantity": {"Amount": "496.03", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:r5.4xlarge", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "40.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "40.00", "Unit": "USD"}, "UsageQuantity": {"Amount": "39.68", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:m5.2xlarge", "SavingsPlanCoveredUsage"], "Metrics": {"AmortizedCost": {"Amount": "100.80", "Unit": "USD"}, "UnblendedCost": {"Amount": "140.00", "Unit": "USD"}, "UsageQuantity": {"Amount": "364.58", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:c5.2xlarge", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "643.94", "Unit": "USD"}, "UnblendedCost": {"Amount": "643.94", "Unit": "USD"}, "UsageQuantity": {"Amount": "1893.94", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:m6i.xlarge", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "409.96", "Unit": "USD"}, "UnblendedCost": {"Amount": "409.96", "Unit": "USD"}, "UsageQuantity": {"Amount": "2135.21", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:t3.large", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "279.38", "Unit": "USD"}, "UnblendedCost": {"Amount": "279.38", "Unit": "USD"}, "UsageQuantity": {"Amount": "3357.93", "Unit": "Hrs"}}}
+  ], "Estimated": false},
+  {"TimePeriod": {"Start": "2026-03-31", "End": "2026-04-01"}, "Total": {}, "Groups": [
+    {"Keys": ["BoxUsage:r5.4xlarge", "SavingsPlanCoveredUsage"], "Metrics": {"AmortizedCost": {"Amount": "360.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "500.00", "Unit": "USD"}, "UsageQuantity": {"Amount": "496.03", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:r5.4xlarge", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "40.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "40.00", "Unit": "USD"}, "UsageQuantity": {"Amount": "39.68", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:m5.2xlarge", "SavingsPlanCoveredUsage"], "Metrics": {"AmortizedCost": {"Amount": "100.80", "Unit": "USD"}, "UnblendedCost": {"Amount": "140.00", "Unit": "USD"}, "UsageQuantity": {"Amount": "364.58", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:c5.2xlarge", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "636.37", "Unit": "USD"}, "UnblendedCost": {"Amount": "636.37", "Unit": "USD"}, "UsageQuantity": {"Amount": "1871.68", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:m6i.xlarge", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "405.65", "Unit": "USD"}, "UnblendedCost": {"Amount": "405.65", "Unit": "USD"}, "UsageQuantity": {"Amount": "2112.76", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:t3.large", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "279.63", "Unit": "USD"}, "UnblendedCost": {"Amount": "279.63", "Unit": "USD"}, "UsageQuantity": {"Amount": "3360.94", "Unit": "Hrs"}}}
+  ], "Estimated": false},
+  {"TimePeriod": {"Start": "2026-04-01", "End": "2026-04-02"}, "Total": {}, "Groups": [
+    {"Keys": ["BoxUsage:r5.4xlarge", "SavingsPlanCoveredUsage"], "Metrics": {"AmortizedCost": {"Amount": "360.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "500.00", "Unit": "USD"}, "UsageQuantity": {"Amount": "496.03", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:r5.4xlarge", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "40.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "40.00", "Unit": "USD"}, "UsageQuantity": {"Amount": "39.68", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:m5.2xlarge", "SavingsPlanCoveredUsage"], "Metrics": {"AmortizedCost": {"Amount": "100.80", "Unit": "USD"}, "UnblendedCost": {"Amount": "140.00", "Unit": "USD"}, "UsageQuantity": {"Amount": "364.58", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:c5.2xlarge", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "635.40", "Unit": "USD"}, "UnblendedCost": {"Amount": "635.40", "Unit": "USD"}, "UsageQuantity": {"Amount": "1868.82", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:m6i.xlarge", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "414.51", "Unit": "USD"}, "UnblendedCost": {"Amount": "414.51", "Unit": "USD"}, "UsageQuantity": {"Amount": "2158.91", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:t3.large", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "278.44", "Unit": "USD"}, "UnblendedCost": {"Amount": "278.44", "Unit": "USD"}, "UsageQuantity": {"Amount": "3346.63", "Unit": "Hrs"}}}
+  ], "Estimated": false},
+  {"TimePeriod": {"Start": "2026-04-02", "End": "2026-04-03"}, "Total": {}, "Groups": [
+    {"Keys": ["BoxUsage:r5.4xlarge", "SavingsPlanCoveredUsage"], "Metrics": {"AmortizedCost": {"Amount": "360.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "500.00", "Unit": "USD"}, "UsageQuantity": {"Amount": "496.03", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:r5.4xlarge", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "40.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "40.00", "Unit": "USD"}, "UsageQuantity": {"Amount": "39.68", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:m5.2xlarge", "SavingsPlanCoveredUsage"], "Metrics": {"AmortizedCost": {"Amount": "100.80", "Unit": "USD"}, "UnblendedCost": {"Amount": "140.00", "Unit": "USD"}, "UsageQuantity": {"Amount": "364.58", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:c5.2xlarge", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "639.01", "Unit": "USD"}, "UnblendedCost": {"Amount": "639.01", "Unit": "USD"}, "UsageQuantity": {"Amount": "1879.44", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:m6i.xlarge", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "406.27", "Unit": "USD"}, "UnblendedCost": {"Amount": "406.27", "Unit": "USD"}, "UsageQuantity": {"Amount": "2115.99", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:t3.large", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "279.80", "Unit": "USD"}, "UnblendedCost": {"Amount": "279.80", "Unit": "USD"}, "UsageQuantity": {"Amount": "3362.98", "Unit": "Hrs"}}}
+  ], "Estimated": false},
+  {"TimePeriod": {"Start": "2026-04-03", "End": "2026-04-04"}, "Total": {}, "Groups": [
+    {"Keys": ["BoxUsage:r5.4xlarge", "SavingsPlanCoveredUsage"], "Metrics": {"AmortizedCost": {"Amount": "360.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "500.00", "Unit": "USD"}, "UsageQuantity": {"Amount": "496.03", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:r5.4xlarge", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "40.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "40.00", "Unit": "USD"}, "UsageQuantity": {"Amount": "39.68", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:m5.2xlarge", "SavingsPlanCoveredUsage"], "Metrics": {"AmortizedCost": {"Amount": "100.80", "Unit": "USD"}, "UnblendedCost": {"Amount": "140.00", "Unit": "USD"}, "UsageQuantity": {"Amount": "364.58", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:c5.2xlarge", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "636.46", "Unit": "USD"}, "UnblendedCost": {"Amount": "636.46", "Unit": "USD"}, "UsageQuantity": {"Amount": "1871.94", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:m6i.xlarge", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "408.71", "Unit": "USD"}, "UnblendedCost": {"Amount": "408.71", "Unit": "USD"}, "UsageQuantity": {"Amount": "2128.70", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:t3.large", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "279.65", "Unit": "USD"}, "UnblendedCost": {"Amount": "279.65", "Unit": "USD"}, "UsageQuantity": {"Amount": "3361.18", "Unit": "Hrs"}}}
+  ], "Estimated": false},
+  {"TimePeriod": {"Start": "2026-04-04", "End": "2026-04-05"}, "Total": {}, "Groups": [
+    {"Keys": ["BoxUsage:r5.4xlarge", "SavingsPlanCoveredUsage"], "Metrics": {"AmortizedCost": {"Amount": "360.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "500.00", "Unit": "USD"}, "UsageQuantity": {"Amount": "496.03", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:r5.4xlarge", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "40.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "40.00", "Unit": "USD"}, "UsageQuantity": {"Amount": "39.68", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:m5.2xlarge", "SavingsPlanCoveredUsage"], "Metrics": {"AmortizedCost": {"Amount": "100.80", "Unit": "USD"}, "UnblendedCost": {"Amount": "140.00", "Unit": "USD"}, "UsageQuantity": {"Amount": "364.58", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:c5.2xlarge", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "646.03", "Unit": "USD"}, "UnblendedCost": {"Amount": "646.03", "Unit": "USD"}, "UsageQuantity": {"Amount": "1900.09", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:m6i.xlarge", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "405.96", "Unit": "USD"}, "UnblendedCost": {"Amount": "405.96", "Unit": "USD"}, "UsageQuantity": {"Amount": "2114.38", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:t3.large", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "280.89", "Unit": "USD"}, "UnblendedCost": {"Amount": "280.89", "Unit": "USD"}, "UsageQuantity": {"Amount": "3376.08", "Unit": "Hrs"}}}
+  ], "Estimated": false},
+  {"TimePeriod": {"Start": "2026-04-05", "End": "2026-04-06"}, "Total": {}, "Groups": [
+    {"Keys": ["BoxUsage:r5.4xlarge", "SavingsPlanCoveredUsage"], "Metrics": {"AmortizedCost": {"Amount": "360.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "500.00", "Unit": "USD"}, "UsageQuantity": {"Amount": "496.03", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:r5.4xlarge", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "40.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "40.00", "Unit": "USD"}, "UsageQuantity": {"Amount": "39.68", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:m5.2xlarge", "SavingsPlanCoveredUsage"], "Metrics": {"AmortizedCost": {"Amount": "100.80", "Unit": "USD"}, "UnblendedCost": {"Amount": "140.00", "Unit": "USD"}, "UsageQuantity": {"Amount": "364.58", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:c5.2xlarge", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "632.67", "Unit": "USD"}, "UnblendedCost": {"Amount": "632.67", "Unit": "USD"}, "UsageQuantity": {"Amount": "1860.79", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:m6i.xlarge", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "410.88", "Unit": "USD"}, "UnblendedCost": {"Amount": "410.88", "Unit": "USD"}, "UsageQuantity": {"Amount": "2140.00", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:t3.large", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "282.11", "Unit": "USD"}, "UnblendedCost": {"Amount": "282.11", "Unit": "USD"}, "UsageQuantity": {"Amount": "3390.75", "Unit": "Hrs"}}}
+  ], "Estimated": false},
+  {"TimePeriod": {"Start": "2026-04-06", "End": "2026-04-07"}, "Total": {}, "Groups": [
+    {"Keys": ["BoxUsage:r5.4xlarge", "SavingsPlanCoveredUsage"], "Metrics": {"AmortizedCost": {"Amount": "360.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "500.00", "Unit": "USD"}, "UsageQuantity": {"Amount": "496.03", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:r5.4xlarge", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "40.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "40.00", "Unit": "USD"}, "UsageQuantity": {"Amount": "39.68", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:m5.2xlarge", "SavingsPlanCoveredUsage"], "Metrics": {"AmortizedCost": {"Amount": "100.80", "Unit": "USD"}, "UnblendedCost": {"Amount": "140.00", "Unit": "USD"}, "UsageQuantity": {"Amount": "364.58", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:c5.2xlarge", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "641.06", "Unit": "USD"}, "UnblendedCost": {"Amount": "641.06", "Unit": "USD"}, "UsageQuantity": {"Amount": "1885.47", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:m6i.xlarge", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "406.66", "Unit": "USD"}, "UnblendedCost": {"Amount": "406.66", "Unit": "USD"}, "UsageQuantity": {"Amount": "2118.02", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:t3.large", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "282.46", "Unit": "USD"}, "UnblendedCost": {"Amount": "282.46", "Unit": "USD"}, "UsageQuantity": {"Amount": "3394.95", "Unit": "Hrs"}}}
+  ], "Estimated": false},
+  {"TimePeriod": {"Start": "2026-04-07", "End": "2026-04-08"}, "Total": {}, "Groups": [
+    {"Keys": ["BoxUsage:r5.4xlarge", "SavingsPlanCoveredUsage"], "Metrics": {"AmortizedCost": {"Amount": "360.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "500.00", "Unit": "USD"}, "UsageQuantity": {"Amount": "496.03", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:r5.4xlarge", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "40.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "40.00", "Unit": "USD"}, "UsageQuantity": {"Amount": "39.68", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:m5.2xlarge", "SavingsPlanCoveredUsage"], "Metrics": {"AmortizedCost": {"Amount": "100.80", "Unit": "USD"}, "UnblendedCost": {"Amount": "140.00", "Unit": "USD"}, "UsageQuantity": {"Amount": "364.58", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:c5.2xlarge", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "633.59", "Unit": "USD"}, "UnblendedCost": {"Amount": "633.59", "Unit": "USD"}, "UsageQuantity": {"Amount": "1863.50", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:m6i.xlarge", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "413.99", "Unit": "USD"}, "UnblendedCost": {"Amount": "413.99", "Unit": "USD"}, "UsageQuantity": {"Amount": "2156.20", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:t3.large", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "283.23", "Unit": "USD"}, "UnblendedCost": {"Amount": "283.23", "Unit": "USD"}, "UsageQuantity": {"Amount": "3404.21", "Unit": "Hrs"}}}
+  ], "Estimated": false},
+  {"TimePeriod": {"Start": "2026-04-08", "End": "2026-04-09"}, "Total": {}, "Groups": [
+    {"Keys": ["BoxUsage:r5.4xlarge", "SavingsPlanCoveredUsage"], "Metrics": {"AmortizedCost": {"Amount": "360.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "500.00", "Unit": "USD"}, "UsageQuantity": {"Amount": "496.03", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:r5.4xlarge", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "40.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "40.00", "Unit": "USD"}, "UsageQuantity": {"Amount": "39.68", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:m5.2xlarge", "SavingsPlanCoveredUsage"], "Metrics": {"AmortizedCost": {"Amount": "100.80", "Unit": "USD"}, "UnblendedCost": {"Amount": "140.00", "Unit": "USD"}, "UsageQuantity": {"Amount": "364.58", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:c5.2xlarge", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "639.51", "Unit": "USD"}, "UnblendedCost": {"Amount": "639.51", "Unit": "USD"}, "UsageQuantity": {"Amount": "1880.91", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:m6i.xlarge", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "413.62", "Unit": "USD"}, "UnblendedCost": {"Amount": "413.62", "Unit": "USD"}, "UsageQuantity": {"Amount": "2154.27", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:t3.large", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "279.71", "Unit": "USD"}, "UnblendedCost": {"Amount": "279.71", "Unit": "USD"}, "UsageQuantity": {"Amount": "3361.90", "Unit": "Hrs"}}}
+  ], "Estimated": false},
+  {"TimePeriod": {"Start": "2026-04-09", "End": "2026-04-10"}, "Total": {}, "Groups": [
+    {"Keys": ["BoxUsage:r5.4xlarge", "SavingsPlanCoveredUsage"], "Metrics": {"AmortizedCost": {"Amount": "360.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "500.00", "Unit": "USD"}, "UsageQuantity": {"Amount": "496.03", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:r5.4xlarge", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "40.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "40.00", "Unit": "USD"}, "UsageQuantity": {"Amount": "39.68", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:m5.2xlarge", "SavingsPlanCoveredUsage"], "Metrics": {"AmortizedCost": {"Amount": "100.80", "Unit": "USD"}, "UnblendedCost": {"Amount": "140.00", "Unit": "USD"}, "UsageQuantity": {"Amount": "364.58", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:c5.2xlarge", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "640.63", "Unit": "USD"}, "UnblendedCost": {"Amount": "640.63", "Unit": "USD"}, "UsageQuantity": {"Amount": "1884.21", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:m6i.xlarge", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "406.10", "Unit": "USD"}, "UnblendedCost": {"Amount": "406.10", "Unit": "USD"}, "UsageQuantity": {"Amount": "2115.10", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:t3.large", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "283.27", "Unit": "USD"}, "UnblendedCost": {"Amount": "283.27", "Unit": "USD"}, "UsageQuantity": {"Amount": "3404.69", "Unit": "Hrs"}}}
+  ], "Estimated": false},
+  {"TimePeriod": {"Start": "2026-04-10", "End": "2026-04-11"}, "Total": {}, "Groups": [
+    {"Keys": ["BoxUsage:r5.4xlarge", "SavingsPlanCoveredUsage"], "Metrics": {"AmortizedCost": {"Amount": "360.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "500.00", "Unit": "USD"}, "UsageQuantity": {"Amount": "496.03", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:r5.4xlarge", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "40.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "40.00", "Unit": "USD"}, "UsageQuantity": {"Amount": "39.68", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:m5.2xlarge", "SavingsPlanCoveredUsage"], "Metrics": {"AmortizedCost": {"Amount": "100.80", "Unit": "USD"}, "UnblendedCost": {"Amount": "140.00", "Unit": "USD"}, "UsageQuantity": {"Amount": "364.58", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:c5.2xlarge", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "637.93", "Unit": "USD"}, "UnblendedCost": {"Amount": "637.93", "Unit": "USD"}, "UsageQuantity": {"Amount": "1876.26", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:m6i.xlarge", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "414.58", "Unit": "USD"}, "UnblendedCost": {"Amount": "414.58", "Unit": "USD"}, "UsageQuantity": {"Amount": "2159.27", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:t3.large", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "280.58", "Unit": "USD"}, "UnblendedCost": {"Amount": "280.58", "Unit": "USD"}, "UsageQuantity": {"Amount": "3372.36", "Unit": "Hrs"}}}
+  ], "Estimated": false},
+  {"TimePeriod": {"Start": "2026-04-11", "End": "2026-04-12"}, "Total": {}, "Groups": [
+    {"Keys": ["BoxUsage:r5.4xlarge", "SavingsPlanCoveredUsage"], "Metrics": {"AmortizedCost": {"Amount": "360.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "500.00", "Unit": "USD"}, "UsageQuantity": {"Amount": "496.03", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:r5.4xlarge", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "40.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "40.00", "Unit": "USD"}, "UsageQuantity": {"Amount": "39.68", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:m5.2xlarge", "SavingsPlanCoveredUsage"], "Metrics": {"AmortizedCost": {"Amount": "100.80", "Unit": "USD"}, "UnblendedCost": {"Amount": "140.00", "Unit": "USD"}, "UsageQuantity": {"Amount": "364.58", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:c5.2xlarge", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "641.24", "Unit": "USD"}, "UnblendedCost": {"Amount": "641.24", "Unit": "USD"}, "UsageQuantity": {"Amount": "1886.00", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:m6i.xlarge", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "408.17", "Unit": "USD"}, "UnblendedCost": {"Amount": "408.17", "Unit": "USD"}, "UsageQuantity": {"Amount": "2125.89", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:t3.large", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "282.45", "Unit": "USD"}, "UnblendedCost": {"Amount": "282.45", "Unit": "USD"}, "UsageQuantity": {"Amount": "3394.83", "Unit": "Hrs"}}}
+  ], "Estimated": false},
+  {"TimePeriod": {"Start": "2026-04-12", "End": "2026-04-13"}, "Total": {}, "Groups": [
+    {"Keys": ["BoxUsage:r5.4xlarge", "SavingsPlanCoveredUsage"], "Metrics": {"AmortizedCost": {"Amount": "360.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "500.00", "Unit": "USD"}, "UsageQuantity": {"Amount": "496.03", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:r5.4xlarge", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "40.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "40.00", "Unit": "USD"}, "UsageQuantity": {"Amount": "39.68", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:m5.2xlarge", "SavingsPlanCoveredUsage"], "Metrics": {"AmortizedCost": {"Amount": "100.80", "Unit": "USD"}, "UnblendedCost": {"Amount": "140.00", "Unit": "USD"}, "UsageQuantity": {"Amount": "364.58", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:c5.2xlarge", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "632.47", "Unit": "USD"}, "UnblendedCost": {"Amount": "632.47", "Unit": "USD"}, "UsageQuantity": {"Amount": "1860.21", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:m6i.xlarge", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "408.49", "Unit": "USD"}, "UnblendedCost": {"Amount": "408.49", "Unit": "USD"}, "UsageQuantity": {"Amount": "2127.55", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:t3.large", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "279.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "279.00", "Unit": "USD"}, "UsageQuantity": {"Amount": "3353.37", "Unit": "Hrs"}}}
+  ], "Estimated": false},
+  {"TimePeriod": {"Start": "2026-04-13", "End": "2026-04-14"}, "Total": {}, "Groups": [
+    {"Keys": ["BoxUsage:r5.4xlarge", "SavingsPlanCoveredUsage"], "Metrics": {"AmortizedCost": {"Amount": "360.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "500.00", "Unit": "USD"}, "UsageQuantity": {"Amount": "496.03", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:r5.4xlarge", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "40.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "40.00", "Unit": "USD"}, "UsageQuantity": {"Amount": "39.68", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:m5.2xlarge", "SavingsPlanCoveredUsage"], "Metrics": {"AmortizedCost": {"Amount": "100.80", "Unit": "USD"}, "UnblendedCost": {"Amount": "140.00", "Unit": "USD"}, "UsageQuantity": {"Amount": "364.58", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:c5.2xlarge", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "644.94", "Unit": "USD"}, "UnblendedCost": {"Amount": "644.94", "Unit": "USD"}, "UsageQuantity": {"Amount": "1896.88", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:m6i.xlarge", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "413.72", "Unit": "USD"}, "UnblendedCost": {"Amount": "413.72", "Unit": "USD"}, "UsageQuantity": {"Amount": "2154.79", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:t3.large", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "283.27", "Unit": "USD"}, "UnblendedCost": {"Amount": "283.27", "Unit": "USD"}, "UsageQuantity": {"Amount": "3404.69", "Unit": "Hrs"}}}
+  ], "Estimated": false},
+  {"TimePeriod": {"Start": "2026-04-14", "End": "2026-04-15"}, "Total": {}, "Groups": [
+    {"Keys": ["BoxUsage:r5.4xlarge", "SavingsPlanCoveredUsage"], "Metrics": {"AmortizedCost": {"Amount": "360.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "500.00", "Unit": "USD"}, "UsageQuantity": {"Amount": "496.03", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:r5.4xlarge", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "40.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "40.00", "Unit": "USD"}, "UsageQuantity": {"Amount": "39.68", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:m5.2xlarge", "SavingsPlanCoveredUsage"], "Metrics": {"AmortizedCost": {"Amount": "100.80", "Unit": "USD"}, "UnblendedCost": {"Amount": "140.00", "Unit": "USD"}, "UsageQuantity": {"Amount": "364.58", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:c5.2xlarge", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "645.98", "Unit": "USD"}, "UnblendedCost": {"Amount": "645.98", "Unit": "USD"}, "UsageQuantity": {"Amount": "1899.94", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:m6i.xlarge", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "413.13", "Unit": "USD"}, "UnblendedCost": {"Amount": "413.13", "Unit": "USD"}, "UsageQuantity": {"Amount": "2151.72", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:t3.large", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "278.66", "Unit": "USD"}, "UnblendedCost": {"Amount": "278.66", "Unit": "USD"}, "UsageQuantity": {"Amount": "3349.28", "Unit": "Hrs"}}}
+  ], "Estimated": false},
+  {"TimePeriod": {"Start": "2026-04-15", "End": "2026-04-16"}, "Total": {}, "Groups": [
+    {"Keys": ["BoxUsage:r5.4xlarge", "SavingsPlanCoveredUsage"], "Metrics": {"AmortizedCost": {"Amount": "360.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "500.00", "Unit": "USD"}, "UsageQuantity": {"Amount": "496.03", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:r5.4xlarge", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "40.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "40.00", "Unit": "USD"}, "UsageQuantity": {"Amount": "39.68", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:m5.2xlarge", "SavingsPlanCoveredUsage"], "Metrics": {"AmortizedCost": {"Amount": "100.80", "Unit": "USD"}, "UnblendedCost": {"Amount": "140.00", "Unit": "USD"}, "UsageQuantity": {"Amount": "364.58", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:c5.2xlarge", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "647.20", "Unit": "USD"}, "UnblendedCost": {"Amount": "647.20", "Unit": "USD"}, "UsageQuantity": {"Amount": "1903.53", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:m6i.xlarge", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "409.55", "Unit": "USD"}, "UnblendedCost": {"Amount": "409.55", "Unit": "USD"}, "UsageQuantity": {"Amount": "2133.07", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:t3.large", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "281.68", "Unit": "USD"}, "UnblendedCost": {"Amount": "281.68", "Unit": "USD"}, "UsageQuantity": {"Amount": "3385.58", "Unit": "Hrs"}}}
+  ], "Estimated": false},
+  {"TimePeriod": {"Start": "2026-04-16", "End": "2026-04-17"}, "Total": {}, "Groups": [
+    {"Keys": ["BoxUsage:r5.4xlarge", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "540.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "540.00", "Unit": "USD"}, "UsageQuantity": {"Amount": "535.71", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:m5.2xlarge", "SavingsPlanCoveredUsage"], "Metrics": {"AmortizedCost": {"Amount": "100.80", "Unit": "USD"}, "UnblendedCost": {"Amount": "140.00", "Unit": "USD"}, "UsageQuantity": {"Amount": "364.58", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:c5.2xlarge", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "646.52", "Unit": "USD"}, "UnblendedCost": {"Amount": "646.52", "Unit": "USD"}, "UsageQuantity": {"Amount": "1901.53", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:m6i.xlarge", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "411.74", "Unit": "USD"}, "UnblendedCost": {"Amount": "411.74", "Unit": "USD"}, "UsageQuantity": {"Amount": "2144.48", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:t3.large", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "281.22", "Unit": "USD"}, "UnblendedCost": {"Amount": "281.22", "Unit": "USD"}, "UsageQuantity": {"Amount": "3380.05", "Unit": "Hrs"}}}
+  ], "Estimated": false},
+  {"TimePeriod": {"Start": "2026-04-17", "End": "2026-04-18"}, "Total": {}, "Groups": [
+    {"Keys": ["BoxUsage:r5.4xlarge", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "540.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "540.00", "Unit": "USD"}, "UsageQuantity": {"Amount": "535.71", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:m5.2xlarge", "SavingsPlanCoveredUsage"], "Metrics": {"AmortizedCost": {"Amount": "100.80", "Unit": "USD"}, "UnblendedCost": {"Amount": "140.00", "Unit": "USD"}, "UsageQuantity": {"Amount": "364.58", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:c5.2xlarge", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "647.26", "Unit": "USD"}, "UnblendedCost": {"Amount": "647.26", "Unit": "USD"}, "UsageQuantity": {"Amount": "1903.71", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:m6i.xlarge", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "413.04", "Unit": "USD"}, "UnblendedCost": {"Amount": "413.04", "Unit": "USD"}, "UsageQuantity": {"Amount": "2151.25", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:t3.large", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "279.04", "Unit": "USD"}, "UnblendedCost": {"Amount": "279.04", "Unit": "USD"}, "UsageQuantity": {"Amount": "3353.85", "Unit": "Hrs"}}}
+  ], "Estimated": false},
+  {"TimePeriod": {"Start": "2026-04-18", "End": "2026-04-19"}, "Total": {}, "Groups": [
+    {"Keys": ["BoxUsage:r5.4xlarge", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "540.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "540.00", "Unit": "USD"}, "UsageQuantity": {"Amount": "535.71", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:m5.2xlarge", "SavingsPlanCoveredUsage"], "Metrics": {"AmortizedCost": {"Amount": "100.80", "Unit": "USD"}, "UnblendedCost": {"Amount": "140.00", "Unit": "USD"}, "UsageQuantity": {"Amount": "364.58", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:c5.2xlarge", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "644.16", "Unit": "USD"}, "UnblendedCost": {"Amount": "644.16", "Unit": "USD"}, "UsageQuantity": {"Amount": "1894.59", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:m6i.xlarge", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "409.41", "Unit": "USD"}, "UnblendedCost": {"Amount": "409.41", "Unit": "USD"}, "UsageQuantity": {"Amount": "2132.34", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:t3.large", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "282.71", "Unit": "USD"}, "UnblendedCost": {"Amount": "282.71", "Unit": "USD"}, "UsageQuantity": {"Amount": "3397.96", "Unit": "Hrs"}}}
+  ], "Estimated": false},
+  {"TimePeriod": {"Start": "2026-04-19", "End": "2026-04-20"}, "Total": {}, "Groups": [
+    {"Keys": ["BoxUsage:r5.4xlarge", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "540.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "540.00", "Unit": "USD"}, "UsageQuantity": {"Amount": "535.71", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:m5.2xlarge", "SavingsPlanCoveredUsage"], "Metrics": {"AmortizedCost": {"Amount": "100.80", "Unit": "USD"}, "UnblendedCost": {"Amount": "140.00", "Unit": "USD"}, "UsageQuantity": {"Amount": "364.58", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:c5.2xlarge", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "632.78", "Unit": "USD"}, "UnblendedCost": {"Amount": "632.78", "Unit": "USD"}, "UsageQuantity": {"Amount": "1861.12", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:m6i.xlarge", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "410.36", "Unit": "USD"}, "UnblendedCost": {"Amount": "410.36", "Unit": "USD"}, "UsageQuantity": {"Amount": "2137.29", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:t3.large", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "283.19", "Unit": "USD"}, "UnblendedCost": {"Amount": "283.19", "Unit": "USD"}, "UsageQuantity": {"Amount": "3403.73", "Unit": "Hrs"}}}
+  ], "Estimated": false},
+  {"TimePeriod": {"Start": "2026-04-20", "End": "2026-04-21"}, "Total": {}, "Groups": [
+    {"Keys": ["BoxUsage:r5.4xlarge", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "540.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "540.00", "Unit": "USD"}, "UsageQuantity": {"Amount": "535.71", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:m5.2xlarge", "SavingsPlanCoveredUsage"], "Metrics": {"AmortizedCost": {"Amount": "100.80", "Unit": "USD"}, "UnblendedCost": {"Amount": "140.00", "Unit": "USD"}, "UsageQuantity": {"Amount": "364.58", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:c5.2xlarge", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "640.28", "Unit": "USD"}, "UnblendedCost": {"Amount": "640.28", "Unit": "USD"}, "UsageQuantity": {"Amount": "1883.18", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:m6i.xlarge", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "413.16", "Unit": "USD"}, "UnblendedCost": {"Amount": "413.16", "Unit": "USD"}, "UsageQuantity": {"Amount": "2151.88", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:t3.large", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "281.68", "Unit": "USD"}, "UnblendedCost": {"Amount": "281.68", "Unit": "USD"}, "UsageQuantity": {"Amount": "3385.58", "Unit": "Hrs"}}}
+  ], "Estimated": false},
+  {"TimePeriod": {"Start": "2026-04-21", "End": "2026-04-22"}, "Total": {}, "Groups": [
+    {"Keys": ["BoxUsage:r5.4xlarge", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "540.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "540.00", "Unit": "USD"}, "UsageQuantity": {"Amount": "535.71", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:m5.2xlarge", "SavingsPlanCoveredUsage"], "Metrics": {"AmortizedCost": {"Amount": "100.80", "Unit": "USD"}, "UnblendedCost": {"Amount": "140.00", "Unit": "USD"}, "UsageQuantity": {"Amount": "364.58", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:c5.2xlarge", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "633.11", "Unit": "USD"}, "UnblendedCost": {"Amount": "633.11", "Unit": "USD"}, "UsageQuantity": {"Amount": "1862.09", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:m6i.xlarge", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "411.65", "Unit": "USD"}, "UnblendedCost": {"Amount": "411.65", "Unit": "USD"}, "UsageQuantity": {"Amount": "2144.01", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:t3.large", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "276.67", "Unit": "USD"}, "UnblendedCost": {"Amount": "276.67", "Unit": "USD"}, "UsageQuantity": {"Amount": "3325.36", "Unit": "Hrs"}}}
+  ], "Estimated": false},
+  {"TimePeriod": {"Start": "2026-04-22", "End": "2026-04-23"}, "Total": {}, "Groups": [
+    {"Keys": ["BoxUsage:r5.4xlarge", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "540.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "540.00", "Unit": "USD"}, "UsageQuantity": {"Amount": "535.71", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:m5.2xlarge", "SavingsPlanCoveredUsage"], "Metrics": {"AmortizedCost": {"Amount": "100.80", "Unit": "USD"}, "UnblendedCost": {"Amount": "140.00", "Unit": "USD"}, "UsageQuantity": {"Amount": "364.58", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:c5.2xlarge", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "635.83", "Unit": "USD"}, "UnblendedCost": {"Amount": "635.83", "Unit": "USD"}, "UsageQuantity": {"Amount": "1870.09", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:m6i.xlarge", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "412.93", "Unit": "USD"}, "UnblendedCost": {"Amount": "412.93", "Unit": "USD"}, "UsageQuantity": {"Amount": "2150.68", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:t3.large", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "279.48", "Unit": "USD"}, "UnblendedCost": {"Amount": "279.48", "Unit": "USD"}, "UsageQuantity": {"Amount": "3359.13", "Unit": "Hrs"}}}
+  ], "Estimated": false},
+  {"TimePeriod": {"Start": "2026-04-23", "End": "2026-04-24"}, "Total": {}, "Groups": [
+    {"Keys": ["BoxUsage:r5.4xlarge", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "540.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "540.00", "Unit": "USD"}, "UsageQuantity": {"Amount": "535.71", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:m5.2xlarge", "SavingsPlanCoveredUsage"], "Metrics": {"AmortizedCost": {"Amount": "100.80", "Unit": "USD"}, "UnblendedCost": {"Amount": "140.00", "Unit": "USD"}, "UsageQuantity": {"Amount": "364.58", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:c5.2xlarge", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "636.34", "Unit": "USD"}, "UnblendedCost": {"Amount": "636.34", "Unit": "USD"}, "UsageQuantity": {"Amount": "1871.59", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:m6i.xlarge", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "410.27", "Unit": "USD"}, "UnblendedCost": {"Amount": "410.27", "Unit": "USD"}, "UsageQuantity": {"Amount": "2136.82", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:t3.large", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "281.29", "Unit": "USD"}, "UnblendedCost": {"Amount": "281.29", "Unit": "USD"}, "UsageQuantity": {"Amount": "3380.89", "Unit": "Hrs"}}}
+  ], "Estimated": false},
+  {"TimePeriod": {"Start": "2026-04-24", "End": "2026-04-25"}, "Total": {}, "Groups": [
+    {"Keys": ["BoxUsage:r5.4xlarge", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "540.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "540.00", "Unit": "USD"}, "UsageQuantity": {"Amount": "535.71", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:m5.2xlarge", "SavingsPlanCoveredUsage"], "Metrics": {"AmortizedCost": {"Amount": "100.80", "Unit": "USD"}, "UnblendedCost": {"Amount": "140.00", "Unit": "USD"}, "UsageQuantity": {"Amount": "364.58", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:c5.2xlarge", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "643.08", "Unit": "USD"}, "UnblendedCost": {"Amount": "643.08", "Unit": "USD"}, "UsageQuantity": {"Amount": "1891.41", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:m6i.xlarge", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "406.54", "Unit": "USD"}, "UnblendedCost": {"Amount": "406.54", "Unit": "USD"}, "UsageQuantity": {"Amount": "2117.40", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:t3.large", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "278.95", "Unit": "USD"}, "UnblendedCost": {"Amount": "278.95", "Unit": "USD"}, "UsageQuantity": {"Amount": "3352.76", "Unit": "Hrs"}}}
+  ], "Estimated": false},
+  {"TimePeriod": {"Start": "2026-04-25", "End": "2026-04-26"}, "Total": {}, "Groups": [
+    {"Keys": ["BoxUsage:r5.4xlarge", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "540.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "540.00", "Unit": "USD"}, "UsageQuantity": {"Amount": "535.71", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:m5.2xlarge", "SavingsPlanCoveredUsage"], "Metrics": {"AmortizedCost": {"Amount": "100.80", "Unit": "USD"}, "UnblendedCost": {"Amount": "140.00", "Unit": "USD"}, "UsageQuantity": {"Amount": "364.58", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:c5.2xlarge", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "635.11", "Unit": "USD"}, "UnblendedCost": {"Amount": "635.11", "Unit": "USD"}, "UsageQuantity": {"Amount": "1867.97", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:m6i.xlarge", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "408.56", "Unit": "USD"}, "UnblendedCost": {"Amount": "408.56", "Unit": "USD"}, "UsageQuantity": {"Amount": "2127.92", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:t3.large", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "279.42", "Unit": "USD"}, "UnblendedCost": {"Amount": "279.42", "Unit": "USD"}, "UsageQuantity": {"Amount": "3358.41", "Unit": "Hrs"}}}
+  ], "Estimated": false},
+  {"TimePeriod": {"Start": "2026-04-26", "End": "2026-04-27"}, "Total": {}, "Groups": [
+    {"Keys": ["BoxUsage:p3.8xlarge", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "345.51", "Unit": "USD"}, "UnblendedCost": {"Amount": "345.51", "Unit": "USD"}, "UsageQuantity": {"Amount": "28.23", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:r5.4xlarge", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "540.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "540.00", "Unit": "USD"}, "UsageQuantity": {"Amount": "535.71", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:m5.2xlarge", "SavingsPlanCoveredUsage"], "Metrics": {"AmortizedCost": {"Amount": "100.80", "Unit": "USD"}, "UnblendedCost": {"Amount": "140.00", "Unit": "USD"}, "UsageQuantity": {"Amount": "364.58", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:c5.2xlarge", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "635.98", "Unit": "USD"}, "UnblendedCost": {"Amount": "635.98", "Unit": "USD"}, "UsageQuantity": {"Amount": "1870.53", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:m6i.xlarge", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "412.97", "Unit": "USD"}, "UnblendedCost": {"Amount": "412.97", "Unit": "USD"}, "UsageQuantity": {"Amount": "2150.89", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:t3.large", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "281.24", "Unit": "USD"}, "UnblendedCost": {"Amount": "281.24", "Unit": "USD"}, "UsageQuantity": {"Amount": "3380.29", "Unit": "Hrs"}}}
+  ], "Estimated": false},
+  {"TimePeriod": {"Start": "2026-04-27", "End": "2026-04-28"}, "Total": {}, "Groups": [
+    {"Keys": ["BoxUsage:p3.8xlarge", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "1421.15", "Unit": "USD"}, "UnblendedCost": {"Amount": "1421.15", "Unit": "USD"}, "UsageQuantity": {"Amount": "116.11", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:r5.4xlarge", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "540.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "540.00", "Unit": "USD"}, "UsageQuantity": {"Amount": "535.71", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:m5.2xlarge", "SavingsPlanCoveredUsage"], "Metrics": {"AmortizedCost": {"Amount": "100.80", "Unit": "USD"}, "UnblendedCost": {"Amount": "140.00", "Unit": "USD"}, "UsageQuantity": {"Amount": "364.58", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:c5.2xlarge", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "634.69", "Unit": "USD"}, "UnblendedCost": {"Amount": "634.69", "Unit": "USD"}, "UsageQuantity": {"Amount": "1866.74", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:m6i.xlarge", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "411.17", "Unit": "USD"}, "UnblendedCost": {"Amount": "411.17", "Unit": "USD"}, "UsageQuantity": {"Amount": "2141.51", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:t3.large", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "277.13", "Unit": "USD"}, "UnblendedCost": {"Amount": "277.13", "Unit": "USD"}, "UsageQuantity": {"Amount": "3330.89", "Unit": "Hrs"}}}
+  ], "Estimated": false},
+  {"TimePeriod": {"Start": "2026-04-28", "End": "2026-04-29"}, "Total": {}, "Groups": [
+    {"Keys": ["BoxUsage:p3.8xlarge", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "1939.62", "Unit": "USD"}, "UnblendedCost": {"Amount": "1939.62", "Unit": "USD"}, "UsageQuantity": {"Amount": "158.47", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:r5.4xlarge", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "540.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "540.00", "Unit": "USD"}, "UsageQuantity": {"Amount": "535.71", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:m5.2xlarge", "SavingsPlanCoveredUsage"], "Metrics": {"AmortizedCost": {"Amount": "100.80", "Unit": "USD"}, "UnblendedCost": {"Amount": "140.00", "Unit": "USD"}, "UsageQuantity": {"Amount": "364.58", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:c5.2xlarge", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "641.14", "Unit": "USD"}, "UnblendedCost": {"Amount": "641.14", "Unit": "USD"}, "UsageQuantity": {"Amount": "1885.71", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:m6i.xlarge", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "405.60", "Unit": "USD"}, "UnblendedCost": {"Amount": "405.60", "Unit": "USD"}, "UsageQuantity": {"Amount": "2112.50", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:t3.large", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "282.22", "Unit": "USD"}, "UnblendedCost": {"Amount": "282.22", "Unit": "USD"}, "UsageQuantity": {"Amount": "3392.07", "Unit": "Hrs"}}}
+  ], "Estimated": false},
+  {"TimePeriod": {"Start": "2026-04-29", "End": "2026-04-30"}, "Total": {}, "Groups": [
+    {"Keys": ["BoxUsage:p3.8xlarge", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "2350.08", "Unit": "USD"}, "UnblendedCost": {"Amount": "2350.08", "Unit": "USD"}, "UsageQuantity": {"Amount": "192.00", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:r5.4xlarge", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "540.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "540.00", "Unit": "USD"}, "UsageQuantity": {"Amount": "535.71", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:m5.2xlarge", "SavingsPlanCoveredUsage"], "Metrics": {"AmortizedCost": {"Amount": "100.80", "Unit": "USD"}, "UnblendedCost": {"Amount": "140.00", "Unit": "USD"}, "UsageQuantity": {"Amount": "364.58", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:c5.2xlarge", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "644.77", "Unit": "USD"}, "UnblendedCost": {"Amount": "644.77", "Unit": "USD"}, "UsageQuantity": {"Amount": "1896.38", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:m6i.xlarge", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "414.59", "Unit": "USD"}, "UnblendedCost": {"Amount": "414.59", "Unit": "USD"}, "UsageQuantity": {"Amount": "2159.32", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:t3.large", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "282.34", "Unit": "USD"}, "UnblendedCost": {"Amount": "282.34", "Unit": "USD"}, "UsageQuantity": {"Amount": "3393.51", "Unit": "Hrs"}}}
+  ], "Estimated": false},
+  {"TimePeriod": {"Start": "2026-04-30", "End": "2026-05-01"}, "Total": {}, "Groups": [
+    {"Keys": ["BoxUsage:p3.8xlarge", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "2350.08", "Unit": "USD"}, "UnblendedCost": {"Amount": "2350.08", "Unit": "USD"}, "UsageQuantity": {"Amount": "192.00", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:r5.4xlarge", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "540.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "540.00", "Unit": "USD"}, "UsageQuantity": {"Amount": "535.71", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:m5.2xlarge", "SavingsPlanCoveredUsage"], "Metrics": {"AmortizedCost": {"Amount": "100.80", "Unit": "USD"}, "UnblendedCost": {"Amount": "140.00", "Unit": "USD"}, "UsageQuantity": {"Amount": "364.58", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:c5.2xlarge", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "638.63", "Unit": "USD"}, "UnblendedCost": {"Amount": "638.63", "Unit": "USD"}, "UsageQuantity": {"Amount": "1878.32", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:m6i.xlarge", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "413.78", "Unit": "USD"}, "UnblendedCost": {"Amount": "413.78", "Unit": "USD"}, "UsageQuantity": {"Amount": "2155.10", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:t3.large", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "281.55", "Unit": "USD"}, "UnblendedCost": {"Amount": "281.55", "Unit": "USD"}, "UsageQuantity": {"Amount": "3384.01", "Unit": "Hrs"}}}
+  ], "Estimated": false},
+  {"TimePeriod": {"Start": "2026-05-01", "End": "2026-05-02"}, "Total": {}, "Groups": [
+    {"Keys": ["BoxUsage:p3.8xlarge", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "2350.08", "Unit": "USD"}, "UnblendedCost": {"Amount": "2350.08", "Unit": "USD"}, "UsageQuantity": {"Amount": "192.00", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:r5.4xlarge", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "540.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "540.00", "Unit": "USD"}, "UsageQuantity": {"Amount": "535.71", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:m5.2xlarge", "SavingsPlanCoveredUsage"], "Metrics": {"AmortizedCost": {"Amount": "100.80", "Unit": "USD"}, "UnblendedCost": {"Amount": "140.00", "Unit": "USD"}, "UsageQuantity": {"Amount": "364.58", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:c5.2xlarge", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "642.72", "Unit": "USD"}, "UnblendedCost": {"Amount": "642.72", "Unit": "USD"}, "UsageQuantity": {"Amount": "1890.35", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:m6i.xlarge", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "410.83", "Unit": "USD"}, "UnblendedCost": {"Amount": "410.83", "Unit": "USD"}, "UsageQuantity": {"Amount": "2139.74", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:t3.large", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "277.34", "Unit": "USD"}, "UnblendedCost": {"Amount": "277.34", "Unit": "USD"}, "UsageQuantity": {"Amount": "3333.41", "Unit": "Hrs"}}}
+  ], "Estimated": false},
+  {"TimePeriod": {"Start": "2026-05-02", "End": "2026-05-03"}, "Total": {}, "Groups": [
+    {"Keys": ["BoxUsage:p3.8xlarge", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "2350.08", "Unit": "USD"}, "UnblendedCost": {"Amount": "2350.08", "Unit": "USD"}, "UsageQuantity": {"Amount": "192.00", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:r5.4xlarge", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "540.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "540.00", "Unit": "USD"}, "UsageQuantity": {"Amount": "535.71", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:m5.2xlarge", "SavingsPlanCoveredUsage"], "Metrics": {"AmortizedCost": {"Amount": "100.80", "Unit": "USD"}, "UnblendedCost": {"Amount": "140.00", "Unit": "USD"}, "UsageQuantity": {"Amount": "364.58", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:c5.2xlarge", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "634.11", "Unit": "USD"}, "UnblendedCost": {"Amount": "634.11", "Unit": "USD"}, "UsageQuantity": {"Amount": "1865.03", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:m6i.xlarge", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "409.60", "Unit": "USD"}, "UnblendedCost": {"Amount": "409.60", "Unit": "USD"}, "UsageQuantity": {"Amount": "2133.33", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:t3.large", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "278.22", "Unit": "USD"}, "UnblendedCost": {"Amount": "278.22", "Unit": "USD"}, "UsageQuantity": {"Amount": "3343.99", "Unit": "Hrs"}}}
+  ], "Estimated": false},
+  {"TimePeriod": {"Start": "2026-05-03", "End": "2026-05-04"}, "Total": {}, "Groups": [
+    {"Keys": ["BoxUsage:p3.8xlarge", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "2350.08", "Unit": "USD"}, "UnblendedCost": {"Amount": "2350.08", "Unit": "USD"}, "UsageQuantity": {"Amount": "192.00", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:r5.4xlarge", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "540.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "540.00", "Unit": "USD"}, "UsageQuantity": {"Amount": "535.71", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:m5.2xlarge", "SavingsPlanCoveredUsage"], "Metrics": {"AmortizedCost": {"Amount": "100.80", "Unit": "USD"}, "UnblendedCost": {"Amount": "140.00", "Unit": "USD"}, "UsageQuantity": {"Amount": "364.58", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:c5.2xlarge", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "645.60", "Unit": "USD"}, "UnblendedCost": {"Amount": "645.60", "Unit": "USD"}, "UsageQuantity": {"Amount": "1898.82", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:m6i.xlarge", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "408.43", "Unit": "USD"}, "UnblendedCost": {"Amount": "408.43", "Unit": "USD"}, "UsageQuantity": {"Amount": "2127.24", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:t3.large", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "276.67", "Unit": "USD"}, "UnblendedCost": {"Amount": "276.67", "Unit": "USD"}, "UsageQuantity": {"Amount": "3325.36", "Unit": "Hrs"}}}
+  ], "Estimated": false},
+  {"TimePeriod": {"Start": "2026-05-04", "End": "2026-05-05"}, "Total": {}, "Groups": [
+    {"Keys": ["BoxUsage:p3.8xlarge", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "2185.57", "Unit": "USD"}, "UnblendedCost": {"Amount": "2185.57", "Unit": "USD"}, "UsageQuantity": {"Amount": "178.56", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:r5.4xlarge", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "502.20", "Unit": "USD"}, "UnblendedCost": {"Amount": "502.20", "Unit": "USD"}, "UsageQuantity": {"Amount": "498.21", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:m5.2xlarge", "SavingsPlanCoveredUsage"], "Metrics": {"AmortizedCost": {"Amount": "93.74", "Unit": "USD"}, "UnblendedCost": {"Amount": "130.20", "Unit": "USD"}, "UsageQuantity": {"Amount": "339.06", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:c5.2xlarge", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "596.99", "Unit": "USD"}, "UnblendedCost": {"Amount": "596.99", "Unit": "USD"}, "UsageQuantity": {"Amount": "1755.84", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:m6i.xlarge", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "384.60", "Unit": "USD"}, "UnblendedCost": {"Amount": "384.60", "Unit": "USD"}, "UsageQuantity": {"Amount": "2003.14", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:t3.large", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "261.40", "Unit": "USD"}, "UnblendedCost": {"Amount": "261.40", "Unit": "USD"}, "UsageQuantity": {"Amount": "3141.88", "Unit": "Hrs"}}}
+  ], "Estimated": true},
+  {"TimePeriod": {"Start": "2026-05-05", "End": "2026-05-06"}, "Total": {}, "Groups": [
+    {"Keys": ["BoxUsage:p3.8xlarge", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "1457.05", "Unit": "USD"}, "UnblendedCost": {"Amount": "1457.05", "Unit": "USD"}, "UsageQuantity": {"Amount": "119.04", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:r5.4xlarge", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "334.80", "Unit": "USD"}, "UnblendedCost": {"Amount": "334.80", "Unit": "USD"}, "UsageQuantity": {"Amount": "332.14", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:m5.2xlarge", "SavingsPlanCoveredUsage"], "Metrics": {"AmortizedCost": {"Amount": "62.50", "Unit": "USD"}, "UnblendedCost": {"Amount": "86.80", "Unit": "USD"}, "UsageQuantity": {"Amount": "226.04", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:c5.2xlarge", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "394.85", "Unit": "USD"}, "UnblendedCost": {"Amount": "394.85", "Unit": "USD"}, "UsageQuantity": {"Amount": "1161.33", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:m6i.xlarge", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "254.92", "Unit": "USD"}, "UnblendedCost": {"Amount": "254.92", "Unit": "USD"}, "UsageQuantity": {"Amount": "1327.71", "Unit": "Hrs"}}},
+    {"Keys": ["BoxUsage:t3.large", "Usage"], "Metrics": {"AmortizedCost": {"Amount": "171.93", "Unit": "USD"}, "UnblendedCost": {"Amount": "171.93", "Unit": "USD"}, "UsageQuantity": {"Amount": "2066.49", "Unit": "Hrs"}}}
+  ], "Estimated": true}
+ ],
+ "DimensionValueAttributes": []
+}

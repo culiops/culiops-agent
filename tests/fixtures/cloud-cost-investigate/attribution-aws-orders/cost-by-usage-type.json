@@ -1,0 +1,506 @@
+{
+  "_note": "aws ce get-cost-and-usage --time-period Start=2026-03-01,End=2026-05-01 --granularity MONTHLY --metrics AmortizedCost UsageQuantity --filter '{\"And\":[{\"Tags\":{\"Key\":\"Service\",\"Values\":[\"orders\"]}},{\"Dimensions\":{\"Key\":\"RECORD_TYPE\",\"Values\":[\"Usage\",\"DiscountedUsage\",\"SavingsPlanCoveredUsage\"]}}]}' --group-by Type=DIMENSION,Key=USAGE_TYPE. Account 123456789012 (acme-prod) is a member account, so no LINKED_ACCOUNT filter is needed. Tag Service must be activated as a cost-allocation tag. This is the authoritative service-level view: it carries NO per-resource information. No commitment applies to these services (the account's only Savings Plan is an EC2 Instance plan on m5), so AmortizedCost equals UnblendedCost here and no DiscountedUsage / SavingsPlanCoveredUsage rows appear. Amounts are rounded to cents per line item, so every sum in the README / DRY-RUN-NOTES is exact. Usage-type strings are illustrative.",
+  "ResultsByTime": [
+    {
+      "TimePeriod": {
+        "Start": "2026-03-01",
+        "End": "2026-04-01"
+      },
+      "Total": {},
+      "Groups": [
+        {
+          "Keys": [
+            "USE1-Fargate-vCPU-Hours:perCPU"
+          ],
+          "Metrics": {
+            "AmortizedCost": {
+              "Amount": "602.34",
+              "Unit": "USD"
+            },
+            "UsageQuantity": {
+              "Amount": "14880",
+              "Unit": "vCPU-Hours"
+            }
+          }
+        },
+        {
+          "Keys": [
+            "USE1-Fargate-GB-Hours"
+          ],
+          "Metrics": {
+            "AmortizedCost": {
+              "Amount": "132.28",
+              "Unit": "USD"
+            },
+            "UsageQuantity": {
+              "Amount": "29760",
+              "Unit": "GB-Hours"
+            }
+          }
+        },
+        {
+          "Keys": [
+            "USE1-DataTransfer-Out-Bytes"
+          ],
+          "Metrics": {
+            "AmortizedCost": {
+              "Amount": "97.20",
+              "Unit": "USD"
+            },
+            "UsageQuantity": {
+              "Amount": "1080",
+              "Unit": "GB"
+            }
+          }
+        },
+        {
+          "Keys": [
+            "USE1-Multi-AZUsage:db.r6g.xlarge"
+          ],
+          "Metrics": {
+            "AmortizedCost": {
+              "Amount": "714.24",
+              "Unit": "USD"
+            },
+            "UsageQuantity": {
+              "Amount": "744",
+              "Unit": "Hrs"
+            }
+          }
+        },
+        {
+          "Keys": [
+            "USE1-RDS:Multi-AZ-GP3-Storage"
+          ],
+          "Metrics": {
+            "AmortizedCost": {
+              "Amount": "179.40",
+              "Unit": "USD"
+            },
+            "UsageQuantity": {
+              "Amount": "780",
+              "Unit": "GB-Mo"
+            }
+          }
+        },
+        {
+          "Keys": [
+            "USE1-RDS:ChargedBackupUsage"
+          ],
+          "Metrics": {
+            "AmortizedCost": {
+              "Amount": "45.60",
+              "Unit": "USD"
+            },
+            "UsageQuantity": {
+              "Amount": "480",
+              "Unit": "GB-Mo"
+            }
+          }
+        },
+        {
+          "Keys": [
+            "USE1-InstanceUsage:db.t4g.medium"
+          ],
+          "Metrics": {
+            "AmortizedCost": {
+              "Amount": "22.78",
+              "Unit": "USD"
+            },
+            "UsageQuantity": {
+              "Amount": "312",
+              "Unit": "Hrs"
+            }
+          }
+        },
+        {
+          "Keys": [
+            "USE1-RDS:GP3-Storage"
+          ],
+          "Metrics": {
+            "AmortizedCost": {
+              "Amount": "4.82",
+              "Unit": "USD"
+            },
+            "UsageQuantity": {
+              "Amount": "41.94",
+              "Unit": "GB-Mo"
+            }
+          }
+        },
+        {
+          "Keys": [
+            "TimedStorage-ByteHrs"
+          ],
+          "Metrics": {
+            "AmortizedCost": {
+              "Amount": "89.70",
+              "Unit": "USD"
+            },
+            "UsageQuantity": {
+              "Amount": "3900",
+              "Unit": "GB-Mo"
+            }
+          }
+        },
+        {
+          "Keys": [
+            "Requests-Tier1"
+          ],
+          "Metrics": {
+            "AmortizedCost": {
+              "Amount": "55.00",
+              "Unit": "USD"
+            },
+            "UsageQuantity": {
+              "Amount": "11000000",
+              "Unit": "Requests"
+            }
+          }
+        },
+        {
+          "Keys": [
+            "Requests-Tier2"
+          ],
+          "Metrics": {
+            "AmortizedCost": {
+              "Amount": "11.20",
+              "Unit": "USD"
+            },
+            "UsageQuantity": {
+              "Amount": "28000000",
+              "Unit": "Requests"
+            }
+          }
+        },
+        {
+          "Keys": [
+            "TimedStorage-GDA-ByteHrs"
+          ],
+          "Metrics": {
+            "AmortizedCost": {
+              "Amount": "57.42",
+              "Unit": "USD"
+            },
+            "UsageQuantity": {
+              "Amount": "58000",
+              "Unit": "GB-Mo"
+            }
+          }
+        },
+        {
+          "Keys": [
+            "Requests-GDA-Tier1"
+          ],
+          "Metrics": {
+            "AmortizedCost": {
+              "Amount": "70.00",
+              "Unit": "USD"
+            },
+            "UsageQuantity": {
+              "Amount": "1400000",
+              "Unit": "Requests"
+            }
+          }
+        },
+        {
+          "Keys": [
+            "USE1-Requests-Tier1"
+          ],
+          "Metrics": {
+            "AmortizedCost": {
+              "Amount": "152.00",
+              "Unit": "USD"
+            },
+            "UsageQuantity": {
+              "Amount": "380000000",
+              "Unit": "Requests"
+            }
+          }
+        },
+        {
+          "Keys": [
+            "USE1-StateTransitions"
+          ],
+          "Metrics": {
+            "AmortizedCost": {
+              "Amount": "135.00",
+              "Unit": "USD"
+            },
+            "UsageQuantity": {
+              "Amount": "5400000",
+              "Unit": "StateTransitions"
+            }
+          }
+        },
+        {
+          "Keys": [
+            "USE1-NatGateway-Hours"
+          ],
+          "Metrics": {
+            "AmortizedCost": {
+              "Amount": "33.48",
+              "Unit": "USD"
+            },
+            "UsageQuantity": {
+              "Amount": "744",
+              "Unit": "Hrs"
+            }
+          }
+        },
+        {
+          "Keys": [
+            "USE1-NatGateway-Bytes"
+          ],
+          "Metrics": {
+            "AmortizedCost": {
+              "Amount": "76.50",
+              "Unit": "USD"
+            },
+            "UsageQuantity": {
+              "Amount": "1700",
+              "Unit": "GB"
+            }
+          }
+        }
+      ],
+      "Estimated": false
+    },
+    {
+      "TimePeriod": {
+        "Start": "2026-04-01",
+        "End": "2026-05-01"
+      },
+      "Total": {},
+      "Groups": [
+        {
+          "Keys": [
+            "USE1-Fargate-vCPU-Hours:perCPU"
+          ],
+          "Metrics": {
+            "AmortizedCost": {
+              "Amount": "757.79",
+              "Unit": "USD"
+            },
+            "UsageQuantity": {
+              "Amount": "18720",
+              "Unit": "vCPU-Hours"
+            }
+          }
+        },
+        {
+          "Keys": [
+            "USE1-Fargate-GB-Hours"
+          ],
+          "Metrics": {
+            "AmortizedCost": {
+              "Amount": "166.42",
+              "Unit": "USD"
+            },
+            "UsageQuantity": {
+              "Amount": "37440",
+              "Unit": "GB-Hours"
+            }
+          }
+        },
+        {
+          "Keys": [
+            "USE1-DataTransfer-Out-Bytes"
+          ],
+          "Metrics": {
+            "AmortizedCost": {
+              "Amount": "108.00",
+              "Unit": "USD"
+            },
+            "UsageQuantity": {
+              "Amount": "1200",
+              "Unit": "GB"
+            }
+          }
+        },
+        {
+          "Keys": [
+            "USE1-Multi-AZUsage:db.r6g.xlarge"
+          ],
+          "Metrics": {
+            "AmortizedCost": {
+              "Amount": "691.20",
+              "Unit": "USD"
+            },
+            "UsageQuantity": {
+              "Amount": "720",
+              "Unit": "Hrs"
+            }
+          }
+        },
+        {
+          "Keys": [
+            "USE1-RDS:Multi-AZ-GP3-Storage"
+          ],
+          "Metrics": {
+            "AmortizedCost": {
+              "Amount": "184.00",
+              "Unit": "USD"
+            },
+            "UsageQuantity": {
+              "Amount": "800",
+              "Unit": "GB-Mo"
+            }
+          }
+        },
+        {
+          "Keys": [
+            "USE1-RDS:ChargedBackupUsage"
+          ],
+          "Metrics": {
+            "AmortizedCost": {
+              "Amount": "47.50",
+              "Unit": "USD"
+            },
+            "UsageQuantity": {
+              "Amount": "500",
+              "Unit": "GB-Mo"
+            }
+          }
+        },
+        {
+          "Keys": [
+            "TimedStorage-ByteHrs"
+          ],
+          "Metrics": {
+            "AmortizedCost": {
+              "Amount": "92.00",
+              "Unit": "USD"
+            },
+            "UsageQuantity": {
+              "Amount": "4000",
+              "Unit": "GB-Mo"
+            }
+          }
+        },
+        {
+          "Keys": [
+            "Requests-Tier1"
+          ],
+          "Metrics": {
+            "AmortizedCost": {
+              "Amount": "60.00",
+              "Unit": "USD"
+            },
+            "UsageQuantity": {
+              "Amount": "12000000",
+              "Unit": "Requests"
+            }
+          }
+        },
+        {
+          "Keys": [
+            "Requests-Tier2"
+          ],
+          "Metrics": {
+            "AmortizedCost": {
+              "Amount": "12.00",
+              "Unit": "USD"
+            },
+            "UsageQuantity": {
+              "Amount": "30000000",
+              "Unit": "Requests"
+            }
+          }
+        },
+        {
+          "Keys": [
+            "TimedStorage-GDA-ByteHrs"
+          ],
+          "Metrics": {
+            "AmortizedCost": {
+              "Amount": "59.40",
+              "Unit": "USD"
+            },
+            "UsageQuantity": {
+              "Amount": "60000",
+              "Unit": "GB-Mo"
+            }
+          }
+        },
+        {
+          "Keys": [
+            "Requests-GDA-Tier1"
+          ],
+          "Metrics": {
+            "AmortizedCost": {
+              "Amount": "75.00",
+              "Unit": "USD"
+            },
+            "UsageQuantity": {
+              "Amount": "1500000",
+              "Unit": "Requests"
+            }
+          }
+        },
+        {
+          "Keys": [
+            "USE1-Requests-Tier1"
+          ],
+          "Metrics": {
+            "AmortizedCost": {
+              "Amount": "180.00",
+              "Unit": "USD"
+            },
+            "UsageQuantity": {
+              "Amount": "450000000",
+              "Unit": "Requests"
+            }
+          }
+        },
+        {
+          "Keys": [
+            "USE1-StateTransitions"
+          ],
+          "Metrics": {
+            "AmortizedCost": {
+              "Amount": "150.00",
+              "Unit": "USD"
+            },
+            "UsageQuantity": {
+              "Amount": "6000000",
+              "Unit": "StateTransitions"
+            }
+          }
+        },
+        {
+          "Keys": [
+            "USE1-NatGateway-Hours"
+          ],
+          "Metrics": {
+            "AmortizedCost": {
+              "Amount": "32.40",
+              "Unit": "USD"
+            },
+            "UsageQuantity": {
+              "Amount": "720",
+              "Unit": "Hrs"
+            }
+          }
+        },
+        {
+          "Keys": [
+            "USE1-NatGateway-Bytes"
+          ],
+          "Metrics": {
+            "AmortizedCost": {
+              "Amount": "83.25",
+              "Unit": "USD"
+            },
+            "UsageQuantity": {
+              "Amount": "1850",
+              "Unit": "GB"
+            }
+          }
+        }
+      ],
+      "Estimated": false
+    }
+  ],
+  "DimensionValueAttributes": []
+}

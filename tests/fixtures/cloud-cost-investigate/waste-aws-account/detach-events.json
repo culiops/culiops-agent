@@ -1,0 +1,242 @@
+{
+  "_note": "CloudTrail Event history keeps 90 days (from 2026-02-07 at this date). One lookup per unattached volume; the skill keeps Events[?EventName=='DetachVolume'] and takes the most recent. The CloudTrailEvent payload string is omitted. 'Unused since' = DetachVolume time, never CreateTime. vol-0aaaa0002bbbb0002 has NO DetachVolume event in the 90 days (it was CreateTime 2025-10-17): the true detach is older than the window, or happened before CloudTrail data, so the window cannot be verified.",
+  "lookups": [
+    {
+      "region": "us-east-1",
+      "volumeId": "vol-0xxxx1234abcd5678",
+      "command": "aws cloudtrail lookup-events --region us-east-1 --lookup-attributes AttributeKey=ResourceName,AttributeValue=vol-0xxxx1234abcd5678 --start-time 2026-02-07T00:00:00Z",
+      "Events": [
+        {
+          "EventId": "6afc271c-0000-4000-8000-f770f7746f8d",
+          "EventName": "DetachVolume",
+          "ReadOnly": "false",
+          "EventTime": "2026-05-05T16:20:31+00:00",
+          "EventSource": "ec2.amazonaws.com",
+          "Username": "jsmith",
+          "Resources": [
+            {
+              "ResourceType": "AWS::EC2::Volume",
+              "ResourceName": "vol-0xxxx1234abcd5678"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "region": "us-east-1",
+      "volumeId": "vol-0aaaa0001bbbb0001",
+      "command": "aws cloudtrail lookup-events --region us-east-1 --lookup-attributes AttributeKey=ResourceName,AttributeValue=vol-0aaaa0001bbbb0001 --start-time 2026-02-07T00:00:00Z",
+      "Events": [
+        {
+          "EventId": "61c8bb57-0000-4000-8000-aef3662d99ae",
+          "EventName": "DetachVolume",
+          "ReadOnly": "false",
+          "EventTime": "2026-02-22T11:05:09+00:00",
+          "EventSource": "ec2.amazonaws.com",
+          "Username": "ebs-csi-controller",
+          "Resources": [
+            {
+              "ResourceType": "AWS::EC2::Volume",
+              "ResourceName": "vol-0aaaa0001bbbb0001"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "region": "us-east-1",
+      "volumeId": "vol-0aaaa0002bbbb0002",
+      "command": "aws cloudtrail lookup-events --region us-east-1 --lookup-attributes AttributeKey=ResourceName,AttributeValue=vol-0aaaa0002bbbb0002 --start-time 2026-02-07T00:00:00Z",
+      "Events": []
+    },
+    {
+      "region": "us-east-1",
+      "volumeId": "vol-0aaaa0003bbbb0003",
+      "command": "aws cloudtrail lookup-events --region us-east-1 --lookup-attributes AttributeKey=ResourceName,AttributeValue=vol-0aaaa0003bbbb0003 --start-time 2026-02-07T00:00:00Z",
+      "Events": [
+        {
+          "EventId": "1fb0f60f-0000-4000-8000-8cb3aee060c6",
+          "EventName": "DetachVolume",
+          "ReadOnly": "false",
+          "EventTime": "2026-02-26T09:12:44+00:00",
+          "EventSource": "ec2.amazonaws.com",
+          "Username": "deploy-bot",
+          "Resources": [
+            {
+              "ResourceType": "AWS::EC2::Volume",
+              "ResourceName": "vol-0aaaa0003bbbb0003"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "region": "us-east-1",
+      "volumeId": "vol-0aaaa0004bbbb0004",
+      "command": "aws cloudtrail lookup-events --region us-east-1 --lookup-attributes AttributeKey=ResourceName,AttributeValue=vol-0aaaa0004bbbb0004 --start-time 2026-02-07T00:00:00Z",
+      "Events": [
+        {
+          "EventId": "a963f573-0000-4000-8000-89e8b3bccca4",
+          "EventName": "DetachVolume",
+          "ReadOnly": "false",
+          "EventTime": "2026-03-03T14:48:02+00:00",
+          "EventSource": "ec2.amazonaws.com",
+          "Username": "deploy-bot",
+          "Resources": [
+            {
+              "ResourceType": "AWS::EC2::Volume",
+              "ResourceName": "vol-0aaaa0004bbbb0004"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "region": "us-east-1",
+      "volumeId": "vol-0aaaa0005bbbb0005",
+      "command": "aws cloudtrail lookup-events --region us-east-1 --lookup-attributes AttributeKey=ResourceName,AttributeValue=vol-0aaaa0005bbbb0005 --start-time 2026-02-07T00:00:00Z",
+      "Events": [
+        {
+          "EventId": "1b12ef1e-0000-4000-8000-7f22d821a416",
+          "EventName": "DetachVolume",
+          "ReadOnly": "false",
+          "EventTime": "2026-02-12T17:30:55+00:00",
+          "EventSource": "ec2.amazonaws.com",
+          "Username": "deploy-bot",
+          "Resources": [
+            {
+              "ResourceType": "AWS::EC2::Volume",
+              "ResourceName": "vol-0aaaa0005bbbb0005"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "region": "us-east-1",
+      "volumeId": "vol-0aaaa0006bbbb0006",
+      "command": "aws cloudtrail lookup-events --region us-east-1 --lookup-attributes AttributeKey=ResourceName,AttributeValue=vol-0aaaa0006bbbb0006 --start-time 2026-02-07T00:00:00Z",
+      "Events": [
+        {
+          "EventId": "179bf4d7-0000-4000-8000-686aee6c0825",
+          "EventName": "DetachVolume",
+          "ReadOnly": "false",
+          "EventTime": "2026-03-01T08:03:27+00:00",
+          "EventSource": "ec2.amazonaws.com",
+          "Username": "deploy-bot",
+          "Resources": [
+            {
+              "ResourceType": "AWS::EC2::Volume",
+              "ResourceName": "vol-0aaaa0006bbbb0006"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "region": "us-east-1",
+      "volumeId": "vol-0aaaa000bbbbb000b",
+      "command": "aws cloudtrail lookup-events --region us-east-1 --lookup-attributes AttributeKey=ResourceName,AttributeValue=vol-0aaaa000bbbbb000b --start-time 2026-02-07T00:00:00Z",
+      "Events": [
+        {
+          "EventId": "47641d01-0000-4000-8000-b475c89bd2ae",
+          "EventName": "DetachVolume",
+          "ReadOnly": "false",
+          "EventTime": "2026-02-27T13:41:18+00:00",
+          "EventSource": "ec2.amazonaws.com",
+          "Username": "deploy-bot",
+          "Resources": [
+            {
+              "ResourceType": "AWS::EC2::Volume",
+              "ResourceName": "vol-0aaaa000bbbbb000b"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "region": "eu-west-1",
+      "volumeId": "vol-0aaaa0007bbbb0007",
+      "command": "aws cloudtrail lookup-events --region eu-west-1 --lookup-attributes AttributeKey=ResourceName,AttributeValue=vol-0aaaa0007bbbb0007 --start-time 2026-02-07T00:00:00Z",
+      "Events": [
+        {
+          "EventId": "fb252624-0000-4000-8000-b3cb7c831fe4",
+          "EventName": "DetachVolume",
+          "ReadOnly": "false",
+          "EventTime": "2026-02-18T10:22:40+00:00",
+          "EventSource": "ec2.amazonaws.com",
+          "Username": "deploy-bot",
+          "Resources": [
+            {
+              "ResourceType": "AWS::EC2::Volume",
+              "ResourceName": "vol-0aaaa0007bbbb0007"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "region": "eu-west-1",
+      "volumeId": "vol-0aaaa0008bbbb0008",
+      "command": "aws cloudtrail lookup-events --region eu-west-1 --lookup-attributes AttributeKey=ResourceName,AttributeValue=vol-0aaaa0008bbbb0008 --start-time 2026-02-07T00:00:00Z",
+      "Events": [
+        {
+          "EventId": "3131edca-0000-4000-8000-bc5c32c0abbc",
+          "EventName": "DetachVolume",
+          "ReadOnly": "false",
+          "EventTime": "2026-03-05T15:09:12+00:00",
+          "EventSource": "ec2.amazonaws.com",
+          "Username": "deploy-bot",
+          "Resources": [
+            {
+              "ResourceType": "AWS::EC2::Volume",
+              "ResourceName": "vol-0aaaa0008bbbb0008"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "region": "eu-west-1",
+      "volumeId": "vol-0aaaa0009bbbb0009",
+      "command": "aws cloudtrail lookup-events --region eu-west-1 --lookup-attributes AttributeKey=ResourceName,AttributeValue=vol-0aaaa0009bbbb0009 --start-time 2026-02-07T00:00:00Z",
+      "Events": [
+        {
+          "EventId": "be538ab3-0000-4000-8000-5afd8880f115",
+          "EventName": "DetachVolume",
+          "ReadOnly": "false",
+          "EventTime": "2026-02-09T12:57:36+00:00",
+          "EventSource": "ec2.amazonaws.com",
+          "Username": "deploy-bot",
+          "Resources": [
+            {
+              "ResourceType": "AWS::EC2::Volume",
+              "ResourceName": "vol-0aaaa0009bbbb0009"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "region": "eu-west-1",
+      "volumeId": "vol-0aaaa000abbbb000a",
+      "command": "aws cloudtrail lookup-events --region eu-west-1 --lookup-attributes AttributeKey=ResourceName,AttributeValue=vol-0aaaa000abbbb000a --start-time 2026-02-07T00:00:00Z",
+      "Events": [
+        {
+          "EventId": "a7004e8e-0000-4000-8000-10791ba0b50e",
+          "EventName": "DetachVolume",
+          "ReadOnly": "false",
+          "EventTime": "2026-03-02T09:30:00+00:00",
+          "EventSource": "ec2.amazonaws.com",
+          "Username": "deploy-bot",
+          "Resources": [
+            {
+              "ResourceType": "AWS::EC2::Volume",
+              "ResourceName": "vol-0aaaa000abbbb000a"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

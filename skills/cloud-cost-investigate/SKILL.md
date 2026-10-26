@@ -1,6 +1,6 @@
 ---
 name: cloud-cost-investigate
-description: Use when the user wants to investigate cloud costs — bill anomalies ("our AWS bill spiked", "why is GCP costing more"), waste / optimization audits ("find what we're wasting", "where can we save"), or per-service cost attribution ("what does service X cost us", "break down our cost by service"). Read-only; produces a report and prioritized remediation list with source-labelled savings estimates. Works with AWS (Cost Explorer + Compute Optimizer), GCP (Cloud Billing + Recommender), Azure (Cost Management + Advisor), and Kubernetes (OpenCost / Kubecost).
+description: Use when the user wants to investigate cloud costs — bill anomalies ("our AWS bill spiked", "why did EC2 cost jump"), waste / optimization audits ("find what we're wasting", "where can we save"), or per-service cost attribution ("what does service X cost us", "break down our cost by service"). Read-only; produces a report and prioritized remediation list with source-labelled, evidence-cited savings estimates. Works with AWS (Cost Explorer + Compute Optimizer + CloudWatch) and Kubernetes (OpenCost / Kubecost). Cost owned by CloudFormation / Serverless / SAM / CDK is still investigated but flagged `unsupported-owner`; GCP / Azure are out of scope.
 ---
 
 # Cloud Cost Investigate
@@ -17,7 +17,7 @@ NO SAVINGS CLAIM WITHOUT A LABELLED SOURCE.
 
 - Law 1: Strictly read-only. Cost APIs, resource-state APIs, metrics APIs only. No `delete`, `terminate`, `update`, `purchase` — not even "harmless" tagging fixes.
 - Law 2: Every batch of cloud queries is shown to the operator and approved before execution. Per-batch (not per-query) to keep friction reasonable, but the batch is itemized with API costs and IAM permissions called out.
-- Law 3: Every dollar figure in the remediation list is tagged with its source (`compute-optimizer`, `gcp-recommender`, `azure-advisor`, `line-item-computation`) and confidence (`high` / `medium` / `low`). No bare "save $X" claims.
+- Law 3: Every dollar figure in the remediation list is tagged with its source (`compute-optimizer` / `line-item-computation` / `allocation-model`), its rate basis for computed rows (`bill-derived` / `list-price`), and confidence (`high` / `medium` / `low`). Every row's evidence cites the query that produced it (`live:<query #>`), or `code:<path:line>` when an IaC repo was given, or `UNVERIFIED`. No bare "save $X" claims; `UNVERIFIED` evidence caps a row at `confidence: low`.
 
 ## Guiding principles
 
@@ -43,7 +43,7 @@ Rules:
 
 Every savings claim involving a pricing-mode or tier change must compute the delta from **real pricing × the resource's actual utilization profile**, not from the direction of the switch. Usage-based / elastic / on-demand pricing carries a per-unit premium that can *exceed* a small fixed / reserved footprint at low utilization. The cheaper mode flips with the shape of the workload.
 
-This applies whether the candidate came from a cloud recommender or from line-item computation. Recommender output is treated as `confidence: medium` until the math is re-checked against observed usage; bare recommender numbers without a utilization-anchored computation are not promoted to `confidence: high`.
+This applies whether the candidate came from Compute Optimizer or from line-item computation. Compute Optimizer output starts at `confidence: low`, reaches `medium` once the ≥ 30d hourly check and the RI/SP coverage check (Principle 4) pass, and is never promoted to `high` without a utilization-anchored computation.
 
 **Model the transition, not just the endpoints.** A pricing-mode or tier change can *raise* cost during the transition before the new steady state pays off — a Kinesis stream switched on-demand → provisioned inherits a high shard count and costs more until the count is stepped down. Savings estimates for mode / tier changes must show the path (interim cost and time-to-payback), not only the start and end states.
 
@@ -55,7 +55,9 @@ Evidence must be read over a window sized to how destructive the proposed action
 
 - **idle → resize / downgrade:** require ≥ 30 days of utilization data.
 - **idle → delete / decommission:** require 60–180 days.
-- Read at **hourly granularity**, not daily aggregate — a daily average hides bursts and idle stretches alike.
+- Read at **hourly granularity**, not daily aggregate — a daily average hides bursts and idle stretches alike. (CloudWatch returns at most 1,440 datapoints per call: at 1-hour periods, split windows longer than 60 days into ≤ 60-day calls.)
+- **An empty result is not zero.** `Datapoints: []` is what CloudWatch returns for a wrong account, region, namespace or dimension — not an error. Confirm the metric exists (`cloudwatch list-metrics` with the same namespace + dimensions) before reading an empty series as "no activity"; otherwise the row is `UNVERIFIED`.
+- **Measure the window from the right event.** "Unused for N days" counts from when use stopped (detach, last invocation, last write) — never from `CreateTime`.
 - Inspect the **temporal distribution** of activity, not just the total. A single historical burst is not steady low use: a stream with 48 requests all inside one 2-hour window 3.5 months ago is idle now, not lightly used.
 
 A delete-candidate whose only evidence comes from a window shorter than 60 days is capped at `confidence: low` and labelled `window-too-short`.
@@ -69,21 +71,27 @@ Every cost and savings figure must be derived from what is actually billed, and 
 - **Bill-derived rates first.** Compute the effective $/unit from the real bill (usage quantity ÷ line-item cost) rather than list price. Label such figures `bill-derived`; list price is a fallback, labelled as such.
 - **Attribute to the metered dimension, not the trigger.** Resolve every dollar to what is billed. A schedule, rule, or event source that is itself $0 is not the cost — "$X EventBridge schedule cost" is a misattribution when 100% of the charge is the target Lambda's GB-seconds.
 - **Recurring vs residual.** Classify each charge as recurring or residual / one-off / self-clearing. A leftover line from an already-deleted resource (e.g. an extended-support charge for an instance that no longer exists) clears itself and is not a saving to chase.
+- **Realizable, not list.** A saving on capacity covered by a Reserved Instance or Savings Plan is ~$0 until the commitment ends (the commitment is paid either way). Record coverage for every rightsize / delete row on RI/SP-eligible services; a covered row shows `realizable: covered until <date>`, not a bare $/mo. Compute Optimizer prices at on-demand unless its savings-estimation mode includes discounts — treat its figure as list.
+- **Incremental storage is not its nominal size.** EBS snapshots are incremental: deleting one frees only blocks no other snapshot references. Never price a snapshot as `VolumeSize × rate`; use the bill (snapshot usage by ID/tag) or mark the figure `low`.
+- **Kubernetes allocation is a model, not the bill.** OpenCost / Kubecost dollars are allocated from list or custom prices unless cloud billing integration is configured; label them `allocation-model`. On EKS the same spend also appears as EC2 in the AWS bill — never sum the two.
 
 **Rationalization stopper:** "List price says $X, and the schedule that triggers it is the cost" → STOP. Derive the rate from the bill, and attribute it to the metered dimension.
 
 ## Constraints (Non-Negotiable)
 
 1. **Read-only.** No mutations of any kind. Not even tagging fixes, even if they would "improve future investigations".
-2. **Per-batch query approval.** No queries run before GATE 2 (initial batch) or GATE 3 (drill-down batch) approval. Skill never silently extends a batch.
-3. **API costs and IAM in the plan.** Every query plan itemizes IAM permissions and (where applicable) API per-request costs. Operators must not be surprised by an unexpected bill from Cost Explorer queries.
-4. **Single account by default.** Org-wide is opt-in and triggers a stricter scope confirmation. Skill never escalates from single to org silently.
-5. **Catalog-or-tag for attribution mode.** Attribution mode refuses to run without either a service-discovery catalog or an operator-confirmed tag convention.
-6. **Source-labelled savings claims.** Every dollar figure in the remediation list carries `source` (`compute-optimizer` / `gcp-recommender` / `azure-advisor` / `line-item-computation`) and `confidence` (`high` / `medium` / `low`). No bare claims.
-7. **Cloud-native APIs only in v1.** No third-party FinOps tools. No warehouse/billing-export queries. Deferred to v2 via the `examples/` extension pattern.
-8. **All output in `.culiops/cloud-cost-investigate/`.** Single directory, single file per investigation, named `<scope-slug>-<mode>-<YYYYMMDD-HHmm>.md` (service name in attribution mode; slugified account/subscription/project/cluster identifier — alias preferred, ID acceptable — in anomaly and waste modes). Same convention as other skills.
-9. **Stop on query failure.** Auth errors, rate limits, service unavailability halt the investigation and surface to the operator. The skill does not silently skip and produce a partial report disguised as complete.
-10. **No auto-remediation handoff.** Even if a remediation fits perfectly into `iac-change-execution`, the skill stops at the report. Operator triggers the next skill explicitly.
+2. **Per-batch query approval.** No queries run before GATE 1a (scoping probe), GATE 2 (initial batch) or GATE 3 (drill-down batch) approval. Skill never silently extends a batch.
+3. **API costs and IAM in the plan.** Every query plan itemizes IAM permissions and (where applicable) API per-request costs. Cost Explorer bills **every paginated page** as a request — estimate pages, not calls. Operators must not be surprised by an unexpected bill from Cost Explorer queries.
+4. **Single account by default — enforced, not assumed.** In an AWS Organizations management (payer) account, unfiltered Cost Explorer returns the whole organization. Single-account scope there means a `LINKED_ACCOUNT` filter on **every** CE call. Org-wide is opt-in and triggers a stricter scope confirmation. Skill never escalates from single to org silently.
+5. **Regions covered are stated, never implied.** Resource-state, Compute Optimizer and CloudWatch calls are regional; Cost Explorer is global. Sweeps run in every region that carries spend in the window (Step 1.4); the report header lists `Regions covered:`. A sweep never run in a region is a gap, not "no waste".
+6. **Catalog-or-tag for attribution mode.** Attribution mode refuses to run without either a service-discovery catalog or an operator-confirmed tag convention.
+7. **Source-labelled, evidence-cited savings claims.** Every dollar figure in the remediation list carries `source`, rate basis, `confidence` and an evidence reference (Law 3). Informational and excluded items (untagged spend, residual charges, binding-constraint exclusions) go to their own report section — never the remediation table, which downstream skills parse as actions.
+8. **Cloud-native APIs only in v1.** No third-party FinOps tools beyond in-cluster OpenCost / Kubecost. No warehouse/billing-export (CUR / Data Exports) queries. Deferred to v2 via the `examples/` extension pattern.
+9. **All output in `.culiops/cloud-cost-investigate/`.** Single directory, single file per investigation, named `<scope-slug>-<mode>-<YYYYMMDD-HHmm>.md` (service name in attribution mode; slugified account or cluster identifier — alias preferred, ID acceptable — in anomaly and waste modes). Same convention as other skills.
+10. **No raw output in the report.** Raw query output stays in the session. The report holds results the skill extracted (IDs, sizes, sums, timestamps) plus a per-query status table. Never write environment-variable values, secrets, tokens, kubeconfig contents, presigned URLs or user data into the report. Describe calls that can return them (`lambda list-functions` / `get-function`, `ecs describe-task-definition`, pod specs) run only with a `--query` / `jsonpath` projection that excludes them.
+11. **Stop on query failure.** Auth errors, rate limits, service unavailability halt the investigation and surface to the operator. The skill does not silently skip and produce a partial report disguised as complete.
+12. **No auto-remediation handoff.** Even if a remediation fits perfectly into `iac-change-execution`, the skill stops at the report. Operator triggers the next skill explicitly.
+13. **Supported owners only for remediation.** Cost from resources owned by CloudFormation / Serverless / SAM / CDK (tag `aws:cloudformation:stack-name`) is reported, but its remediation row is marked `Owner: unsupported-owner (cloudformation)` and carries no IaC change suggestion. GCP / Azure are out of scope — if the operator's question is about them, say so and stop.
 
 ## Rationalization Prevention
 
@@ -91,7 +99,7 @@ Every cost and savings figure must be derived from what is actually billed, and 
 |---------|---------|
 | "This unattached volume has been sitting for a year — I'll just include a delete in the report" | STOP — read-only. Recommendation only, never an action. |
 | "Cost Explorer charges are tiny, I don't need to surface them" | STOP — operators have hit unexpected bills from automated tooling. Itemize. |
-| "Compute Optimizer says save $400 — I'll write that as the savings" | STOP — label `source: compute-optimizer, confidence: medium`. Don't strip the source. |
+| "Compute Optimizer says save $400 — I'll write that as the savings" | STOP — label `source: compute-optimizer, rate: list-price`; `confidence: low` until the 30d hourly + coverage checks pass, then `medium`. Don't strip the source. |
 | "The catalog is missing — I'll attribute by guessing from naming pattern" | STOP — attribution mode requires catalog or operator-confirmed tag. Naming-pattern guessing produces wrong attributions. |
 | "The operator already approved one batch, the next batch is similar, I'll just run it" | STOP — per-batch approval is non-negotiable. Drill-down is its own gate. |
 | "Bill went from $50K to $80K — I'll declare ML team caused it because they always do" | STOP — driver claims need evidence in the queries run. No priors. |
@@ -103,6 +111,15 @@ Every cost and savings figure must be derived from what is actually billed, and 
 | "Org-wide scope would give a better picture — I'll just go org-wide" | STOP — scope escalation requires operator opt-in. Never silent. |
 | "I'll skip listing IAM permissions, the operator obviously has admin" | STOP — least-privilege is the user's expectation. Always list. |
 | "This finding needs a metrics query — I'll batch it in with the original batch" | STOP — original batch is approved as-is. Drill-down is GATE 3. |
+| "This snapshot is older than 30 days — it's orphaned" | STOP — age is not orphaned. Orphaned = source volume gone AND no AMI references it AND not AWS Backup / DLM managed. And it's incremental: its saving is not `VolumeSize × rate`. |
+| "The volume was created 400 days ago and is unattached — unused for 400 days" | STOP — `CreateTime` is not detach time. Find the detach event (CloudTrail `DetachVolume`, ≤ 90d) or cap at `low` + `window-unverified`. |
+| "CloudWatch returned no datapoints — zero traffic" | STOP — empty is what a wrong region / dimension / account returns. Confirm the metric exists first. |
+| "I'm in the payer account, CE says $80K — that's this account" | STOP — unfiltered CE in a payer account is the whole org. Filter by `LINKED_ACCOUNT`. |
+| "We only swept the default region, nothing found — the account is clean" | STOP — sweeps are regional. Run them where the spend is, and list regions covered. |
+| "`kubectl top` shows 3% CPU — the pod is idle" | STOP — `top` is one instant. Use the allocation API's efficiency over ≥ 30d. |
+| "Compute Optimizer says $280/mo — that's the saving" | STOP — check RI / Savings Plan coverage. Covered capacity saves ~$0 until the commitment ends. |
+| "The bill spiked the day we bought the RI — that's the anomaly" | STOP — split `RECORD_TYPE`. Purchases, credits, refunds and tax are not usage; compare the usage record types (`Usage` + `DiscountedUsage` + `SavingsPlanCoveredUsage`) at `AmortizedCost`. Filtering `Usage` alone hides covered spend. |
+| "I'll paste the raw output into Queries run so it's auditable" | STOP — raw output stays in the session (Constraint 10). The report records extracted results and query status. |
 
 ## Red Flags — STOP and Follow Process
 
@@ -110,7 +127,9 @@ Every cost and savings figure must be derived from what is actually billed, and 
 |----------|------------|
 | About to call any non-`Get` / non-`Describe` / non-`List` API | STOP — read-only. The skill never calls write APIs. |
 | Operator asks for a recommendation outside the report's source set | STOP — bring the question into the next investigation, don't fabricate. |
-| Cost Explorer query count for the month already high | STOP — surface remaining quota and per-request cost; ask before proceeding. |
+| A planned Cost Explorer query will paginate (DAILY × many groups, long window) | Estimate pages × $0.01 in the plan; prefer MONTHLY or fewer group-bys where the question allows. |
+| Authenticated account is an Organizations management account | Add `LINKED_ACCOUNT` to every CE call unless the operator opted in to org-wide at GATE 1. |
+| A query result would contain env vars, secrets or kubeconfig data | STOP — re-run with a projection that excludes them; never copy them into the report. |
 | Catalog references resources missing from the cost lookup (attribution mode) | Flag as "untraced", do NOT silently drop from the report. |
 | Cost line items with no matching catalog resource (attribution mode) | Flag as "context cost", do NOT attribute to the service. |
 | Operator asks "just summarize without showing me the queries" | STOP — query plan visibility is non-negotiable. Explain why. |
@@ -128,7 +147,9 @@ digraph cost_investigate {
     node [shape=box, style=rounded];
 
     input    [label="Input: cost question\n(operator-described)"];
-    detect   [label="Step 1: Detect & Scope\n(cloud, account, time range,\nmode, catalog if any)"];
+    detect   [label="Step 1: Detect & Scope\n(cloud, mode, time range,\ncatalog, IaC repo)"];
+    gate1a   [label="GATE 1a: Operator\napproves scoping probe\n(target + regions)", shape=diamond];
+    probe    [label="Run scoping probe"];
     gate1    [label="GATE 1: Operator\nconfirms scope + mode", shape=diamond];
     branch   [label="Mode?", shape=diamond];
     qa       [label="Step 2A: Anomaly\nquery plan"];
@@ -144,7 +165,9 @@ digraph cost_investigate {
     done     [label="Done", shape=doublecircle];
 
     input -> detect;
-    detect -> gate1;
+    detect -> gate1a;
+    gate1a -> probe       [label="approved"];
+    probe -> gate1;
     gate1 -> branch       [label="approved"];
     gate1 -> detect       [label="corrections"];
     branch -> qa          [label="anomaly"];
@@ -173,23 +196,32 @@ digraph cost_investigate {
 
 **What the skill does:**
 
-1. **Detect cloud(s).** Look at the working directory for cloud authentication signals (`~/.aws/`, `gcloud config`, `az account`, `kubectl config current-context`). If multiple are configured, list them and ask which to investigate. If none, ask the operator to authenticate.
+1. **Detect cloud.** Check for authentication signals: `AWS_PROFILE` / `AWS_REGION` env vars and `~/.aws/` (AWS), `kubectl config current-context` (Kubernetes). If both are configured, list them and ask which to investigate. If none, ask the operator to authenticate. A question about GCP or Azure → out of scope (Constraint 13); say so and stop.
 2. **Detect mode from question phrasing.** Heuristic: "spike / increase / why" → anomaly; "waste / unused / idle / save" → waste; "what does X cost / breakdown / per-service" → attribution. Always confirms — never auto-runs.
-3. **Set scope.** Default: the operator's currently-authenticated single account/subscription/project/cluster. If they want org-wide, they say so and the skill switches to consolidated billing / org billing account / management group / multi-cluster.
-4. **Set time range.** Defaults per mode:
-   - Anomaly: last 30d vs. previous 30d (or last 7d vs. previous 7d if request mentions recent).
+3. **Establish the target** — the **scoping probe** (items 3–4). Show it as a mini batch (same table shape as GATE 2: 4 read-only calls, 1 Cost Explorer request ≈ $0.01) and run it only on the operator's approval (**GATE 1a**). It is the only query run before GATE 1:
+   - `sts get-caller-identity` + `iam list-account-aliases` → account ID and alias, shown at GATE 1 so the operator can catch "wrong profile".
+   - `organizations describe-organization` → is this account the management (payer) account? `AWSOrganizationsNotInUseException` or `AccessDenied` from a member account is fine — it means "not payer", record it. Payer + single-account scope → every CE call gets a `LINKED_ACCOUNT` filter (Constraint 4).
+   - Kubernetes: the context's cluster name and API server, and whether OpenCost / Kubecost is installed (`examples/kubernetes.md`).
+   Default scope is that single account / cluster. Org-wide or multi-cluster only when the operator says so.
+4. **Find the regions with spend.** One CE call, `MONTHLY`, last 30d, grouped by `REGION` (global line items show as `global` / `NoRegion`). Every region above the noise floor (default 1% of spend) becomes a sweep region (Constraint 5). The operator can add or drop regions at GATE 1.
+5. **Set time range.** Defaults per mode:
+   - Anomaly: last 30d vs. previous 30d (or last 7d vs. previous 7d if request mentions recent), **ending 2 days ago** — the most recent CE days are estimated and still filling in. Windows are equal length; never compare a month-to-date or forecast against a full month.
    - Waste: current resource state + last 30d utilization metrics for resize candidates (Principle 3); delete / decommission candidates require a 60–180d confirmation window, fetched at the Step 3 drill-down.
    - Attribution: previous complete billing month.
    Operator can override.
-5. **Look up catalog.** Check `.culiops/service-discovery/<service>.md`. Required for attribution mode unless the operator confirms a tag convention (e.g., `Service=foo` tag). Optional for the other modes.
-6. **Present scoping summary:**
+6. **Look up catalog.** Check `.culiops/service-discovery/<service>.md`. Required for attribution mode unless the operator confirms a tag convention (e.g., `Service=foo` tag — must be activated as a cost-allocation tag to appear in CE). Optional for the other modes.
+7. **Ask for the IaC repo path(s)** (optional). With one, remediation rows can cite `code:<path:line>` for the resource definition; without one, ownership comes from tags only. Full ownership probing is `cost-optimize-plan`'s job — this skill does not duplicate it.
+8. **Present scoping summary:**
 
 > "**Cost question:** `<freeform>`
 > **Mode:** anomaly / waste / attribution (suggested from phrasing)
-> **Cloud:** `<aws|gcp|azure|kubernetes>`
-> **Scope:** `<account/subscription/project/cluster>` (single — say `org-wide` to expand)
+> **Cloud:** `<aws|kubernetes>`
+> **Target:** `<account-id>` (`<alias>`) — `<payer | member | standalone>`  ·  or cluster `<name>`
+> **Scope:** single (say `org-wide` to expand) — `<LINKED_ACCOUNT filter applied | not needed>`
+> **Regions to sweep:** `<list, with % of spend>`
 > **Time range:** `<from> → <to>`
 > **Catalog:** `<path or 'none — using tag convention <key>' or 'none — proceeding account-wide'>`
+> **IaC repo(s):** `<path(s) or 'none — owner from tags only'>`
 >
 > **Confirm to proceed to query planning.**"
 
@@ -197,29 +229,32 @@ digraph cost_investigate {
 
 ### Step 2 — Mode-specific query plan (branch point)
 
-The skill generates a query batch for the chosen mode. Each query is shown with: API method, scope, time range, IAM permission required, estimated API cost (e.g., AWS Cost Explorer's $0.01/req-after-100/month), and what the result will tell us.
+The skill generates a query batch for the chosen mode. Each query is shown with: API method, scope, **region**, time range, IAM permission required, estimated API cost (Cost Explorer: $0.01 × estimated pages — verify the current rate on the AWS Cost Explorer pricing page), and what the result will tell us. Regional queries are repeated per sweep region from Step 1.4 and shown as one row with the region list.
 
 #### Step 2A — Anomaly mode query plan
 
 Typical batch:
-1. Total spend by day, grouped by service, for the comparison window — identifies which service(s) drove the delta.
-2. For top-delta services, drill-by region / usage type / linked account / tag — identifies the dimension of the change.
-3. Resource-state query for newly-created resources in the anomalous window (e.g., `ec2:DescribeInstances` filtered by launch time) — identifies new resources that appeared.
-4. (Optional, gated separately at Step 3) Utilization metrics for top-delta resources to confirm whether they're actually being used or just running idle.
+1. **Native anomaly findings (if enabled).** `ce get-anomalies` for the window — AWS Cost Anomaly Detection's own root-cause dimensions are a cheap first lead. Empty is not "no anomaly" if no monitor is configured.
+2. **Usage spend by day, grouped by service**, for both comparison windows — identifies which service(s) drove the delta. "Usage" = the three usage record types `Usage`, `DiscountedUsage` (RI-covered) and `SavingsPlanCoveredUsage` (SP-covered), read at **`AmortizedCost`** so covered usage carries its effective commitment rate. Filtering `Usage` alone drops every covered line and makes a commitment expiry look like new spend. Purchases (`RIFee`, upfront `Savings Plan` fees), `Credit`, `Refund`, `Tax` and `Support` are pulled in a separate call grouped by `RECORD_TYPE`: a one-day upfront purchase or an expired credit is a bill change, not a usage anomaly. Under amortization, `SavingsPlanRecurringFee` / `RIFee` is the *unused* commitment — report it with the non-usage lines.
+3. **Commitment coverage.** `ce get-savings-plans-coverage` / `ce get-reservation-coverage` over both windows, plus active commitments' end dates (`savingsplans describe-savings-plans`, `ec2 describe-reserved-instances`, `rds describe-reserved-db-instances`). A commitment expiring raises on-demand cost with **no resource change** — the new-resource sweep cannot explain it.
+4. For top-delta services, drill by region / usage type / linked account / tag — identifies the dimension of the change.
+5. Resource-state query for newly-created resources in the anomalous window, **in the regions the drill-down names** (e.g., `ec2:DescribeInstances`). Caveats in the plan: `LaunchTime` resets on stop/start (not creation time), and instances terminated more than ~1h ago no longer appear — for those, the resource-level CE view (`get-cost-and-usage-with-resources`, `RESOURCE_ID`, last 14 days, requires opt-in in CE settings) or CloudTrail `RunInstances` (Event history, ≤ 90 days) is the source.
+6. (Optional, gated separately at Step 3) Utilization metrics for top-delta resources to confirm whether they're actually being used or just running idle.
 
 #### Step 2B — Waste mode query plan
 
-Typical batch:
-1. **Cloud-native recommenders.** AWS Compute Optimizer rightsizing recommendations, GCP Recommender (idle VMs, unattached disks, idle IPs), Azure Advisor cost recommendations. These come pre-scored with savings estimates.
-2. **Resource-state sweeps.** Unattached EBS volumes / unattached GCP disks / orphaned managed disks; orphaned snapshots older than 30d; unused Elastic IPs / unused public IPs; load balancers with no recent traffic; S3 buckets / GCS buckets / Azure containers without lifecycle policies.
-3. **Untagged spend.** Cost grouped by tag presence — surfaces resources without service/owner/env tags.
-4. **Utilization metrics** for instances / databases / queues / streams / functions — CPU, memory, network, request count, invocation count, throughput at **hourly granularity** over the Principle 3 window (≥30d for resize candidates; 60–180d for delete / decommission candidates). **Required (not optional)** for any rightsize or idle-resource candidate per Principle 1. For **database rightsize candidates, fetch the binding constraint** — freeable memory and active connection count — not CPU alone; databases are usually memory- or connection-bound, so CPU can read low on a resource that cannot be safely downsized. Resources with no activity dimension (unattached EBS, unallocated EIP, orphaned snapshots) are exempt — attachment state alone is sufficient evidence for those types.
+Typical batch (regional calls run per sweep region):
+1. **Compute Optimizer** rightsizing recommendations (EC2, EBS, Lambda, ECS on Fargate, Auto Scaling groups, RDS) and idle findings (`get-idle-recommendations` — a lead, not delete evidence). Pre-scored but priced at on-demand and based on a 14-day default lookback — below Principle 3's ≥ 30d for a resize. A CO row starts at `confidence: low` and is promoted to `medium` only after the Step 3 drill-down confirms it over ≥ 30d hourly and RI/SP coverage is known (Principle 4).
+2. **Resource-state sweeps.** Unattached EBS volumes (state + ownership tags); snapshot **orphan candidates** (source volume no longer exists — see `examples/aws.md`; age alone is not orphaned); unassociated Elastic IPs; load balancers (`elbv2` for ALB/NLB/GWLB **and** `elb` for Classic); S3 buckets without lifecycle policies (a hygiene flag, not a saving — no $ without a storage-class analysis); NAT gateways, Lambda functions, DynamoDB tables, EKS nodegroups, Kinesis streams (inventory for the utilization step).
+3. **Commitment coverage** for the services that carry rightsize / delete candidates (`ce get-savings-plans-coverage`, `ce get-reservation-coverage`) — needed for `realizable` (Principle 4).
+4. **Untagged spend.** Cost grouped by tag presence — surfaces resources without service/owner/env tags.
+5. **Utilization metrics** for instances / databases / queues / streams / functions — CPU, memory, network, request count, invocation count, throughput at **hourly granularity** over the Principle 3 window (≥30d for resize candidates; 60–180d for delete / decommission candidates, chunked ≤ 60d per call). **Required (not optional)** for any rightsize or idle-resource candidate per Principle 1. For **database rightsize candidates, fetch the binding constraint** — freeable memory and active connection count — not CPU alone; databases are usually memory- or connection-bound, so CPU can read low on a resource that cannot be safely downsized. Resources with no activity dimension (unattached EBS, unassociated EIP, orphan-candidate snapshots) are exempt from activity metrics — but not from the **window** rule: their "unused since" date comes from the detach / disassociate event (CloudTrail Event history, ≤ 90 days, or AWS Config history), never from `CreateTime`.
 
 #### Step 2C — Attribution mode query plan
 
 Typical batch:
 1. **Resolve resource list.** From catalog (preferred) or tag filter (operator-confirmed key). List of resource IDs scoped to the service.
-2. **Cost lookup.** Cost Explorer / Cloud Billing filtered by resource ID set, tag, or linked account, grouped by usage type, for the time range.
+2. **Cost lookup.** Cost Explorer filtered by tag (cost-allocation tag) or linked account, grouped by usage type, for the time range — usage record types at `AmortizedCost`, so commitment-covered resources aren't silently missing. Resource-ID-level breakdown only via `get-cost-and-usage-with-resources` (last 14 days, opt-in) — say so when the window is longer.
 3. **Period comparison.** Same window in the previous period — surfaces growth/shrink trends.
 4. **Untraced cost check.** Resources in the catalog that did not appear in cost lookup (potentially mis-tagged or in a different account). Flag, don't fail.
 
@@ -227,10 +262,10 @@ Typical batch:
 
 > **Query plan for `<mode>` investigation:**
 >
-> | # | API | Scope | Time | IAM | Est. cost | Why |
-> |---|-----|-------|------|-----|-----------|-----|
-> | 1 | `ce:GetCostAndUsage` | `<acct>` | last 30d | `ce:GetCostAndUsage` | $0.01 | total spend by service |
-> | 2 | ... | ... | ... | ... | ... | ... |
+> | # | API | Scope | Region(s) | Time | IAM | Est. cost | Why |
+> |---|-----|-------|-----------|------|-----|-----------|-----|
+> | 1 | `ce:GetCostAndUsage` | `<acct>` (`LINKED_ACCOUNT` filter) | global | last 30d | `ce:GetCostAndUsage` | ~$0.02 (2 pages) | usage spend by service |
+> | 2 | ... | ... | ... | ... | ... | ... | ... |
 >
 > **Total estimated API cost:** $0.0X
 > **IAM permissions needed:** `<consolidated list>`
@@ -241,27 +276,33 @@ Typical batch:
 
 ### Step 3 — Execute approved queries (shared mechanics)
 
-Run the approved batch. Each query's raw output captured to a buffer for the report. If a query fails (auth, rate limit, service unavailable), skill stops and reports the failure — does not silently skip. The buffer is the verbatim raw output retained for the report's `## Queries run` section, so the operator can audit exactly what was fetched.
+Run the approved batch. Raw output stays in the session for analysis; it is **never** copied into the report (Constraint 10). For each query record: number, status (`ok` / `failed` / `empty`), row count, and region. Results used as evidence are referenced as `live:<query #>`. If a query fails (auth, rate limit, service unavailable), skill stops and reports the failure — does not silently skip. An `empty` metric result counts as zero only if the `list-metrics` existence check — planned in the **same batch** as the metric query, never added afterwards — shows the metric exists (Principle 3); otherwise it is `UNVERIFIED`. Close any `kubectl port-forward` started for the batch when it finishes.
 
 ### Step 4 — Analyze (mode-specific)
 
 #### Step 4A — Anomaly analysis
 
-- Compute period delta totals.
+- Compute period delta totals on the usage record types at `AmortizedCost`; report the non-usage delta (purchases, credits, refunds, tax, support) as its own line.
+- Check commitment coverage first: a coverage drop or an expiry inside the window is a driver in its own right, even with no resource change.
 - Decompose delta by dimension: service → region / usage type / account / tag.
-- Match new-resource list against top-delta services to identify likely drivers.
-- Rank drivers by absolute delta dollars (not percentage — a 50% increase on a $5 line item is noise).
-- Output: ranked list of `(driver, delta, dimensions, candidate explanation)`.
+- Match new-resource list against top-delta services to identify likely drivers. A match on `LaunchTime` is a candidate, not proof — it may be a restart.
+- Rank drivers by absolute delta dollars (not percentage — a 50% increase on a $5 line item is noise). Include offsetting decreases so the drivers add up to the net delta; state the unexplained remainder.
+- Output: ranked list of `(driver, delta, dimensions, candidate explanation, evidence live:<#>)`.
+- **A driver is not a saving.** Drivers go to the report as owner decisions (Informational / excluded: "still needed?", "renew the commitment?") with their run rate — not as remediation rows. A row enters the remediation table only with waste evidence (activity window per Principles 1 and 3), from a GATE 3 drill-down or a separate waste run. Commitment purchases are owner decisions, never a remediation this skill proposes.
 
 #### Step 4B — Waste analysis
 
-- Merge cloud recommender output with resource-state sweep findings (deduplicate — Compute Optimizer may already cover what we'd compute manually).
-- For each candidate: estimated monthly savings (from recommender or computed from line item), source label, confidence.
+- Merge Compute Optimizer output with resource-state sweep findings (deduplicate — Compute Optimizer may already cover what we'd compute manually). When one resource has both a delete and a resize option, keep the delete row and note the resize as its cheaper-reversible alternative — never let the resize row hide the delete candidate.
+- For each candidate: estimated monthly savings (from Compute Optimizer or computed from the bill), source label, rate basis, `realizable` (from commitment coverage), confidence, evidence reference.
+- **Read the owner from the tags already fetched** (no extra queries): `aws:cloudformation:stack-name` → `unsupported-owner (cloudformation)`; `kubernetes.io/created-for/pvc/name` or `ebs.csi.aws.com/cluster` → `kubernetes-pv` (a StatefulSet scaled to 0 holds data — cap at `low`); `aws:autoscaling:groupName`, `eks:nodegroup-name`, `karpenter.sh/nodepool` → the group, not the instance, is the change target; `elbv2.k8s.aws/cluster` → AWS Load Balancer Controller; otherwise `unknown` (or `code:<path:line>` if the IaC repo shows it). `cost-optimize-plan` does the full ownership probe.
+- **Snapshots:** a snapshot is an orphan candidate only if its source volume no longer exists, no AMI references it, and it is not AWS Backup / DLM managed. Anything else is a backup — report it under Informational (retention review), not as a delete. Savings are bill-derived or `low` (Principle 4, incremental storage).
 - **Apply Principle 1 confidence cap.** Any candidate whose only no-use evidence is attachment state (and whose resource type has an activity dimension — DB, queue, stream, bucket, function) is capped at `confidence: low` and labelled `activity-unverified` in the Evidence column. Operator may approve a drill-down batch at GATE 3 to fetch the missing activity data and promote confidence.
 - **Apply Principle 2 cost-direction check.** Any candidate whose savings come from a pricing-mode / tier change (reserved ↔ on-demand, provisioned ↔ serverless, hot ↔ cold storage tier) must include a delta computed from observed utilization × real pricing for both modes. Without that math, cap at `confidence: low` and label `direction-unverified`.
 - **Check the binding constraint for databases (Principle 3 window applies).** A DB rightsize recommendation is only valid if the *binding* resource (memory, connections) has headroom over ≥30d — not merely low average CPU. A writer at 12% CPU but 1.7 GB free of 16 GB with rising connections is memory-bound and not downsizeable. Where Compute Optimizer says "Optimized," trust it over a raw CPU line-item instinct.
+- **Apply the window rule to no-activity types.** For unattached volumes and unassociated EIPs, the unused-since date is the detach / disassociate event. If it is older than CloudTrail Event history (90 days) and no Config history exists, the row is `confidence: low` + `window-unverified`.
 - Filter: drop candidates below a threshold (default $5/mo) to reduce noise; operator can adjust at GATE 4.
-- Group by remediation type: delete / rightsize / archive / lifecycle-policy / tag.
+- Move informational and excluded items (untagged spend, residual charges, binding-constraint exclusions, backups) to the Informational / excluded section — out of the remediation table.
+- Group by remediation type: delete / rightsize / archive / lifecycle-policy.
 - Output: prioritized waste list with per-candidate evidence.
 
 #### Step 4C — Attribution analysis
@@ -280,51 +321,58 @@ After analysis, the skill checks: did any finding need a query we didn't run (e.
 
 ### Step 5 — Compose report + remediation list (shared)
 
-Write to `.culiops/cloud-cost-investigate/<scope-slug>-<mode>-<YYYYMMDD-HHmm>.md`. The `<scope-slug>` is the service name in attribution mode and the slugified account/subscription/project/cluster identifier — alias preferred, ID acceptable — in anomaly and waste modes:
+Write to `.culiops/cloud-cost-investigate/<scope-slug>-<mode>-<YYYYMMDD-HHmm>.md`. The `<scope-slug>` is the service name in attribution mode and the slugified account or cluster identifier — alias preferred, ID acceptable — in anomaly and waste modes:
 
 ````markdown
 **Cloud cost investigation**
 **Mode:** anomaly | waste | attribution
-**Scope:** <account/subscription/project/cluster> (single | org-wide)
+**Cloud:** <aws|kubernetes>
+**Scope:** <account-id (alias) | cluster> (single | org-wide) — <payer + LINKED_ACCOUNT filter | member | standalone>
+**Regions covered:** <list> (<% of spend in the window>)
 **Time range:** <from> → <to>
 **Catalog used:** <path or 'none'>
+**IaC repo(s):** <path(s) or 'none'>
 **Date:** <YYYY-MM-DD HH:mm>
-**Cloud:** <aws|gcp|azure|kubernetes>
 
 ## Question
 <operator's question, verbatim>
 
 ## Scoping decisions
-<what was confirmed at GATE 1 — scope, time range, mode>
+<what was confirmed at GATE 1 — target, scope, regions, time range, mode>
 
 ## Queries run
-<table — same shape as the GATE 2 plan, with status per query>
+| # | API | Scope | Region(s) | Time | Status | Rows |
+|---|-----|-------|-----------|------|--------|------|
+<one row per query; extracted results only — never raw output, env values, secrets or kubeconfig data>
 
 ## Findings
-<mode-specific section>
+<mode-specific section; every claim cites live:<#>>
 
 ## Remediation list (prioritized)
-| # | Action | Resource(s) | Est. savings | Source | Confidence | Evidence |
-|---|--------|-------------|--------------|--------|------------|----------|
-| 1 | Delete unattached EBS volume | vol-xxxxx | $48/mo | line-item-computation | high | volume.state=available since 2026-02-14 |
-| 2 | Rightsize prod-api from m5.4xl → m5.2xl | i-yyyyy | $280/mo | compute-optimizer | medium | CO recommendation, 30d avg CPU 4% |
-| ... | ... | ... | ... | ... | ... | ... |
+| # | Action | Resource(s) | Owner | Est. savings | Realizable | Source | Rate | Confidence | Evidence |
+|---|--------|-------------|-------|--------------|------------|--------|------|------------|----------|
+| 1 | Delete unattached EBS volume | vol-xxxxx | unknown (no IaC match) | $48/mo | ✓ no commitment applies | line-item-computation | bill-derived | high | available, detached 2026-06-02 (live:4 DetachVolume), no PV/CSI tags (live:3) |
+| 2 | Rightsize prod-api m5.4xl → m5.2xl | i-yyyyy | terraform `ec2.tf:17` | $280/mo | ✓ 0% SP/RI coverage (live:6) | compute-optimizer | list-price | medium | CO rec (live:1); 30d hourly CPU p99 9% (live:8) |
+| ... | ... | ... | ... | ... | ... | ... | ... | ... | ... |
 
-**Total estimated savings:** $X/mo (sum of high-confidence) + $Y/mo (medium) + $Z/mo (low)
+**Total estimated savings:** $X/mo (sum of high-confidence) + $Y/mo (medium) + $Z/mo (low). Rows with `Realizable: covered` are excluded from the totals.
+
+## Informational / excluded
+<untagged spend, residual / self-clearing charges, binding-constraint exclusions, backups for retention review, unsupported-owner cost — each with $ and reason; no savings claimed>
 
 ## Untraced / context (attribution mode only)
 <resources in catalog with no cost / cost lines with no catalog match>
 
 ## Gaps
-<things the skill couldn't answer with the queries run, e.g., "did not fetch CloudWatch metrics — operator declined drill-down">
+<things the skill couldn't answer with the queries run — e.g., "did not fetch CloudWatch metrics — operator declined drill-down", "regions not swept: ap-south-1 (0.4% of spend)", "UNVERIFIED: EKS Container Insights metric absent">
 
 ## Next steps (informational)
-<suggestions for the operator: which findings to investigate further, which to act on via iac-change-execution>
+<suggestions for the operator: which findings to investigate further; `cost-optimize-plan` to triage the remediation list before any change>
 ````
 
 > "Report drafted at `<path>`. Review it. Approve to commit, or tell me what to revise."
 
-**GATE 4.** Operator reviews, requests revisions, or approves. On approve, skill commits the report file (only the report — no other changes).
+**GATE 4.** Operator reviews, requests revisions, or approves. Before committing, re-check the draft for Constraint 10 (no env values, secrets, tokens, kubeconfig data). On approve, skill commits **only the report file**. If the current branch is the repo's default branch, or the remote is public (cost data and account IDs are business-sensitive), say so and ask before committing; the operator may choose to keep the report uncommitted.
 
 ## Model Routing
 
@@ -351,10 +399,11 @@ service-discovery ──catalog──→ cloud-cost-investigate
                           .culiops/cloud-cost-investigate/ record
                                        │
                                        ↓ (operator-driven, no auto-handoff)
-                          iac-change-execution (separate invocation)
+                          cost-optimize-plan (triage) → iac-change-execution
 ```
 
 - **Consumes from `service-discovery`:** Catalog used as a service→resource mapping in attribution mode (required); used as supporting context in anomaly/waste (optional).
+- **Feeds `cost-optimize-plan` (contract):** it parses the `**Cloud:**` / `**Scope:**` / `**Date:**` headers and the `## Remediation list (prioritized)` table, and copies Savings / Source / Confidence verbatim. Keep those headers and column names stable; informational rows never go in that table.
 - **Does not invoke `pre-flight`:** Investigation is read-only — no apply, no risk gate needed.
-- **Does not feed `iac-change-execution` automatically:** Remediation list is the artifact. Operator picks an action and triggers `iac-change-execution` separately if they want to implement it.
+- **Does not feed `iac-change-execution` automatically:** Remediation list is the artifact. Operator runs `cost-optimize-plan` to triage it, then triggers `iac-change-execution` separately to implement a chosen action.
 - **No dependency on future skills** (`incident-investigation`, etc.). No circular dependencies.

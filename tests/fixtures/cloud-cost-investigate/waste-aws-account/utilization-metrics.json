@@ -1,39 +1,200 @@
 {
-  "_note": "CPUUtilization for the 3 Compute-Optimizer-flagged EC2 instances. Per Principle 3, a rightsize decision reads >=30d — window is 2026-04-08 to 2026-05-07 (30d). Datapoints below are a representative sample; ALL 30 daily datapoints per instance are < 5% avg CPU (steady low, no burst in the temporal distribution), confirming the rightsize signal.",
-  "_window": "2026-04-08 to 2026-05-07 (30d)",
+  "_note": "Query 18 (hourly CPU, 30d) + query 19 (list-metrics existence check, planned in the same GATE 3 batch). Principle 3: a resize needs >= 30d at hourly granularity; the 14-day Compute Optimizer lookback is not enough on its own. All three instances stay under 10% for >= 99% of hours with no burst in the temporal distribution, so the resize signal is confirmed and the CO rows are promoted from low to medium (subject to commitment coverage).",
   "metricsByInstance": {
     "i-0aaaa1111bbbb2222": {
+      "region": "us-east-1",
+      "instanceName": "prod-api-worker-01",
       "Label": "CPUUtilization",
+      "Namespace": "AWS/EC2",
+      "Period": 3600,
+      "datapointCount": 720,
+      "window": "2026-04-08T00:00:00Z to 2026-05-08T00:00:00Z (30 days x 24 = 720 hourly datapoints)",
+      "summary": {
+        "averageOfHourlyAverages": 3.8,
+        "p50OfHourlyAverages": 3.6,
+        "p99OfHourlyAverages": 9.4,
+        "maxOfHourlyMaximums": 14.9,
+        "fractionOfHoursBelow10Percent": 0.99
+      },
       "Datapoints": [
-        {"Timestamp": "2026-04-08T00:00:00Z", "Average": 3.7, "Unit": "Percent"},
-        {"Timestamp": "2026-04-16T00:00:00Z", "Average": 4.2, "Unit": "Percent"},
-        {"Timestamp": "2026-04-24T00:00:00Z", "Average": 3.9, "Unit": "Percent"},
-        {"Timestamp": "2026-05-01T00:00:00Z", "Average": 4.0, "Unit": "Percent"},
-        {"Timestamp": "2026-05-07T00:00:00Z", "Average": 3.6, "Unit": "Percent"}
+        {
+          "Timestamp": "2026-04-08T00:00:00Z",
+          "Average": 3.6,
+          "Maximum": 7.6,
+          "Unit": "Percent"
+        },
+        {
+          "Timestamp": "2026-04-15T13:00:00Z",
+          "Average": 4.2,
+          "Maximum": 8.8,
+          "Unit": "Percent"
+        },
+        {
+          "Timestamp": "2026-04-22T06:00:00Z",
+          "Average": 3.7,
+          "Maximum": 7.8,
+          "Unit": "Percent"
+        },
+        {
+          "Timestamp": "2026-04-29T20:00:00Z",
+          "Average": 4.1,
+          "Maximum": 8.6,
+          "Unit": "Percent"
+        },
+        {
+          "Timestamp": "2026-05-07T23:00:00Z",
+          "Average": 3.8,
+          "Maximum": 8.0,
+          "Unit": "Percent"
+        }
       ],
-      "_truncated_for_brevity": "All 30 daily datapoints are 3.1-4.8% avg CPU."
+      "_envelope": "Datapoints shows 5 of the 720 hourly points; 'summary' is computed over all 720. The real call is hourly (--period 3600, --statistics Average Maximum): 720 datapoints is under the 1,440-per-call cap.",
+      "listMetricsCheck": {
+        "command": "aws cloudwatch list-metrics --region us-east-1 --namespace AWS/EC2 --metric-name CPUUtilization --dimensions Name=InstanceId,Value=i-0aaaa1111bbbb2222",
+        "Metrics": [
+          {
+            "Namespace": "AWS/EC2",
+            "MetricName": "CPUUtilization",
+            "Dimensions": [
+              {
+                "Name": "InstanceId",
+                "Value": "i-0aaaa1111bbbb2222"
+              }
+            ]
+          }
+        ],
+        "result": "metric exists, series non-empty"
+      }
     },
     "i-0bbbb3333cccc4444": {
+      "region": "us-east-1",
+      "instanceName": "prod-api-worker-02",
       "Label": "CPUUtilization",
+      "Namespace": "AWS/EC2",
+      "Period": 3600,
+      "datapointCount": 720,
+      "window": "2026-04-08T00:00:00Z to 2026-05-08T00:00:00Z (30 days x 24 = 720 hourly datapoints)",
+      "summary": {
+        "averageOfHourlyAverages": 4.1,
+        "p50OfHourlyAverages": 3.9,
+        "p99OfHourlyAverages": 8.8,
+        "maxOfHourlyMaximums": 13.1,
+        "fractionOfHoursBelow10Percent": 0.99
+      },
       "Datapoints": [
-        {"Timestamp": "2026-04-08T00:00:00Z", "Average": 4.1, "Unit": "Percent"},
-        {"Timestamp": "2026-04-16T00:00:00Z", "Average": 3.8, "Unit": "Percent"},
-        {"Timestamp": "2026-04-24T00:00:00Z", "Average": 4.3, "Unit": "Percent"},
-        {"Timestamp": "2026-05-01T00:00:00Z", "Average": 4.7, "Unit": "Percent"},
-        {"Timestamp": "2026-05-07T00:00:00Z", "Average": 3.9, "Unit": "Percent"}
+        {
+          "Timestamp": "2026-04-08T00:00:00Z",
+          "Average": 3.9,
+          "Maximum": 8.2,
+          "Unit": "Percent"
+        },
+        {
+          "Timestamp": "2026-04-15T13:00:00Z",
+          "Average": 4.5,
+          "Maximum": 9.5,
+          "Unit": "Percent"
+        },
+        {
+          "Timestamp": "2026-04-22T06:00:00Z",
+          "Average": 4.0,
+          "Maximum": 8.4,
+          "Unit": "Percent"
+        },
+        {
+          "Timestamp": "2026-04-29T20:00:00Z",
+          "Average": 4.4,
+          "Maximum": 9.2,
+          "Unit": "Percent"
+        },
+        {
+          "Timestamp": "2026-05-07T23:00:00Z",
+          "Average": 4.1,
+          "Maximum": 8.6,
+          "Unit": "Percent"
+        }
       ],
-      "_truncated_for_brevity": "All 30 daily datapoints are 3.5-4.9% avg CPU."
+      "_envelope": "Datapoints shows 5 of the 720 hourly points; 'summary' is computed over all 720. The real call is hourly (--period 3600, --statistics Average Maximum): 720 datapoints is under the 1,440-per-call cap.",
+      "listMetricsCheck": {
+        "command": "aws cloudwatch list-metrics --region us-east-1 --namespace AWS/EC2 --metric-name CPUUtilization --dimensions Name=InstanceId,Value=i-0bbbb3333cccc4444",
+        "Metrics": [
+          {
+            "Namespace": "AWS/EC2",
+            "MetricName": "CPUUtilization",
+            "Dimensions": [
+              {
+                "Name": "InstanceId",
+                "Value": "i-0bbbb3333cccc4444"
+              }
+            ]
+          }
+        ],
+        "result": "metric exists, series non-empty"
+      }
     },
     "i-0cccc5555dddd6666": {
+      "region": "eu-west-1",
+      "instanceName": "prod-batch-runner-01",
       "Label": "CPUUtilization",
+      "Namespace": "AWS/EC2",
+      "Period": 3600,
+      "datapointCount": 720,
+      "window": "2026-04-08T00:00:00Z to 2026-05-08T00:00:00Z (30 days x 24 = 720 hourly datapoints)",
+      "summary": {
+        "averageOfHourlyAverages": 2.6,
+        "p50OfHourlyAverages": 2.5,
+        "p99OfHourlyAverages": 5.7,
+        "maxOfHourlyMaximums": 8.3,
+        "fractionOfHoursBelow10Percent": 1.0
+      },
       "Datapoints": [
-        {"Timestamp": "2026-04-08T00:00:00Z", "Average": 2.6, "Unit": "Percent"},
-        {"Timestamp": "2026-04-16T00:00:00Z", "Average": 2.9, "Unit": "Percent"},
-        {"Timestamp": "2026-04-24T00:00:00Z", "Average": 2.8, "Unit": "Percent"},
-        {"Timestamp": "2026-05-01T00:00:00Z", "Average": 3.0, "Unit": "Percent"},
-        {"Timestamp": "2026-05-07T00:00:00Z", "Average": 2.5, "Unit": "Percent"}
+        {
+          "Timestamp": "2026-04-08T00:00:00Z",
+          "Average": 2.4,
+          "Maximum": 5.0,
+          "Unit": "Percent"
+        },
+        {
+          "Timestamp": "2026-04-15T13:00:00Z",
+          "Average": 3.0,
+          "Maximum": 6.3,
+          "Unit": "Percent"
+        },
+        {
+          "Timestamp": "2026-04-22T06:00:00Z",
+          "Average": 2.5,
+          "Maximum": 5.2,
+          "Unit": "Percent"
+        },
+        {
+          "Timestamp": "2026-04-29T20:00:00Z",
+          "Average": 2.9,
+          "Maximum": 6.1,
+          "Unit": "Percent"
+        },
+        {
+          "Timestamp": "2026-05-07T23:00:00Z",
+          "Average": 2.6,
+          "Maximum": 5.5,
+          "Unit": "Percent"
+        }
       ],
-      "_truncated_for_brevity": "All 30 daily datapoints are 2.2-3.1% avg CPU."
+      "_envelope": "Datapoints shows 5 of the 720 hourly points; 'summary' is computed over all 720. The real call is hourly (--period 3600, --statistics Average Maximum): 720 datapoints is under the 1,440-per-call cap.",
+      "listMetricsCheck": {
+        "command": "aws cloudwatch list-metrics --region eu-west-1 --namespace AWS/EC2 --metric-name CPUUtilization --dimensions Name=InstanceId,Value=i-0cccc5555dddd6666",
+        "Metrics": [
+          {
+            "Namespace": "AWS/EC2",
+            "MetricName": "CPUUtilization",
+            "Dimensions": [
+              {
+                "Name": "InstanceId",
+                "Value": "i-0cccc5555dddd6666"
+              }
+            ]
+          }
+        ],
+        "result": "metric exists, series non-empty"
+      }
     }
   }
 }

@@ -1,10 +1,12 @@
-# waste-aws-account — cloud-cost-investigate fixture
+# waste-aws-account - cloud-cost-investigate fixture
 
-Waste-mode fixture exercising a full account audit including Compute Optimizer rightsizing, unattached EBS volumes, orphaned snapshots, and untagged spend.
+Waste-mode fixture for a full account audit across two regions: Compute Optimizer rightsizing, unattached EBS volumes (with detach-time and Kubernetes-PV cases), snapshot orphan checks, commitment coverage, and four items that must stay OUT of the remediation table (untagged spend, a residual charge, an Aurora writer that is memory-bound, and backup snapshots).
 
 ## What's modelled
 
-A fictional AWS account `123456789012` (`acme-prod`) with ~$12K/mo of identifiable waste and $8K/mo of spend with no `Service` tag. Compute Optimizer has been running for 14+ days and has surfaced 3 EC2 rightsizing recommendations and 1 EBS volume rightsizing recommendation.
+A fictional AWS account `123456789012` (`acme-prod`), a **member** account of an AWS Organization (payer `999988887777`). April 2026 usage spend (the three usage record types at `AmortizedCost`) is $48,000.00 across us-east-1 (62%), eu-west-1 (35%) and global (3%); $8,000.00 of it carries no `Service` tag. Compute Optimizer (14-day lookback, on-demand pricing) returned 3 EC2 rightsizing recommendations (two in us-east-1, one in eu-west-1) and 1 EBS recommendation. There are 12 unattached gp3 volumes, 47 snapshots older than 30 days, one EC2 Instance Savings Plan (m5, us-east-1), and an Aurora writer with low CPU.
+
+Fixture "now" is 2026-05-08; the cost window is the complete month 2026-04-01 to 2026-05-01 (30 days).
 
 ## The operator question
 
@@ -14,41 +16,64 @@ A fictional AWS account `123456789012` (`acme-prod`) with ~$12K/mo of identifiab
 
 ## What this fixture exercises
 
-- **Mode detection from question phrasing:** "waste audit / delete or rightsize" → waste mode (suggested at GATE 1).
-- **Compute Optimizer + resource-state sweeps in one batch:** CO EC2, CO EBS, `describe-volumes`, `describe-snapshots`, and CE untagged-spend all run in a single GATE 2 batch.
-- **Deduplication:** `vol-0xxxx1234abcd5678` appears in both `compute-optimizer.json` (as an EBS rightsizing candidate) and `unattached-volumes.json` (as an unattached volume). The skill must dedup and emit one row labelled `compute-optimizer` (preferred source per spec) rather than two rows.
-- **Dollar-threshold filtering:** candidates below $5/mo are dropped from the remediation list.
-- **Source/confidence labelling:** each remediation item carries a `source` (`compute-optimizer` | `line-item-computation`) and `confidence` (`high` | `medium` | `low`) label.
-- **Untagged spend flagged separately:** the CE untagged-spend finding is reported as an informational flag (`untagged-spend-flag`), not as a waste item. No savings figure is claimed.
-- **Drill-down at GATE 3:** utilization metrics for the 3 CO-flagged EC2 instances are fetched in a separate batch to confirm the rightsizing signal. All 3 show <5% avg CPU over **30d (Principle 3: rightsize needs ≥30d)** — recommendations are confirmed.
-- **Principle 3 (#7) binding constraint:** an Aurora writer reads 12% avg CPU but is memory- and connection-bound (~1.6 GB free of 128 GB, rising connections) → NOT downsizeable. The skill fetches `FreeableMemory` / `DatabaseConnections`, not CPU alone, and drops it from the rightsize list. Compute Optimizer agrees (`Optimized`).
-- **Principle 4 (#4) residual vs recurring:** an RDS extended-support line for an already-deleted instance is classified `residual / self-clearing` and excluded from the savings total — not waste to chase.
-- **Principle 4 (#3) bill-derived rate:** the residual line's rate is derived from the bill (usage ÷ cost = $0.10/instance-hour, labelled `bill-derived`), not list price.
+- **Mode detection from question phrasing:** "waste audit / delete or rightsize" gives waste mode (suggested at GATE 1).
+- **Payer vs member and regions (H1/H2):** the scoping probe (`scoping-probe.json`) shows the caller is NOT the payer (`MasterAccountId` 999988887777), so no `LINKED_ACCOUNT` filter is needed (a payer variant would need it on every CE call). CE by `REGION` gives us-east-1 62.0%, eu-west-1 35.0%, NoRegion 3.0%; sweeps run in BOTH regions, findings exist in both, and the report header lists `Regions covered`.
+- **Compute Optimizer is a lead, not a saving (H6):** CO rows start at `low`; after the 30d hourly drill-down (`utilization-metrics.json`) they are `medium`; rate basis is `list-price`.
+- **Commitment coverage (Principle 4):** the m5 us-east-1 instance is 100% covered by an EC2 Instance Savings Plan until 2027-02-14, so its Realizable is `covered until 2027-02-14` and it leaves the totals. In the amortized view its cost is the $3,024.00/mo commitment ($4,200.00 at on-demand value), paid either way; Compute Optimizer's $280.00 is an on-demand figure. The m5 instance in eu-west-1 is NOT covered (the plan is region-bound); the c5 instance is not covered.
+- **EBS unused-since window (H7):** `detach-events.json` gives CloudTrail `DetachVolume` times. 9 volumes were detached 64-88 days ago (eligible, `high`); 1 was detached 3 days ago (`low`, `window-too-short`); 1 has no event in the 90-day history (`low`, `window-unverified`); 1 carries `kubernetes.io/created-for/pvc/name` + `ebs.csi.aws.com/cluster` (Owner `kubernetes-pv`, `low`, data, owner confirm).
+- **Dedup (Step 4B):** `vol-0xxxx1234abcd5678` is in both the Compute Optimizer EBS output (resize 1,000 to 250 GB) and the unattached list. The skill keeps ONE row, the delete row, and notes the resize as the alternative; it is not counted twice.
+- **Bill-derived rates (Principle 4):** the EBS rate comes from `ebs-cost-by-usage-type.json` (gp3: us-east-1 $0.0800, eu-west-1 $0.0880 per GB-Mo = cost / usage quantity). EC2 figures are Compute Optimizer's on-demand prices, labelled `list-price`.
+- **Snapshots are not "older than 30 days" (C2):** all 47 old snapshots are classified by three checks (source volume gone / AMI reference / AWS Backup or DLM marker). 30 are backups (AWS Backup 14, DLM 8, AMI-backed 4, live source volume 4) and go to Informational for retention review; 17 are orphan candidates, priced from the bill per snapshot (incremental), not `VolumeSize x rate`.
+- **Informational / excluded section:** untagged spend, the residual extended-support charge, the Aurora binding-constraint exclusion and the backup snapshots are reported with $ and reason, never in the remediation table (Constraint 7).
+- **Binding constraint (Principle 3):** the Aurora writer reads 12% average CPU but ~1.7 GB free of 128 GB and rising connections, so it is not downsizeable. The skill fetches `FreeableMemory` / `DatabaseConnections` hourly, not CPU alone.
+- **Residual vs recurring (Principle 4):** an RDS extended-support line for an instance deleted on 2026-04-16 is residual / self-clearing, excluded from savings.
+- **Cost view:** every CE figure uses the three usage record types at `AmortizedCost`. No commitment applies to EBS, snapshots, RDS or untagged lines, so those numbers equal their unblended charge; only the covered m5 EC2 usage differs.
+- **Dollar threshold:** every remaining row is above $5/mo; nothing is dropped.
 
 ## Files in this fixture
 
 | File | Purpose |
 |------|---------|
 | `operator-question.md` | The freeform cost question to feed the skill |
-| `compute-optimizer.json` | Synthetic CO EC2 + EBS recommendations |
-| `unattached-volumes.json` | Synthetic `aws ec2 describe-volumes` output (12 unattached gp3 volumes) |
-| `orphaned-snapshots.json` | Synthetic `aws ec2 describe-snapshots` output (47 snapshots >30d old) |
-| `untagged-spend.json` | Synthetic `aws ce get-cost-and-usage` output (by tag absence) |
-| `utilization-metrics.json` | Synthetic CloudWatch CPU metrics for 3 CO-flagged instances (30d window) |
-| `db-binding-metrics.json` | Aurora writer CPU + FreeableMemory + DatabaseConnections (Principle 3 #7 — memory-bound, not downsizeable) |
-| `residual-charge.json` | CE extended-support line for a deleted instance (Principle 4 #4 residual, #3 bill-derived) |
-| `DRY-RUN-NOTES.md` | Expected skill behaviour at each step |
+| `scoping-probe.json` | Query 1-4: identity, alias, `describe-organization` (member), CE by `REGION` |
+| `compute-optimizer.json` | CO EC2 (3, two regions), EBS (1) and RDS (Aurora, `Optimized`) recommendations |
+| `unattached-volumes.json` | `describe-volumes --filters status=available`, both regions (12 gp3 volumes, with tags) |
+| `detach-events.json` | CloudTrail `lookup-events` per volume (DetachVolume times, 90-day history) |
+| `ebs-cost-by-usage-type.json` | CE EBS gp3 + snapshot usage types by region; the bill-derived rate source |
+| `snapshots-older-than-30d.json` | `describe-snapshots --owner-ids self`, 47 snapshots older than 30 days, both regions (replaces the old `orphaned-snapshots.json`, whose name asserted the conclusion) |
+| `snapshot-checks.json` | Live volume ids, AMI snapshot references: inputs for the three orphan checks |
+| `snapshot-cost-by-resource.json` | CE `get-cost-and-usage-with-resources`, 7 days, per snapshot ARN (bill-derived cost) |
+| `commitment-coverage.json` | Savings Plan description, RI list, SP and RI coverage, plus the amortized view of the covered m5 usage |
+| `untagged-spend.json` | CE spend with no `Service` tag |
+| `utilization-metrics.json` | 30d hourly CPU for the 3 CO instances (summary envelope over 720 datapoints) + existence checks |
+| `db-binding-metrics.json` | Aurora writer CPU + FreeableMemory + DatabaseConnections (hourly summary envelope) |
+| `residual-charge.json` | CE extended-support line for a deleted instance + `describe-db-instances` |
+| `DRY-RUN-NOTES.md` | Expected skill behaviour at each step, including the expected report |
 
 ## Savings summary (expected output)
 
-| Finding | Source | Confidence | Est. savings |
-|---------|--------|------------|-------------|
-| Delete 11 unattached EBS volumes | line-item-computation | high | ~$420/mo |
-| Rightsize 3 EC2 instances | compute-optimizer | medium | ~$490/mo |
-| Resize 1 EBS volume (oversized) | compute-optimizer | medium | ~$48/mo |
-| Delete 47 orphaned snapshots | line-item-computation | high | ~$320/mo |
-| Tag $8K/mo of untagged spend | untagged-spend-flag | informational | n/a |
-| Aurora writer (memory/connection-bound) | binding-constraint-check | excluded | n/a — NOT downsizeable (#7) |
-| RDS extended-support tail (deleted instance) | residual | excluded | n/a — self-clearing, not chased (#4) |
+| Finding | Source | Rate | Confidence | Est. savings |
+|---------|--------|------|------------|-------------|
+| Delete 5 unattached EBS volumes, us-east-1 (detached >= 60d) | line-item-computation | bill-derived | high | $80.00/mo |
+| Delete 4 unattached EBS volumes, eu-west-1 (detached >= 60d) | line-item-computation | bill-derived | high | $35.20/mo |
+| Rightsize EC2 `i-0bbbb` c5.2xlarge to c5.xlarge | compute-optimizer | list-price | medium | $124.00/mo |
+| Rightsize EC2 `i-0cccc` m5.xlarge to m5.large (eu-west-1) | compute-optimizer | list-price | medium | $78.00/mo |
+| Delete 12 orphan-candidate snapshots, us-east-1 | line-item-computation | bill-derived | medium | $31.50/mo |
+| Delete 5 orphan-candidate snapshots, eu-west-1 | line-item-computation | bill-derived | medium | $13.50/mo |
+| Rightsize EC2 `i-0aaaa` m5.4xlarge to m5.2xlarge | compute-optimizer | list-price | medium | $280.00/mo, **covered until 2027-02-14, excluded from totals** |
+| Delete 1,000 GB volume detached 3 days ago (CO resize noted as alternative) | line-item-computation | bill-derived | low | $80.00/mo |
+| Confirm owner of Kubernetes PV volume, 500 GB | line-item-computation | bill-derived | low | $40.00/mo |
+| Delete 400 GB volume, detach date unverified | line-item-computation | bill-derived | low | $32.00/mo |
 
-**Total:** ~$740/mo high-confidence, ~$538/mo medium-confidence. The Aurora writer and the residual extended-support line are **excluded** from the savings total (binding-constraint and residual-charge rules), demonstrating the v0.10 principles filter out two false-positive "savings."
+**Total estimated savings: $115.20/mo high + $247.00/mo medium + $152.00/mo low = $514.20/mo.** The covered row ($280.00/mo at list price) is excluded.
+
+Informational / excluded (no savings claimed, NOT in the remediation table):
+
+| Item | Source of the figure | Amount | Reason |
+|------|----------------------|--------|--------|
+| Untagged spend (EC2 $5,200.00, EBS $1,800.00, S3 $1,000.00) | line-item-computation | $8,000.00/mo | visibility, not waste; owner unknown |
+| RDS extended-support charge, deleted instance `db-legacy-pg13` | line-item-computation (bill-derived $0.10/instance-hour) | $37.20 (April, one-off) | residual / self-clearing |
+| Aurora writer `acme-prod-aurora-writer` | compute-optimizer (`Optimized`) | n/a | memory- and connection-bound, not downsizeable |
+| 30 backup snapshots (AWS Backup 14, DLM 8, AMI-backed 4, live source volume 4) | line-item-computation (bill-derived) | $175.50/mo billed | backups, retention review; not orphaned |
+
+Why the headline is small: the previous version of this fixture claimed ~$740/mo high-confidence from 11 volumes and 47 "orphaned" snapshots at `VolumeSize x list price`. With bill-derived rates, a real detach window, and the three snapshot checks, the same account yields $115.20/mo high-confidence.

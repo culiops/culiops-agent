@@ -1,1955 +1,440 @@
 {
-  "ResultsByTime": [
-    {
-      "TimePeriod": {
-        "Start": "2026-04-08",
-        "End": "2026-04-09"
-      },
-      "Total": {},
-      "Groups": [
-        {
-          "Keys": [
-            "Amazon Elastic Compute Cloud - Compute"
-          ],
-          "Metrics": {
-            "UnblendedCost": {
-              "Amount": "1438.0",
-              "Unit": "USD"
-            }
-          }
-        },
-        {
-          "Keys": [
-            "Amazon Simple Storage Service"
-          ],
-          "Metrics": {
-            "UnblendedCost": {
-              "Amount": "60.12",
-              "Unit": "USD"
-            }
-          }
-        },
-        {
-          "Keys": [
-            "Amazon Relational Database Service"
-          ],
-          "Metrics": {
-            "UnblendedCost": {
-              "Amount": "199.8",
-              "Unit": "USD"
-            }
-          }
-        },
-        {
-          "Keys": [
-            "AWS Lambda"
-          ],
-          "Metrics": {
-            "UnblendedCost": {
-              "Amount": "19.88",
-              "Unit": "USD"
-            }
-          }
-        },
-        {
-          "Keys": [
-            "AmazonCloudWatch"
-          ],
-          "Metrics": {
-            "UnblendedCost": {
-              "Amount": "14.87",
-              "Unit": "USD"
-            }
-          }
-        }
-      ],
-      "Estimated": false
-    },
-    {
-      "TimePeriod": {
-        "Start": "2026-04-09",
-        "End": "2026-04-10"
-      },
-      "Total": {},
-      "Groups": [
-        {
-          "Keys": [
-            "Amazon Elastic Compute Cloud - Compute"
-          ],
-          "Metrics": {
-            "UnblendedCost": {
-              "Amount": "1441.15",
-              "Unit": "USD"
-            }
-          }
-        },
-        {
-          "Keys": [
-            "Amazon Simple Storage Service"
-          ],
-          "Metrics": {
-            "UnblendedCost": {
-              "Amount": "59.87",
-              "Unit": "USD"
-            }
-          }
-        },
-        {
-          "Keys": [
-            "Amazon Relational Database Service"
-          ],
-          "Metrics": {
-            "UnblendedCost": {
-              "Amount": "200.35",
-              "Unit": "USD"
-            }
-          }
-        },
-        {
-          "Keys": [
-            "AWS Lambda"
-          ],
-          "Metrics": {
-            "UnblendedCost": {
-              "Amount": "20.14",
-              "Unit": "USD"
-            }
-          }
-        },
-        {
-          "Keys": [
-            "AmazonCloudWatch"
-          ],
-          "Metrics": {
-            "UnblendedCost": {
-              "Amount": "15.03",
-              "Unit": "USD"
-            }
-          }
-        }
-      ],
-      "Estimated": false
-    },
-    {
-      "TimePeriod": {
-        "Start": "2026-04-10",
-        "End": "2026-04-11"
-      },
-      "Total": {},
-      "Groups": [
-        {
-          "Keys": [
-            "Amazon Elastic Compute Cloud - Compute"
-          ],
-          "Metrics": {
-            "UnblendedCost": {
-              "Amount": "1435.2",
-              "Unit": "USD"
-            }
-          }
-        },
-        {
-          "Keys": [
-            "Amazon Simple Storage Service"
-          ],
-          "Metrics": {
-            "UnblendedCost": {
-              "Amount": "60.34",
-              "Unit": "USD"
-            }
-          }
-        },
-        {
-          "Keys": [
-            "Amazon Relational Database Service"
-          ],
-          "Metrics": {
-            "UnblendedCost": {
-              "Amount": "199.62",
-              "Unit": "USD"
-            }
-          }
-        },
-        {
-          "Keys": [
-            "AWS Lambda"
-          ],
-          "Metrics": {
-            "UnblendedCost": {
-              "Amount": "19.73",
-              "Unit": "USD"
-            }
-          }
-        },
-        {
-          "Keys": [
-            "AmazonCloudWatch"
-          ],
-          "Metrics": {
-            "UnblendedCost": {
-              "Amount": "14.79",
-              "Unit": "USD"
-            }
-          }
-        }
-      ],
-      "Estimated": false
-    },
-    {
-      "TimePeriod": {
-        "Start": "2026-04-11",
-        "End": "2026-04-12"
-      },
-      "Total": {},
-      "Groups": [
-        {
-          "Keys": [
-            "Amazon Elastic Compute Cloud - Compute"
-          ],
-          "Metrics": {
-            "UnblendedCost": {
-              "Amount": "1443.2",
-              "Unit": "USD"
-            }
-          }
-        },
-        {
-          "Keys": [
-            "Amazon Simple Storage Service"
-          ],
-          "Metrics": {
-            "UnblendedCost": {
-              "Amount": "59.71",
-              "Unit": "USD"
-            }
-          }
-        },
-        {
-          "Keys": [
-            "Amazon Relational Database Service"
-          ],
-          "Metrics": {
-            "UnblendedCost": {
-              "Amount": "200.18",
-              "Unit": "USD"
-            }
-          }
-        },
-        {
-          "Keys": [
-            "AWS Lambda"
-          ],
-          "Metrics": {
-            "UnblendedCost": {
-              "Amount": "20.31",
-              "Unit": "USD"
-            }
-          }
-        },
-        {
-          "Keys": [
-            "AmazonCloudWatch"
-          ],
-          "Metrics": {
-            "UnblendedCost": {
-              "Amount": "15.11",
-              "Unit": "USD"
-            }
-          }
-        }
-      ],
-      "Estimated": false
-    },
-    {
-      "TimePeriod": {
-        "Start": "2026-04-12",
-        "End": "2026-04-13"
-      },
-      "Total": {},
-      "Groups": [
-        {
-          "Keys": [
-            "Amazon Elastic Compute Cloud - Compute"
-          ],
-          "Metrics": {
-            "UnblendedCost": {
-              "Amount": "1436.5",
-              "Unit": "USD"
-            }
-          }
-        },
-        {
-          "Keys": [
-            "Amazon Simple Storage Service"
-          ],
-          "Metrics": {
-            "UnblendedCost": {
-              "Amount": "60.08",
-              "Unit": "USD"
-            }
-          }
-        },
-        {
-          "Keys": [
-            "Amazon Relational Database Service"
-          ],
-          "Metrics": {
-            "UnblendedCost": {
-              "Amount": "199.74",
-              "Unit": "USD"
-            }
-          }
-        },
-        {
-          "Keys": [
-            "AWS Lambda"
-          ],
-          "Metrics": {
-            "UnblendedCost": {
-              "Amount": "19.96",
-              "Unit": "USD"
-            }
-          }
-        },
-        {
-          "Keys": [
-            "AmazonCloudWatch"
-          ],
-          "Metrics": {
-            "UnblendedCost": {
-              "Amount": "14.94",
-              "Unit": "USD"
-            }
-          }
-        }
-      ],
-      "Estimated": false
-    },
-    {
-      "TimePeriod": {
-        "Start": "2026-04-13",
-        "End": "2026-04-14"
-      },
-      "Total": {},
-      "Groups": [
-        {
-          "Keys": [
-            "Amazon Elastic Compute Cloud - Compute"
-          ],
-          "Metrics": {
-            "UnblendedCost": {
-              "Amount": "1442.7",
-              "Unit": "USD"
-            }
-          }
-        },
-        {
-          "Keys": [
-            "Amazon Simple Storage Service"
-          ],
-          "Metrics": {
-            "UnblendedCost": {
-              "Amount": "59.95",
-              "Unit": "USD"
-            }
-          }
-        },
-        {
-          "Keys": [
-            "Amazon Relational Database Service"
-          ],
-          "Metrics": {
-            "UnblendedCost": {
-              "Amount": "200.42",
-              "Unit": "USD"
-            }
-          }
-        },
-        {
-          "Keys": [
-            "AWS Lambda"
-          ],
-          "Metrics": {
-            "UnblendedCost": {
-              "Amount": "20.08",
-              "Unit": "USD"
-            }
-          }
-        },
-        {
-          "Keys": [
-            "AmazonCloudWatch"
-          ],
-          "Metrics": {
-            "UnblendedCost": {
-              "Amount": "15.06",
-              "Unit": "USD"
-            }
-          }
-        }
-      ],
-      "Estimated": false
-    },
-    {
-      "TimePeriod": {
-        "Start": "2026-04-14",
-        "End": "2026-04-15"
-      },
-      "Total": {},
-      "Groups": [
-        {
-          "Keys": [
-            "Amazon Elastic Compute Cloud - Compute"
-          ],
-          "Metrics": {
-            "UnblendedCost": {
-              "Amount": "1434.7",
-              "Unit": "USD"
-            }
-          }
-        },
-        {
-          "Keys": [
-            "Amazon Simple Storage Service"
-          ],
-          "Metrics": {
-            "UnblendedCost": {
-              "Amount": "60.21",
-              "Unit": "USD"
-            }
-          }
-        },
-        {
-          "Keys": [
-            "Amazon Relational Database Service"
-          ],
-          "Metrics": {
-            "UnblendedCost": {
-              "Amount": "199.88",
-              "Unit": "USD"
-            }
-          }
-        },
-        {
-          "Keys": [
-            "AWS Lambda"
-          ],
-          "Metrics": {
-            "UnblendedCost": {
-              "Amount": "19.81",
-              "Unit": "USD"
-            }
-          }
-        },
-        {
-          "Keys": [
-            "AmazonCloudWatch"
-          ],
-          "Metrics": {
-            "UnblendedCost": {
-              "Amount": "14.82",
-              "Unit": "USD"
-            }
-          }
-        }
-      ],
-      "Estimated": false
-    },
-    {
-      "TimePeriod": {
-        "Start": "2026-04-15",
-        "End": "2026-04-16"
-      },
-      "Total": {},
-      "Groups": [
-        {
-          "Keys": [
-            "Amazon Elastic Compute Cloud - Compute"
-          ],
-          "Metrics": {
-            "UnblendedCost": {
-              "Amount": "1440.1",
-              "Unit": "USD"
-            }
-          }
-        },
-        {
-          "Keys": [
-            "Amazon Simple Storage Service"
-          ],
-          "Metrics": {
-            "UnblendedCost": {
-              "Amount": "59.63",
-              "Unit": "USD"
-            }
-          }
-        },
-        {
-          "Keys": [
-            "Amazon Relational Database Service"
-          ],
-          "Metrics": {
-            "UnblendedCost": {
-              "Amount": "200.05",
-              "Unit": "USD"
-            }
-          }
-        },
-        {
-          "Keys": [
-            "AWS Lambda"
-          ],
-          "Metrics": {
-            "UnblendedCost": {
-              "Amount": "20.25",
-              "Unit": "USD"
-            }
-          }
-        },
-        {
-          "Keys": [
-            "AmazonCloudWatch"
-          ],
-          "Metrics": {
-            "UnblendedCost": {
-              "Amount": "15.08",
-              "Unit": "USD"
-            }
-          }
-        }
-      ],
-      "Estimated": false
-    },
-    {
-      "TimePeriod": {
-        "Start": "2026-04-16",
-        "End": "2026-04-17"
-      },
-      "Total": {},
-      "Groups": [
-        {
-          "Keys": [
-            "Amazon Elastic Compute Cloud - Compute"
-          ],
-          "Metrics": {
-            "UnblendedCost": {
-              "Amount": "1433.8",
-              "Unit": "USD"
-            }
-          }
-        },
-        {
-          "Keys": [
-            "Amazon Simple Storage Service"
-          ],
-          "Metrics": {
-            "UnblendedCost": {
-              "Amount": "60.45",
-              "Unit": "USD"
-            }
-          }
-        },
-        {
-          "Keys": [
-            "Amazon Relational Database Service"
-          ],
-          "Metrics": {
-            "UnblendedCost": {
-              "Amount": "199.51",
-              "Unit": "USD"
-            }
-          }
-        },
-        {
-          "Keys": [
-            "AWS Lambda"
-          ],
-          "Metrics": {
-            "UnblendedCost": {
-              "Amount": "19.67",
-              "Unit": "USD"
-            }
-          }
-        },
-        {
-          "Keys": [
-            "AmazonCloudWatch"
-          ],
-          "Metrics": {
-            "UnblendedCost": {
-              "Amount": "14.76",
-              "Unit": "USD"
-            }
-          }
-        }
-      ],
-      "Estimated": false
-    },
-    {
-      "TimePeriod": {
-        "Start": "2026-04-17",
-        "End": "2026-04-18"
-      },
-      "Total": {},
-      "Groups": [
-        {
-          "Keys": [
-            "Amazon Elastic Compute Cloud - Compute"
-          ],
-          "Metrics": {
-            "UnblendedCost": {
-              "Amount": "1444.3",
-              "Unit": "USD"
-            }
-          }
-        },
-        {
-          "Keys": [
-            "Amazon Simple Storage Service"
-          ],
-          "Metrics": {
-            "UnblendedCost": {
-              "Amount": "59.88",
-              "Unit": "USD"
-            }
-          }
-        },
-        {
-          "Keys": [
-            "Amazon Relational Database Service"
-          ],
-          "Metrics": {
-            "UnblendedCost": {
-              "Amount": "200.29",
-              "Unit": "USD"
-            }
-          }
-        },
-        {
-          "Keys": [
-            "AWS Lambda"
-          ],
-          "Metrics": {
-            "UnblendedCost": {
-              "Amount": "20.19",
-              "Unit": "USD"
-            }
-          }
-        },
-        {
-          "Keys": [
-            "AmazonCloudWatch"
-          ],
-          "Metrics": {
-            "UnblendedCost": {
-              "Amount": "15.04",
-              "Unit": "USD"
-            }
-          }
-        }
-      ],
-      "Estimated": false
-    },
-    {
-      "TimePeriod": {
-        "Start": "2026-04-18",
-        "End": "2026-04-19"
-      },
-      "Total": {},
-      "Groups": [
-        {
-          "Keys": [
-            "Amazon Elastic Compute Cloud - Compute"
-          ],
-          "Metrics": {
-            "UnblendedCost": {
-              "Amount": "1436.2",
-              "Unit": "USD"
-            }
-          }
-        },
-        {
-          "Keys": [
-            "Amazon Simple Storage Service"
-          ],
-          "Metrics": {
-            "UnblendedCost": {
-              "Amount": "60.17",
-              "Unit": "USD"
-            }
-          }
-        },
-        {
-          "Keys": [
-            "Amazon Relational Database Service"
-          ],
-          "Metrics": {
-            "UnblendedCost": {
-              "Amount": "199.83",
-              "Unit": "USD"
-            }
-          }
-        },
-        {
-          "Keys": [
-            "AWS Lambda"
-          ],
-          "Metrics": {
-            "UnblendedCost": {
-              "Amount": "19.91",
-              "Unit": "USD"
-            }
-          }
-        },
-        {
-          "Keys": [
-            "AmazonCloudWatch"
-          ],
-          "Metrics": {
-            "UnblendedCost": {
-              "Amount": "14.91",
-              "Unit": "USD"
-            }
-          }
-        }
-      ],
-      "Estimated": false
-    },
-    {
-      "TimePeriod": {
-        "Start": "2026-04-19",
-        "End": "2026-04-20"
-      },
-      "Total": {},
-      "Groups": [
-        {
-          "Keys": [
-            "Amazon Elastic Compute Cloud - Compute"
-          ],
-          "Metrics": {
-            "UnblendedCost": {
-              "Amount": "1441.9",
-              "Unit": "USD"
-            }
-          }
-        },
-        {
-          "Keys": [
-            "Amazon Simple Storage Service"
-          ],
-          "Metrics": {
-            "UnblendedCost": {
-              "Amount": "59.74",
-              "Unit": "USD"
-            }
-          }
-        },
-        {
-          "Keys": [
-            "Amazon Relational Database Service"
-          ],
-          "Metrics": {
-            "UnblendedCost": {
-              "Amount": "200.11",
-              "Unit": "USD"
-            }
-          }
-        },
-        {
-          "Keys": [
-            "AWS Lambda"
-          ],
-          "Metrics": {
-            "UnblendedCost": {
-              "Amount": "20.03",
-              "Unit": "USD"
-            }
-          }
-        },
-        {
-          "Keys": [
-            "AmazonCloudWatch"
-          ],
-          "Metrics": {
-            "UnblendedCost": {
-              "Amount": "15.09",
-              "Unit": "USD"
-            }
-          }
-        }
-      ],
-      "Estimated": false
-    },
-    {
-      "TimePeriod": {
-        "Start": "2026-04-20",
-        "End": "2026-04-21"
-      },
-      "Total": {},
-      "Groups": [
-        {
-          "Keys": [
-            "Amazon Elastic Compute Cloud - Compute"
-          ],
-          "Metrics": {
-            "UnblendedCost": {
-              "Amount": "1435.6",
-              "Unit": "USD"
-            }
-          }
-        },
-        {
-          "Keys": [
-            "Amazon Simple Storage Service"
-          ],
-          "Metrics": {
-            "UnblendedCost": {
-              "Amount": "60.03",
-              "Unit": "USD"
-            }
-          }
-        },
-        {
-          "Keys": [
-            "Amazon Relational Database Service"
-          ],
-          "Metrics": {
-            "UnblendedCost": {
-              "Amount": "199.67",
-              "Unit": "USD"
-            }
-          }
-        },
-        {
-          "Keys": [
-            "AWS Lambda"
-          ],
-          "Metrics": {
-            "UnblendedCost": {
-              "Amount": "19.76",
-              "Unit": "USD"
-            }
-          }
-        },
-        {
-          "Keys": [
-            "AmazonCloudWatch"
-          ],
-          "Metrics": {
-            "UnblendedCost": {
-              "Amount": "14.85",
-              "Unit": "USD"
-            }
-          }
-        }
-      ],
-      "Estimated": false
-    },
-    {
-      "TimePeriod": {
-        "Start": "2026-04-21",
-        "End": "2026-04-22"
-      },
-      "Total": {},
-      "Groups": [
-        {
-          "Keys": [
-            "Amazon Elastic Compute Cloud - Compute"
-          ],
-          "Metrics": {
-            "UnblendedCost": {
-              "Amount": "1443.5",
-              "Unit": "USD"
-            }
-          }
-        },
-        {
-          "Keys": [
-            "Amazon Simple Storage Service"
-          ],
-          "Metrics": {
-            "UnblendedCost": {
-              "Amount": "59.91",
-              "Unit": "USD"
-            }
-          }
-        },
-        {
-          "Keys": [
-            "Amazon Relational Database Service"
-          ],
-          "Metrics": {
-            "UnblendedCost": {
-              "Amount": "200.38",
-              "Unit": "USD"
-            }
-          }
-        },
-        {
-          "Keys": [
-            "AWS Lambda"
-          ],
-          "Metrics": {
-            "UnblendedCost": {
-              "Amount": "20.28",
-              "Unit": "USD"
-            }
-          }
-        },
-        {
-          "Keys": [
-            "AmazonCloudWatch"
-          ],
-          "Metrics": {
-            "UnblendedCost": {
-              "Amount": "15.02",
-              "Unit": "USD"
-            }
-          }
-        }
-      ],
-      "Estimated": false
-    },
-    {
-      "TimePeriod": {
-        "Start": "2026-04-22",
-        "End": "2026-04-23"
-      },
-      "Total": {},
-      "Groups": [
-        {
-          "Keys": [
-            "Amazon Elastic Compute Cloud - Compute"
-          ],
-          "Metrics": {
-            "UnblendedCost": {
-              "Amount": "1437.1",
-              "Unit": "USD"
-            }
-          }
-        },
-        {
-          "Keys": [
-            "Amazon Simple Storage Service"
-          ],
-          "Metrics": {
-            "UnblendedCost": {
-              "Amount": "60.28",
-              "Unit": "USD"
-            }
-          }
-        },
-        {
-          "Keys": [
-            "Amazon Relational Database Service"
-          ],
-          "Metrics": {
-            "UnblendedCost": {
-              "Amount": "199.92",
-              "Unit": "USD"
-            }
-          }
-        },
-        {
-          "Keys": [
-            "AWS Lambda"
-          ],
-          "Metrics": {
-            "UnblendedCost": {
-              "Amount": "19.84",
-              "Unit": "USD"
-            }
-          }
-        },
-        {
-          "Keys": [
-            "AmazonCloudWatch"
-          ],
-          "Metrics": {
-            "UnblendedCost": {
-              "Amount": "14.88",
-              "Unit": "USD"
-            }
-          }
-        }
-      ],
-      "Estimated": false
-    },
-    {
-      "TimePeriod": {
-        "Start": "2026-04-23",
-        "End": "2026-04-24"
-      },
-      "Total": {},
-      "Groups": [
-        {
-          "Keys": [
-            "Amazon Elastic Compute Cloud - Compute"
-          ],
-          "Metrics": {
-            "UnblendedCost": {
-              "Amount": "1442.1",
-              "Unit": "USD"
-            }
-          }
-        },
-        {
-          "Keys": [
-            "Amazon Simple Storage Service"
-          ],
-          "Metrics": {
-            "UnblendedCost": {
-              "Amount": "59.66",
-              "Unit": "USD"
-            }
-          }
-        },
-        {
-          "Keys": [
-            "Amazon Relational Database Service"
-          ],
-          "Metrics": {
-            "UnblendedCost": {
-              "Amount": "200.14",
-              "Unit": "USD"
-            }
-          }
-        },
-        {
-          "Keys": [
-            "AWS Lambda"
-          ],
-          "Metrics": {
-            "UnblendedCost": {
-              "Amount": "20.11",
-              "Unit": "USD"
-            }
-          }
-        },
-        {
-          "Keys": [
-            "AmazonCloudWatch"
-          ],
-          "Metrics": {
-            "UnblendedCost": {
-              "Amount": "15.07",
-              "Unit": "USD"
-            }
-          }
-        }
-      ],
-      "Estimated": false
-    },
-    {
-      "TimePeriod": {
-        "Start": "2026-04-24",
-        "End": "2026-04-25"
-      },
-      "Total": {},
-      "Groups": [
-        {
-          "Keys": [
-            "Amazon Elastic Compute Cloud - Compute"
-          ],
-          "Metrics": {
-            "UnblendedCost": {
-              "Amount": "1434.4",
-              "Unit": "USD"
-            }
-          }
-        },
-        {
-          "Keys": [
-            "Amazon Simple Storage Service"
-          ],
-          "Metrics": {
-            "UnblendedCost": {
-              "Amount": "60.14",
-              "Unit": "USD"
-            }
-          }
-        },
-        {
-          "Keys": [
-            "Amazon Relational Database Service"
-          ],
-          "Metrics": {
-            "UnblendedCost": {
-              "Amount": "199.58",
-              "Unit": "USD"
-            }
-          }
-        },
-        {
-          "Keys": [
-            "AWS Lambda"
-          ],
-          "Metrics": {
-            "UnblendedCost": {
-              "Amount": "19.69",
-              "Unit": "USD"
-            }
-          }
-        },
-        {
-          "Keys": [
-            "AmazonCloudWatch"
-          ],
-          "Metrics": {
-            "UnblendedCost": {
-              "Amount": "14.8",
-              "Unit": "USD"
-            }
-          }
-        }
-      ],
-      "Estimated": false
-    },
-    {
-      "TimePeriod": {
-        "Start": "2026-04-25",
-        "End": "2026-04-26"
-      },
-      "Total": {},
-      "Groups": [
-        {
-          "Keys": [
-            "Amazon Elastic Compute Cloud - Compute"
-          ],
-          "Metrics": {
-            "UnblendedCost": {
-              "Amount": "1440.7",
-              "Unit": "USD"
-            }
-          }
-        },
-        {
-          "Keys": [
-            "Amazon Simple Storage Service"
-          ],
-          "Metrics": {
-            "UnblendedCost": {
-              "Amount": "59.82",
-              "Unit": "USD"
-            }
-          }
-        },
-        {
-          "Keys": [
-            "Amazon Relational Database Service"
-          ],
-          "Metrics": {
-            "UnblendedCost": {
-              "Amount": "200.26",
-              "Unit": "USD"
-            }
-          }
-        },
-        {
-          "Keys": [
-            "AWS Lambda"
-          ],
-          "Metrics": {
-            "UnblendedCost": {
-              "Amount": "20.22",
-              "Unit": "USD"
-            }
-          }
-        },
-        {
-          "Keys": [
-            "AmazonCloudWatch"
-          ],
-          "Metrics": {
-            "UnblendedCost": {
-              "Amount": "15.05",
-              "Unit": "USD"
-            }
-          }
-        }
-      ],
-      "Estimated": false
-    },
-    {
-      "TimePeriod": {
-        "Start": "2026-04-26",
-        "End": "2026-04-27"
-      },
-      "Total": {},
-      "Groups": [
-        {
-          "Keys": [
-            "Amazon Elastic Compute Cloud - Compute"
-          ],
-          "Metrics": {
-            "UnblendedCost": {
-              "Amount": "3288.0",
-              "Unit": "USD"
-            }
-          }
-        },
-        {
-          "Keys": [
-            "Amazon Simple Storage Service"
-          ],
-          "Metrics": {
-            "UnblendedCost": {
-              "Amount": "60.07",
-              "Unit": "USD"
-            }
-          }
-        },
-        {
-          "Keys": [
-            "Amazon Relational Database Service"
-          ],
-          "Metrics": {
-            "UnblendedCost": {
-              "Amount": "199.71",
-              "Unit": "USD"
-            }
-          }
-        },
-        {
-          "Keys": [
-            "AWS Lambda"
-          ],
-          "Metrics": {
-            "UnblendedCost": {
-              "Amount": "19.93",
-              "Unit": "USD"
-            }
-          }
-        },
-        {
-          "Keys": [
-            "AmazonCloudWatch"
-          ],
-          "Metrics": {
-            "UnblendedCost": {
-              "Amount": "14.93",
-              "Unit": "USD"
-            }
-          }
-        }
-      ],
-      "Estimated": false
-    },
-    {
-      "TimePeriod": {
-        "Start": "2026-04-27",
-        "End": "2026-04-28"
-      },
-      "Total": {},
-      "Groups": [
-        {
-          "Keys": [
-            "Amazon Elastic Compute Cloud - Compute"
-          ],
-          "Metrics": {
-            "UnblendedCost": {
-              "Amount": "3296.4",
-              "Unit": "USD"
-            }
-          }
-        },
-        {
-          "Keys": [
-            "Amazon Simple Storage Service"
-          ],
-          "Metrics": {
-            "UnblendedCost": {
-              "Amount": "59.93",
-              "Unit": "USD"
-            }
-          }
-        },
-        {
-          "Keys": [
-            "Amazon Relational Database Service"
-          ],
-          "Metrics": {
-            "UnblendedCost": {
-              "Amount": "200.44",
-              "Unit": "USD"
-            }
-          }
-        },
-        {
-          "Keys": [
-            "AWS Lambda"
-          ],
-          "Metrics": {
-            "UnblendedCost": {
-              "Amount": "20.05",
-              "Unit": "USD"
-            }
-          }
-        },
-        {
-          "Keys": [
-            "AmazonCloudWatch"
-          ],
-          "Metrics": {
-            "UnblendedCost": {
-              "Amount": "15.01",
-              "Unit": "USD"
-            }
-          }
-        }
-      ],
-      "Estimated": false
-    },
-    {
-      "TimePeriod": {
-        "Start": "2026-04-28",
-        "End": "2026-04-29"
-      },
-      "Total": {},
-      "Groups": [
-        {
-          "Keys": [
-            "Amazon Elastic Compute Cloud - Compute"
-          ],
-          "Metrics": {
-            "UnblendedCost": {
-              "Amount": "3281.8",
-              "Unit": "USD"
-            }
-          }
-        },
-        {
-          "Keys": [
-            "Amazon Simple Storage Service"
-          ],
-          "Metrics": {
-            "UnblendedCost": {
-              "Amount": "60.31",
-              "Unit": "USD"
-            }
-          }
-        },
-        {
-          "Keys": [
-            "Amazon Relational Database Service"
-          ],
-          "Metrics": {
-            "UnblendedCost": {
-              "Amount": "199.86",
-              "Unit": "USD"
-            }
-          }
-        },
-        {
-          "Keys": [
-            "AWS Lambda"
-          ],
-          "Metrics": {
-            "UnblendedCost": {
-              "Amount": "19.78",
-              "Unit": "USD"
-            }
-          }
-        },
-        {
-          "Keys": [
-            "AmazonCloudWatch"
-          ],
-          "Metrics": {
-            "UnblendedCost": {
-              "Amount": "14.84",
-              "Unit": "USD"
-            }
-          }
-        }
-      ],
-      "Estimated": false
-    },
-    {
-      "TimePeriod": {
-        "Start": "2026-04-29",
-        "End": "2026-04-30"
-      },
-      "Total": {},
-      "Groups": [
-        {
-          "Keys": [
-            "Amazon Elastic Compute Cloud - Compute"
-          ],
-          "Metrics": {
-            "UnblendedCost": {
-              "Amount": "3299.5",
-              "Unit": "USD"
-            }
-          }
-        },
-        {
-          "Keys": [
-            "Amazon Simple Storage Service"
-          ],
-          "Metrics": {
-            "UnblendedCost": {
-              "Amount": "59.77",
-              "Unit": "USD"
-            }
-          }
-        },
-        {
-          "Keys": [
-            "Amazon Relational Database Service"
-          ],
-          "Metrics": {
-            "UnblendedCost": {
-              "Amount": "200.07",
-              "Unit": "USD"
-            }
-          }
-        },
-        {
-          "Keys": [
-            "AWS Lambda"
-          ],
-          "Metrics": {
-            "UnblendedCost": {
-              "Amount": "20.3",
-              "Unit": "USD"
-            }
-          }
-        },
-        {
-          "Keys": [
-            "AmazonCloudWatch"
-          ],
-          "Metrics": {
-            "UnblendedCost": {
-              "Amount": "15.1",
-              "Unit": "USD"
-            }
-          }
-        }
-      ],
-      "Estimated": false
-    },
-    {
-      "TimePeriod": {
-        "Start": "2026-04-30",
-        "End": "2026-05-01"
-      },
-      "Total": {},
-      "Groups": [
-        {
-          "Keys": [
-            "Amazon Elastic Compute Cloud - Compute"
-          ],
-          "Metrics": {
-            "UnblendedCost": {
-              "Amount": "3283.2",
-              "Unit": "USD"
-            }
-          }
-        },
-        {
-          "Keys": [
-            "Amazon Simple Storage Service"
-          ],
-          "Metrics": {
-            "UnblendedCost": {
-              "Amount": "60.19",
-              "Unit": "USD"
-            }
-          }
-        },
-        {
-          "Keys": [
-            "Amazon Relational Database Service"
-          ],
-          "Metrics": {
-            "UnblendedCost": {
-              "Amount": "199.53",
-              "Unit": "USD"
-            }
-          }
-        },
-        {
-          "Keys": [
-            "AWS Lambda"
-          ],
-          "Metrics": {
-            "UnblendedCost": {
-              "Amount": "19.72",
-              "Unit": "USD"
-            }
-          }
-        },
-        {
-          "Keys": [
-            "AmazonCloudWatch"
-          ],
-          "Metrics": {
-            "UnblendedCost": {
-              "Amount": "14.77",
-              "Unit": "USD"
-            }
-          }
-        }
-      ],
-      "Estimated": false
-    },
-    {
-      "TimePeriod": {
-        "Start": "2026-05-01",
-        "End": "2026-05-02"
-      },
-      "Total": {},
-      "Groups": [
-        {
-          "Keys": [
-            "Amazon Elastic Compute Cloud - Compute"
-          ],
-          "Metrics": {
-            "UnblendedCost": {
-              "Amount": "3297.3",
-              "Unit": "USD"
-            }
-          }
-        },
-        {
-          "Keys": [
-            "Amazon Simple Storage Service"
-          ],
-          "Metrics": {
-            "UnblendedCost": {
-              "Amount": "59.84",
-              "Unit": "USD"
-            }
-          }
-        },
-        {
-          "Keys": [
-            "Amazon Relational Database Service"
-          ],
-          "Metrics": {
-            "UnblendedCost": {
-              "Amount": "200.31",
-              "Unit": "USD"
-            }
-          }
-        },
-        {
-          "Keys": [
-            "AWS Lambda"
-          ],
-          "Metrics": {
-            "UnblendedCost": {
-              "Amount": "20.17",
-              "Unit": "USD"
-            }
-          }
-        },
-        {
-          "Keys": [
-            "AmazonCloudWatch"
-          ],
-          "Metrics": {
-            "UnblendedCost": {
-              "Amount": "15.03",
-              "Unit": "USD"
-            }
-          }
-        }
-      ],
-      "Estimated": false
-    },
-    {
-      "TimePeriod": {
-        "Start": "2026-05-02",
-        "End": "2026-05-03"
-      },
-      "Total": {},
-      "Groups": [
-        {
-          "Keys": [
-            "Amazon Elastic Compute Cloud - Compute"
-          ],
-          "Metrics": {
-            "UnblendedCost": {
-              "Amount": "3280.9",
-              "Unit": "USD"
-            }
-          }
-        },
-        {
-          "Keys": [
-            "Amazon Simple Storage Service"
-          ],
-          "Metrics": {
-            "UnblendedCost": {
-              "Amount": "60.06",
-              "Unit": "USD"
-            }
-          }
-        },
-        {
-          "Keys": [
-            "Amazon Relational Database Service"
-          ],
-          "Metrics": {
-            "UnblendedCost": {
-              "Amount": "199.78",
-              "Unit": "USD"
-            }
-          }
-        },
-        {
-          "Keys": [
-            "AWS Lambda"
-          ],
-          "Metrics": {
-            "UnblendedCost": {
-              "Amount": "19.89",
-              "Unit": "USD"
-            }
-          }
-        },
-        {
-          "Keys": [
-            "AmazonCloudWatch"
-          ],
-          "Metrics": {
-            "UnblendedCost": {
-              "Amount": "14.9",
-              "Unit": "USD"
-            }
-          }
-        }
-      ],
-      "Estimated": false
-    },
-    {
-      "TimePeriod": {
-        "Start": "2026-05-03",
-        "End": "2026-05-04"
-      },
-      "Total": {},
-      "Groups": [
-        {
-          "Keys": [
-            "Amazon Elastic Compute Cloud - Compute"
-          ],
-          "Metrics": {
-            "UnblendedCost": {
-              "Amount": "3300.6",
-              "Unit": "USD"
-            }
-          }
-        },
-        {
-          "Keys": [
-            "Amazon Simple Storage Service"
-          ],
-          "Metrics": {
-            "UnblendedCost": {
-              "Amount": "59.71",
-              "Unit": "USD"
-            }
-          }
-        },
-        {
-          "Keys": [
-            "Amazon Relational Database Service"
-          ],
-          "Metrics": {
-            "UnblendedCost": {
-              "Amount": "200.16",
-              "Unit": "USD"
-            }
-          }
-        },
-        {
-          "Keys": [
-            "AWS Lambda"
-          ],
-          "Metrics": {
-            "UnblendedCost": {
-              "Amount": "20.13",
-              "Unit": "USD"
-            }
-          }
-        },
-        {
-          "Keys": [
-            "AmazonCloudWatch"
-          ],
-          "Metrics": {
-            "UnblendedCost": {
-              "Amount": "15.06",
-              "Unit": "USD"
-            }
-          }
-        }
-      ],
-      "Estimated": false
-    },
-    {
-      "TimePeriod": {
-        "Start": "2026-05-04",
-        "End": "2026-05-05"
-      },
-      "Total": {},
-      "Groups": [
-        {
-          "Keys": [
-            "Amazon Elastic Compute Cloud - Compute"
-          ],
-          "Metrics": {
-            "UnblendedCost": {
-              "Amount": "3284.5",
-              "Unit": "USD"
-            }
-          }
-        },
-        {
-          "Keys": [
-            "Amazon Simple Storage Service"
-          ],
-          "Metrics": {
-            "UnblendedCost": {
-              "Amount": "60.22",
-              "Unit": "USD"
-            }
-          }
-        },
-        {
-          "Keys": [
-            "Amazon Relational Database Service"
-          ],
-          "Metrics": {
-            "UnblendedCost": {
-              "Amount": "199.64",
-              "Unit": "USD"
-            }
-          }
-        },
-        {
-          "Keys": [
-            "AWS Lambda"
-          ],
-          "Metrics": {
-            "UnblendedCost": {
-              "Amount": "19.82",
-              "Unit": "USD"
-            }
-          }
-        },
-        {
-          "Keys": [
-            "AmazonCloudWatch"
-          ],
-          "Metrics": {
-            "UnblendedCost": {
-              "Amount": "14.83",
-              "Unit": "USD"
-            }
-          }
-        }
-      ],
-      "Estimated": false
-    },
-    {
-      "TimePeriod": {
-        "Start": "2026-05-05",
-        "End": "2026-05-06"
-      },
-      "Total": {},
-      "Groups": [
-        {
-          "Keys": [
-            "Amazon Elastic Compute Cloud - Compute"
-          ],
-          "Metrics": {
-            "UnblendedCost": {
-              "Amount": "3298.2",
-              "Unit": "USD"
-            }
-          }
-        },
-        {
-          "Keys": [
-            "Amazon Simple Storage Service"
-          ],
-          "Metrics": {
-            "UnblendedCost": {
-              "Amount": "59.98",
-              "Unit": "USD"
-            }
-          }
-        },
-        {
-          "Keys": [
-            "Amazon Relational Database Service"
-          ],
-          "Metrics": {
-            "UnblendedCost": {
-              "Amount": "200.37",
-              "Unit": "USD"
-            }
-          }
-        },
-        {
-          "Keys": [
-            "AWS Lambda"
-          ],
-          "Metrics": {
-            "UnblendedCost": {
-              "Amount": "20.26",
-              "Unit": "USD"
-            }
-          }
-        },
-        {
-          "Keys": [
-            "AmazonCloudWatch"
-          ],
-          "Metrics": {
-            "UnblendedCost": {
-              "Amount": "15.08",
-              "Unit": "USD"
-            }
-          }
-        }
-      ],
-      "Estimated": false
-    },
-    {
-      "TimePeriod": {
-        "Start": "2026-05-06",
-        "End": "2026-05-07"
-      },
-      "Total": {},
-      "Groups": [
-        {
-          "Keys": [
-            "Amazon Elastic Compute Cloud - Compute"
-          ],
-          "Metrics": {
-            "UnblendedCost": {
-              "Amount": "3282.1",
-              "Unit": "USD"
-            }
-          }
-        },
-        {
-          "Keys": [
-            "Amazon Simple Storage Service"
-          ],
-          "Metrics": {
-            "UnblendedCost": {
-              "Amount": "60.15",
-              "Unit": "USD"
-            }
-          }
-        },
-        {
-          "Keys": [
-            "Amazon Relational Database Service"
-          ],
-          "Metrics": {
-            "UnblendedCost": {
-              "Amount": "199.9",
-              "Unit": "USD"
-            }
-          }
-        },
-        {
-          "Keys": [
-            "AWS Lambda"
-          ],
-          "Metrics": {
-            "UnblendedCost": {
-              "Amount": "19.95",
-              "Unit": "USD"
-            }
-          }
-        },
-        {
-          "Keys": [
-            "AmazonCloudWatch"
-          ],
-          "Metrics": {
-            "UnblendedCost": {
-              "Amount": "14.86",
-              "Unit": "USD"
-            }
-          }
-        }
-      ],
-      "Estimated": false
-    },
-    {
-      "TimePeriod": {
-        "Start": "2026-05-07",
-        "End": "2026-05-08"
-      },
-      "Total": {},
-      "Groups": [
-        {
-          "Keys": [
-            "Amazon Elastic Compute Cloud - Compute"
-          ],
-          "Metrics": {
-            "UnblendedCost": {
-              "Amount": "3295.8",
-              "Unit": "USD"
-            }
-          }
-        },
-        {
-          "Keys": [
-            "Amazon Simple Storage Service"
-          ],
-          "Metrics": {
-            "UnblendedCost": {
-              "Amount": "59.89",
-              "Unit": "USD"
-            }
-          }
-        },
-        {
-          "Keys": [
-            "Amazon Relational Database Service"
-          ],
-          "Metrics": {
-            "UnblendedCost": {
-              "Amount": "200.23",
-              "Unit": "USD"
-            }
-          }
-        },
-        {
-          "Keys": [
-            "AWS Lambda"
-          ],
-          "Metrics": {
-            "UnblendedCost": {
-              "Amount": "20.09",
-              "Unit": "USD"
-            }
-          }
-        },
-        {
-          "Keys": [
-            "AmazonCloudWatch"
-          ],
-          "Metrics": {
-            "UnblendedCost": {
-              "Amount": "15.04",
-              "Unit": "USD"
-            }
-          }
-        }
-      ],
-      "Estimated": false
-    }
-  ],
-  "DimensionValueAttributes": []
+ "_note": "Query 6: aws ce get-cost-and-usage --time-period Start=2026-03-05,End=2026-05-06 --granularity DAILY --metrics AmortizedCost UnblendedCost --filter '{\"Dimensions\":{\"Key\":\"RECORD_TYPE\",\"Values\":[\"Usage\",\"DiscountedUsage\",\"SavingsPlanCoveredUsage\"]}}' --group-by Type=DIMENSION,Key=SERVICE. 62 days, ending 2 days before 'now' (2026-05-08); End is exclusive. 'Usage' = the three usage record types; the primary metric is AmortizedCost, which prices Savings-Plan-covered usage at its effective commitment rate. Only the EC2 line differs between the two metrics (covered m5/r5 usage: amortized = effective rate, unblended = on-demand value); the other four services have no commitment, so both metrics are identical. Not usage and therefore not in this file: SavingsPlanRecurringFee (unused commitment under amortization), SavingsPlanUpfrontFee, SavingsPlanNegation, Support - see record-type-breakdown.json. The last two days (2026-05-04, 2026-05-05) are returned with Estimated=true and are still filling in (values are partial): the skill drops them, which leaves 60 complete days = two equal 30-day windows, previous 2026-03-05..2026-04-03 and current 2026-04-04..2026-05-03.",
+ "ResultsByTime": [
+  {"TimePeriod": {"Start": "2026-03-05", "End": "2026-03-06"}, "Total": {}, "Groups": [
+    {"Keys": ["Amazon Elastic Compute Cloud - Compute"], "Metrics": {"AmortizedCost": {"Amount": "1832.37", "Unit": "USD"}, "UnblendedCost": {"Amount": "2011.57", "Unit": "USD"}}},
+    {"Keys": ["Amazon Simple Storage Service"], "Metrics": {"AmortizedCost": {"Amount": "59.87", "Unit": "USD"}, "UnblendedCost": {"Amount": "59.87", "Unit": "USD"}}},
+    {"Keys": ["Amazon Relational Database Service"], "Metrics": {"AmortizedCost": {"Amount": "199.57", "Unit": "USD"}, "UnblendedCost": {"Amount": "199.57", "Unit": "USD"}}},
+    {"Keys": ["AWS Lambda"], "Metrics": {"AmortizedCost": {"Amount": "19.62", "Unit": "USD"}, "UnblendedCost": {"Amount": "19.62", "Unit": "USD"}}},
+    {"Keys": ["AmazonCloudWatch"], "Metrics": {"AmortizedCost": {"Amount": "14.99", "Unit": "USD"}, "UnblendedCost": {"Amount": "14.99", "Unit": "USD"}}}
+  ], "Estimated": false},
+  {"TimePeriod": {"Start": "2026-03-06", "End": "2026-03-07"}, "Total": {}, "Groups": [
+    {"Keys": ["Amazon Elastic Compute Cloud - Compute"], "Metrics": {"AmortizedCost": {"Amount": "1832.75", "Unit": "USD"}, "UnblendedCost": {"Amount": "2011.95", "Unit": "USD"}}},
+    {"Keys": ["Amazon Simple Storage Service"], "Metrics": {"AmortizedCost": {"Amount": "60.21", "Unit": "USD"}, "UnblendedCost": {"Amount": "60.21", "Unit": "USD"}}},
+    {"Keys": ["Amazon Relational Database Service"], "Metrics": {"AmortizedCost": {"Amount": "199.09", "Unit": "USD"}, "UnblendedCost": {"Amount": "199.09", "Unit": "USD"}}},
+    {"Keys": ["AWS Lambda"], "Metrics": {"AmortizedCost": {"Amount": "19.55", "Unit": "USD"}, "UnblendedCost": {"Amount": "19.55", "Unit": "USD"}}},
+    {"Keys": ["AmazonCloudWatch"], "Metrics": {"AmortizedCost": {"Amount": "14.71", "Unit": "USD"}, "UnblendedCost": {"Amount": "14.71", "Unit": "USD"}}}
+  ], "Estimated": false},
+  {"TimePeriod": {"Start": "2026-03-07", "End": "2026-03-08"}, "Total": {}, "Groups": [
+    {"Keys": ["Amazon Elastic Compute Cloud - Compute"], "Metrics": {"AmortizedCost": {"Amount": "1823.30", "Unit": "USD"}, "UnblendedCost": {"Amount": "2002.50", "Unit": "USD"}}},
+    {"Keys": ["Amazon Simple Storage Service"], "Metrics": {"AmortizedCost": {"Amount": "60.23", "Unit": "USD"}, "UnblendedCost": {"Amount": "60.23", "Unit": "USD"}}},
+    {"Keys": ["Amazon Relational Database Service"], "Metrics": {"AmortizedCost": {"Amount": "200.40", "Unit": "USD"}, "UnblendedCost": {"Amount": "200.40", "Unit": "USD"}}},
+    {"Keys": ["AWS Lambda"], "Metrics": {"AmortizedCost": {"Amount": "19.68", "Unit": "USD"}, "UnblendedCost": {"Amount": "19.68", "Unit": "USD"}}},
+    {"Keys": ["AmazonCloudWatch"], "Metrics": {"AmortizedCost": {"Amount": "14.96", "Unit": "USD"}, "UnblendedCost": {"Amount": "14.96", "Unit": "USD"}}}
+  ], "Estimated": false},
+  {"TimePeriod": {"Start": "2026-03-08", "End": "2026-03-09"}, "Total": {}, "Groups": [
+    {"Keys": ["Amazon Elastic Compute Cloud - Compute"], "Metrics": {"AmortizedCost": {"Amount": "1834.31", "Unit": "USD"}, "UnblendedCost": {"Amount": "2013.51", "Unit": "USD"}}},
+    {"Keys": ["Amazon Simple Storage Service"], "Metrics": {"AmortizedCost": {"Amount": "59.60", "Unit": "USD"}, "UnblendedCost": {"Amount": "59.60", "Unit": "USD"}}},
+    {"Keys": ["Amazon Relational Database Service"], "Metrics": {"AmortizedCost": {"Amount": "199.61", "Unit": "USD"}, "UnblendedCost": {"Amount": "199.61", "Unit": "USD"}}},
+    {"Keys": ["AWS Lambda"], "Metrics": {"AmortizedCost": {"Amount": "19.83", "Unit": "USD"}, "UnblendedCost": {"Amount": "19.83", "Unit": "USD"}}},
+    {"Keys": ["AmazonCloudWatch"], "Metrics": {"AmortizedCost": {"Amount": "14.92", "Unit": "USD"}, "UnblendedCost": {"Amount": "14.92", "Unit": "USD"}}}
+  ], "Estimated": false},
+  {"TimePeriod": {"Start": "2026-03-09", "End": "2026-03-10"}, "Total": {}, "Groups": [
+    {"Keys": ["Amazon Elastic Compute Cloud - Compute"], "Metrics": {"AmortizedCost": {"Amount": "1823.92", "Unit": "USD"}, "UnblendedCost": {"Amount": "2003.12", "Unit": "USD"}}},
+    {"Keys": ["Amazon Simple Storage Service"], "Metrics": {"AmortizedCost": {"Amount": "60.12", "Unit": "USD"}, "UnblendedCost": {"Amount": "60.12", "Unit": "USD"}}},
+    {"Keys": ["Amazon Relational Database Service"], "Metrics": {"AmortizedCost": {"Amount": "199.96", "Unit": "USD"}, "UnblendedCost": {"Amount": "199.96", "Unit": "USD"}}},
+    {"Keys": ["AWS Lambda"], "Metrics": {"AmortizedCost": {"Amount": "19.93", "Unit": "USD"}, "UnblendedCost": {"Amount": "19.93", "Unit": "USD"}}},
+    {"Keys": ["AmazonCloudWatch"], "Metrics": {"AmortizedCost": {"Amount": "15.25", "Unit": "USD"}, "UnblendedCost": {"Amount": "15.25", "Unit": "USD"}}}
+  ], "Estimated": false},
+  {"TimePeriod": {"Start": "2026-03-10", "End": "2026-03-11"}, "Total": {}, "Groups": [
+    {"Keys": ["Amazon Elastic Compute Cloud - Compute"], "Metrics": {"AmortizedCost": {"Amount": "1831.78", "Unit": "USD"}, "UnblendedCost": {"Amount": "2010.98", "Unit": "USD"}}},
+    {"Keys": ["Amazon Simple Storage Service"], "Metrics": {"AmortizedCost": {"Amount": "60.13", "Unit": "USD"}, "UnblendedCost": {"Amount": "60.13", "Unit": "USD"}}},
+    {"Keys": ["Amazon Relational Database Service"], "Metrics": {"AmortizedCost": {"Amount": "200.99", "Unit": "USD"}, "UnblendedCost": {"Amount": "200.99", "Unit": "USD"}}},
+    {"Keys": ["AWS Lambda"], "Metrics": {"AmortizedCost": {"Amount": "19.98", "Unit": "USD"}, "UnblendedCost": {"Amount": "19.98", "Unit": "USD"}}},
+    {"Keys": ["AmazonCloudWatch"], "Metrics": {"AmortizedCost": {"Amount": "15.34", "Unit": "USD"}, "UnblendedCost": {"Amount": "15.34", "Unit": "USD"}}}
+  ], "Estimated": false},
+  {"TimePeriod": {"Start": "2026-03-11", "End": "2026-03-12"}, "Total": {}, "Groups": [
+    {"Keys": ["Amazon Elastic Compute Cloud - Compute"], "Metrics": {"AmortizedCost": {"Amount": "1841.12", "Unit": "USD"}, "UnblendedCost": {"Amount": "2020.32", "Unit": "USD"}}},
+    {"Keys": ["Amazon Simple Storage Service"], "Metrics": {"AmortizedCost": {"Amount": "60.20", "Unit": "USD"}, "UnblendedCost": {"Amount": "60.20", "Unit": "USD"}}},
+    {"Keys": ["Amazon Relational Database Service"], "Metrics": {"AmortizedCost": {"Amount": "199.92", "Unit": "USD"}, "UnblendedCost": {"Amount": "199.92", "Unit": "USD"}}},
+    {"Keys": ["AWS Lambda"], "Metrics": {"AmortizedCost": {"Amount": "19.67", "Unit": "USD"}, "UnblendedCost": {"Amount": "19.67", "Unit": "USD"}}},
+    {"Keys": ["AmazonCloudWatch"], "Metrics": {"AmortizedCost": {"Amount": "14.78", "Unit": "USD"}, "UnblendedCost": {"Amount": "14.78", "Unit": "USD"}}}
+  ], "Estimated": false},
+  {"TimePeriod": {"Start": "2026-03-12", "End": "2026-03-13"}, "Total": {}, "Groups": [
+    {"Keys": ["Amazon Elastic Compute Cloud - Compute"], "Metrics": {"AmortizedCost": {"Amount": "2005.63", "Unit": "USD"}, "UnblendedCost": {"Amount": "2184.83", "Unit": "USD"}}},
+    {"Keys": ["Amazon Simple Storage Service"], "Metrics": {"AmortizedCost": {"Amount": "60.02", "Unit": "USD"}, "UnblendedCost": {"Amount": "60.02", "Unit": "USD"}}},
+    {"Keys": ["Amazon Relational Database Service"], "Metrics": {"AmortizedCost": {"Amount": "199.40", "Unit": "USD"}, "UnblendedCost": {"Amount": "199.40", "Unit": "USD"}}},
+    {"Keys": ["AWS Lambda"], "Metrics": {"AmortizedCost": {"Amount": "20.26", "Unit": "USD"}, "UnblendedCost": {"Amount": "20.26", "Unit": "USD"}}},
+    {"Keys": ["AmazonCloudWatch"], "Metrics": {"AmortizedCost": {"Amount": "15.02", "Unit": "USD"}, "UnblendedCost": {"Amount": "15.02", "Unit": "USD"}}}
+  ], "Estimated": false},
+  {"TimePeriod": {"Start": "2026-03-13", "End": "2026-03-14"}, "Total": {}, "Groups": [
+    {"Keys": ["Amazon Elastic Compute Cloud - Compute"], "Metrics": {"AmortizedCost": {"Amount": "2118.24", "Unit": "USD"}, "UnblendedCost": {"Amount": "2297.44", "Unit": "USD"}}},
+    {"Keys": ["Amazon Simple Storage Service"], "Metrics": {"AmortizedCost": {"Amount": "60.39", "Unit": "USD"}, "UnblendedCost": {"Amount": "60.39", "Unit": "USD"}}},
+    {"Keys": ["Amazon Relational Database Service"], "Metrics": {"AmortizedCost": {"Amount": "199.04", "Unit": "USD"}, "UnblendedCost": {"Amount": "199.04", "Unit": "USD"}}},
+    {"Keys": ["AWS Lambda"], "Metrics": {"AmortizedCost": {"Amount": "19.41", "Unit": "USD"}, "UnblendedCost": {"Amount": "19.41", "Unit": "USD"}}},
+    {"Keys": ["AmazonCloudWatch"], "Metrics": {"AmortizedCost": {"Amount": "14.62", "Unit": "USD"}, "UnblendedCost": {"Amount": "14.62", "Unit": "USD"}}}
+  ], "Estimated": false},
+  {"TimePeriod": {"Start": "2026-03-14", "End": "2026-03-15"}, "Total": {}, "Groups": [
+    {"Keys": ["Amazon Elastic Compute Cloud - Compute"], "Metrics": {"AmortizedCost": {"Amount": "2126.88", "Unit": "USD"}, "UnblendedCost": {"Amount": "2306.08", "Unit": "USD"}}},
+    {"Keys": ["Amazon Simple Storage Service"], "Metrics": {"AmortizedCost": {"Amount": "60.70", "Unit": "USD"}, "UnblendedCost": {"Amount": "60.70", "Unit": "USD"}}},
+    {"Keys": ["Amazon Relational Database Service"], "Metrics": {"AmortizedCost": {"Amount": "199.41", "Unit": "USD"}, "UnblendedCost": {"Amount": "199.41", "Unit": "USD"}}},
+    {"Keys": ["AWS Lambda"], "Metrics": {"AmortizedCost": {"Amount": "20.38", "Unit": "USD"}, "UnblendedCost": {"Amount": "20.38", "Unit": "USD"}}},
+    {"Keys": ["AmazonCloudWatch"], "Metrics": {"AmortizedCost": {"Amount": "14.99", "Unit": "USD"}, "UnblendedCost": {"Amount": "14.99", "Unit": "USD"}}}
+  ], "Estimated": false},
+  {"TimePeriod": {"Start": "2026-03-15", "End": "2026-03-16"}, "Total": {}, "Groups": [
+    {"Keys": ["Amazon Elastic Compute Cloud - Compute"], "Metrics": {"AmortizedCost": {"Amount": "2117.74", "Unit": "USD"}, "UnblendedCost": {"Amount": "2296.94", "Unit": "USD"}}},
+    {"Keys": ["Amazon Simple Storage Service"], "Metrics": {"AmortizedCost": {"Amount": "60.71", "Unit": "USD"}, "UnblendedCost": {"Amount": "60.71", "Unit": "USD"}}},
+    {"Keys": ["Amazon Relational Database Service"], "Metrics": {"AmortizedCost": {"Amount": "200.79", "Unit": "USD"}, "UnblendedCost": {"Amount": "200.79", "Unit": "USD"}}},
+    {"Keys": ["AWS Lambda"], "Metrics": {"AmortizedCost": {"Amount": "20.36", "Unit": "USD"}, "UnblendedCost": {"Amount": "20.36", "Unit": "USD"}}},
+    {"Keys": ["AmazonCloudWatch"], "Metrics": {"AmortizedCost": {"Amount": "15.39", "Unit": "USD"}, "UnblendedCost": {"Amount": "15.39", "Unit": "USD"}}}
+  ], "Estimated": false},
+  {"TimePeriod": {"Start": "2026-03-16", "End": "2026-03-17"}, "Total": {}, "Groups": [
+    {"Keys": ["Amazon Elastic Compute Cloud - Compute"], "Metrics": {"AmortizedCost": {"Amount": "2120.84", "Unit": "USD"}, "UnblendedCost": {"Amount": "2300.04", "Unit": "USD"}}},
+    {"Keys": ["Amazon Simple Storage Service"], "Metrics": {"AmortizedCost": {"Amount": "60.33", "Unit": "USD"}, "UnblendedCost": {"Amount": "60.33", "Unit": "USD"}}},
+    {"Keys": ["Amazon Relational Database Service"], "Metrics": {"AmortizedCost": {"Amount": "201.09", "Unit": "USD"}, "UnblendedCost": {"Amount": "201.09", "Unit": "USD"}}},
+    {"Keys": ["AWS Lambda"], "Metrics": {"AmortizedCost": {"Amount": "19.67", "Unit": "USD"}, "UnblendedCost": {"Amount": "19.67", "Unit": "USD"}}},
+    {"Keys": ["AmazonCloudWatch"], "Metrics": {"AmortizedCost": {"Amount": "14.90", "Unit": "USD"}, "UnblendedCost": {"Amount": "14.90", "Unit": "USD"}}}
+  ], "Estimated": false},
+  {"TimePeriod": {"Start": "2026-03-17", "End": "2026-03-18"}, "Total": {}, "Groups": [
+    {"Keys": ["Amazon Elastic Compute Cloud - Compute"], "Metrics": {"AmortizedCost": {"Amount": "2123.06", "Unit": "USD"}, "UnblendedCost": {"Amount": "2302.26", "Unit": "USD"}}},
+    {"Keys": ["Amazon Simple Storage Service"], "Metrics": {"AmortizedCost": {"Amount": "60.78", "Unit": "USD"}, "UnblendedCost": {"Amount": "60.78", "Unit": "USD"}}},
+    {"Keys": ["Amazon Relational Database Service"], "Metrics": {"AmortizedCost": {"Amount": "198.86", "Unit": "USD"}, "UnblendedCost": {"Amount": "198.86", "Unit": "USD"}}},
+    {"Keys": ["AWS Lambda"], "Metrics": {"AmortizedCost": {"Amount": "20.49", "Unit": "USD"}, "UnblendedCost": {"Amount": "20.49", "Unit": "USD"}}},
+    {"Keys": ["AmazonCloudWatch"], "Metrics": {"AmortizedCost": {"Amount": "15.29", "Unit": "USD"}, "UnblendedCost": {"Amount": "15.29", "Unit": "USD"}}}
+  ], "Estimated": false},
+  {"TimePeriod": {"Start": "2026-03-18", "End": "2026-03-19"}, "Total": {}, "Groups": [
+    {"Keys": ["Amazon Elastic Compute Cloud - Compute"], "Metrics": {"AmortizedCost": {"Amount": "2115.34", "Unit": "USD"}, "UnblendedCost": {"Amount": "2294.54", "Unit": "USD"}}},
+    {"Keys": ["Amazon Simple Storage Service"], "Metrics": {"AmortizedCost": {"Amount": "60.14", "Unit": "USD"}, "UnblendedCost": {"Amount": "60.14", "Unit": "USD"}}},
+    {"Keys": ["Amazon Relational Database Service"], "Metrics": {"AmortizedCost": {"Amount": "200.74", "Unit": "USD"}, "UnblendedCost": {"Amount": "200.74", "Unit": "USD"}}},
+    {"Keys": ["AWS Lambda"], "Metrics": {"AmortizedCost": {"Amount": "19.78", "Unit": "USD"}, "UnblendedCost": {"Amount": "19.78", "Unit": "USD"}}},
+    {"Keys": ["AmazonCloudWatch"], "Metrics": {"AmortizedCost": {"Amount": "14.76", "Unit": "USD"}, "UnblendedCost": {"Amount": "14.76", "Unit": "USD"}}}
+  ], "Estimated": false},
+  {"TimePeriod": {"Start": "2026-03-19", "End": "2026-03-20"}, "Total": {}, "Groups": [
+    {"Keys": ["Amazon Elastic Compute Cloud - Compute"], "Metrics": {"AmortizedCost": {"Amount": "2128.55", "Unit": "USD"}, "UnblendedCost": {"Amount": "2307.75", "Unit": "USD"}}},
+    {"Keys": ["Amazon Simple Storage Service"], "Metrics": {"AmortizedCost": {"Amount": "61.18", "Unit": "USD"}, "UnblendedCost": {"Amount": "61.18", "Unit": "USD"}}},
+    {"Keys": ["Amazon Relational Database Service"], "Metrics": {"AmortizedCost": {"Amount": "201.18", "Unit": "USD"}, "UnblendedCost": {"Amount": "201.18", "Unit": "USD"}}},
+    {"Keys": ["AWS Lambda"], "Metrics": {"AmortizedCost": {"Amount": "19.70", "Unit": "USD"}, "UnblendedCost": {"Amount": "19.70", "Unit": "USD"}}},
+    {"Keys": ["AmazonCloudWatch"], "Metrics": {"AmortizedCost": {"Amount": "15.37", "Unit": "USD"}, "UnblendedCost": {"Amount": "15.37", "Unit": "USD"}}}
+  ], "Estimated": false},
+  {"TimePeriod": {"Start": "2026-03-20", "End": "2026-03-21"}, "Total": {}, "Groups": [
+    {"Keys": ["Amazon Elastic Compute Cloud - Compute"], "Metrics": {"AmortizedCost": {"Amount": "2047.74", "Unit": "USD"}, "UnblendedCost": {"Amount": "2226.94", "Unit": "USD"}}},
+    {"Keys": ["Amazon Simple Storage Service"], "Metrics": {"AmortizedCost": {"Amount": "60.79", "Unit": "USD"}, "UnblendedCost": {"Amount": "60.79", "Unit": "USD"}}},
+    {"Keys": ["Amazon Relational Database Service"], "Metrics": {"AmortizedCost": {"Amount": "199.13", "Unit": "USD"}, "UnblendedCost": {"Amount": "199.13", "Unit": "USD"}}},
+    {"Keys": ["AWS Lambda"], "Metrics": {"AmortizedCost": {"Amount": "19.49", "Unit": "USD"}, "UnblendedCost": {"Amount": "19.49", "Unit": "USD"}}},
+    {"Keys": ["AmazonCloudWatch"], "Metrics": {"AmortizedCost": {"Amount": "14.66", "Unit": "USD"}, "UnblendedCost": {"Amount": "14.66", "Unit": "USD"}}}
+  ], "Estimated": false},
+  {"TimePeriod": {"Start": "2026-03-21", "End": "2026-03-22"}, "Total": {}, "Groups": [
+    {"Keys": ["Amazon Elastic Compute Cloud - Compute"], "Metrics": {"AmortizedCost": {"Amount": "1826.61", "Unit": "USD"}, "UnblendedCost": {"Amount": "2005.81", "Unit": "USD"}}},
+    {"Keys": ["Amazon Simple Storage Service"], "Metrics": {"AmortizedCost": {"Amount": "61.13", "Unit": "USD"}, "UnblendedCost": {"Amount": "61.13", "Unit": "USD"}}},
+    {"Keys": ["Amazon Relational Database Service"], "Metrics": {"AmortizedCost": {"Amount": "199.46", "Unit": "USD"}, "UnblendedCost": {"Amount": "199.46", "Unit": "USD"}}},
+    {"Keys": ["AWS Lambda"], "Metrics": {"AmortizedCost": {"Amount": "19.64", "Unit": "USD"}, "UnblendedCost": {"Amount": "19.64", "Unit": "USD"}}},
+    {"Keys": ["AmazonCloudWatch"], "Metrics": {"AmortizedCost": {"Amount": "15.04", "Unit": "USD"}, "UnblendedCost": {"Amount": "15.04", "Unit": "USD"}}}
+  ], "Estimated": false},
+  {"TimePeriod": {"Start": "2026-03-22", "End": "2026-03-23"}, "Total": {}, "Groups": [
+    {"Keys": ["Amazon Elastic Compute Cloud - Compute"], "Metrics": {"AmortizedCost": {"Amount": "1829.29", "Unit": "USD"}, "UnblendedCost": {"Amount": "2008.49", "Unit": "USD"}}},
+    {"Keys": ["Amazon Simple Storage Service"], "Metrics": {"AmortizedCost": {"Amount": "61.28", "Unit": "USD"}, "UnblendedCost": {"Amount": "61.28", "Unit": "USD"}}},
+    {"Keys": ["Amazon Relational Database Service"], "Metrics": {"AmortizedCost": {"Amount": "199.77", "Unit": "USD"}, "UnblendedCost": {"Amount": "199.77", "Unit": "USD"}}},
+    {"Keys": ["AWS Lambda"], "Metrics": {"AmortizedCost": {"Amount": "20.43", "Unit": "USD"}, "UnblendedCost": {"Amount": "20.43", "Unit": "USD"}}},
+    {"Keys": ["AmazonCloudWatch"], "Metrics": {"AmortizedCost": {"Amount": "14.68", "Unit": "USD"}, "UnblendedCost": {"Amount": "14.68", "Unit": "USD"}}}
+  ], "Estimated": false},
+  {"TimePeriod": {"Start": "2026-03-23", "End": "2026-03-24"}, "Total": {}, "Groups": [
+    {"Keys": ["Amazon Elastic Compute Cloud - Compute"], "Metrics": {"AmortizedCost": {"Amount": "1824.84", "Unit": "USD"}, "UnblendedCost": {"Amount": "2004.04", "Unit": "USD"}}},
+    {"Keys": ["Amazon Simple Storage Service"], "Metrics": {"AmortizedCost": {"Amount": "60.70", "Unit": "USD"}, "UnblendedCost": {"Amount": "60.70", "Unit": "USD"}}},
+    {"Keys": ["Amazon Relational Database Service"], "Metrics": {"AmortizedCost": {"Amount": "200.49", "Unit": "USD"}, "UnblendedCost": {"Amount": "200.49", "Unit": "USD"}}},
+    {"Keys": ["AWS Lambda"], "Metrics": {"AmortizedCost": {"Amount": "19.47", "Unit": "USD"}, "UnblendedCost": {"Amount": "19.47", "Unit": "USD"}}},
+    {"Keys": ["AmazonCloudWatch"], "Metrics": {"AmortizedCost": {"Amount": "14.85", "Unit": "USD"}, "UnblendedCost": {"Amount": "14.85", "Unit": "USD"}}}
+  ], "Estimated": false},
+  {"TimePeriod": {"Start": "2026-03-24", "End": "2026-03-25"}, "Total": {}, "Groups": [
+    {"Keys": ["Amazon Elastic Compute Cloud - Compute"], "Metrics": {"AmortizedCost": {"Amount": "1832.96", "Unit": "USD"}, "UnblendedCost": {"Amount": "2012.16", "Unit": "USD"}}},
+    {"Keys": ["Amazon Simple Storage Service"], "Metrics": {"AmortizedCost": {"Amount": "61.14", "Unit": "USD"}, "UnblendedCost": {"Amount": "61.14", "Unit": "USD"}}},
+    {"Keys": ["Amazon Relational Database Service"], "Metrics": {"AmortizedCost": {"Amount": "200.62", "Unit": "USD"}, "UnblendedCost": {"Amount": "200.62", "Unit": "USD"}}},
+    {"Keys": ["AWS Lambda"], "Metrics": {"AmortizedCost": {"Amount": "19.70", "Unit": "USD"}, "UnblendedCost": {"Amount": "19.70", "Unit": "USD"}}},
+    {"Keys": ["AmazonCloudWatch"], "Metrics": {"AmortizedCost": {"Amount": "14.70", "Unit": "USD"}, "UnblendedCost": {"Amount": "14.70", "Unit": "USD"}}}
+  ], "Estimated": false},
+  {"TimePeriod": {"Start": "2026-03-25", "End": "2026-03-26"}, "Total": {}, "Groups": [
+    {"Keys": ["Amazon Elastic Compute Cloud - Compute"], "Metrics": {"AmortizedCost": {"Amount": "1833.61", "Unit": "USD"}, "UnblendedCost": {"Amount": "2012.81", "Unit": "USD"}}},
+    {"Keys": ["Amazon Simple Storage Service"], "Metrics": {"AmortizedCost": {"Amount": "61.22", "Unit": "USD"}, "UnblendedCost": {"Amount": "61.22", "Unit": "USD"}}},
+    {"Keys": ["Amazon Relational Database Service"], "Metrics": {"AmortizedCost": {"Amount": "200.14", "Unit": "USD"}, "UnblendedCost": {"Amount": "200.14", "Unit": "USD"}}},
+    {"Keys": ["AWS Lambda"], "Metrics": {"AmortizedCost": {"Amount": "19.60", "Unit": "USD"}, "UnblendedCost": {"Amount": "19.60", "Unit": "USD"}}},
+    {"Keys": ["AmazonCloudWatch"], "Metrics": {"AmortizedCost": {"Amount": "14.71", "Unit": "USD"}, "UnblendedCost": {"Amount": "14.71", "Unit": "USD"}}}
+  ], "Estimated": false},
+  {"TimePeriod": {"Start": "2026-03-26", "End": "2026-03-27"}, "Total": {}, "Groups": [
+    {"Keys": ["Amazon Elastic Compute Cloud - Compute"], "Metrics": {"AmortizedCost": {"Amount": "1832.59", "Unit": "USD"}, "UnblendedCost": {"Amount": "2011.79", "Unit": "USD"}}},
+    {"Keys": ["Amazon Simple Storage Service"], "Metrics": {"AmortizedCost": {"Amount": "60.71", "Unit": "USD"}, "UnblendedCost": {"Amount": "60.71", "Unit": "USD"}}},
+    {"Keys": ["Amazon Relational Database Service"], "Metrics": {"AmortizedCost": {"Amount": "199.33", "Unit": "USD"}, "UnblendedCost": {"Amount": "199.33", "Unit": "USD"}}},
+    {"Keys": ["AWS Lambda"], "Metrics": {"AmortizedCost": {"Amount": "19.99", "Unit": "USD"}, "UnblendedCost": {"Amount": "19.99", "Unit": "USD"}}},
+    {"Keys": ["AmazonCloudWatch"], "Metrics": {"AmortizedCost": {"Amount": "14.83", "Unit": "USD"}, "UnblendedCost": {"Amount": "14.83", "Unit": "USD"}}}
+  ], "Estimated": false},
+  {"TimePeriod": {"Start": "2026-03-27", "End": "2026-03-28"}, "Total": {}, "Groups": [
+    {"Keys": ["Amazon Elastic Compute Cloud - Compute"], "Metrics": {"AmortizedCost": {"Amount": "1842.14", "Unit": "USD"}, "UnblendedCost": {"Amount": "2021.34", "Unit": "USD"}}},
+    {"Keys": ["Amazon Simple Storage Service"], "Metrics": {"AmortizedCost": {"Amount": "60.74", "Unit": "USD"}, "UnblendedCost": {"Amount": "60.74", "Unit": "USD"}}},
+    {"Keys": ["Amazon Relational Database Service"], "Metrics": {"AmortizedCost": {"Amount": "200.94", "Unit": "USD"}, "UnblendedCost": {"Amount": "200.94", "Unit": "USD"}}},
+    {"Keys": ["AWS Lambda"], "Metrics": {"AmortizedCost": {"Amount": "20.29", "Unit": "USD"}, "UnblendedCost": {"Amount": "20.29", "Unit": "USD"}}},
+    {"Keys": ["AmazonCloudWatch"], "Metrics": {"AmortizedCost": {"Amount": "15.15", "Unit": "USD"}, "UnblendedCost": {"Amount": "15.15", "Unit": "USD"}}}
+  ], "Estimated": false},
+  {"TimePeriod": {"Start": "2026-03-28", "End": "2026-03-29"}, "Total": {}, "Groups": [
+    {"Keys": ["Amazon Elastic Compute Cloud - Compute"], "Metrics": {"AmortizedCost": {"Amount": "1823.04", "Unit": "USD"}, "UnblendedCost": {"Amount": "2002.24", "Unit": "USD"}}},
+    {"Keys": ["Amazon Simple Storage Service"], "Metrics": {"AmortizedCost": {"Amount": "61.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "61.00", "Unit": "USD"}}},
+    {"Keys": ["Amazon Relational Database Service"], "Metrics": {"AmortizedCost": {"Amount": "200.53", "Unit": "USD"}, "UnblendedCost": {"Amount": "200.53", "Unit": "USD"}}},
+    {"Keys": ["AWS Lambda"], "Metrics": {"AmortizedCost": {"Amount": "20.26", "Unit": "USD"}, "UnblendedCost": {"Amount": "20.26", "Unit": "USD"}}},
+    {"Keys": ["AmazonCloudWatch"], "Metrics": {"AmortizedCost": {"Amount": "14.66", "Unit": "USD"}, "UnblendedCost": {"Amount": "14.66", "Unit": "USD"}}}
+  ], "Estimated": false},
+  {"TimePeriod": {"Start": "2026-03-29", "End": "2026-03-30"}, "Total": {}, "Groups": [
+    {"Keys": ["Amazon Elastic Compute Cloud - Compute"], "Metrics": {"AmortizedCost": {"Amount": "1818.22", "Unit": "USD"}, "UnblendedCost": {"Amount": "1997.42", "Unit": "USD"}}},
+    {"Keys": ["Amazon Simple Storage Service"], "Metrics": {"AmortizedCost": {"Amount": "60.72", "Unit": "USD"}, "UnblendedCost": {"Amount": "60.72", "Unit": "USD"}}},
+    {"Keys": ["Amazon Relational Database Service"], "Metrics": {"AmortizedCost": {"Amount": "200.28", "Unit": "USD"}, "UnblendedCost": {"Amount": "200.28", "Unit": "USD"}}},
+    {"Keys": ["AWS Lambda"], "Metrics": {"AmortizedCost": {"Amount": "19.41", "Unit": "USD"}, "UnblendedCost": {"Amount": "19.41", "Unit": "USD"}}},
+    {"Keys": ["AmazonCloudWatch"], "Metrics": {"AmortizedCost": {"Amount": "15.36", "Unit": "USD"}, "UnblendedCost": {"Amount": "15.36", "Unit": "USD"}}}
+  ], "Estimated": false},
+  {"TimePeriod": {"Start": "2026-03-30", "End": "2026-03-31"}, "Total": {}, "Groups": [
+    {"Keys": ["Amazon Elastic Compute Cloud - Compute"], "Metrics": {"AmortizedCost": {"Amount": "1834.08", "Unit": "USD"}, "UnblendedCost": {"Amount": "2013.28", "Unit": "USD"}}},
+    {"Keys": ["Amazon Simple Storage Service"], "Metrics": {"AmortizedCost": {"Amount": "60.62", "Unit": "USD"}, "UnblendedCost": {"Amount": "60.62", "Unit": "USD"}}},
+    {"Keys": ["Amazon Relational Database Service"], "Metrics": {"AmortizedCost": {"Amount": "200.77", "Unit": "USD"}, "UnblendedCost": {"Amount": "200.77", "Unit": "USD"}}},
+    {"Keys": ["AWS Lambda"], "Metrics": {"AmortizedCost": {"Amount": "20.17", "Unit": "USD"}, "UnblendedCost": {"Amount": "20.17", "Unit": "USD"}}},
+    {"Keys": ["AmazonCloudWatch"], "Metrics": {"AmortizedCost": {"Amount": "15.31", "Unit": "USD"}, "UnblendedCost": {"Amount": "15.31", "Unit": "USD"}}}
+  ], "Estimated": false},
+  {"TimePeriod": {"Start": "2026-03-31", "End": "2026-04-01"}, "Total": {}, "Groups": [
+    {"Keys": ["Amazon Elastic Compute Cloud - Compute"], "Metrics": {"AmortizedCost": {"Amount": "1822.45", "Unit": "USD"}, "UnblendedCost": {"Amount": "2001.65", "Unit": "USD"}}},
+    {"Keys": ["Amazon Simple Storage Service"], "Metrics": {"AmortizedCost": {"Amount": "61.06", "Unit": "USD"}, "UnblendedCost": {"Amount": "61.06", "Unit": "USD"}}},
+    {"Keys": ["Amazon Relational Database Service"], "Metrics": {"AmortizedCost": {"Amount": "200.92", "Unit": "USD"}, "UnblendedCost": {"Amount": "200.92", "Unit": "USD"}}},
+    {"Keys": ["AWS Lambda"], "Metrics": {"AmortizedCost": {"Amount": "19.45", "Unit": "USD"}, "UnblendedCost": {"Amount": "19.45", "Unit": "USD"}}},
+    {"Keys": ["AmazonCloudWatch"], "Metrics": {"AmortizedCost": {"Amount": "14.72", "Unit": "USD"}, "UnblendedCost": {"Amount": "14.72", "Unit": "USD"}}}
+  ], "Estimated": false},
+  {"TimePeriod": {"Start": "2026-04-01", "End": "2026-04-02"}, "Total": {}, "Groups": [
+    {"Keys": ["Amazon Elastic Compute Cloud - Compute"], "Metrics": {"AmortizedCost": {"Amount": "1829.15", "Unit": "USD"}, "UnblendedCost": {"Amount": "2008.35", "Unit": "USD"}}},
+    {"Keys": ["Amazon Simple Storage Service"], "Metrics": {"AmortizedCost": {"Amount": "61.27", "Unit": "USD"}, "UnblendedCost": {"Amount": "61.27", "Unit": "USD"}}},
+    {"Keys": ["Amazon Relational Database Service"], "Metrics": {"AmortizedCost": {"Amount": "199.84", "Unit": "USD"}, "UnblendedCost": {"Amount": "199.84", "Unit": "USD"}}},
+    {"Keys": ["AWS Lambda"], "Metrics": {"AmortizedCost": {"Amount": "20.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "20.00", "Unit": "USD"}}},
+    {"Keys": ["AmazonCloudWatch"], "Metrics": {"AmortizedCost": {"Amount": "14.79", "Unit": "USD"}, "UnblendedCost": {"Amount": "14.79", "Unit": "USD"}}}
+  ], "Estimated": false},
+  {"TimePeriod": {"Start": "2026-04-02", "End": "2026-04-03"}, "Total": {}, "Groups": [
+    {"Keys": ["Amazon Elastic Compute Cloud - Compute"], "Metrics": {"AmortizedCost": {"Amount": "1825.88", "Unit": "USD"}, "UnblendedCost": {"Amount": "2005.08", "Unit": "USD"}}},
+    {"Keys": ["Amazon Simple Storage Service"], "Metrics": {"AmortizedCost": {"Amount": "61.70", "Unit": "USD"}, "UnblendedCost": {"Amount": "61.70", "Unit": "USD"}}},
+    {"Keys": ["Amazon Relational Database Service"], "Metrics": {"AmortizedCost": {"Amount": "199.87", "Unit": "USD"}, "UnblendedCost": {"Amount": "199.87", "Unit": "USD"}}},
+    {"Keys": ["AWS Lambda"], "Metrics": {"AmortizedCost": {"Amount": "19.81", "Unit": "USD"}, "UnblendedCost": {"Amount": "19.81", "Unit": "USD"}}},
+    {"Keys": ["AmazonCloudWatch"], "Metrics": {"AmortizedCost": {"Amount": "15.13", "Unit": "USD"}, "UnblendedCost": {"Amount": "15.13", "Unit": "USD"}}}
+  ], "Estimated": false},
+  {"TimePeriod": {"Start": "2026-04-03", "End": "2026-04-04"}, "Total": {}, "Groups": [
+    {"Keys": ["Amazon Elastic Compute Cloud - Compute"], "Metrics": {"AmortizedCost": {"Amount": "1825.62", "Unit": "USD"}, "UnblendedCost": {"Amount": "2004.82", "Unit": "USD"}}},
+    {"Keys": ["Amazon Simple Storage Service"], "Metrics": {"AmortizedCost": {"Amount": "61.18", "Unit": "USD"}, "UnblendedCost": {"Amount": "61.18", "Unit": "USD"}}},
+    {"Keys": ["Amazon Relational Database Service"], "Metrics": {"AmortizedCost": {"Amount": "199.70", "Unit": "USD"}, "UnblendedCost": {"Amount": "199.70", "Unit": "USD"}}},
+    {"Keys": ["AWS Lambda"], "Metrics": {"AmortizedCost": {"Amount": "19.81", "Unit": "USD"}, "UnblendedCost": {"Amount": "19.81", "Unit": "USD"}}},
+    {"Keys": ["AmazonCloudWatch"], "Metrics": {"AmortizedCost": {"Amount": "14.71", "Unit": "USD"}, "UnblendedCost": {"Amount": "14.71", "Unit": "USD"}}}
+  ], "Estimated": false},
+  {"TimePeriod": {"Start": "2026-04-04", "End": "2026-04-05"}, "Total": {}, "Groups": [
+    {"Keys": ["Amazon Elastic Compute Cloud - Compute"], "Metrics": {"AmortizedCost": {"Amount": "1833.68", "Unit": "USD"}, "UnblendedCost": {"Amount": "2012.88", "Unit": "USD"}}},
+    {"Keys": ["Amazon Simple Storage Service"], "Metrics": {"AmortizedCost": {"Amount": "61.12", "Unit": "USD"}, "UnblendedCost": {"Amount": "61.12", "Unit": "USD"}}},
+    {"Keys": ["Amazon Relational Database Service"], "Metrics": {"AmortizedCost": {"Amount": "200.77", "Unit": "USD"}, "UnblendedCost": {"Amount": "200.77", "Unit": "USD"}}},
+    {"Keys": ["AWS Lambda"], "Metrics": {"AmortizedCost": {"Amount": "19.94", "Unit": "USD"}, "UnblendedCost": {"Amount": "19.94", "Unit": "USD"}}},
+    {"Keys": ["AmazonCloudWatch"], "Metrics": {"AmortizedCost": {"Amount": "15.28", "Unit": "USD"}, "UnblendedCost": {"Amount": "15.28", "Unit": "USD"}}}
+  ], "Estimated": false},
+  {"TimePeriod": {"Start": "2026-04-05", "End": "2026-04-06"}, "Total": {}, "Groups": [
+    {"Keys": ["Amazon Elastic Compute Cloud - Compute"], "Metrics": {"AmortizedCost": {"Amount": "1826.46", "Unit": "USD"}, "UnblendedCost": {"Amount": "2005.66", "Unit": "USD"}}},
+    {"Keys": ["Amazon Simple Storage Service"], "Metrics": {"AmortizedCost": {"Amount": "61.97", "Unit": "USD"}, "UnblendedCost": {"Amount": "61.97", "Unit": "USD"}}},
+    {"Keys": ["Amazon Relational Database Service"], "Metrics": {"AmortizedCost": {"Amount": "199.08", "Unit": "USD"}, "UnblendedCost": {"Amount": "199.08", "Unit": "USD"}}},
+    {"Keys": ["AWS Lambda"], "Metrics": {"AmortizedCost": {"Amount": "19.73", "Unit": "USD"}, "UnblendedCost": {"Amount": "19.73", "Unit": "USD"}}},
+    {"Keys": ["AmazonCloudWatch"], "Metrics": {"AmortizedCost": {"Amount": "15.02", "Unit": "USD"}, "UnblendedCost": {"Amount": "15.02", "Unit": "USD"}}}
+  ], "Estimated": false},
+  {"TimePeriod": {"Start": "2026-04-06", "End": "2026-04-07"}, "Total": {}, "Groups": [
+    {"Keys": ["Amazon Elastic Compute Cloud - Compute"], "Metrics": {"AmortizedCost": {"Amount": "1830.98", "Unit": "USD"}, "UnblendedCost": {"Amount": "2010.18", "Unit": "USD"}}},
+    {"Keys": ["Amazon Simple Storage Service"], "Metrics": {"AmortizedCost": {"Amount": "61.01", "Unit": "USD"}, "UnblendedCost": {"Amount": "61.01", "Unit": "USD"}}},
+    {"Keys": ["Amazon Relational Database Service"], "Metrics": {"AmortizedCost": {"Amount": "200.07", "Unit": "USD"}, "UnblendedCost": {"Amount": "200.07", "Unit": "USD"}}},
+    {"Keys": ["AWS Lambda"], "Metrics": {"AmortizedCost": {"Amount": "20.17", "Unit": "USD"}, "UnblendedCost": {"Amount": "20.17", "Unit": "USD"}}},
+    {"Keys": ["AmazonCloudWatch"], "Metrics": {"AmortizedCost": {"Amount": "15.15", "Unit": "USD"}, "UnblendedCost": {"Amount": "15.15", "Unit": "USD"}}}
+  ], "Estimated": false},
+  {"TimePeriod": {"Start": "2026-04-07", "End": "2026-04-08"}, "Total": {}, "Groups": [
+    {"Keys": ["Amazon Elastic Compute Cloud - Compute"], "Metrics": {"AmortizedCost": {"Amount": "1831.61", "Unit": "USD"}, "UnblendedCost": {"Amount": "2010.81", "Unit": "USD"}}},
+    {"Keys": ["Amazon Simple Storage Service"], "Metrics": {"AmortizedCost": {"Amount": "60.93", "Unit": "USD"}, "UnblendedCost": {"Amount": "60.93", "Unit": "USD"}}},
+    {"Keys": ["Amazon Relational Database Service"], "Metrics": {"AmortizedCost": {"Amount": "200.90", "Unit": "USD"}, "UnblendedCost": {"Amount": "200.90", "Unit": "USD"}}},
+    {"Keys": ["AWS Lambda"], "Metrics": {"AmortizedCost": {"Amount": "20.04", "Unit": "USD"}, "UnblendedCost": {"Amount": "20.04", "Unit": "USD"}}},
+    {"Keys": ["AmazonCloudWatch"], "Metrics": {"AmortizedCost": {"Amount": "14.79", "Unit": "USD"}, "UnblendedCost": {"Amount": "14.79", "Unit": "USD"}}}
+  ], "Estimated": false},
+  {"TimePeriod": {"Start": "2026-04-08", "End": "2026-04-09"}, "Total": {}, "Groups": [
+    {"Keys": ["Amazon Elastic Compute Cloud - Compute"], "Metrics": {"AmortizedCost": {"Amount": "1833.64", "Unit": "USD"}, "UnblendedCost": {"Amount": "2012.84", "Unit": "USD"}}},
+    {"Keys": ["Amazon Simple Storage Service"], "Metrics": {"AmortizedCost": {"Amount": "61.81", "Unit": "USD"}, "UnblendedCost": {"Amount": "61.81", "Unit": "USD"}}},
+    {"Keys": ["Amazon Relational Database Service"], "Metrics": {"AmortizedCost": {"Amount": "199.75", "Unit": "USD"}, "UnblendedCost": {"Amount": "199.75", "Unit": "USD"}}},
+    {"Keys": ["AWS Lambda"], "Metrics": {"AmortizedCost": {"Amount": "20.17", "Unit": "USD"}, "UnblendedCost": {"Amount": "20.17", "Unit": "USD"}}},
+    {"Keys": ["AmazonCloudWatch"], "Metrics": {"AmortizedCost": {"Amount": "15.02", "Unit": "USD"}, "UnblendedCost": {"Amount": "15.02", "Unit": "USD"}}}
+  ], "Estimated": false},
+  {"TimePeriod": {"Start": "2026-04-09", "End": "2026-04-10"}, "Total": {}, "Groups": [
+    {"Keys": ["Amazon Elastic Compute Cloud - Compute"], "Metrics": {"AmortizedCost": {"Amount": "1830.80", "Unit": "USD"}, "UnblendedCost": {"Amount": "2010.00", "Unit": "USD"}}},
+    {"Keys": ["Amazon Simple Storage Service"], "Metrics": {"AmortizedCost": {"Amount": "61.70", "Unit": "USD"}, "UnblendedCost": {"Amount": "61.70", "Unit": "USD"}}},
+    {"Keys": ["Amazon Relational Database Service"], "Metrics": {"AmortizedCost": {"Amount": "200.98", "Unit": "USD"}, "UnblendedCost": {"Amount": "200.98", "Unit": "USD"}}},
+    {"Keys": ["AWS Lambda"], "Metrics": {"AmortizedCost": {"Amount": "19.58", "Unit": "USD"}, "UnblendedCost": {"Amount": "19.58", "Unit": "USD"}}},
+    {"Keys": ["AmazonCloudWatch"], "Metrics": {"AmortizedCost": {"Amount": "14.89", "Unit": "USD"}, "UnblendedCost": {"Amount": "14.89", "Unit": "USD"}}}
+  ], "Estimated": false},
+  {"TimePeriod": {"Start": "2026-04-10", "End": "2026-04-11"}, "Total": {}, "Groups": [
+    {"Keys": ["Amazon Elastic Compute Cloud - Compute"], "Metrics": {"AmortizedCost": {"Amount": "1833.89", "Unit": "USD"}, "UnblendedCost": {"Amount": "2013.09", "Unit": "USD"}}},
+    {"Keys": ["Amazon Simple Storage Service"], "Metrics": {"AmortizedCost": {"Amount": "61.38", "Unit": "USD"}, "UnblendedCost": {"Amount": "61.38", "Unit": "USD"}}},
+    {"Keys": ["Amazon Relational Database Service"], "Metrics": {"AmortizedCost": {"Amount": "174.86", "Unit": "USD"}, "UnblendedCost": {"Amount": "174.86", "Unit": "USD"}}},
+    {"Keys": ["AWS Lambda"], "Metrics": {"AmortizedCost": {"Amount": "20.28", "Unit": "USD"}, "UnblendedCost": {"Amount": "20.28", "Unit": "USD"}}},
+    {"Keys": ["AmazonCloudWatch"], "Metrics": {"AmortizedCost": {"Amount": "14.86", "Unit": "USD"}, "UnblendedCost": {"Amount": "14.86", "Unit": "USD"}}}
+  ], "Estimated": false},
+  {"TimePeriod": {"Start": "2026-04-11", "End": "2026-04-12"}, "Total": {}, "Groups": [
+    {"Keys": ["Amazon Elastic Compute Cloud - Compute"], "Metrics": {"AmortizedCost": {"Amount": "1832.66", "Unit": "USD"}, "UnblendedCost": {"Amount": "2011.86", "Unit": "USD"}}},
+    {"Keys": ["Amazon Simple Storage Service"], "Metrics": {"AmortizedCost": {"Amount": "61.80", "Unit": "USD"}, "UnblendedCost": {"Amount": "61.80", "Unit": "USD"}}},
+    {"Keys": ["Amazon Relational Database Service"], "Metrics": {"AmortizedCost": {"Amount": "174.88", "Unit": "USD"}, "UnblendedCost": {"Amount": "174.88", "Unit": "USD"}}},
+    {"Keys": ["AWS Lambda"], "Metrics": {"AmortizedCost": {"Amount": "19.94", "Unit": "USD"}, "UnblendedCost": {"Amount": "19.94", "Unit": "USD"}}},
+    {"Keys": ["AmazonCloudWatch"], "Metrics": {"AmortizedCost": {"Amount": "15.37", "Unit": "USD"}, "UnblendedCost": {"Amount": "15.37", "Unit": "USD"}}}
+  ], "Estimated": false},
+  {"TimePeriod": {"Start": "2026-04-12", "End": "2026-04-13"}, "Total": {}, "Groups": [
+    {"Keys": ["Amazon Elastic Compute Cloud - Compute"], "Metrics": {"AmortizedCost": {"Amount": "1820.76", "Unit": "USD"}, "UnblendedCost": {"Amount": "1999.96", "Unit": "USD"}}},
+    {"Keys": ["Amazon Simple Storage Service"], "Metrics": {"AmortizedCost": {"Amount": "62.22", "Unit": "USD"}, "UnblendedCost": {"Amount": "62.22", "Unit": "USD"}}},
+    {"Keys": ["Amazon Relational Database Service"], "Metrics": {"AmortizedCost": {"Amount": "173.87", "Unit": "USD"}, "UnblendedCost": {"Amount": "173.87", "Unit": "USD"}}},
+    {"Keys": ["AWS Lambda"], "Metrics": {"AmortizedCost": {"Amount": "19.66", "Unit": "USD"}, "UnblendedCost": {"Amount": "19.66", "Unit": "USD"}}},
+    {"Keys": ["AmazonCloudWatch"], "Metrics": {"AmortizedCost": {"Amount": "15.27", "Unit": "USD"}, "UnblendedCost": {"Amount": "15.27", "Unit": "USD"}}}
+  ], "Estimated": false},
+  {"TimePeriod": {"Start": "2026-04-13", "End": "2026-04-14"}, "Total": {}, "Groups": [
+    {"Keys": ["Amazon Elastic Compute Cloud - Compute"], "Metrics": {"AmortizedCost": {"Amount": "1842.73", "Unit": "USD"}, "UnblendedCost": {"Amount": "2021.93", "Unit": "USD"}}},
+    {"Keys": ["Amazon Simple Storage Service"], "Metrics": {"AmortizedCost": {"Amount": "61.66", "Unit": "USD"}, "UnblendedCost": {"Amount": "61.66", "Unit": "USD"}}},
+    {"Keys": ["Amazon Relational Database Service"], "Metrics": {"AmortizedCost": {"Amount": "174.36", "Unit": "USD"}, "UnblendedCost": {"Amount": "174.36", "Unit": "USD"}}},
+    {"Keys": ["AWS Lambda"], "Metrics": {"AmortizedCost": {"Amount": "20.39", "Unit": "USD"}, "UnblendedCost": {"Amount": "20.39", "Unit": "USD"}}},
+    {"Keys": ["AmazonCloudWatch"], "Metrics": {"AmortizedCost": {"Amount": "14.69", "Unit": "USD"}, "UnblendedCost": {"Amount": "14.69", "Unit": "USD"}}}
+  ], "Estimated": false},
+  {"TimePeriod": {"Start": "2026-04-14", "End": "2026-04-15"}, "Total": {}, "Groups": [
+    {"Keys": ["Amazon Elastic Compute Cloud - Compute"], "Metrics": {"AmortizedCost": {"Amount": "1838.57", "Unit": "USD"}, "UnblendedCost": {"Amount": "2017.77", "Unit": "USD"}}},
+    {"Keys": ["Amazon Simple Storage Service"], "Metrics": {"AmortizedCost": {"Amount": "61.73", "Unit": "USD"}, "UnblendedCost": {"Amount": "61.73", "Unit": "USD"}}},
+    {"Keys": ["Amazon Relational Database Service"], "Metrics": {"AmortizedCost": {"Amount": "175.88", "Unit": "USD"}, "UnblendedCost": {"Amount": "175.88", "Unit": "USD"}}},
+    {"Keys": ["AWS Lambda"], "Metrics": {"AmortizedCost": {"Amount": "19.78", "Unit": "USD"}, "UnblendedCost": {"Amount": "19.78", "Unit": "USD"}}},
+    {"Keys": ["AmazonCloudWatch"], "Metrics": {"AmortizedCost": {"Amount": "15.26", "Unit": "USD"}, "UnblendedCost": {"Amount": "15.26", "Unit": "USD"}}}
+  ], "Estimated": false},
+  {"TimePeriod": {"Start": "2026-04-15", "End": "2026-04-16"}, "Total": {}, "Groups": [
+    {"Keys": ["Amazon Elastic Compute Cloud - Compute"], "Metrics": {"AmortizedCost": {"Amount": "1839.23", "Unit": "USD"}, "UnblendedCost": {"Amount": "2018.43", "Unit": "USD"}}},
+    {"Keys": ["Amazon Simple Storage Service"], "Metrics": {"AmortizedCost": {"Amount": "61.98", "Unit": "USD"}, "UnblendedCost": {"Amount": "61.98", "Unit": "USD"}}},
+    {"Keys": ["Amazon Relational Database Service"], "Metrics": {"AmortizedCost": {"Amount": "175.88", "Unit": "USD"}, "UnblendedCost": {"Amount": "175.88", "Unit": "USD"}}},
+    {"Keys": ["AWS Lambda"], "Metrics": {"AmortizedCost": {"Amount": "20.59", "Unit": "USD"}, "UnblendedCost": {"Amount": "20.59", "Unit": "USD"}}},
+    {"Keys": ["AmazonCloudWatch"], "Metrics": {"AmortizedCost": {"Amount": "15.28", "Unit": "USD"}, "UnblendedCost": {"Amount": "15.28", "Unit": "USD"}}}
+  ], "Estimated": false},
+  {"TimePeriod": {"Start": "2026-04-16", "End": "2026-04-17"}, "Total": {}, "Groups": [
+    {"Keys": ["Amazon Elastic Compute Cloud - Compute"], "Metrics": {"AmortizedCost": {"Amount": "1980.28", "Unit": "USD"}, "UnblendedCost": {"Amount": "2019.48", "Unit": "USD"}}},
+    {"Keys": ["Amazon Simple Storage Service"], "Metrics": {"AmortizedCost": {"Amount": "61.99", "Unit": "USD"}, "UnblendedCost": {"Amount": "61.99", "Unit": "USD"}}},
+    {"Keys": ["Amazon Relational Database Service"], "Metrics": {"AmortizedCost": {"Amount": "176.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "176.00", "Unit": "USD"}}},
+    {"Keys": ["AWS Lambda"], "Metrics": {"AmortizedCost": {"Amount": "20.01", "Unit": "USD"}, "UnblendedCost": {"Amount": "20.01", "Unit": "USD"}}},
+    {"Keys": ["AmazonCloudWatch"], "Metrics": {"AmortizedCost": {"Amount": "15.38", "Unit": "USD"}, "UnblendedCost": {"Amount": "15.38", "Unit": "USD"}}}
+  ], "Estimated": false},
+  {"TimePeriod": {"Start": "2026-04-17", "End": "2026-04-18"}, "Total": {}, "Groups": [
+    {"Keys": ["Amazon Elastic Compute Cloud - Compute"], "Metrics": {"AmortizedCost": {"Amount": "1980.14", "Unit": "USD"}, "UnblendedCost": {"Amount": "2019.34", "Unit": "USD"}}},
+    {"Keys": ["Amazon Simple Storage Service"], "Metrics": {"AmortizedCost": {"Amount": "61.63", "Unit": "USD"}, "UnblendedCost": {"Amount": "61.63", "Unit": "USD"}}},
+    {"Keys": ["Amazon Relational Database Service"], "Metrics": {"AmortizedCost": {"Amount": "174.13", "Unit": "USD"}, "UnblendedCost": {"Amount": "174.13", "Unit": "USD"}}},
+    {"Keys": ["AWS Lambda"], "Metrics": {"AmortizedCost": {"Amount": "20.34", "Unit": "USD"}, "UnblendedCost": {"Amount": "20.34", "Unit": "USD"}}},
+    {"Keys": ["AmazonCloudWatch"], "Metrics": {"AmortizedCost": {"Amount": "15.25", "Unit": "USD"}, "UnblendedCost": {"Amount": "15.25", "Unit": "USD"}}}
+  ], "Estimated": false},
+  {"TimePeriod": {"Start": "2026-04-18", "End": "2026-04-19"}, "Total": {}, "Groups": [
+    {"Keys": ["Amazon Elastic Compute Cloud - Compute"], "Metrics": {"AmortizedCost": {"Amount": "1977.08", "Unit": "USD"}, "UnblendedCost": {"Amount": "2016.28", "Unit": "USD"}}},
+    {"Keys": ["Amazon Simple Storage Service"], "Metrics": {"AmortizedCost": {"Amount": "62.09", "Unit": "USD"}, "UnblendedCost": {"Amount": "62.09", "Unit": "USD"}}},
+    {"Keys": ["Amazon Relational Database Service"], "Metrics": {"AmortizedCost": {"Amount": "175.24", "Unit": "USD"}, "UnblendedCost": {"Amount": "175.24", "Unit": "USD"}}},
+    {"Keys": ["AWS Lambda"], "Metrics": {"AmortizedCost": {"Amount": "19.52", "Unit": "USD"}, "UnblendedCost": {"Amount": "19.52", "Unit": "USD"}}},
+    {"Keys": ["AmazonCloudWatch"], "Metrics": {"AmortizedCost": {"Amount": "15.16", "Unit": "USD"}, "UnblendedCost": {"Amount": "15.16", "Unit": "USD"}}}
+  ], "Estimated": false},
+  {"TimePeriod": {"Start": "2026-04-19", "End": "2026-04-20"}, "Total": {}, "Groups": [
+    {"Keys": ["Amazon Elastic Compute Cloud - Compute"], "Metrics": {"AmortizedCost": {"Amount": "1967.13", "Unit": "USD"}, "UnblendedCost": {"Amount": "2006.33", "Unit": "USD"}}},
+    {"Keys": ["Amazon Simple Storage Service"], "Metrics": {"AmortizedCost": {"Amount": "62.66", "Unit": "USD"}, "UnblendedCost": {"Amount": "62.66", "Unit": "USD"}}},
+    {"Keys": ["Amazon Relational Database Service"], "Metrics": {"AmortizedCost": {"Amount": "174.45", "Unit": "USD"}, "UnblendedCost": {"Amount": "174.45", "Unit": "USD"}}},
+    {"Keys": ["AWS Lambda"], "Metrics": {"AmortizedCost": {"Amount": "20.17", "Unit": "USD"}, "UnblendedCost": {"Amount": "20.17", "Unit": "USD"}}},
+    {"Keys": ["AmazonCloudWatch"], "Metrics": {"AmortizedCost": {"Amount": "14.89", "Unit": "USD"}, "UnblendedCost": {"Amount": "14.89", "Unit": "USD"}}}
+  ], "Estimated": false},
+  {"TimePeriod": {"Start": "2026-04-20", "End": "2026-04-21"}, "Total": {}, "Groups": [
+    {"Keys": ["Amazon Elastic Compute Cloud - Compute"], "Metrics": {"AmortizedCost": {"Amount": "1975.92", "Unit": "USD"}, "UnblendedCost": {"Amount": "2015.12", "Unit": "USD"}}},
+    {"Keys": ["Amazon Simple Storage Service"], "Metrics": {"AmortizedCost": {"Amount": "62.03", "Unit": "USD"}, "UnblendedCost": {"Amount": "62.03", "Unit": "USD"}}},
+    {"Keys": ["Amazon Relational Database Service"], "Metrics": {"AmortizedCost": {"Amount": "175.43", "Unit": "USD"}, "UnblendedCost": {"Amount": "175.43", "Unit": "USD"}}},
+    {"Keys": ["AWS Lambda"], "Metrics": {"AmortizedCost": {"Amount": "20.52", "Unit": "USD"}, "UnblendedCost": {"Amount": "20.52", "Unit": "USD"}}},
+    {"Keys": ["AmazonCloudWatch"], "Metrics": {"AmortizedCost": {"Amount": "15.26", "Unit": "USD"}, "UnblendedCost": {"Amount": "15.26", "Unit": "USD"}}}
+  ], "Estimated": false},
+  {"TimePeriod": {"Start": "2026-04-21", "End": "2026-04-22"}, "Total": {}, "Groups": [
+    {"Keys": ["Amazon Elastic Compute Cloud - Compute"], "Metrics": {"AmortizedCost": {"Amount": "1962.23", "Unit": "USD"}, "UnblendedCost": {"Amount": "2001.43", "Unit": "USD"}}},
+    {"Keys": ["Amazon Simple Storage Service"], "Metrics": {"AmortizedCost": {"Amount": "62.36", "Unit": "USD"}, "UnblendedCost": {"Amount": "62.36", "Unit": "USD"}}},
+    {"Keys": ["Amazon Relational Database Service"], "Metrics": {"AmortizedCost": {"Amount": "173.89", "Unit": "USD"}, "UnblendedCost": {"Amount": "173.89", "Unit": "USD"}}},
+    {"Keys": ["AWS Lambda"], "Metrics": {"AmortizedCost": {"Amount": "20.24", "Unit": "USD"}, "UnblendedCost": {"Amount": "20.24", "Unit": "USD"}}},
+    {"Keys": ["AmazonCloudWatch"], "Metrics": {"AmortizedCost": {"Amount": "15.30", "Unit": "USD"}, "UnblendedCost": {"Amount": "15.30", "Unit": "USD"}}}
+  ], "Estimated": false},
+  {"TimePeriod": {"Start": "2026-04-22", "End": "2026-04-23"}, "Total": {}, "Groups": [
+    {"Keys": ["Amazon Elastic Compute Cloud - Compute"], "Metrics": {"AmortizedCost": {"Amount": "1969.04", "Unit": "USD"}, "UnblendedCost": {"Amount": "2008.24", "Unit": "USD"}}},
+    {"Keys": ["Amazon Simple Storage Service"], "Metrics": {"AmortizedCost": {"Amount": "62.69", "Unit": "USD"}, "UnblendedCost": {"Amount": "62.69", "Unit": "USD"}}},
+    {"Keys": ["Amazon Relational Database Service"], "Metrics": {"AmortizedCost": {"Amount": "174.40", "Unit": "USD"}, "UnblendedCost": {"Amount": "174.40", "Unit": "USD"}}},
+    {"Keys": ["AWS Lambda"], "Metrics": {"AmortizedCost": {"Amount": "19.44", "Unit": "USD"}, "UnblendedCost": {"Amount": "19.44", "Unit": "USD"}}},
+    {"Keys": ["AmazonCloudWatch"], "Metrics": {"AmortizedCost": {"Amount": "14.88", "Unit": "USD"}, "UnblendedCost": {"Amount": "14.88", "Unit": "USD"}}}
+  ], "Estimated": false},
+  {"TimePeriod": {"Start": "2026-04-23", "End": "2026-04-24"}, "Total": {}, "Groups": [
+    {"Keys": ["Amazon Elastic Compute Cloud - Compute"], "Metrics": {"AmortizedCost": {"Amount": "1968.70", "Unit": "USD"}, "UnblendedCost": {"Amount": "2007.90", "Unit": "USD"}}},
+    {"Keys": ["Amazon Simple Storage Service"], "Metrics": {"AmortizedCost": {"Amount": "61.94", "Unit": "USD"}, "UnblendedCost": {"Amount": "61.94", "Unit": "USD"}}},
+    {"Keys": ["Amazon Relational Database Service"], "Metrics": {"AmortizedCost": {"Amount": "174.95", "Unit": "USD"}, "UnblendedCost": {"Amount": "174.95", "Unit": "USD"}}},
+    {"Keys": ["AWS Lambda"], "Metrics": {"AmortizedCost": {"Amount": "20.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "20.00", "Unit": "USD"}}},
+    {"Keys": ["AmazonCloudWatch"], "Metrics": {"AmortizedCost": {"Amount": "14.65", "Unit": "USD"}, "UnblendedCost": {"Amount": "14.65", "Unit": "USD"}}}
+  ], "Estimated": false},
+  {"TimePeriod": {"Start": "2026-04-24", "End": "2026-04-25"}, "Total": {}, "Groups": [
+    {"Keys": ["Amazon Elastic Compute Cloud - Compute"], "Metrics": {"AmortizedCost": {"Amount": "1969.37", "Unit": "USD"}, "UnblendedCost": {"Amount": "2008.57", "Unit": "USD"}}},
+    {"Keys": ["Amazon Simple Storage Service"], "Metrics": {"AmortizedCost": {"Amount": "62.94", "Unit": "USD"}, "UnblendedCost": {"Amount": "62.94", "Unit": "USD"}}},
+    {"Keys": ["Amazon Relational Database Service"], "Metrics": {"AmortizedCost": {"Amount": "174.44", "Unit": "USD"}, "UnblendedCost": {"Amount": "174.44", "Unit": "USD"}}},
+    {"Keys": ["AWS Lambda"], "Metrics": {"AmortizedCost": {"Amount": "20.43", "Unit": "USD"}, "UnblendedCost": {"Amount": "20.43", "Unit": "USD"}}},
+    {"Keys": ["AmazonCloudWatch"], "Metrics": {"AmortizedCost": {"Amount": "14.63", "Unit": "USD"}, "UnblendedCost": {"Amount": "14.63", "Unit": "USD"}}}
+  ], "Estimated": false},
+  {"TimePeriod": {"Start": "2026-04-25", "End": "2026-04-26"}, "Total": {}, "Groups": [
+    {"Keys": ["Amazon Elastic Compute Cloud - Compute"], "Metrics": {"AmortizedCost": {"Amount": "1963.89", "Unit": "USD"}, "UnblendedCost": {"Amount": "2003.09", "Unit": "USD"}}},
+    {"Keys": ["Amazon Simple Storage Service"], "Metrics": {"AmortizedCost": {"Amount": "62.25", "Unit": "USD"}, "UnblendedCost": {"Amount": "62.25", "Unit": "USD"}}},
+    {"Keys": ["Amazon Relational Database Service"], "Metrics": {"AmortizedCost": {"Amount": "173.85", "Unit": "USD"}, "UnblendedCost": {"Amount": "173.85", "Unit": "USD"}}},
+    {"Keys": ["AWS Lambda"], "Metrics": {"AmortizedCost": {"Amount": "20.52", "Unit": "USD"}, "UnblendedCost": {"Amount": "20.52", "Unit": "USD"}}},
+    {"Keys": ["AmazonCloudWatch"], "Metrics": {"AmortizedCost": {"Amount": "14.93", "Unit": "USD"}, "UnblendedCost": {"Amount": "14.93", "Unit": "USD"}}}
+  ], "Estimated": false},
+  {"TimePeriod": {"Start": "2026-04-26", "End": "2026-04-27"}, "Total": {}, "Groups": [
+    {"Keys": ["Amazon Elastic Compute Cloud - Compute"], "Metrics": {"AmortizedCost": {"Amount": "2316.50", "Unit": "USD"}, "UnblendedCost": {"Amount": "2355.70", "Unit": "USD"}}},
+    {"Keys": ["Amazon Simple Storage Service"], "Metrics": {"AmortizedCost": {"Amount": "62.40", "Unit": "USD"}, "UnblendedCost": {"Amount": "62.40", "Unit": "USD"}}},
+    {"Keys": ["Amazon Relational Database Service"], "Metrics": {"AmortizedCost": {"Amount": "174.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "174.00", "Unit": "USD"}}},
+    {"Keys": ["AWS Lambda"], "Metrics": {"AmortizedCost": {"Amount": "20.24", "Unit": "USD"}, "UnblendedCost": {"Amount": "20.24", "Unit": "USD"}}},
+    {"Keys": ["AmazonCloudWatch"], "Metrics": {"AmortizedCost": {"Amount": "14.65", "Unit": "USD"}, "UnblendedCost": {"Amount": "14.65", "Unit": "USD"}}}
+  ], "Estimated": false},
+  {"TimePeriod": {"Start": "2026-04-27", "End": "2026-04-28"}, "Total": {}, "Groups": [
+    {"Keys": ["Amazon Elastic Compute Cloud - Compute"], "Metrics": {"AmortizedCost": {"Amount": "3384.94", "Unit": "USD"}, "UnblendedCost": {"Amount": "3424.14", "Unit": "USD"}}},
+    {"Keys": ["Amazon Simple Storage Service"], "Metrics": {"AmortizedCost": {"Amount": "62.62", "Unit": "USD"}, "UnblendedCost": {"Amount": "62.62", "Unit": "USD"}}},
+    {"Keys": ["Amazon Relational Database Service"], "Metrics": {"AmortizedCost": {"Amount": "174.21", "Unit": "USD"}, "UnblendedCost": {"Amount": "174.21", "Unit": "USD"}}},
+    {"Keys": ["AWS Lambda"], "Metrics": {"AmortizedCost": {"Amount": "20.33", "Unit": "USD"}, "UnblendedCost": {"Amount": "20.33", "Unit": "USD"}}},
+    {"Keys": ["AmazonCloudWatch"], "Metrics": {"AmortizedCost": {"Amount": "14.63", "Unit": "USD"}, "UnblendedCost": {"Amount": "14.63", "Unit": "USD"}}}
+  ], "Estimated": false},
+  {"TimePeriod": {"Start": "2026-04-28", "End": "2026-04-29"}, "Total": {}, "Groups": [
+    {"Keys": ["Amazon Elastic Compute Cloud - Compute"], "Metrics": {"AmortizedCost": {"Amount": "3909.38", "Unit": "USD"}, "UnblendedCost": {"Amount": "3948.58", "Unit": "USD"}}},
+    {"Keys": ["Amazon Simple Storage Service"], "Metrics": {"AmortizedCost": {"Amount": "62.91", "Unit": "USD"}, "UnblendedCost": {"Amount": "62.91", "Unit": "USD"}}},
+    {"Keys": ["Amazon Relational Database Service"], "Metrics": {"AmortizedCost": {"Amount": "174.77", "Unit": "USD"}, "UnblendedCost": {"Amount": "174.77", "Unit": "USD"}}},
+    {"Keys": ["AWS Lambda"], "Metrics": {"AmortizedCost": {"Amount": "19.55", "Unit": "USD"}, "UnblendedCost": {"Amount": "19.55", "Unit": "USD"}}},
+    {"Keys": ["AmazonCloudWatch"], "Metrics": {"AmortizedCost": {"Amount": "15.12", "Unit": "USD"}, "UnblendedCost": {"Amount": "15.12", "Unit": "USD"}}}
+  ], "Estimated": false},
+  {"TimePeriod": {"Start": "2026-04-29", "End": "2026-04-30"}, "Total": {}, "Groups": [
+    {"Keys": ["Amazon Elastic Compute Cloud - Compute"], "Metrics": {"AmortizedCost": {"Amount": "4332.58", "Unit": "USD"}, "UnblendedCost": {"Amount": "4371.78", "Unit": "USD"}}},
+    {"Keys": ["Amazon Simple Storage Service"], "Metrics": {"AmortizedCost": {"Amount": "62.71", "Unit": "USD"}, "UnblendedCost": {"Amount": "62.71", "Unit": "USD"}}},
+    {"Keys": ["Amazon Relational Database Service"], "Metrics": {"AmortizedCost": {"Amount": "174.44", "Unit": "USD"}, "UnblendedCost": {"Amount": "174.44", "Unit": "USD"}}},
+    {"Keys": ["AWS Lambda"], "Metrics": {"AmortizedCost": {"Amount": "19.70", "Unit": "USD"}, "UnblendedCost": {"Amount": "19.70", "Unit": "USD"}}},
+    {"Keys": ["AmazonCloudWatch"], "Metrics": {"AmortizedCost": {"Amount": "14.73", "Unit": "USD"}, "UnblendedCost": {"Amount": "14.73", "Unit": "USD"}}}
+  ], "Estimated": false},
+  {"TimePeriod": {"Start": "2026-04-30", "End": "2026-05-01"}, "Total": {}, "Groups": [
+    {"Keys": ["Amazon Elastic Compute Cloud - Compute"], "Metrics": {"AmortizedCost": {"Amount": "4324.84", "Unit": "USD"}, "UnblendedCost": {"Amount": "4364.04", "Unit": "USD"}}},
+    {"Keys": ["Amazon Simple Storage Service"], "Metrics": {"AmortizedCost": {"Amount": "63.11", "Unit": "USD"}, "UnblendedCost": {"Amount": "63.11", "Unit": "USD"}}},
+    {"Keys": ["Amazon Relational Database Service"], "Metrics": {"AmortizedCost": {"Amount": "175.36", "Unit": "USD"}, "UnblendedCost": {"Amount": "175.36", "Unit": "USD"}}},
+    {"Keys": ["AWS Lambda"], "Metrics": {"AmortizedCost": {"Amount": "19.83", "Unit": "USD"}, "UnblendedCost": {"Amount": "19.83", "Unit": "USD"}}},
+    {"Keys": ["AmazonCloudWatch"], "Metrics": {"AmortizedCost": {"Amount": "15.00", "Unit": "USD"}, "UnblendedCost": {"Amount": "15.00", "Unit": "USD"}}}
+  ], "Estimated": false},
+  {"TimePeriod": {"Start": "2026-05-01", "End": "2026-05-02"}, "Total": {}, "Groups": [
+    {"Keys": ["Amazon Elastic Compute Cloud - Compute"], "Metrics": {"AmortizedCost": {"Amount": "4321.77", "Unit": "USD"}, "UnblendedCost": {"Amount": "4360.97", "Unit": "USD"}}},
+    {"Keys": ["Amazon Simple Storage Service"], "Metrics": {"AmortizedCost": {"Amount": "62.21", "Unit": "USD"}, "UnblendedCost": {"Amount": "62.21", "Unit": "USD"}}},
+    {"Keys": ["Amazon Relational Database Service"], "Metrics": {"AmortizedCost": {"Amount": "174.45", "Unit": "USD"}, "UnblendedCost": {"Amount": "174.45", "Unit": "USD"}}},
+    {"Keys": ["AWS Lambda"], "Metrics": {"AmortizedCost": {"Amount": "19.70", "Unit": "USD"}, "UnblendedCost": {"Amount": "19.70", "Unit": "USD"}}},
+    {"Keys": ["AmazonCloudWatch"], "Metrics": {"AmortizedCost": {"Amount": "15.28", "Unit": "USD"}, "UnblendedCost": {"Amount": "15.28", "Unit": "USD"}}}
+  ], "Estimated": false},
+  {"TimePeriod": {"Start": "2026-05-02", "End": "2026-05-03"}, "Total": {}, "Groups": [
+    {"Keys": ["Amazon Elastic Compute Cloud - Compute"], "Metrics": {"AmortizedCost": {"Amount": "4312.81", "Unit": "USD"}, "UnblendedCost": {"Amount": "4352.01", "Unit": "USD"}}},
+    {"Keys": ["Amazon Simple Storage Service"], "Metrics": {"AmortizedCost": {"Amount": "63.08", "Unit": "USD"}, "UnblendedCost": {"Amount": "63.08", "Unit": "USD"}}},
+    {"Keys": ["Amazon Relational Database Service"], "Metrics": {"AmortizedCost": {"Amount": "174.05", "Unit": "USD"}, "UnblendedCost": {"Amount": "174.05", "Unit": "USD"}}},
+    {"Keys": ["AWS Lambda"], "Metrics": {"AmortizedCost": {"Amount": "20.51", "Unit": "USD"}, "UnblendedCost": {"Amount": "20.51", "Unit": "USD"}}},
+    {"Keys": ["AmazonCloudWatch"], "Metrics": {"AmortizedCost": {"Amount": "15.15", "Unit": "USD"}, "UnblendedCost": {"Amount": "15.15", "Unit": "USD"}}}
+  ], "Estimated": false},
+  {"TimePeriod": {"Start": "2026-05-03", "End": "2026-05-04"}, "Total": {}, "Groups": [
+    {"Keys": ["Amazon Elastic Compute Cloud - Compute"], "Metrics": {"AmortizedCost": {"Amount": "4321.58", "Unit": "USD"}, "UnblendedCost": {"Amount": "4360.78", "Unit": "USD"}}},
+    {"Keys": ["Amazon Simple Storage Service"], "Metrics": {"AmortizedCost": {"Amount": "63.04", "Unit": "USD"}, "UnblendedCost": {"Amount": "63.04", "Unit": "USD"}}},
+    {"Keys": ["Amazon Relational Database Service"], "Metrics": {"AmortizedCost": {"Amount": "174.69", "Unit": "USD"}, "UnblendedCost": {"Amount": "174.69", "Unit": "USD"}}},
+    {"Keys": ["AWS Lambda"], "Metrics": {"AmortizedCost": {"Amount": "20.44", "Unit": "USD"}, "UnblendedCost": {"Amount": "20.44", "Unit": "USD"}}},
+    {"Keys": ["AmazonCloudWatch"], "Metrics": {"AmortizedCost": {"Amount": "14.78", "Unit": "USD"}, "UnblendedCost": {"Amount": "14.78", "Unit": "USD"}}}
+  ], "Estimated": false},
+  {"TimePeriod": {"Start": "2026-05-04", "End": "2026-05-05"}, "Total": {}, "Groups": [
+    {"Keys": ["Amazon Elastic Compute Cloud - Compute"], "Metrics": {"AmortizedCost": {"Amount": "4024.50", "Unit": "USD"}, "UnblendedCost": {"Amount": "4060.96", "Unit": "USD"}}},
+    {"Keys": ["Amazon Simple Storage Service"], "Metrics": {"AmortizedCost": {"Amount": "58.75", "Unit": "USD"}, "UnblendedCost": {"Amount": "58.75", "Unit": "USD"}}},
+    {"Keys": ["Amazon Relational Database Service"], "Metrics": {"AmortizedCost": {"Amount": "162.80", "Unit": "USD"}, "UnblendedCost": {"Amount": "162.80", "Unit": "USD"}}},
+    {"Keys": ["AWS Lambda"], "Metrics": {"AmortizedCost": {"Amount": "18.64", "Unit": "USD"}, "UnblendedCost": {"Amount": "18.64", "Unit": "USD"}}},
+    {"Keys": ["AmazonCloudWatch"], "Metrics": {"AmortizedCost": {"Amount": "13.68", "Unit": "USD"}, "UnblendedCost": {"Amount": "13.68", "Unit": "USD"}}}
+  ], "Estimated": true},
+  {"TimePeriod": {"Start": "2026-05-05", "End": "2026-05-06"}, "Total": {}, "Groups": [
+    {"Keys": ["Amazon Elastic Compute Cloud - Compute"], "Metrics": {"AmortizedCost": {"Amount": "2676.05", "Unit": "USD"}, "UnblendedCost": {"Amount": "2700.35", "Unit": "USD"}}},
+    {"Keys": ["Amazon Simple Storage Service"], "Metrics": {"AmortizedCost": {"Amount": "38.58", "Unit": "USD"}, "UnblendedCost": {"Amount": "38.58", "Unit": "USD"}}},
+    {"Keys": ["Amazon Relational Database Service"], "Metrics": {"AmortizedCost": {"Amount": "108.15", "Unit": "USD"}, "UnblendedCost": {"Amount": "108.15", "Unit": "USD"}}},
+    {"Keys": ["AWS Lambda"], "Metrics": {"AmortizedCost": {"Amount": "12.15", "Unit": "USD"}, "UnblendedCost": {"Amount": "12.15", "Unit": "USD"}}},
+    {"Keys": ["AmazonCloudWatch"], "Metrics": {"AmortizedCost": {"Amount": "9.28", "Unit": "USD"}, "UnblendedCost": {"Amount": "9.28", "Unit": "USD"}}}
+  ], "Estimated": true}
+ ],
+ "DimensionValueAttributes": []
 }

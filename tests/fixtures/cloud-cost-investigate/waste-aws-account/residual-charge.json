@@ -1,21 +1,44 @@
 {
-  "_note": "Cost Explorer line item for RDS extended support on db-legacy-pg13 — an instance that was ALREADY DELETED on 2026-04-30. Principle 4 (#4): this is a residual / self-clearing charge, not recurring waste to chase. It stops on its own at the next billing cycle. Must be classified 'residual' and EXCLUDED from the savings total. Also demonstrates Principle 4 (#3) bill-derived rate: effective $/unit is derived from usage qty / cost, not list price.",
-  "resultsByTime": [
+  "_note": "Query 23: aws ce get-cost-and-usage --time-period Start=2026-04-01,End=2026-05-01 --granularity MONTHLY --metrics AmortizedCost UsageQuantity --filter '{\"And\":[{\"Dimensions\":{\"Key\":\"SERVICE\",\"Values\":[\"Amazon Relational Database Service\"]}},{\"Dimensions\":{\"Key\":\"USAGE_TYPE\",\"Values\":[\"USE1-RDS:PostgreSQL-ExtendedSupport\"]}}]}'. This is the April extended-support charge for db-legacy-pg13, an instance DELETED on 2026-04-16T12:00Z (query 22: absent from describe-db-instances). 372 instance-hours = 15.5 days of 1 April..16 April 12:00. The charge stopped when the instance was deleted: it is a one-off historic line that does not recur, so it is classified residual / self-clearing and is NOT a saving to chase. Bill-derived rate: 37.20 / 372 = 0.10 USD per instance-hour.",
+  "ResultsByTime": [
     {
-      "timePeriod": {"Start": "2026-05-01", "End": "2026-06-01"},
-      "groups": [
+      "TimePeriod": {
+        "Start": "2026-04-01",
+        "End": "2026-05-01"
+      },
+      "Total": {},
+      "Groups": [
         {
-          "keys": ["Amazon RDS", "RDS:PostgreSQL-ExtendedSupport"],
-          "metrics": {
-            "UnblendedCost": {"Amount": "37.20", "Unit": "USD"},
-            "UsageQuantity": {"Amount": "372", "Unit": "instance-hours"}
-          },
-          "_resource": "db-legacy-pg13",
-          "_instance_state": "DELETED 2026-04-30 — no longer exists in describe-db-instances",
-          "_classification": "residual / self-clearing (extended-support tail for a deleted instance)",
-          "_bill_derived_rate": "37.20 USD / 372 instance-hours = $0.10/instance-hour effective (bill-derived, not list price)"
+          "Keys": [
+            "Amazon Relational Database Service",
+            "USE1-RDS:PostgreSQL-ExtendedSupport"
+          ],
+          "Metrics": {
+            "AmortizedCost": {
+              "Amount": "37.20",
+              "Unit": "USD"
+            },
+            "UsageQuantity": {
+              "Amount": "372",
+              "Unit": "Hrs"
+            }
+          }
         }
-      ]
+      ],
+      "Estimated": false
     }
-  ]
+  ],
+  "DimensionValueAttributes": [],
+  "describe-db-instances": {
+    "command": "aws rds describe-db-instances --region us-east-1 --query 'DBInstances[].DBInstanceIdentifier'",
+    "us-east-1": [
+      "acme-prod-aurora-writer",
+      "acme-prod-aurora-reader-1",
+      "acme-prod-pg-main"
+    ],
+    "eu-west-1": [
+      "acme-eu-pg-main"
+    ],
+    "_note": "db-legacy-pg13 is not listed in either region -> deleted."
+  }
 }

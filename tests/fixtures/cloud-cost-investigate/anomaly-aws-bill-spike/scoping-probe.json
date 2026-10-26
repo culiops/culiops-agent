@@ -1,0 +1,65 @@
+{
+  "_note": "Scoping probe (GATE 1a): 4 read-only calls, 1 Cost Explorer request (~$0.01).",
+  "1_sts_get-caller-identity": {
+    "UserId": "AROAEXAMPLEFIXTURE01:cost-investigator",
+    "Account": "123456789012",
+    "Arn": "arn:aws:sts::123456789012:assumed-role/CostInvestigatorReadOnly/cost-investigator"
+  },
+  "2_iam_list-account-aliases": [
+    "acme-prod"
+  ],
+  "3_organizations_describe-organization": {
+    "Organization": {
+      "Id": "o-acmeorg1234",
+      "MasterAccountId": "999988887777",
+      "FeatureSet": "ALL"
+    },
+    "_interpretation": "caller 123456789012 != MasterAccountId 999988887777 -> member account; Cost Explorer returns only this account, no LINKED_ACCOUNT filter needed (a payer would need it on every CE call)."
+  },
+  "4_ce_get-cost-and-usage_by_REGION": {
+    "_command": "aws ce get-cost-and-usage --time-period Start=2026-04-04,End=2026-05-04 --granularity MONTHLY --metrics AmortizedCost --filter '{\"Dimensions\":{\"Key\":\"RECORD_TYPE\",\"Values\":[\"Usage\",\"DiscountedUsage\",\"SavingsPlanCoveredUsage\"]}}' --group-by Type=DIMENSION,Key=REGION",
+    "_note": "Single-region account in this scenario: all five services bill in us-east-1. MONTHLY over a window that crosses a month boundary returns two partial periods (April 4-30, May 1-3); amounts below are the two periods summed per region as the skill would present them.",
+    "ResultsByTime": [
+      {
+        "TimePeriod": {
+          "Start": "2026-04-04",
+          "End": "2026-05-01"
+        },
+        "Groups": [
+          {
+            "Keys": [
+              "us-east-1"
+            ],
+            "Metrics": {
+              "AmortizedCost": {
+                "Amount": "67469.96",
+                "Unit": "USD"
+              }
+            }
+          }
+        ],
+        "Estimated": false
+      },
+      {
+        "TimePeriod": {
+          "Start": "2026-05-01",
+          "End": "2026-05-04"
+        },
+        "Groups": [
+          {
+            "Keys": [
+              "us-east-1"
+            ],
+            "Metrics": {
+              "AmortizedCost": {
+                "Amount": "13773.54",
+                "Unit": "USD"
+              }
+            }
+          }
+        ],
+        "Estimated": false
+      }
+    ]
+  }
+}

@@ -1,0 +1,251 @@
+{
+  "_note": "Query 8: aws ce get-savings-plans-coverage --time-period Start=2026-03-05,End=2026-05-06 --granularity DAILY --filter '{\"Dimensions\":{\"Key\":\"SERVICE\",\"Values\":[\"Amazon Elastic Compute Cloud - Compute\"]}}' --group-by Type=DIMENSION,Key=INSTANCE_FAMILY. The real response has 62 daily entries; this file shows the days around the expiry (2026-04-14..04-17) and one day after the p3 fleet exists (2026-04-29); every day from 2026-03-05 to 2026-04-15 looks like 04-14 and every day from 2026-04-16 on looks like 04-17. Amounts are on-demand equivalent. r5 coverage drops from 92.6% to 0.0% on 2026-04-16 with NO change in r5 usage: the plan ended, the same instances now bill at on-demand rates. The m5 plan is untouched. p3 has never been covered.",
+  "SavingsPlansCoverages": [
+    {
+      "TimePeriod": {
+        "Start": "2026-04-14",
+        "End": "2026-04-15"
+      },
+      "Groups": [
+        {
+          "Attributes": {
+            "INSTANCE_FAMILY": "r5"
+          },
+          "Coverage": {
+            "SpendCoveredBySavingsPlans": "500.00",
+            "OnDemandCost": "40.00",
+            "TotalCost": "540.00",
+            "CoveragePercentage": "92.6"
+          }
+        },
+        {
+          "Attributes": {
+            "INSTANCE_FAMILY": "m5"
+          },
+          "Coverage": {
+            "SpendCoveredBySavingsPlans": "140.00",
+            "OnDemandCost": "0.00",
+            "TotalCost": "140.00",
+            "CoveragePercentage": "100.0"
+          }
+        }
+      ],
+      "Total": {}
+    },
+    {
+      "TimePeriod": {
+        "Start": "2026-04-15",
+        "End": "2026-04-16"
+      },
+      "Groups": [
+        {
+          "Attributes": {
+            "INSTANCE_FAMILY": "r5"
+          },
+          "Coverage": {
+            "SpendCoveredBySavingsPlans": "500.00",
+            "OnDemandCost": "40.00",
+            "TotalCost": "540.00",
+            "CoveragePercentage": "92.6"
+          }
+        },
+        {
+          "Attributes": {
+            "INSTANCE_FAMILY": "m5"
+          },
+          "Coverage": {
+            "SpendCoveredBySavingsPlans": "140.00",
+            "OnDemandCost": "0.00",
+            "TotalCost": "140.00",
+            "CoveragePercentage": "100.0"
+          }
+        }
+      ],
+      "Total": {}
+    },
+    {
+      "TimePeriod": {
+        "Start": "2026-04-16",
+        "End": "2026-04-17"
+      },
+      "Groups": [
+        {
+          "Attributes": {
+            "INSTANCE_FAMILY": "r5"
+          },
+          "Coverage": {
+            "SpendCoveredBySavingsPlans": "0.00",
+            "OnDemandCost": "540.00",
+            "TotalCost": "540.00",
+            "CoveragePercentage": "0.0"
+          }
+        },
+        {
+          "Attributes": {
+            "INSTANCE_FAMILY": "m5"
+          },
+          "Coverage": {
+            "SpendCoveredBySavingsPlans": "140.00",
+            "OnDemandCost": "0.00",
+            "TotalCost": "140.00",
+            "CoveragePercentage": "100.0"
+          }
+        }
+      ],
+      "Total": {}
+    },
+    {
+      "TimePeriod": {
+        "Start": "2026-04-17",
+        "End": "2026-04-18"
+      },
+      "Groups": [
+        {
+          "Attributes": {
+            "INSTANCE_FAMILY": "r5"
+          },
+          "Coverage": {
+            "SpendCoveredBySavingsPlans": "0.00",
+            "OnDemandCost": "540.00",
+            "TotalCost": "540.00",
+            "CoveragePercentage": "0.0"
+          }
+        },
+        {
+          "Attributes": {
+            "INSTANCE_FAMILY": "m5"
+          },
+          "Coverage": {
+            "SpendCoveredBySavingsPlans": "140.00",
+            "OnDemandCost": "0.00",
+            "TotalCost": "140.00",
+            "CoveragePercentage": "100.0"
+          }
+        }
+      ],
+      "Total": {}
+    },
+    {
+      "TimePeriod": {
+        "Start": "2026-04-29",
+        "End": "2026-04-30"
+      },
+      "Groups": [
+        {
+          "Attributes": {
+            "INSTANCE_FAMILY": "r5"
+          },
+          "Coverage": {
+            "SpendCoveredBySavingsPlans": "0.00",
+            "OnDemandCost": "540.00",
+            "TotalCost": "540.00",
+            "CoveragePercentage": "0.0"
+          }
+        },
+        {
+          "Attributes": {
+            "INSTANCE_FAMILY": "m5"
+          },
+          "Coverage": {
+            "SpendCoveredBySavingsPlans": "140.00",
+            "OnDemandCost": "0.00",
+            "TotalCost": "140.00",
+            "CoveragePercentage": "100.0"
+          }
+        },
+        {
+          "Attributes": {
+            "INSTANCE_FAMILY": "p3"
+          },
+          "Coverage": {
+            "SpendCoveredBySavingsPlans": "0.00",
+            "OnDemandCost": "2350.08",
+            "TotalCost": "2350.08",
+            "CoveragePercentage": "0.0"
+          }
+        }
+      ],
+      "Total": {}
+    }
+  ],
+  "get-reservation-coverage": {
+    "_note": "No active RIs in us-east-1; CoverageHoursPercentage 0 for every family.",
+    "CoveragesByTime": [
+      {
+        "TimePeriod": {
+          "Start": "2026-03-05",
+          "End": "2026-05-06"
+        },
+        "Total": {
+          "CoverageHours": {
+            "OnDemandHours": "0",
+            "ReservedHours": "0",
+            "TotalRunningHours": "0",
+            "CoverageHoursPercentage": "0"
+          }
+        }
+      }
+    ]
+  },
+  "describe-savings-plans": {
+    "_note": "Query 9: aws savingsplans describe-savings-plans (+ aws ec2 describe-reserved-instances --region us-east-1, which returns an empty list). The plan that covered the r5 fleet ENDED inside the current window. The all-upfront SageMaker plan was bought on 2026-04-21 and applies to SageMaker usage only, so it does not touch EC2.",
+    "savingsPlans": [
+      {
+        "savingsPlanId": "7f3a1c2e-0b4d-4a6e-9f10-2d8e5c7b9a41",
+        "savingsPlanType": "EC2Instance",
+        "state": "active",
+        "start": "2026-02-15T00:00:00Z",
+        "end": "2027-02-14T23:59:59Z",
+        "region": "us-east-1",
+        "ec2InstanceFamily": "m5",
+        "paymentOption": "No Upfront",
+        "commitment": "4.20000000",
+        "upfrontPaymentAmount": "0.0",
+        "recurringPaymentAmount": "4.2",
+        "termDurationInSeconds": 31536000,
+        "currency": "USD",
+        "productTypes": [
+          "EC2"
+        ]
+      },
+      {
+        "savingsPlanId": "2b9d4e61-8c3f-47a0-b5d2-91e6a0c3f7d8",
+        "savingsPlanType": "EC2Instance",
+        "state": "expired",
+        "start": "2025-04-16T00:00:00Z",
+        "end": "2026-04-15T23:59:59Z",
+        "region": "us-east-1",
+        "ec2InstanceFamily": "r5",
+        "paymentOption": "No Upfront",
+        "commitment": "15.00000000",
+        "upfrontPaymentAmount": "0.0",
+        "recurringPaymentAmount": "15.0",
+        "termDurationInSeconds": 31536000,
+        "currency": "USD",
+        "productTypes": [
+          "EC2"
+        ]
+      },
+      {
+        "savingsPlanId": "c4e81a07-5d2b-4f93-8a6e-3b7d9f0e1c52",
+        "savingsPlanType": "SageMaker",
+        "state": "active",
+        "start": "2026-04-21T00:00:00Z",
+        "end": "2027-04-20T23:59:59Z",
+        "region": "us-east-1",
+        "paymentOption": "All Upfront",
+        "commitment": "1.02739726",
+        "upfrontPaymentAmount": "9000.0",
+        "recurringPaymentAmount": "0.0",
+        "termDurationInSeconds": 31536000,
+        "currency": "USD",
+        "productTypes": [
+          "SageMaker"
+        ]
+      }
+    ]
+  },
+  "describe-reserved-instances": {
+    "ReservedInstances": []
+  }
+}

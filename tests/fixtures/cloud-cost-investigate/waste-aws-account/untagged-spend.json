@@ -1,4 +1,5 @@
 {
+  "_note": "Query 17: aws ce get-cost-and-usage --time-period Start=2026-04-01,End=2026-05-01 --granularity MONTHLY --metrics AmortizedCost --filter '{\"Dimensions\":{\"Key\":\"RECORD_TYPE\",\"Values\":[\"Usage\",\"DiscountedUsage\",\"SavingsPlanCoveredUsage\"]}}' --group-by Type=TAG,Key=Service Type=DIMENSION,Key=SERVICE (the 'Service$' key = tag value empty = untagged). No commitment applies to the untagged lines, so the amounts are the same under either cost metric. Untagged is a visibility finding, not waste: reported under Informational / excluded, no savings claimed. Total 8,000.00 = 5,200.00 + 1,800.00 + 1,000.00.",
   "ResultsByTime": [
     {
       "TimePeriod": {
@@ -13,7 +14,7 @@
             "Amazon Elastic Compute Cloud - Compute"
           ],
           "Metrics": {
-            "UnblendedCost": {
+            "AmortizedCost": {
               "Amount": "5200.00",
               "Unit": "USD"
             }
@@ -25,7 +26,7 @@
             "Amazon Elastic Block Store"
           ],
           "Metrics": {
-            "UnblendedCost": {
+            "AmortizedCost": {
               "Amount": "1800.00",
               "Unit": "USD"
             }
@@ -37,7 +38,7 @@
             "Amazon Simple Storage Service"
           ],
           "Metrics": {
-            "UnblendedCost": {
+            "AmortizedCost": {
               "Amount": "1000.00",
               "Unit": "USD"
             }

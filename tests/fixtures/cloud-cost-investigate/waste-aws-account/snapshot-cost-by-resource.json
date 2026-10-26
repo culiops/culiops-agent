@@ -1,0 +1,533 @@
+{
+  "_note": "aws ce get-cost-and-usage-with-resources --time-period Start=2026-04-24,End=2026-05-01 --granularity MONTHLY --metrics AmortizedCost --filter '{\"Dimensions\":{\"Key\":\"USAGE_TYPE_GROUP\",\"Values\":[\"EC2: EBS - Snapshots\"]}}' --group-by Type=DIMENSION,Key=RESOURCE_ID. Resource-level data is opt-in in CE settings and covers only the last 14 days, so the window is the 7 complete days 2026-04-24..04-30. Rows below are the 47 snapshots from snapshots-older-than-30d.json (newer snapshots omitted). Monthly figure = 7-day cost x 30/7 (snapshot storage is flat day to day). It is the cost the BILL attributes to that snapshot id; deleting one of a chain of snapshots of the same volume can shift blocks to its neighbour, so treat it as an upper bound for the amount actually freed.",
+  "ResultsByTime": [
+    {
+      "TimePeriod": {
+        "Start": "2026-04-24",
+        "End": "2026-05-01"
+      },
+      "Total": {},
+      "Groups": [
+        {
+          "Keys": [
+            "arn:aws:ec2:us-east-1::snapshot/snap-e78e301ba65296f83"
+          ],
+          "Metrics": {
+            "AmortizedCost": {
+              "Amount": "2.18",
+              "Unit": "USD"
+            }
+          }
+        },
+        {
+          "Keys": [
+            "arn:aws:ec2:us-east-1::snapshot/snap-63faeaefa3ff343f4"
+          ],
+          "Metrics": {
+            "AmortizedCost": {
+              "Amount": "1.80",
+              "Unit": "USD"
+            }
+          }
+        },
+        {
+          "Keys": [
+            "arn:aws:ec2:us-east-1::snapshot/snap-eb1d002fc91aedbbc"
+          ],
+          "Metrics": {
+            "AmortizedCost": {
+              "Amount": "1.41",
+              "Unit": "USD"
+            }
+          }
+        },
+        {
+          "Keys": [
+            "arn:aws:ec2:us-east-1::snapshot/snap-1791911142e50cfd9"
+          ],
+          "Metrics": {
+            "AmortizedCost": {
+              "Amount": "0.83",
+              "Unit": "USD"
+            }
+          }
+        },
+        {
+          "Keys": [
+            "arn:aws:ec2:us-east-1::snapshot/snap-5c0aea5cfa943317d"
+          ],
+          "Metrics": {
+            "AmortizedCost": {
+              "Amount": "1.02",
+              "Unit": "USD"
+            }
+          }
+        },
+        {
+          "Keys": [
+            "arn:aws:ec2:us-east-1::snapshot/snap-a817257ece53c2589"
+          ],
+          "Metrics": {
+            "AmortizedCost": {
+              "Amount": "0.32",
+              "Unit": "USD"
+            }
+          }
+        },
+        {
+          "Keys": [
+            "arn:aws:ec2:us-east-1::snapshot/snap-241ed0b32eb7bb5aa"
+          ],
+          "Metrics": {
+            "AmortizedCost": {
+              "Amount": "1.67",
+              "Unit": "USD"
+            }
+          }
+        },
+        {
+          "Keys": [
+            "arn:aws:ec2:us-east-1::snapshot/snap-c5205fff345f537f9"
+          ],
+          "Metrics": {
+            "AmortizedCost": {
+              "Amount": "2.37",
+              "Unit": "USD"
+            }
+          }
+        },
+        {
+          "Keys": [
+            "arn:aws:ec2:us-east-1::snapshot/snap-fe90722f9e300d413"
+          ],
+          "Metrics": {
+            "AmortizedCost": {
+              "Amount": "2.18",
+              "Unit": "USD"
+            }
+          }
+        },
+        {
+          "Keys": [
+            "arn:aws:ec2:us-east-1::snapshot/snap-b1d449ca4a1a2f80c"
+          ],
+          "Metrics": {
+            "AmortizedCost": {
+              "Amount": "0.64",
+              "Unit": "USD"
+            }
+          }
+        },
+        {
+          "Keys": [
+            "arn:aws:ec2:us-east-1::snapshot/snap-dedfad2dfc258ab9c"
+          ],
+          "Metrics": {
+            "AmortizedCost": {
+              "Amount": "1.67",
+              "Unit": "USD"
+            }
+          }
+        },
+        {
+          "Keys": [
+            "arn:aws:ec2:us-east-1::snapshot/snap-6420ed0a18747951c"
+          ],
+          "Metrics": {
+            "AmortizedCost": {
+              "Amount": "2.57",
+              "Unit": "USD"
+            }
+          }
+        },
+        {
+          "Keys": [
+            "arn:aws:ec2:us-east-1::snapshot/snap-87b8799c418183d37"
+          ],
+          "Metrics": {
+            "AmortizedCost": {
+              "Amount": "0.45",
+              "Unit": "USD"
+            }
+          }
+        },
+        {
+          "Keys": [
+            "arn:aws:ec2:us-east-1::snapshot/snap-45f17a525d72bc98b"
+          ],
+          "Metrics": {
+            "AmortizedCost": {
+              "Amount": "1.86",
+              "Unit": "USD"
+            }
+          }
+        },
+        {
+          "Keys": [
+            "arn:aws:ec2:us-east-1::snapshot/snap-57acd999e052a1ba6"
+          ],
+          "Metrics": {
+            "AmortizedCost": {
+              "Amount": "0.96",
+              "Unit": "USD"
+            }
+          }
+        },
+        {
+          "Keys": [
+            "arn:aws:ec2:us-east-1::snapshot/snap-db8684ccbacafe45d"
+          ],
+          "Metrics": {
+            "AmortizedCost": {
+              "Amount": "2.12",
+              "Unit": "USD"
+            }
+          }
+        },
+        {
+          "Keys": [
+            "arn:aws:ec2:us-east-1::snapshot/snap-653088026f068ebef"
+          ],
+          "Metrics": {
+            "AmortizedCost": {
+              "Amount": "2.05",
+              "Unit": "USD"
+            }
+          }
+        },
+        {
+          "Keys": [
+            "arn:aws:ec2:us-east-1::snapshot/snap-1b4bd5ce9db63edc3"
+          ],
+          "Metrics": {
+            "AmortizedCost": {
+              "Amount": "0.96",
+              "Unit": "USD"
+            }
+          }
+        },
+        {
+          "Keys": [
+            "arn:aws:ec2:us-east-1::snapshot/snap-8d47c46fb424eaac5"
+          ],
+          "Metrics": {
+            "AmortizedCost": {
+              "Amount": "0.96",
+              "Unit": "USD"
+            }
+          }
+        },
+        {
+          "Keys": [
+            "arn:aws:ec2:us-east-1::snapshot/snap-e210eaffa67df3926"
+          ],
+          "Metrics": {
+            "AmortizedCost": {
+              "Amount": "1.28",
+              "Unit": "USD"
+            }
+          }
+        },
+        {
+          "Keys": [
+            "arn:aws:ec2:us-east-1::snapshot/snap-d3ff6c205962c3af5"
+          ],
+          "Metrics": {
+            "AmortizedCost": {
+              "Amount": "0.51",
+              "Unit": "USD"
+            }
+          }
+        },
+        {
+          "Keys": [
+            "arn:aws:ec2:us-east-1::snapshot/snap-3f87b5ba60d5662c5"
+          ],
+          "Metrics": {
+            "AmortizedCost": {
+              "Amount": "0.77",
+              "Unit": "USD"
+            }
+          }
+        },
+        {
+          "Keys": [
+            "arn:aws:ec2:us-east-1::snapshot/snap-eb0f22796f93c2d51"
+          ],
+          "Metrics": {
+            "AmortizedCost": {
+              "Amount": "0.92",
+              "Unit": "USD"
+            }
+          }
+        },
+        {
+          "Keys": [
+            "arn:aws:ec2:us-east-1::snapshot/snap-27a485a3f00fee560"
+          ],
+          "Metrics": {
+            "AmortizedCost": {
+              "Amount": "0.57",
+              "Unit": "USD"
+            }
+          }
+        },
+        {
+          "Keys": [
+            "arn:aws:ec2:us-east-1::snapshot/snap-ecbf2e34c4af15f20"
+          ],
+          "Metrics": {
+            "AmortizedCost": {
+              "Amount": "0.85",
+              "Unit": "USD"
+            }
+          }
+        },
+        {
+          "Keys": [
+            "arn:aws:ec2:us-east-1::snapshot/snap-641a84044143aa063"
+          ],
+          "Metrics": {
+            "AmortizedCost": {
+              "Amount": "0.88",
+              "Unit": "USD"
+            }
+          }
+        },
+        {
+          "Keys": [
+            "arn:aws:ec2:us-east-1::snapshot/snap-4feb5435ab632479f"
+          ],
+          "Metrics": {
+            "AmortizedCost": {
+              "Amount": "0.39",
+              "Unit": "USD"
+            }
+          }
+        },
+        {
+          "Keys": [
+            "arn:aws:ec2:us-east-1::snapshot/snap-76521964b030fc89c"
+          ],
+          "Metrics": {
+            "AmortizedCost": {
+              "Amount": "0.51",
+              "Unit": "USD"
+            }
+          }
+        },
+        {
+          "Keys": [
+            "arn:aws:ec2:us-east-1::snapshot/snap-7e0d92bd7b1e72a1b"
+          ],
+          "Metrics": {
+            "AmortizedCost": {
+              "Amount": "0.21",
+              "Unit": "USD"
+            }
+          }
+        },
+        {
+          "Keys": [
+            "arn:aws:ec2:us-east-1::snapshot/snap-f5eb794f3d1919b7c"
+          ],
+          "Metrics": {
+            "AmortizedCost": {
+              "Amount": "0.30",
+              "Unit": "USD"
+            }
+          }
+        },
+        {
+          "Keys": [
+            "arn:aws:ec2:us-east-1::snapshot/snap-174754ad1ac539316"
+          ],
+          "Metrics": {
+            "AmortizedCost": {
+              "Amount": "0.39",
+              "Unit": "USD"
+            }
+          }
+        },
+        {
+          "Keys": [
+            "arn:aws:ec2:us-east-1::snapshot/snap-7051f0c8c2ca4b004"
+          ],
+          "Metrics": {
+            "AmortizedCost": {
+              "Amount": "0.60",
+              "Unit": "USD"
+            }
+          }
+        },
+        {
+          "Keys": [
+            "arn:aws:ec2:us-east-1::snapshot/snap-a985f263b75a2cf25"
+          ],
+          "Metrics": {
+            "AmortizedCost": {
+              "Amount": "1.12",
+              "Unit": "USD"
+            }
+          }
+        },
+        {
+          "Keys": [
+            "arn:aws:ec2:us-east-1::snapshot/snap-e8d2fd878e6ca39af"
+          ],
+          "Metrics": {
+            "AmortizedCost": {
+              "Amount": "0.54",
+              "Unit": "USD"
+            }
+          }
+        },
+        {
+          "Keys": [
+            "arn:aws:ec2:us-east-1::snapshot/snap-b82f7a29b191e86af"
+          ],
+          "Metrics": {
+            "AmortizedCost": {
+              "Amount": "0.99",
+              "Unit": "USD"
+            }
+          }
+        },
+        {
+          "Keys": [
+            "arn:aws:ec2:eu-west-1::snapshot/snap-2220d7c6e5e3ef6ed"
+          ],
+          "Metrics": {
+            "AmortizedCost": {
+              "Amount": "1.55",
+              "Unit": "USD"
+            }
+          }
+        },
+        {
+          "Keys": [
+            "arn:aws:ec2:eu-west-1::snapshot/snap-31197941385e0829a"
+          ],
+          "Metrics": {
+            "AmortizedCost": {
+              "Amount": "1.69",
+              "Unit": "USD"
+            }
+          }
+        },
+        {
+          "Keys": [
+            "arn:aws:ec2:eu-west-1::snapshot/snap-317ced6beef6dc087"
+          ],
+          "Metrics": {
+            "AmortizedCost": {
+              "Amount": "1.18",
+              "Unit": "USD"
+            }
+          }
+        },
+        {
+          "Keys": [
+            "arn:aws:ec2:eu-west-1::snapshot/snap-978a00f764e390eb3"
+          ],
+          "Metrics": {
+            "AmortizedCost": {
+              "Amount": "1.40",
+              "Unit": "USD"
+            }
+          }
+        },
+        {
+          "Keys": [
+            "arn:aws:ec2:eu-west-1::snapshot/snap-627130165b5e7f10c"
+          ],
+          "Metrics": {
+            "AmortizedCost": {
+              "Amount": "1.03",
+              "Unit": "USD"
+            }
+          }
+        },
+        {
+          "Keys": [
+            "arn:aws:ec2:eu-west-1::snapshot/snap-36e36e8e85c356867"
+          ],
+          "Metrics": {
+            "AmortizedCost": {
+              "Amount": "1.40",
+              "Unit": "USD"
+            }
+          }
+        },
+        {
+          "Keys": [
+            "arn:aws:ec2:eu-west-1::snapshot/snap-b2dc7ad2883aba1cb"
+          ],
+          "Metrics": {
+            "AmortizedCost": {
+              "Amount": "1.20",
+              "Unit": "USD"
+            }
+          }
+        },
+        {
+          "Keys": [
+            "arn:aws:ec2:eu-west-1::snapshot/snap-d4215ab346b413872"
+          ],
+          "Metrics": {
+            "AmortizedCost": {
+              "Amount": "0.81",
+              "Unit": "USD"
+            }
+          }
+        },
+        {
+          "Keys": [
+            "arn:aws:ec2:eu-west-1::snapshot/snap-4dd27b8bbe72fcfe9"
+          ],
+          "Metrics": {
+            "AmortizedCost": {
+              "Amount": "0.50",
+              "Unit": "USD"
+            }
+          }
+        },
+        {
+          "Keys": [
+            "arn:aws:ec2:eu-west-1::snapshot/snap-6e928f48a6d73c35d"
+          ],
+          "Metrics": {
+            "AmortizedCost": {
+              "Amount": "0.88",
+              "Unit": "USD"
+            }
+          }
+        },
+        {
+          "Keys": [
+            "arn:aws:ec2:eu-west-1::snapshot/snap-b0dc1d5f0f70fcae8"
+          ],
+          "Metrics": {
+            "AmortizedCost": {
+              "Amount": "0.62",
+              "Unit": "USD"
+            }
+          }
+        },
+        {
+          "Keys": [
+            "arn:aws:ec2:eu-west-1::snapshot/snap-de07ed407d029fcde"
+          ],
+          "Metrics": {
+            "AmortizedCost": {
+              "Amount": "0.34",
+              "Unit": "USD"
+            }
+          }
+        }
+      ],
+      "Estimated": false
+    }
+  ],
+  "DimensionValueAttributes": []
+}
