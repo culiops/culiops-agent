@@ -8,7 +8,7 @@ GCP, Azure, Pulumi and Bicep support was removed in v0.11.0. The last multi-clou
 
 ## Status
 
-`v0.11.0` — Skills shipped:
+`v0.12.0` — Skills shipped:
 
 - **service-discovery** — scan a service's IaC code — or its documentation and diagrams when no IaC exists — and produce a troubleshooting-oriented inventory document (resource catalog, naming patterns, dependencies, per-alarm investigation runbooks). IaC path works with Terraform, Helm, Kustomize, raw Kubernetes manifests, ecspresso, lambroll; CloudFormation / SAM / Serverless / CDK / Ansible repos are recognised and stop (CloudFormation-only repos are offered the real-discovery path). Real-discovery path works with Draw.io, Mermaid, PlantUML diagrams, Markdown/text docs, and architecture images, verified against live AWS / Kubernetes APIs (read-only).
 - **pre-flight** — evaluate the risk of a proposed production action (IaC change, CLI command, or agent action) across 10 categories. Produces a go/no-go risk report with per-category scoring and actionable mitigations.
@@ -17,6 +17,7 @@ GCP, Azure, Pulumi and Bicep support was removed in v0.11.0. The last multi-clou
 - **cost-optimize-plan** — reads a `cloud-cost-investigate` report and produces a tiered, verified execution plan. Per-action safety verification ("no GetObject in 90d, no DNS pointing at it, no IAM principals with active usage") and four-dimension triage (reversibility, blast radius, evidence, dependency) assigns each item to 🟢 Fast win / 🟡 Coordinated / 🔵 Requires owner confirmation / 🔴 Risky / 🚫 Do not act / ❔ Manual review. Triage is governed by four Guiding Principles — verify activity, not attachment; verify the cost-change direction; scale the verification window to the action's destructiveness (resize ≥30d, delete 60–180d); cost from the bill and attribute to the metered dimension — so attached-but-idle resources are not assumed in use, mode-switch savings claims are recomputed before being trusted, short-window "idle" reads don't justify deletes, and idle-but-wired resources route to owner confirmation with a dev-note rather than a blind delete. Read-only. Sits between cloud-cost-investigate (input) and iac-change-execution (downstream); no automation handoff — operator drives. AWS-only in v1 (15 playbooks: 9 delete, 5 rightsize, 1 lifecycle); Kubernetes workload playbooks deferred.
 - **runtime-trace** — produce a self-contained AWS runtime profile of a service (tag-scoped spend, control-plane events, wiring, activity baselines, cross-region inventory) from cheap read-only APIs (Cost Explorer, CloudTrail Event history, resource policies / event-source mappings, CloudWatch, Resource Explorer). $1 cost cap, seven gates, every claim traceable; verdicts describe, never prescribe. Useful for service takeovers, drift checks, post-incident retrospectives, pre-cost-opt baselining.
 - **service-takeover** — orchestrate AWS (incl. EKS) service handoffs from another team when there's no documentation, no IaC, and only diagrams. Eight gates spanning intake, audit, discovery (delegated to service-discovery), catalog verification, runtime profile (delegated to runtime-trace), tribal-knowledge interview, PRR-style readiness scorecard with strict evidence classes, handoff package assembly. Self-contained output at `.culiops/service-takeover/<service>/`. Resumable across multi-day takeovers.
+- **change-comms** — draft the messages people need around an infrastructure change: a heads-up to developers / the EM before applying, a result message after, and a Jira ticket-close comment carrying the PR link. Facts come from the `iac-change-execution` and `pre-flight` records or the operator, and every fact is sourced; anything missing becomes a visible `<TODO>`. Paste-ready English for Google Chat, Slack and Jira, with common identifier and credential patterns redacted (account IDs, ARNs, IPs, CIDRs, cloud keys, tokens, passwords in URLs, private keys) and a redaction log; a credential found in a record or pasted by the operator is also flagged for rotation. Draft-only: it never sends anything. Output at `.culiops/change-comms/`.
 
 Planned (not yet shipped):
 
@@ -61,6 +62,7 @@ Each skill has its own `SKILL.md` under `skills/<name>/`:
 - [`skills/cost-optimize-plan/SKILL.md`](skills/cost-optimize-plan/SKILL.md)
 - [`skills/runtime-trace/SKILL.md`](skills/runtime-trace/SKILL.md)
 - [`skills/service-takeover/SKILL.md`](skills/service-takeover/SKILL.md)
+- [`skills/change-comms/SKILL.md`](skills/change-comms/SKILL.md)
 
 ## Output Convention
 
