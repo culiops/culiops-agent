@@ -1,0 +1,40 @@
+aws_lb.api: Refreshing state... [id=arn:aws:elasticloadbalancing:us-west-2:777788889999:loadbalancer/app/shopfront-api/5c1d2e3f4a5b6c7d]
+aws_cloudfront_distribution.shopfront: Refreshing state... [id=E2QWERTY12345]
+
+Terraform used the selected providers to generate the following execution
+plan. Resource actions are indicated with the following symbols:
+  ~ update in-place
+
+Terraform will perform the following actions:
+
+  # aws_cloudfront_distribution.shopfront will be updated in-place
+  ~ resource "aws_cloudfront_distribution" "shopfront" {
+        id                             = "E2QWERTY12345"
+        # (20 unchanged attributes hidden)
+
+      + ordered_cache_behavior {
+          + allowed_methods          = [
+              + "GET",
+              + "HEAD",
+              + "OPTIONS",
+            ]
+          + cache_policy_id          = "658327ea-f89d-4fab-a63d-7e88639e58f6"
+          + cached_methods           = [
+              + "GET",
+              + "HEAD",
+            ]
+          + compress                 = false
+          + default_ttl              = (known after apply)
+          + max_ttl                  = (known after apply)
+          + min_ttl                  = 0
+          + origin_request_policy_id = "216adef6-5c7f-47e4-b989-5492eafa07d3"
+          + path_pattern             = "/api/catalog/*"
+          + smooth_streaming         = false
+          + target_origin_id         = "api-alb"
+          + viewer_protocol_policy   = "redirect-to-https"
+        }
+
+        # (5 unchanged blocks hidden)
+    }
+
+Plan: 0 to add, 1 to change, 0 to destroy.

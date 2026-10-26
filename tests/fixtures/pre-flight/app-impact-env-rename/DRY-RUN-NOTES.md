@@ -14,7 +14,7 @@ The gate said RED for the wrong reason. If the operator adds alarms (category 7)
 
 | Principle | Exercised by |
 |---|---|
-| Trigger | Renamed env vars and a value-format change are app-contract changes, so Q8 is asked |
+| Trigger | Renamed env vars and a value-format change are app-facing changes, so Q8 is asked |
 | Mode B approval | Choosing `gh` at Q8 approves the four `GET` read types. A first run, from before this rule, asked for a second approval, got none, and left category 11 ⚪ |
 | Pinned version | `commits/v3.8.2` → `5f2c9a1`. Tree and contents were read at that SHA, not at `main` |
 | No code search as evidence | `gh search code` was not used (default branch only) |

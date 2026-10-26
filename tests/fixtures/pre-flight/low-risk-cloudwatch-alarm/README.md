@@ -23,7 +23,7 @@ All Green:
 - Cost impact: Green (CloudWatch alarm cost is negligible)
 - Security posture: Green (no IAM/network/encryption changes)
 - Resource health: Green (live evidence — L3 approved: `ecs describe-services` running = desired, no alarm in `ALARM` on the service's dimensions)
-- Application compatibility: Green (`plan: no app-contract attribute changed` — an alarm is not something the app depends on; Q8 not asked)
+- Application compatibility: Green (`plan: no app-facing attribute changed` — an alarm is not something the app depends on; Q8 not asked)
 
 ## What this fixture exercises
 

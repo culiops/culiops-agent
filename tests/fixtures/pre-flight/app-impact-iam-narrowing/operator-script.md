@@ -14,7 +14,7 @@ What the operator types, in order. Answer only when asked.
 
 1. Active incident: no
 2. Deploy freeze: no
-3. Peak traffic: no, it's mid-morning on a Tuesday
+3. Peak traffic: no, it's mid-morning
 4. Changed this service before: a few times
 5. Used Terraform before: experienced
 6. Cost impact: negligible

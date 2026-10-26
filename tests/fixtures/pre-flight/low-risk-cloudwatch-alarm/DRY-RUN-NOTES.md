@@ -21,7 +21,11 @@ Simulated run of the 7-step skill against this fixture. Recorded on 2026-04-23; 
 | L3 target check | `aws sts get-caller-identity` account and `--region us-east-1` match the plan's target |
 | L3 resource health | Operator approved the read-only batch. `ecs describe-services` running = desired, no pending; `describe-alarms --state-value ALARM` shows nothing on `orderapi-prod` dimensions → Green (`live:2`, `live:3`) |
 | Evidence rule | Category 10 Green cites live evidence; categories 2 and 9 cite the plan |
-| Category 11 not triggered | Adding an alarm changes no app-contract attribute → Green from the plan, Q8 not asked |
+| Category 11 not triggered | Adding an alarm changes no app-facing attribute → Green from the plan, Q8 not asked |
+
+| Monitoring-only change | The only change is an alarm with no output / export changed, so dependency impact (4), observability readiness (7) and cost impact (8) are Green from the plan without a catalog. Before 2026-10-26 the rules forced 4 = ⚪ and 7 / 8 = Yellow, so this fixture's GREEN was unreachable |
+| Fresh eyes on GREEN | A separate reviewer, given the evidence and rules but not the scores, scored all 11 Green. One of its flags (a "missing" `alarm_description`) was rejected by citing `main.tf:10` |
+| Not verified (examples the record lists) | The apply identity used by CI (the live check proves only the operator's CLI). Whether an out-of-band alarm with the same name exists (`PutMetricAlarm` upserts). The SNS subscriber protocols: an auto-remediation Lambda or HTTPS endpoint would make the alarm app-affecting |
 
 ## Findings and fixes applied
 

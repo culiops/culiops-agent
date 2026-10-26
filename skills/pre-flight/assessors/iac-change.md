@@ -134,7 +134,7 @@ Cross-reference with service-discovery catalog if available (`.culiops/service-d
 - Check whether changed resources are marked as critical-path
 - If catalog shows 3+ downstream consumers → **Red**
 - If catalog shows 1–2 downstream consumers → **Yellow**
-- If no catalog exists → score as unknown (⚪), suggest running service-discovery
+- If no catalog exists → score as unknown (⚪), suggest running service-discovery. Exception: every changed resource is on the not-app-facing list (see `### Application compatibility`) and the plan changes no output / export → **Green**, citing the plan. Nothing can consume an alarm or a dashboard
 
 Check for backward-incompatible changes:
 - Renamed or removed outputs/exports → breaks consumers at their next apply
@@ -160,6 +160,7 @@ Classify alerting maturity:
 Check whether the change itself modifies monitoring:
 - Deleting or disabling alarms/monitors → **Red** (reducing observability)
 - Adding new alarms/monitors → lowers risk (improving observability)
+- **The change only adds or edits not-app-facing monitoring** (alarms, dashboards, metric filters) and changes nothing app-facing → **Green**. This category asks whether a break caused by *this change* would be detected, and such a change gives the app nothing to break. The maturity ladder above scores the monitoring around app-facing changes, not the alarm being added. The mitigation is to confirm after apply that the new alarm leaves `INSUFFICIENT_DATA`
 
 ### Cost impact
 
@@ -170,6 +171,7 @@ Detect cost-relevant changes in the plan:
 - Cross-region replication additions: flag data transfer costs
 - NAT Gateway additions: flag hourly + per-GB data processing charges
 - Usage-based services (API Gateway, Lambda, SQS, SNS): flag if traffic volume is unknown
+- Additions that are only alarms, dashboards or metric filters are cost-**Green** (fixed, small per-unit prices). Log groups are not in this exception: ingestion and storage scale with volume
 - Decreases (scale-down, rightsizing, deletion) are cost-**Green**. Their capacity risk is scored under blast radius and resource health — don't count it twice
 
 Look prices up for the target region (AWS Price List API, the pricing calculator) and record the lookup date. Never use a remembered price — prices change and differ by region.
@@ -196,7 +198,16 @@ A narrowing (removed action, tighter resource or condition) is Green here. Wheth
 
 ### Application compatibility
 
-**App-contract attributes** — a change to any of these triggers category 11 and Q8:
+Category 11 is **fail-closed** (`SKILL.md` → Scoring Rules). A changed attribute is **not app-facing** only if it is on this list:
+
+- Tags / labels / annotations that nothing reads at runtime, descriptions, comments
+- Alarms, dashboards, metric filters, log groups and log retention
+- Backup, snapshot and recovery-point schedules (score them under category 2)
+- Scaling counts alone: desired count, replicas, min / max size (score them under category 1)
+- IAM for humans and CI/CD roles (not a role the workload runs as)
+- Cost-only purchase options: reservations, savings plans, spot / on-demand split
+
+**Everything else is app-facing.** The table below shows common app-facing changes and what to search for. It is a set of examples, not the trigger list. A resource type missing from it still triggers category 11.
 
 | Attribute | Terraform | Kubernetes (Helm / Kustomize / manifests) | ecspresso / lambroll | What to search in the app |
 |---|---|---|---|---|
@@ -205,9 +216,8 @@ A narrowing (removed action, tighter resource or condition) is Green here. Wheth
 | Endpoint identity: hostname, port, path, protocol | DB / cache endpoint after replace, listener port, target-group health-check path, DNS record, queue / topic / bucket / table rename or replace | `Service` port / port name, `Ingress` path, container port, probe path | `portMappings`, `healthCheck` command / path | the host / port / path the app dials or serves; the health-check handler |
 | Engine or runtime version | `engine_version` (major), cache `engine_version`, Lambda `runtime`, OpenSearch / Kafka version | image of a sidecar or dependency chart (DB, broker) | Lambda `runtime` | driver / client library version in the lockfile (`go.mod`, `package-lock.json`, `requirements*.txt`, `pom.xml`) |
 | Limits the app must fit inside | SQS visibility timeout, ALB / NLB idle timeout, DB `max_connections` (parameter group), Lambda timeout / memory / reserved concurrency, API Gateway timeout | CPU / memory limits, `terminationGracePeriodSeconds`, HPA min / max | task CPU / memory, Lambda timeout / memory | processing time, connection pool size, request timeout, shutdown handling |
+| CDN, edge and request routing | CloudFront cache behaviors (`path_pattern`, `allowed_methods`), cache policy (cache key: headers / cookies / query strings; TTLs), origin request policy, CloudFront Functions / Lambda@Edge, ALB listener rules, API Gateway routes / authorizers / stage variables, WAF rules | `Ingress` paths, rewrites and annotations, Gateway API routes, service-mesh routing | — | the routes under the pattern; whether each response depends on the user (cookies, `Authorization`, session) or on headers / query strings left out of the cache key; whether the app sets `Cache-Control` / `Vary`; HTTP methods the routes need. A cookie-dependent response under a cache key without that cookie is served to other users: also score it under category 9 |
 | Encryption key on data the app reads | KMS key change on bucket / table / queue / secret | — | — | whether the app's role can use the new key (`kms:Decrypt`) — usually an IAM check, not code |
-
-Not app-contract: tags, alarms, dashboards, log retention, scaling counts alone (category 1), cost-only changes.
 
 **Scoring** (after Step 3b):
 - A use of the old contract is found → **Red**. Name the call site (`app:` citation) and the failure mode. Logged-and-ignored or default-fallback failures are silent: say that health checks, error rate and alarms will not show the break.

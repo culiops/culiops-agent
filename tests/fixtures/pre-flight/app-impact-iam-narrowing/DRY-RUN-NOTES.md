@@ -15,7 +15,7 @@ With a separate repo, the verdict came only from the live send metric (`NumberOf
 
 | Principle | Exercised by |
 |---|---|
-| Trigger | A removed IAM statement is an app-contract change, so Q8 is asked |
+| Trigger | A removed IAM statement is an app-facing change, so Q8 is asked |
 | Mode A, pinned version | `git rev-parse HEAD` → `37df8d8`, `git status --porcelain` clean, `git describe` → `v2.4.0`. The live image tag was not returned, so the record says "deployed version unverified" |
 | Search | `SendMessage`, `LEDGER_QUEUE_URL`, `Getenv`, `/healthz` in the checkout |
 | Silent breakage | `main.go:48-51` logs `WARN … (non-fatal)` and returns 201. `/healthz` is a static 200. So health, 5xx and alarms stay green after apply |

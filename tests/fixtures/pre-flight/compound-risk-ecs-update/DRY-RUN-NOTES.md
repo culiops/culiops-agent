@@ -28,7 +28,7 @@ Simulated run of the 7-step skill against this fixture. Recorded on 2026-04-23; 
 | 8 | Cost impact | 🟢 | Cost decreases (4→2 tasks). Capacity risk scored under blast radius |
 | 9 | Security posture | 🟢 | No IAM, network, or encryption changes |
 | 10 | Resource health | 🟢 | `live:2` 4/4 running, 0 pending; `live:4` no alarm in `ALARM` on the service |
-| 11 | Application compatibility | ⚪ | Container `healthCheck` path `/health` → `/healthz` (`plan:14-16`) is an app-contract change; no app source given at Q8 → unknown whether image `2026.04.2` serves `/healthz` |
+| 11 | Application compatibility | ⚪ | Container `healthCheck` path `/health` → `/healthz` (`plan:14-16`) is an app-facing change; no app source given at Q8 → unknown whether image `2026.04.2` serves `/healthz` |
 
 **Yellow + ⚪ count: 4** (blast radius, change velocity, operator familiarity; ⚪ application compatibility)
 **Multi-Yellow escalation triggered:** 4 >= 3 → **RED — SOFT BLOCK**

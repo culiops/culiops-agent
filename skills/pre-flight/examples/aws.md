@@ -105,6 +105,15 @@ Live evidence of whether a contract the plan removes is still used. They complem
 
 ---
 
+### CloudFront (cache behavior changes)
+
+- Distribution behaviors (projected, no origin custom headers): `aws cloudfront get-distribution-config --id {dist-id} --query 'DistributionConfig.{default:DefaultCacheBehavior.{cache:CachePolicyId,orp:OriginRequestPolicyId},ordered:CacheBehaviors.Items[].{path:PathPattern,methods:AllowedMethods.Items,cache:CachePolicyId,orp:OriginRequestPolicyId}}'`
+- Cache key and TTLs of a policy: `aws cloudfront get-cache-policy --id {policy-id} --query 'CachePolicy.CachePolicyConfig.{name:Name,min:MinTTL,default:DefaultTTL,max:MaxTTL,headers:ParametersInCacheKeyAndForwardedToOrigin.HeadersConfig,cookies:ParametersInCacheKeyAndForwardedToOrigin.CookiesConfig,query:ParametersInCacheKeyAndForwardedToOrigin.QueryStringsConfig}'`. A minimum TTL above 0 caches even when the origin sends `Cache-Control: private` / `no-store`.
+- What reaches the origin: `aws cloudfront get-origin-request-policy --id {policy-id} --query 'OriginRequestPolicy.OriginRequestPolicyConfig.{name:Name,headers:HeadersConfig.HeaderBehavior,cookies:CookiesConfig.CookieBehavior,query:QueryStringsConfig.QueryStringBehavior}'`
+- Metrics live in `us-east-1`: `aws cloudwatch get-metric-statistics --namespace AWS/CloudFront --metric-name {Requests|4xxErrorRate|5xxErrorRate|CacheHitRate} --dimensions Name=DistributionId,Value={dist-id} Name=Region,Value=Global --start-time {T-24h} --end-time {now} --period 3600 --statistics {Sum|Average} --region us-east-1` (`CacheHitRate` needs additional metrics enabled). Methods a behavior rejects return 403, so watch `4xxErrorRate`, not only 5xx.
+
+---
+
 ## Observability Checks
 
 ### CloudWatch Alarms
