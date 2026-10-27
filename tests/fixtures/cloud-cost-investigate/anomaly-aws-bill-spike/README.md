@@ -28,6 +28,7 @@ Smaller facts: an RDS dev instance deleted on 2026-04-10 gives a -$607.81 offset
 - **Commitment expiry:** `coverage.json` shows r5 coverage falling from 92.6% to 0.0% on 2026-04-16 with unchanged r5 hours, and `describe-savings-plans` shows the plan `expired`, end 2026-04-15. The new-resource sweep cannot explain this driver.
 - **Native anomaly detection:** `cost-anomalies.json` flags only the p3 spend (a lead, not the whole story).
 - **LaunchTime caveat:** 8 instances match `LaunchTime >= window start`; CloudTrail `RunInstances` corroborates 7; `i-00b4169a51c38d72e` is a restart (root volume `AttachTime` 2026-03-12, prior p3 usage of 200.00 hours in the previous window).
+- **Tie test (Amount / Timing / Cause):** the 7 new p3 instances and the r5 expiry each cite all three legs (`confirmed`); the restarted p3 instance has no creation event (`probable`); the RDS step has timing only (`candidate`); the rest is `unexplained`. Nothing is marked `expected` because no plan or earlier-cycle pattern is cited. `UsageQuantity` is read beside cost to show r5 hours unchanged (rate change, not more usage).
 - **Driver decomposition:** drivers + offsets + unexplained remainder sum exactly to the net amortized usage delta ($15,053.32); the whole-bill check in `UnblendedCost` reconciles to +$24,053.32.
 - **Remediation list:** two low-confidence rows with `Owner`, `Realizable`, `Rate` and `live:` evidence; tagging and purchase accounting go to Informational / Next steps, not the table. No delete recommendation.
 - **Not exercised:** utilization metrics for the p3 fleet are not fetched (no GATE 3); the report lists that as a Gap.
@@ -58,13 +59,13 @@ Smaller facts: an RDS dev instance deleted on 2026-04-10 gives a -$607.81 offset
 
 Ranked usage drivers (absolute dollars, AmortizedCost):
 
-| Rank | Driver | Delta |
-|------|--------|-------|
-| 1 | `BoxUsage:p3.8xlarge`: ML fleet (7 new + 1 restarted) | +$13,008.68 |
-| 2 | `BoxUsage:r5.4xlarge`: Savings Plan expired 2026-04-15, same instances now on-demand (covered -$6,480.00, on-demand +$9,000.00) | +$2,520.00 |
-| offset | RDS: dev instance deleted 2026-04-10 (cause not verified) | -$607.81 |
-| unexplained | c5 / m6i / t3 EC2, S3, Lambda, CloudWatch drift (m5 plan: +$0.00) | +$132.45 |
-| **Sum** | | **+$15,053.32** |
+| Rank | Driver | Delta | Verdict |
+|------|--------|-------|---------|
+| 1 | `BoxUsage:p3.8xlarge`: ML fleet (7 new +$13,899.70, 1 restarted -$891.02) | +$13,008.68 | 7 new `confirmed`; restart `probable` (no creation event) |
+| 2 | `BoxUsage:r5.4xlarge`: Savings Plan expired 2026-04-15, same instances now on-demand (covered -$6,480.00, on-demand +$9,000.00) | +$2,520.00 | `confirmed` |
+| offset | RDS: dev instance deleted 2026-04-10 (cause not verified) | -$607.81 | `candidate` (timing only) |
+| unexplained | c5 / m6i / t3 EC2, S3, Lambda, CloudWatch drift (m5 plan: +$0.00) | +$132.45 | `unexplained` |
+| **Sum** | | **+$15,053.32** | |
 
 Whole-bill reconciliation in `UnblendedCost`: amortized usage +$15,053.32 + amortized non-usage +$320.58 = amortized whole bill +$15,373.90; plus the $9,000.00 upfront payment not yet amortized (+$8,679.42 = $9,000.00 - $320.58) = **+$24,053.32** Unblended.
 

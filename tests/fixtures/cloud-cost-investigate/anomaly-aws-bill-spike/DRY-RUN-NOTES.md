@@ -107,14 +107,28 @@ Net $2,520.00 = 18 days x ($540.00 - $400.00). Had only `Usage` been queried, th
 
 All 8 are untagged for `Service` / `Owner` (3 + 1 + 1 carry only `Environment=staging`). Cost split of the p3 delta: the 7 new instances cost $13,899.70 in the current window; the restarted instance costs $1,556.98 now against $2,448.00 before, net -$891.02; total +$13,008.68. Treating the whole current-window p3 bill ($15,456.68) as new spend would overstate the delta by $2,448.00, which the fleet already cost in the previous window.
 
+### Tie test and verdicts (SKILL.md Step 4A)
+
+A driver's verdict rests on three cited legs. Amount: units x bill-derived rate explains the delta. Timing: the daily series steps on the day of the change. Cause: a named change. Three legs = `confirmed`, two = `probable`, one = `candidate`, none = `unexplained`. No IaC repo was given, so no `code:` cause is available; no `operator-stated` leg is used.
+
+| Driver | Amount | Timing | Cause | Verdict |
+|--------|--------|--------|-------|---------|
+| 1a. 7 new p3.8xlarge | 1,262.81 h x $12.24 = $15,456.68 current; the 7 new cost $13,899.70 (live:10) | daily p3 cost steps 2026-04-26 ($345.51), 04-27 ($1,421.15), 04-28 ($1,939.62), flat $2,350.08 from 04-29 (live:10) | `RunInstances` by `ml-platform-bot` / `agarcia` on 04-26, 04-27, 04-28 (live:12) | `confirmed` |
+| 1b. restarted p3 (`i-00b4169a51c38d72e`) | prior window 200.00 h, $2,448.00 vs $1,556.98 now (live:10) | restart on 2026-04-28 (live:11) | none: no event in the window; classified a restart from AttachTime only | `probable` (cause leg missing) |
+| 2. r5 after plan expiry | same hours both windows (16071.30 h), rate up: 18 days x ($540.00 - $400.00) = $2,520.00 (live:10) | coverage drops from 92.6% to 0.0% on 2026-04-16 (live:8) | Savings Plan end date 2026-04-15, state `expired` (live:9) | `confirmed` |
+| offset. RDS step-down | cost only; no usage-quantity split fetched (live:6) | step on 2026-04-10 (live:6) | not queried | `candidate` (timing only) |
+| unexplained. c5/m6i/t3, S3, Lambda, CloudWatch | small, spread | none | none | `unexplained` |
+
+No driver is marked `expected`: no plan, code change or earlier-cycle pattern is cited (Cost Explorer history was not pulled for earlier cycles, and the operator named none). Everything not `confirmed` stays out of "caused by" wording in the report.
+
 ### Rank drivers (absolute dollars) and reconcile
 
-| Rank | Driver | Delta | Dimensions | Candidate explanation | Evidence |
-|------|--------|-------|------------|-----------------------|----------|
-| 1 | p3.8xlarge ML fleet | +$13,008.68 | EC2, us-east-1, `BoxUsage:p3.8xlarge` | 7 new + 1 restarted instance, untagged | live:5, live:10, live:11, live:12 |
-| 2 | r5 on-demand after plan expiry | +$2,520.00 | EC2, us-east-1, `BoxUsage:r5.4xlarge` | Savings Plan ended 2026-04-15; same hours, no resource change | live:8, live:9, live:10 |
-| offset | RDS step-down | -$607.81 | RDS, from 2026-04-10 | consistent with a dev instance removed; cause not queried | live:6 |
-| unexplained | c5/m6i/t3, S3, Lambda, CloudWatch drift | +$132.45 | several | small, spread across services; not chased | live:6, live:10 |
+| Rank | Driver | Delta | Dimensions | Verdict | Evidence |
+|------|--------|-------|------------|---------|----------|
+| 1 | p3.8xlarge ML fleet (7 new +$13,899.70, 1 restarted -$891.02) | +$13,008.68 | EC2, us-east-1, `BoxUsage:p3.8xlarge` | 7 new: `confirmed`; restart: `probable` | live:5, live:10, live:11, live:12 |
+| 2 | r5 on-demand after plan expiry | +$2,520.00 | EC2, us-east-1, `BoxUsage:r5.4xlarge` | `confirmed` | live:8, live:9, live:10 |
+| offset | RDS step-down | -$607.81 | RDS, from 2026-04-10 | `candidate` | live:6 |
+| unexplained | c5/m6i/t3, S3, Lambda, CloudWatch drift | +$132.45 | several | `unexplained` | live:6, live:10 |
 
 Check: +$13,008.68 + +$2,520.00 -$607.81 + +$132.45 = +$15,053.32 = net amortized usage delta. Unexplained is 0.9% of the net delta.
 
@@ -138,7 +152,7 @@ Writes draft to `.culiops/cloud-cost-investigate/acme-prod-anomaly-<YYYYMMDD-HHm
 **Date:** 2026-05-08 10:00
 ```
 
-Findings: net amortized usage delta +$15,053.32; ranked drivers and reconciliation as above; non-usage delta +$320.58 (amortized) as its own line; whole-bill delta +$24,053.32 Unblended / +$15,373.90 Amortized.
+Findings: net amortized usage delta +$15,053.32; ranked drivers with their verdict column (confirmed / probable / candidate / unexplained) and amount / timing / cause evidence, and reconciliation as above; non-usage delta +$320.58 (amortized) as its own line; whole-bill delta +$24,053.32 Unblended / +$15,373.90 Amortized.
 
 ### Remediation list (prioritized)
 
@@ -162,6 +176,8 @@ No rows. Anomaly mode explains a change; it does not turn drivers into savings. 
 - Utilization of the p3 fleet and the r5 fleet was not fetched (no GATE 3): "running" is not "used".
 - The RDS offset (-$607.81) is attributed to a removed dev instance only by its timing (step on 2026-04-10); not verified with `describe-db-instances` or CloudTrail.
 - Native Cost Anomaly Detection did not flag the Savings Plan expiry.
+- No IaC repo was given, so no driver has a `code:` cause leg; the p3 and r5 verdicts rest on CloudTrail and the commitment end date.
+- The RDS offset has timing only (`candidate`): no usage-quantity split and no CloudTrail lookup were run for it.
 - `RunInstances` has no event for `i-00b4169a51c38d72e` in the queried window: the lookup starts at the window start (2026-04-04), so the original 2026-03-12 `RunInstances` (inside the 90-day Event history) was not looked up; the instance is classified a restart from AttachTime and prior p3 usage in Q10, not from its creation event.
 
 ### Next steps (informational)

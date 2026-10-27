@@ -1,0 +1,17 @@
+{
+  "_note": "Query 7: aws ce list-cost-allocation-tags --tag-keys Service Component. Both keys were activated before the comparison window (2026-03-01 .. 2026-05-01), so no figure or trend in this fixture spans an activation date. Free call.",
+  "CostAllocationTags": [
+    {
+      "TagKey": "Service",
+      "Type": "UserDefined",
+      "Status": "Active",
+      "LastUpdatedDate": "2025-11-18T09:12:44Z"
+    },
+    {
+      "TagKey": "Component",
+      "Type": "UserDefined",
+      "Status": "Active",
+      "LastUpdatedDate": "2025-11-18T09:12:51Z"
+    }
+  ]
+}

@@ -32,6 +32,7 @@ Cost Explorer `get-cost-and-usage` with `MONTHLY` granularity is **not per-resou
 - **Catalog consumption:** attribution mode requires a catalog or an operator-confirmed tag convention. The catalog is present and also records the tag convention.
 - **Untraced resource:** `orders-dev-db` is in the catalog and has no 2026-04 cost row. The skill flags it `untraced` and does NOT claim $0 (absence of a row is not confirmed zero spend). The 2026-03 row ($27.60, partial month) is consistent with a mid-March deletion, but nothing here proves it; verification (`rds describe-db-instances`, CloudTrail `DeleteDBInstance`) is a GATE 3 option the operator declines.
 - **Context cost:** `shared-nat` ($115.65 in 2026-04) is billed under `Service=orders` but matches no catalog resource. Flagged `context cost` and EXCLUDED from the service total.
+- **Tag activation (E6):** `tag-activation.json` shows `Service` and `Component` active since 2025-11-18, before the comparison window, so the tag-based per-resource figures and the March-to-April trend stay verified. Had a key been activated inside the window, the earlier month would read as empty and the trend would be `UNVERIFIED`.
 - **Period comparison:** 2026-03 vs 2026-04 service total +9.0% month over month ($2,368.98 to $2,583.31). Because the tag view exists for both months, the skill can name the contributors (the worker fleet), which the GCP fixture could not.
 - **Hours effect:** March has 744 hours and April 720; hour-based lines (RDS, NAT) fall in April on that alone.
 - **Resource-level API not used:** the skill states why `get-cost-and-usage-with-resources` is not used (window longer than 14 days).
@@ -45,6 +46,7 @@ Cost Explorer `get-cost-and-usage` with `MONTHLY` granularity is **not per-resou
 | `.culiops/service-discovery/orders.md` | Mock service-discovery catalog (8 AWS resources + tag convention) |
 | `cost-by-usage-type.json` | CE `get-cost-and-usage` filtered `Service=orders` + the three usage record types, MONTHLY, `AmortizedCost`, grouped by `USAGE_TYPE`, 2026-03 and 2026-04 |
 | `cost-by-tag.json` | Same filter, grouped by `TAG:Component` x `USAGE_TYPE`; the only source of per-resource numbers |
+| `tag-activation.json` | Query 7: `ce list-cost-allocation-tags` for `Service` and `Component` (status and `LastUpdatedDate`) |
 | `DRY-RUN-NOTES.md` | Expected skill behaviour at each step |
 
 ## Cost summary (expected output, 2026-04)

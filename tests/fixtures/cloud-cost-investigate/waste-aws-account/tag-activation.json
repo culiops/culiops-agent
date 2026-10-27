@@ -1,0 +1,11 @@
+{
+  "_note": "Part of Query 17: aws ce list-cost-allocation-tags --tag-keys Service. The key was activated before the cost window (2026-04-01 .. 2026-05-01), so the untagged-spend figure does not span an activation date. Free call.",
+  "CostAllocationTags": [
+    {
+      "TagKey": "Service",
+      "Type": "UserDefined",
+      "Status": "Active",
+      "LastUpdatedDate": "2025-09-02T14:05:31Z"
+    }
+  ]
+}

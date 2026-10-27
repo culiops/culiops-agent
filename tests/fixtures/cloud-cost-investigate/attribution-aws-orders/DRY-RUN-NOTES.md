@@ -31,11 +31,12 @@ Resource-ID-level cost (`get-cost-and-usage-with-resources`) covers only the las
 |---|-----|-------|-----------|------|-----|-----------|-----|
 | 5 | `ce:GetCostAndUsage` | `Service=orders` AND `RECORD_TYPE` in {`Usage`, `DiscountedUsage`, `SavingsPlanCoveredUsage`}, MONTHLY, group `USAGE_TYPE`, metrics `AmortizedCost` + `UsageQuantity` | global | 2026-03-01 to 2026-05-01 | `ce:GetCostAndUsage` | $0.01 (1 page) | service-level totals for both months, by usage type |
 | 6 | `ce:GetCostAndUsage` | same filter, group `TAG:Component` x `USAGE_TYPE` | global | 2026-03-01 to 2026-05-01 | `ce:GetCostAndUsage` | $0.01 (1 page) | per-resource cost via the cost-allocation tag |
+| 7 | `ce:ListCostAllocationTags` (`--tag-keys Service Component`) | account | global | now | `ce:ListCostAllocationTags` | $0 | a tag-filtered figure or trend that spans a key's activation is `UNVERIFIED` |
 
 The period comparison needs no extra query (both months are in the same window). The untraced check is analysis on Q6 against the catalog.
 
-**Total estimated API cost:** $0.02 for the batch ($0.03 with the scoping probe).
-**IAM permissions needed:** `ce:GetCostAndUsage` (plus the probe's `sts:GetCallerIdentity`, `iam:ListAccountAliases`, `organizations:DescribeOrganization`).
+**Total estimated API cost:** $0.02 for the batch ($0.03 with the scoping probe); Q7 is free.
+**IAM permissions needed:** `ce:GetCostAndUsage`, `ce:ListCostAllocationTags` (plus the probe's `sts:GetCallerIdentity`, `iam:ListAccountAliases`, `organizations:DescribeOrganization`).
 
 **GATE 2:** operator approves.
 
@@ -43,6 +44,7 @@ The period comparison needs no extra query (both months are in the same window).
 
 - Q5 returns `cost-by-usage-type.json`: 2 periods, 17 usage-type groups in March and 15 in April, status `ok`.
 - Q6 returns `cost-by-tag.json`: 2 periods, 19 cells in March and 17 in April, status `ok`.
+- Q7 returns `tag-activation.json`: `Service` and `Component` are both `Active`, `LastUpdatedDate` 2025-11-18, before the 2026-03-01 start of the comparison. No figure or trend spans an activation, so the tag-based numbers and the March-to-April comparison are not downgraded.
 - Reconciliation done before analysis: Q5 April sum $2,698.96 = Q6 April sum $2,698.96; March $2,478.96 = $2,478.96. No `Component$` (untagged-within-service) group exists in either month.
 
 ## Step 4C - Attribution analysis
@@ -170,6 +172,7 @@ Queries run (extracted results only):
 | 4 | `ce get-cost-and-usage` (group REGION, tag Service=orders) | 123456789012 | global | 2026-04 | ok | 1 |
 | 5 | `ce get-cost-and-usage` (group USAGE_TYPE) | Service=orders, usage record types | global | 2026-03..2026-04 | ok | 17 + 15 |
 | 6 | `ce get-cost-and-usage` (group TAG Component x USAGE_TYPE) | Service=orders, usage record types | global | 2026-03..2026-04 | ok | 19 + 17 |
+| 7 | `ce list-cost-allocation-tags` (Service, Component) | account | global | now | ok | 2 |
 
 ### Findings
 
@@ -177,7 +180,7 @@ Queries run (extracted results only):
 > Total: **$2,583.31** (live:5, live:6; the two derivations agree exactly)
 > Period comparison: $2,368.98 in 2026-03, **+9.0%** month over month (+10.3% like-for-like without the deleted dev DB)
 
-Per-resource breakdown (from the `Component` cost-allocation tag, live:6):
+Per-resource breakdown (from the `Component` cost-allocation tag, live:6; both tag keys active since 2025-11-18, live:7):
 
 | # | Resource | Type | Cost (2026-04) | % of total |
 |---|----------|------|----------------|------------|
@@ -210,7 +213,7 @@ None.
 
 - `orders-dev-db` deletion not verified: operator declined the optional GATE 3 batch (`describe-db-instances`, CloudTrail `DeleteDBInstance`).
 - Commitment coverage was not queried in attribution mode. The cost lookup already includes covered usage at its effective rate (`DiscountedUsage`, `SavingsPlanCoveredUsage`, `AmortizedCost`); none appears here because no commitment applies to these services. Unused commitment (`SavingsPlanRecurringFee` under amortization) is not part of any resource's cost and is not attributed.
-- Per-resource numbers depend on the `Component` tag being complete. The reconciliation (Q5 = Q6) shows no untagged remainder in this window, but a resource tagged with the wrong `Component` value would be misattributed.
+- Per-resource numbers depend on the `Component` tag being complete. Both tag keys were activated on 2025-11-18, before the comparison window (live:7), so the March-to-April trend does not span an activation. The reconciliation (Q5 = Q6) shows no untagged remainder in this window, but a resource tagged with the wrong `Component` value would be misattributed.
 - Resource-level cost (`get-cost-and-usage-with-resources`) not used: it covers only the last 14 days.
 
 ### Next steps (informational)
