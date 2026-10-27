@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [0.14.0] — 2026-10-27
+
 ### Changed
 
 - **iac-change-execution: self-review before every gate.**
@@ -55,6 +57,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - **iac-change-execution.** Reusing a pre-flight record re-asks timing and re-runs the health checks at apply time, matching pre-flight's reuse contract.
 
 - **Repo renamed from `culiops-agent` to `culiops-skills`.** The plugin and marketplace are still named `culiops`, so skill names (`culiops:pre-flight` and the rest) and existing installs are unaffected. GitHub redirects the old URL.
+
+- **README rewritten** for scanning: one skills table (when to use, what you get, whether it changes anything), how the skills fit together, and how they behave.
 
 ### Breaking
 
