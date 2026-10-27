@@ -83,6 +83,28 @@ Don't assume an `app=` label convention. Read the selector from the workload and
 - PVCs and their storage class: `kubectl get pvc -n {namespace}`
 - Can the volume be expanded / is reclaim `Delete`: `kubectl get storageclass {sc} -o jsonpath='{.allowVolumeExpansion}{"\t"}{.reclaimPolicy}'` (`Delete` → deleting the PVC deletes the data)
 - Objects Helm will keep on uninstall: look for `helm.sh/resource-policy: keep` in the chart templates (L1, code)
+- Volume snapshots that exist (only where the snapshot CRDs are installed): `kubectl get volumesnapshot -n {namespace}`
+
+---
+
+## Disruption and dependents (categories 1 and 4)
+
+Live evidence for what softens a disruption and for what consumes the changed resource. What the *change itself* does (a rollout, a recreate, a drain) comes from the Kubernetes documentation (`docs:`), not from these reads.
+
+- Replicas and rollout strategy: `kubectl get deploy/{deploy} -n {namespace} -o jsonpath='{.spec.replicas}{"\t"}{.spec.strategy}'` (a PodDisruptionBudget is under Resource Health)
+- Ingresses that route to a Service: `kubectl get ingress -A -o json | jq -r '.items[] | select([.spec.rules[]?.http.paths[]?.backend.service.name] | index("{service}")) | "\(.metadata.namespace)/\(.metadata.name)"'`
+- Pods that mount a ConfigMap, Secret or PVC (names only, no data): `kubectl get pods -A -o json | jq -r '.items[] | select(.spec.volumes[]? | .configMap.name=="{name}" or .secret.secretName=="{name}" or .persistentVolumeClaim.claimName=="{name}") | "\(.metadata.namespace)/\(.metadata.name)"'` (cluster-wide needs a ClusterRoleBinding; `env` / `envFrom` references need the same filter on `.spec.containers[]`)
+- Callers that dial a Service by DNS name are not visible in the cluster API. Say so; the category stays Yellow unless the code search or traffic metrics show none.
+
+---
+
+## Application Compatibility Checks (category 11)
+
+Live evidence that a contract the change removes is still used. It never replaces the app source (Step 3b).
+
+- Traffic on a Service port or Ingress path being removed or changed, over ≥ 30 days (metric and label names are examples — ingress-nginx shown; use your ingress controller's or mesh's): `curl -sG "$PROM_URL/api/v1/query" --data-urlencode 'query=sum(increase(nginx_ingress_controller_requests{ingress="{ingress}",path="{path}"}[30d]))'`. Prometheus retention shorter than the window gives shorter evidence: say how long it covers.
+- Would a ServiceAccount still be allowed an action after an RBAC change: `kubectl auth can-i {verb} {resource} -n {namespace} --as=system:serviceaccount:{namespace}:{sa}` — **beyond `view`** (needs `impersonate`); it evaluates what is allowed now, not whether it is used.
+- Whether RBAC is *used*: API-server audit logs, if the cluster keeps them (the operator supplies the query). With no usage data, "no use found" in the source stays Yellow.
 
 ---
 
@@ -101,6 +123,7 @@ If Prometheus is reachable only from inside the cluster: `kubectl port-forward` 
 
 ### Alerts
 
+- Alert rules loaded (they exist live, not only in code): `curl -s "$PROM_URL/api/v1/rules?type=alert" | jq -r '.data.groups[].rules[] | "\(.name)\t\(.health)"'`
 - Currently firing alerts: `curl -s "$PROM_URL/api/v1/alerts" | jq '.data.alerts[] | select(.state=="firing")'`
 - Or from Alertmanager: `amtool alert query --alertmanager.url="$AM_URL"`
 

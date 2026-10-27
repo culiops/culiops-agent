@@ -20,7 +20,7 @@ NO GREEN WITHOUT EVIDENCE. EVERY SCORE CITES ITS SOURCE.
 
 ## Constraints (Non-Negotiable)
 
-1. **Score from evidence, not intuition.** Every score cites its source: `plan:<line>`, `code:<path:line>`, `app:<repo>@<sha>:<path:line>`, `live:<query #>`, `operator`, or `UNVERIFIED`. If no signal exists for a category, score it ⚪ unknown — never silently assume Green.
+1. **Score from evidence, not intuition.** Every score cites its source: `plan:<line>`, `code:<path:line>`, `app:<repo>@<sha>:<path:line>`, `live:<query #>`, `docs:<URL>` (official documentation read this session, with the date), `catalog:<path:line>`, `assessor:<table row>` (risk-raising only, see Constraint 8), `operator`, or `UNVERIFIED`. If no signal exists for a category, score it ⚪ unknown — never silently assume Green.
 2. **No live queries without opt-in.** Layer 3 signals require explicit operator consent. All L3 queries are read-only. Present the full list of L3 commands as one batch before running any; the operator approves the batch once. Any command not in the approved batch needs its own approval.
 3. **Hard blocks require written justification.** Categories 2 (reversibility), 5 (timing context), 9 (security posture), and 10 (resource health) can produce hard blocks for specific conditions. The operator must provide a written reason to proceed past a hard block, which is recorded in the pre-flight report.
 4. **No modifications to infrastructure.** The skill reads plan outputs, IaC code, git history, and (with opt-in) live system signals. It never runs `apply`, `deploy`, `create`, `update`, `delete`, or any state-changing command. Mitigations that change state (e.g. taking a snapshot) are written as operator actions; pre-flight never runs them.
@@ -29,7 +29,9 @@ NO GREEN WITHOUT EVIDENCE. EVERY SCORE CITES ITS SOURCE.
 7. **All output goes to `.culiops/pre-flight/`.** Pre-flight records are written to `.culiops/pre-flight/<service>-<action>-<YYYYMMDD-HHmm>.md` in the target repo, following the culiops output convention.
 8. **Evidence rule.** Cross-check code against live state; never resolve a disagreement silently.
    - Facts the agent can check (service health, alarms exist / firing, backups exist, last apply time, current cost) are checked live when L3 is approved. An operator answer about a checkable fact is recorded as `operator-stated (unverified)`; it never scores Green on its own.
-   - **Green on categories 2 (reversibility) and 9 (security) requires `plan`, `code`, or `live` evidence.** **Green on category 10 (resource health) requires `live` evidence.** **Green on a triggered category 11 requires `app` evidence** — and "no use found" is Green only with `live` evidence that the old contract is unused. Otherwise the category is ⚪ (or Yellow, per the table).
+   - **Green requires the right kind of evidence.** Category 1 (blast radius), for an app-facing change: the disruption evidence in the assessor (`plan` for in-place vs replace, `docs` for what the attribute change does, `live` for what softens it). Category 2 (reversibility): `plan`, `code` or `live` for what changed, **and** `docs` or `live` that each in-place attribute change is reversible. Category 4 (dependency impact): `plan`, `code` or `live` showing nothing consumes the resource. Category 7 (observability): `live` confirmation that the alarms / rules exist and are enabled. Category 9 (security): `plan`, `code` or `live`. Category 10 (resource health): `live`. A triggered category 11: `app` evidence — and "no use found" is Green only with `live` evidence that the old contract is unused. Otherwise the category is ⚪ (or Yellow, per the table). Tags, labels, annotations and pure additions of alarms, dashboards or metric filters need no behaviour claim.
+   - **Behaviour claims need `docs:`.** What a change *does* — reboot, failover, replace, downtime, one-way, deletion semantics, what is billed — is a claim about AWS, Kubernetes or the tool, not about this repo. `plan` and `code` show what changes, not what it does. A claim that makes a score safer (a Green, "reversible", "no downtime", "free", "fixed price") cites official documentation read in this session (`docs: <URL>`, with the date, through whatever documentation tool the operator has) or `live` evidence. Recall is not evidence: with neither, the category is ⚪. A claim that raises a score may rest on the assessor's tables (`assessor:`). The tables are starting points: they raise a score and never clear one.
+   - **A catalog is a lead, not code.** Cite it as `catalog:`. It never satisfies "plan, code or live", and a catalog that lists no dependents is not evidence that there are none.
    - Code ↔ live disagreements (drift) are listed in the `## Evidence` section and shown to the operator. `UNVERIFIED` evidence can never clear a destroy, replace, or one-way change.
    - When invoked by another skill with an evidence table (e.g. `iac-change-execution`), cite that table and query only what it doesn't already answer.
 9. **Secrets never enter the report.** Never copy environment-variable values, Secret data, raw plan text, or state content into chat or the record — summarize ("3 env vars changed: `DB_HOST`, …") and record the plan hash. Never run `terraform state pull`, `helm diff --show-secrets`, `helm get values --all`, `helm get manifest`, or `kubectl get secret -o yaml`. Use `--query` / `jsonpath` to fetch only the fields needed.
@@ -44,18 +46,19 @@ NO GREEN WITHOUT EVIDENCE. EVERY SCORE CITES ITS SOURCE.
 | 1 | **Blast radius** | Single resource, single region | Multiple resources or shared component, or reduced capacity / redundancy | Multi-region, multi-service, or user-facing data path | No |
 | 2 | **Reversibility** | Known rollback path, automated, and the changed attributes are reversible | Manual rollback possible but untested, or a one-way change without data loss (e.g. storage increase) | Irreversible (data migration, schema drop, backup deletion, encryption key rotation, public IP release) | Yes — irreversible data changes; public IP release with an unconfirmed external allowlist |
 | 3 | **Change velocity** | First change to this area in 7+ days | 2–3 changes in last 7 days | 4+ changes in last 7 days, or stacking on uncommitted prior change | No |
-| 4 | **Dependency impact** | No critical-path dependencies touched; or every changed resource is not-app-facing and no output / export changes (nothing can depend on it) | Touches resource with downstream dependents | Touches shared infrastructure (DB, message bus, auth) used by multiple services | No |
-| 5 | **Timing context** | Normal hours, no freeze, no incidents | Outside business hours or reduced staffing | Active incident, deploy freeze, peak traffic event, or holiday | Yes — active incident + deploy freeze |
+| 4 | **Dependency impact** | Nothing consumes the changed resources (`plan` / `code` / `live`; a catalog alone gives Yellow); or every changed resource is not-app-facing and no output / export changes (nothing can depend on it) | Touches resource with downstream dependents | Touches shared infrastructure (DB, message bus, auth) used by multiple services | No |
+| 5 | **Timing context** | Someone who can respond is on hand at the expected apply time; no freeze, no incident | Nobody on hand (outside staffed hours with no on-call cover), or reduced staffing | Active incident, deploy freeze, peak traffic event, or holiday | Yes — active incident + deploy freeze |
 | 6 | **Operator familiarity** | Changed this service/tool many times | First time with this specific service | First time with both service and tool | No |
 | 7 | **Observability readiness** | SLOs declared, alarms in place, dashboards exist | Partial — some signals missing | No alarms, no SLOs, no way to detect if this breaks something | No |
-| 8 | **Cost impact** | No new resources, no size increase, or a cost decrease; or the only new resources are alarms, dashboards or metric filters | New resources or size increase with predictable cost | GPU/high-memory instances, cross-region replication, usage-based services with unpredictable scale | No |
+| 8 | **Cost impact** | No new resources, no size increase, or a cost decrease that leaves nothing billing; or the only new resources are alarms, dashboards or metric filters (priced, see assessor) | New resources or size increase with predictable cost | GPU/high-memory instances, cross-region replication, usage-based services with unpredictable scale | No |
 | 9 | **Security posture** | No security-relevant changes | Permission scope change, network rule modification within VPC | Opens public access, widens IAM to `*`, removes encryption, disables audit logging, exposes secrets | Yes — public exposure, encryption removal, secrets |
-| 10 | **Resource health** | All signals nominal from live checks, error budget healthy | Elevated error rate or saturation above 70% | Error budget exhausted, active alerts firing, saturation critical | Yes — error budget exhausted |
+| 10 | **Resource health** | All signals nominal from live checks; error budget healthy where an SLO exists, otherwise error rate, latency and saturation within the service's own recent baseline | Elevated error rate or saturation above 70% | Error budget exhausted, active alerts firing, saturation critical | Yes — error budget exhausted |
 | 11 | **Application compatibility** | Only not-app-facing attributes changed; or every app use of the changed attribute was found and is compatible | App source read, no use found, and no live evidence that the old contract is unused; or the app still works but degrades (e.g. a timeout falls back to a default) | The app still uses the old contract (removed permission, renamed / removed env var or config key, changed endpoint / port / path, incompatible engine or runtime version) | No |
 
 ### Scoring Rules
 
 - **Traffic light:** Red / Yellow / Green per category. Unknown (⚪) when data is unavailable or the evidence rule (Constraint 8) isn't met.
+- **Thresholds are defaults, not measurements.** The numbers in this table and the assessor (7 days, 70 %, 1.5x baseline, 90 days, 3+ Yellow) are the skill's defaults; the team may set its own. Show the measured value next to every label so the operator can judge it.
 - **Hard blocks:** Categories 2, 5, 9, 10 can produce hard blocks for specific conditions listed above. Hard block = operator must provide written justification to proceed, not just acknowledge.
 - **Soft blocks:** All other Red scores. Operator must acknowledge and can proceed.
 - **Multi-Yellow escalation:** 3+ Yellow categories → overall assessment escalates to Red (soft block). Compound risk — individually manageable, collectively dangerous.
@@ -73,8 +76,8 @@ NO GREEN WITHOUT EVIDENCE. EVERY SCORE CITES ITS SOURCE.
 |----------|-------------|
 | Blast radius | Count resources in plan, check if multi-region, check if touches load balancer / DNS / IAM (shared resources), capacity reductions |
 | Reversibility | Detect destructive actions: `destroy`, `replace`, `force_new`, schema migrations, **one-way in-place updates** (see assessor). Check the real rollback path and what it does *not* undo |
-| Change velocity | Commits to the changed paths on the default branch in the last 7 days, excluding this change's own commits |
-| Dependency impact | If catalog exists: check if changed resources are marked critical-path or have downstream dependents. If no catalog: score as ⚪ unknown — except when every changed resource is not-app-facing and the plan changes no output / export: then Green from the plan |
+| Change velocity | Commits to the changed paths on the branch this change merges to, in the last 7 days, excluding this change's own commits |
+| Dependency impact | If catalog exists: check if changed resources are marked critical-path or have downstream dependents (`catalog:`; "none listed" is Yellow until `code` / `live` confirms). If no catalog: score as ⚪ unknown — except when every changed resource is not-app-facing and the plan changes no output / export: then Green from the plan |
 | Observability readiness | Scan IaC for alarm/alert/SLO definitions related to changed resources. Flag resources with no declared monitoring |
 | Cost impact | Detect new resources, instance type changes, replica count changes. Flag known expensive types (GPU, NAT Gateway, cross-region replication) |
 | Security posture | Detect ingress rule changes, IAM / RBAC modifications, encryption settings, public access flags, audit logging changes, secret reference changes |
@@ -88,7 +91,7 @@ Seven structured questions, asked once before scoring:
 > **Pre-flight context check:**
 > 1. Is there an active incident affecting this service or its dependencies? (yes/no)
 > 2. Is there a deploy freeze or change window restriction? (yes/no)
-> 3. Is this during peak traffic hours for this service? (yes/no/unsure)
+> 3. Will the expected apply time be in peak traffic for this service? (yes/no/unsure — for CI or GitOps delivery, the apply happens at merge, not now)
 > 4. Have you changed this service before? (many times / a few times / first time)
 > 5. Have you used this IaC tool before? (experienced / some experience / first time)
 > 6. What's the expected cost impact? (negligible / moderate / significant / unknown)
@@ -114,7 +117,9 @@ If yes, consult `examples/aws.md` and/or `examples/kubernetes.md` for:
 |----------|----------|
 | Resource health | Current error rate, CPU/memory saturation, alarms / alerts firing on the changed resources |
 | Reversibility | Backups / snapshots / versioning exist for stateful resources being destroyed or changed one-way |
-| Observability readiness | Verify dashboards/alarms actually exist in the live system (not just in IaC) |
+| Blast radius | What softens a disruption: replicas, Multi-AZ, PodDisruptionBudget, rolling-update / deployment settings |
+| Dependency impact | What consumes the changed resource: network interfaces on a security group, event-source mappings, Ingress backends, pods mounting a ConfigMap / PVC |
+| Observability readiness | Verify dashboards/alarms actually exist in the live system and are enabled (not just in IaC) |
 | Timing context | Current request rate vs. baseline (is this peak?) |
 | Change velocity | Recent deployments in the last 24h; last successful apply |
 | Cost impact | Current spend rate on resources being changed |
@@ -133,7 +138,7 @@ If any query fails (no credentials, permission denied, timeout), the skill recor
 | "There's no service-discovery catalog, so I can't assess dependencies" | STOP — score dependency impact as ⚪ unknown and surface it. Don't skip the category. The one exception: every changed resource is not-app-facing and no output / export changes → Green, citing the plan. |
 | "This is a rollback, so it's inherently safe" | STOP — rollbacks can fail, can roll back to a broken state, or can conflict with data migrations that happened after the original deploy. Assess normally. |
 | "It's a mitigation for the incident, so the freeze doesn't apply" | STOP — the incident override needs a written justification (incident reference + why this action mitigates it), recorded under Hard Blocks. |
-| "The operator is experienced, so I can relax the scoring" | STOP — operator familiarity is one category out of 10. It doesn't lower blast radius or fix missing observability. |
+| "The operator is experienced, so I can relax the scoring" | STOP — operator familiarity is one category out of 11. It doesn't lower blast radius or fix missing observability. |
 | "L3 queries failed, so I'll assume the system is healthy" | STOP — absence of data is not evidence of health. Score as ⚪ unknown. |
 | "The profile is called `prod`, so the live checks hit the plan's target" | STOP — compare the account ID / region / kube context returned by the identity check against the plan's target. Names lie. |
 | "It's only a describe call — safe to paste the output" | STOP — describe / list calls return environment-variable values (Lambda, ECS task definitions). Fetch only the fields you need and summarize. |
@@ -230,20 +235,20 @@ Load every `assessors/*.md` file and match against the input:
 
 **Record the target.** From the plan, IaC, and the operator: AWS account ID + region; kube context + namespace; Terraform workspace / var-file / backend key; for GitOps, the controller app name. Unknown parts are asked, not guessed.
 
-**Detect the delivery model.** CI applies on merge / GitOps controller syncs from git / manual apply. Look for pipeline files, Argo CD `Application` or Flux `Kustomization` objects pointing at the path.
+**Detect the delivery model:** who or what applies the change, and when — CI after merge, CI on approval, a GitOps controller syncing from git, or a person applying by hand. Cite the evidence (`code:` the pipeline file, the Argo CD `Application` / Flux `Kustomization` that points at the path); a caller's delivery model keeps the caller's citation. Nothing found → `UNVERIFIED`: ask the operator and record `operator-stated`.
 
 **Compute the plan hash.** Write the exact plan/diff text to a scratch file outside the repo, run `sha256sum` on it, record `sha256:<hex>` and the command that produced the text, then delete the scratch file. The plan text itself is never stored in the repo. If a calling skill passes a plan hash, use it (same definition). Description-only input → `Plan hash: none — record not reusable`.
 
 Present the detected action type, scope, target, delivery model, and matched assessor to the operator.
 
-**GATE 1:** Human confirms action scope. "I detected this as a [action type] change affecting [resources] in [target], delivered by [CI / GitOps / manual]. Is this correct?"
+**GATE 1:** Human confirms action scope. "I detected this as a [action type] change affecting [resources] in [target], delivered by [<delivery model>]. Is this correct?"
 
 ### Step 2 — L1 static analysis
 
 Using the matched assessor's `## L1 — Static Risk Signals` section, analyze:
 - The plan/diff output (primary source)
 - The IaC code in the repo (for context the plan doesn't show — module structure, variable definitions)
-- Git history (commits to the changed paths on the default branch in the last 7 days)
+- Git history (commits to the changed paths on the branch this change merges to, in the last 7 days)
 - Service-discovery catalog if it exists (`.culiops/service-discovery/<service>.md`)
 - The evidence table, if a calling skill passed one
 
@@ -287,7 +292,7 @@ If no, or if queries fail:
 
 Apply the traffic-light scoring from the Risk Categories table:
 1. Score each of the 11 categories as Green / Yellow / Red / ⚪ based on the strongest signal from L1+L2+L3 and the app source
-2. Apply the evidence rule (Constraint 8): a Green on category 2 or 9 without `plan` / `code` / `live` evidence, on category 10 without `live` evidence, or on a triggered category 11 without `app:` evidence, becomes ⚪
+2. Apply the evidence rule (Constraint 8): a Green without the evidence Constraint 8 names for its category, or resting on a behaviour claim with no `docs:` / `live:`, becomes ⚪
 3. For each Yellow, Red or ⚪ score, record the specific signal (or missing signal) that drove it
 4. Check hard-block conditions on categories 2, 5, 9, 10
 5. Count Yellow + ⚪ categories for multi-Yellow escalation
@@ -302,10 +307,10 @@ Apply the traffic-light scoring from the Risk Categories table:
 
 The report is a claim about production. Check it before the operator reads it.
 
-1. **Citation check.** Re-open the cited source for each of these: every Red; every Green on categories 2, 9, 10 and 11; every hard-block condition; and the factual premise of each mitigation. Confirm the cited line says what the finding says. A comment, a `# (N unchanged attributes hidden)` line, or a resource name does not support a claim about values. When the line doesn't support the claim, fix the citation or downgrade the score (Green → ⚪). Record each fix.
+1. **Citation check.** Re-open the cited source for each of these: every Red; every Green on categories 1, 2, 4, 7, 9, 10 and 11; every hard-block condition; and the factual premise of each mitigation. Confirm the cited line says what the finding says, and that each `docs:` page was read this session and says what the finding claims about the behaviour; a `docs:` URL that was not read is `UNVERIFIED`. A comment, a `# (N unchanged attributes hidden)` line, or a resource name does not support a claim about values. When the line doesn't support the claim, fix the citation or downgrade the score (Green → ⚪). Record each fix.
 2. **Source conflicts.** A finding that rests on a catalog note, a code comment or an operator statement, where code, plan or live evidence says otherwise: the stronger source wins and the conflict becomes a drift row. Catalogs are as old as their `Generated` date.
 3. **Verdict arithmetic.** Recompute the verdict from the Step 5 rules and write the working: which categories are Red, the Yellow + ⚪ count, and which hard-block conditions were checked.
-4. **Fresh eyes — when the verdict is GREEN or any hard block fired.** These are the two costly mistakes: false safety, and blocking a valid change. Give a separate reviewer, in a fresh context, the evidence (plan text, cited files, live results, L2 answers) and the scoring rules — **not** your scores. It scores the 11 categories itself. Re-read the evidence for every category where you disagree, settle it, and show any remaining disagreement to the operator. If no separate reviewer can be run, write `fresh-eyes: not run` and why.
+4. **Fresh eyes — always, unless the verdict is RED — soft block.** A soft block already makes the operator acknowledge each Red with a reason. GREEN and YELLOW let the change proceed on the report's word alone, and a hard block stops it, so those three get a second read. If unsure, run it. Give a separate reviewer, in a fresh context, the evidence (plan text, cited files, live results, L2 answers) and the scoring rules — **not** your scores. It scores the 11 categories itself. Re-read the evidence for every category where you disagree, settle it, and show any remaining disagreement to the operator. If no separate reviewer can be run, write `fresh-eyes: not run` and why.
 5. **Not verified.** List every claim that rests on `operator-stated`, `UNVERIFIED`, or a search that could miss uses (Step 3b), so the operator knows what to check by hand.
 
 ### Step 6 — Present risk report
@@ -346,7 +351,7 @@ The pre-flight record written to `.culiops/pre-flight/<service>-<action>-<YYYYMM
 **Target:** `<account ID / region>` | `<kube context / namespace>` | `<TF workspace / var-file / backend key>`
 **Plan hash:** `sha256:<hex>` (SHA-256 of the exact plan/diff text assessed) — or `none — not reusable`
 **Plan source:** `<command that produced the plan text, e.g. terraform show -no-color tfplan>`
-**Delivery model:** `<CI on merge | GitOps (<controller/app>) | manual apply>`
+**Delivery model:** `<who or what applies it, and when — e.g. CI after merge | CI on approval | GitOps (<controller/app>) | manual apply>` (`<evidence>`)
 **Invoked by:** `<operator | iac-change-execution | …>`
 **Assessor used:** `<iac-change | generic>`
 **Layers evaluated:** `L1 (static) + L2 (human) [+ L3 (live)]`
@@ -373,7 +378,7 @@ The pre-flight record written to `.culiops/pre-flight/<service>-<action>-<YYYYMM
 ## Verification
 - Citations checked: <n> (fixed: <list, or none>)
 - Verdict working: Red = <categories>; Yellow + ⚪ = <n> (<categories>); hard blocks checked: <conditions> → <verdict>
-- Fresh eyes: <agreed | disagreed on <categories> → settled as … | not run — reason | not required (verdict YELLOW / RED soft block)>
+- Fresh eyes: <agreed | disagreed on <categories> → settled as … | not run — reason | not required (verdict RED — soft block)>
 - Not verified: <claims resting on operator-stated / UNVERIFIED / search limits, or none>
 
 ## Hard Blocks
@@ -423,15 +428,15 @@ service-discovery → (catalog) → pre-flight ← iac-change-execution
 
 Pre-flight takes the same input, produces the same report, and enforces the same gates regardless of whether it's invoked directly or by another skill. The calling skill checks the verdict before proceeding.
 
-**Reuse contract.** A calling skill may reuse an existing record instead of re-running pre-flight only if the record's `Plan hash` equals the SHA-256 of the current plan/diff text, its `Target` is the same, and its `Date` is inside the caller's freshness window (default 24h). A record with `Plan hash: none` is never reusable.
+**Reuse contract.** A calling skill may reuse an existing record instead of re-running pre-flight only if the record's `Plan hash` equals the SHA-256 of the current plan/diff text, its `Target` is the same, and its `Date` is inside the caller's freshness window (default 24h). A record with `Plan hash: none` is never reusable. Categories 5 (timing) and 10 (resource health) describe the moment the record was written, not the moment of apply: the caller re-asks Q1–Q3 and re-runs the category-10 live checks at apply time, and re-scores if either changed.
 
 ### Incident Context
 
 During incident investigation, if the operator considers a mitigation action (rollback, drain, failover), pre-flight can assess it. When the operator answers "yes" to the active-incident question (L2 Q1), the skill asks a follow-up:
 
-> "Is this change a mitigation for the active incident? If yes, give the incident reference and one line on how this action mitigates it."
+> "Is this change a mitigation for the active incident? If yes, give the incident reference, one line on how this action mitigates it, and the evidence: the failing signal (`live:`), that the change touches the failing component (`plan:`), and what the action does (`docs:`). If your freeze rules need an approver, name who approved."
 
-If yes **and** the written justification is given, the timing category scores as **Yellow** (caution, not block) instead of Red, and the report records the justification under Hard Blocks as "mitigation during active incident — elevated risk accepted: <justification>". The override applies to category 5 only; the other categories are scored normally.
+If yes **and** the written justification with its evidence is given, the timing category scores as **Yellow** (caution, not block) instead of Red, and the report records the justification under Hard Blocks as "mitigation during active incident — elevated risk accepted: <justification>". The override applies to category 5 only; the other categories are scored normally.
 
 If no, or no justification is given, the hard block stands.
 
@@ -447,6 +452,6 @@ If no, or no justification is given, the hard block stands.
 | Step 3b: App source scan | opus | Changed app-facing attributes, mode + location + deployed ref, `examples/app-source.md` | Uses found per attribute with `app:` citations and failure behaviour | A missed reader of a renamed env var or removed permission becomes a false Green on the one category that sees it. Fetching is mechanical; deciding what counts as a use and how it fails is not |
 | Step 4: L3 live signals | sonnet | Target, resource identifiers, examples/ file content, approved command batch | Summarized CLI output per query (no secret values) | Mechanical CLI execution of an approved batch. Interpretation of results is deferred to Step 5 (opus) |
 | Step 5: Score | opus | L1 scores + L2 answers + L3 results + scoring rules + evidence rule | 11 category scores (Green/Yellow/Red/⚪), verdict, hard block flags, evidence per score | Judgment core — multi-category synthesis, evidence rule, hard block decisions, multi-Yellow escalation. Wrong score = false safety signal |
-| Step 5b: Verify | opus (+ separate fresh-context reviewer when the verdict is GREEN or a hard block fired) | Draft scorecard, cited sources, Step 5 rules; the reviewer gets the evidence and rules but not the scores | Citation fixes, verdict working, fresh-eyes result, not-verified list | The last check before a human acts on the report. Author review misses its own blind spots; a reviewer that sees the draft scores anchors on them |
+| Step 5b: Verify | opus (+ separate fresh-context reviewer unless the verdict is RED — soft block) | Draft scorecard, cited sources, Step 5 rules; the reviewer gets the evidence and rules but not the scores | Citation fixes, verdict working, fresh-eyes result, not-verified list | The last check before a human acts on the report. Author review misses its own blind spots; a reviewer that sees the draft scores anchors on them |
 | Step 6: Present report | opus | Scores + evidence + assessor rationalization traps | Formatted risk report with per-finding explanation + concrete mitigations | Mitigation quality directly affects operator safety decisions. Domain expertise required |
 | Step 7: Record | sonnet | Complete report from Step 6, output format template | `.culiops/pre-flight/` record file (commit only per the committing rule) | Template assembly from already-validated content. Content was produced and approved at GATE 2 |

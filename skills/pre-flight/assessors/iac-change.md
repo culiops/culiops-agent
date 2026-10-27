@@ -47,6 +47,8 @@ Check whether changed resources are:
 - Shared infrastructure (database, message queue, auth/IAM, networking/VPC) → elevated
 - Single-service internal resource (app config, monitoring, logging) → lower
 
+**Disruption.** For each app-facing changed resource, state what running traffic sees: `none` / `restart` / `failover` / `replace` / `brief unavailability`. Evidence: `plan:` for in-place vs replace; `docs: <URL>` for what that attribute change does (some in-place changes still reboot or fail over a database; a pod-template change rolls pods); `live:` for what softens it (Multi-AZ, replica count, PodDisruptionBudget, rolling-update `maxUnavailable`, ECS deployment configuration). If a calling skill passed a Disruption field, cite it instead of re-deriving. Disruption not established → category 1 is ⚪, never `none`.
+
 Terraform-specific signals:
 - `# forces replacement` / `must be replaced` in plan output → the resource will be destroyed and recreated
 - `-/+` = destroy then create (gap in between); `+/-` = create before destroy
@@ -88,6 +90,11 @@ Detect destructive or irreversible actions in the plan:
 | `deletion_protection` → false, `skip_final_snapshot` → true, `prevent_destroy` removed | Yellow alone; Red if this plan or a queued follow-up destroys the resource |
 | RDS `allocated_storage` increase, EBS volume size increase, PVC storage request increase | Yellow (cannot shrink; no data loss) |
 | KMS key change on an existing encrypted resource | Read the plan — often forces replacement; score as replacement |
+| Major version upgrade of a managed service: ElastiCache, OpenSearch, MSK, an EKS / Kubernetes control plane | Red until `docs:` shows a downgrade path — treat as one-way |
+| Namespace deleted | Red, hard block when it holds PVCs or other stateful objects (everything namespaced in it goes) |
+| PVC deleted, or a PV / StorageClass with `reclaimPolicy: Delete` | Red, hard block (the volume and its data are deleted with the claim) |
+
+**The table is not a complete list.** A row can raise a score (cite `assessor:`); it never clears one. An in-place change to an attribute that is not on it is Green only with `docs: <URL>` (or `live:`) showing that re-applying the old value restores the previous state. Without that the category is ⚪. Tags, labels and annotations are exempt.
 
 **External allowlist check (IP / EIP / NAT / egress-address release).** Any `destroy` / `release` of a public IP — `aws_eip`, an EIP association, a NAT gateway (which releases its EIP), or any change that frees a public egress address — is **irreversible if a partner or external system has allowlisted that IP** in a firewall. A released EIP returns to the AWS pool; you cannot get the same address back. Before scoring this Green, confirm no external reliance: check egress history over ≥ 6 months (0 egress ⇒ no external caller depends on the source IP) and ask the operator whether any partner allowlists this address. Treat unknown as a **hard-block (Red)** until confirmed — the cost of a wrong release is a broken partner integration with no rollback.
 
@@ -106,9 +113,9 @@ Estimate MTTR by recovery path:
 
 ### Change velocity
 
-Analyze git history of the changed files on the default branch:
-- `git log --since=7.days --oneline <default-branch> -- <changed-files>` → count recent commits
-- Exclude this change's own commits (`git log <default-branch>..HEAD`) — a multi-commit PR doesn't count against itself
+Analyze git history of the changed files on the branch this change merges to (`<base>`; for per-environment branches, the environment's branch):
+- `git log --since=7.days --oneline <base> -- <changed-files>` → count recent commits
+- Exclude this change's own commits (`git log <base>..HEAD`) — a multi-commit PR doesn't count against itself
 - 0–1 commits in 7 days → **Green**
 - 2–3 commits → **Yellow**
 - 4+ commits → **Red** (high churn indicates instability or incomplete prior changes)
@@ -128,12 +135,14 @@ From the plan output, identify resources that other services consume:
 - Outputs / exported values that change or disappear → downstream consumers may break
 - Security groups, IAM roles, VPC components shared across services → scope of impact widens
 - Database instances, message queues, caches used by multiple services → shared dependency
+- Kubernetes: Services and Ingress hosts that others dial, CRDs, `ClusterRole` / `ClusterRoleBinding`s, shared ConfigMaps / Secrets / PVCs, a namespace's ResourceQuota
 
 Cross-reference with service-discovery catalog if available (`.culiops/service-discovery/<service>.md`):
 - Check `## Dependency Graph` section for downstream consumers
 - Check whether changed resources are marked as critical-path
 - If catalog shows 3+ downstream consumers → **Red**
 - If catalog shows 1–2 downstream consumers → **Yellow**
+- If catalog shows none → **Yellow**, not Green: it is a lead (`catalog:`). Green needs `code` (references to the resource's outputs, ARNs or names in the repo) or `live` (the dependents query in `examples/`) showing nothing consumes it
 - If no catalog exists → score as unknown (⚪), suggest running service-discovery. Exception: every changed resource is on the not-app-facing list (see `### Application compatibility`) and the plan changes no output / export → **Green**, citing the plan. Nothing can consume an alarm or a dashboard
 
 Check for backward-incompatible changes:
@@ -149,7 +158,7 @@ Scan the IaC code for monitoring resources related to the changed components:
 - Dashboards (CloudWatch, Grafana, Datadog) → present or absent?
 - Log group configurations → present or absent?
 
-An alarm counts only if it watches the changed resources (its namespace / metric / dimensions or label selectors point at them), not just because its name contains the service name.
+An alarm counts only if it watches the changed resources (its namespace / metric / dimensions or label selectors point at them), not just because its name contains the service name. An alarm or rule that exists only in code is `code:` evidence and scores Yellow; Green needs `live:` confirmation that it exists and is enabled (CloudWatch `ActionsEnabled`, Prometheus rule loaded).
 
 Classify alerting maturity:
 - SLO burn-rate alerting → **Green** (best practice)
@@ -171,8 +180,9 @@ Detect cost-relevant changes in the plan:
 - Cross-region replication additions: flag data transfer costs
 - NAT Gateway additions: flag hourly + per-GB data processing charges
 - Usage-based services (API Gateway, Lambda, SQS, SNS): flag if traffic volume is unknown
-- Additions that are only alarms, dashboards or metric filters are cost-**Green** (fixed, small per-unit prices). Log groups are not in this exception: ingestion and storage scale with volume
-- Decreases (scale-down, rightsizing, deletion) are cost-**Green**. Their capacity risk is scored under blast radius and resource health — don't count it twice
+- Additions that are only alarms, dashboards or metric filters are cost-**Green** when the price is looked up (the pricing page or API for the region, `docs:` or the lookup date) — a remembered "small fixed price" is not evidence. Log groups are not in this exception: ingestion and storage scale with volume
+- Decreases (scale-down, rightsizing, deletion) are cost-**Green** only when nothing they leave behind keeps billing: final or retained snapshots and backups, and committed purchases (reservations, savings plans) still bill after the resource is gone. Check `code` / `live`, or cite `docs:`; otherwise **Yellow**. Their capacity risk is scored under blast radius and resource health — don't count it twice
+- Kubernetes cost drivers: `Service` of type `LoadBalancer` or a new Ingress (provisions a cloud load balancer), a new PVC (provisions a volume), GPU requests, and replica or resource-request increases that make the autoscaler add nodes. Price the node / volume / load balancer the provider bills, with the lookup date
 
 Look prices up for the target region (AWS Price List API, the pricing calculator) and record the lookup date. Never use a remembered price — prices change and differ by region.
 
@@ -194,7 +204,7 @@ Detect security-relevant changes:
 - **Audit logging:** CloudTrail, EKS control-plane logging. Flag disabling as **Red**
 - **Secret references:** new or changed Secrets Manager / SSM ARNs, Kubernetes Secret references. Flag hardcoded secrets as **Red** — and name the location, never repeat the value
 
-A narrowing (removed action, tighter resource or condition) is Green here. Whether the app still needs what was removed is category 11, below.
+A narrowing (removed action, tighter resource or condition) is Green here only when the full before and after documents are in evidence. A diff with `# (N unchanged attributes hidden)` or a partial hunk cannot show effective access: an added `Deny`, a `NotAction`, or a changed `Principal` or `Condition` can widen it. Compare statement by statement (IAM: Effect, Action / NotAction, Resource, Principal, Condition; RBAC: verbs, resources, subjects, scope). Not comparable → ⚪. Whether the app still needs what was removed is category 11, below.
 
 ### Application compatibility
 
@@ -202,7 +212,7 @@ Category 11 is **fail-closed** (`SKILL.md` → Scoring Rules). A changed attribu
 
 - Tags / labels / annotations that nothing reads at runtime, descriptions, comments
 - Dashboards, metric filters, log groups and log retention
-- Alarms whose actions only notify: no actions, or SNS topics whose subscriptions are all `email`, `email-json` or `sms`. Check this with the subscription-protocol query in `examples/aws.md`, reading protocols only and never endpoints. An alarm action that scales (Auto Scaling or Application Auto Scaling policy), stops, reboots, terminates or recovers EC2, starts SSM automation, or reaches a `lambda`, `sqs`, `firehose`, `http(s)` or `application` subscriber changes the system, so that alarm is **app-facing**. If the subscriber protocols were not checked, treat the alarm as app-facing (unsure means triggered)
+- Alarms whose actions only notify: no actions, or SNS topics whose subscriptions are all `email`, `email-json` or `sms`. Check this with the subscription-protocol query in `examples/aws.md`, reading protocols only and never endpoints. An alarm action that scales (Auto Scaling or Application Auto Scaling policy), stops, reboots, terminates or recovers EC2, starts SSM automation, or reaches a `lambda`, `sqs`, `firehose`, `http(s)` or `application` subscriber changes the system, so that alarm is **app-facing**. If the subscriber protocols were not checked, treat the alarm as app-facing (unsure means triggered). Kubernetes equivalent: a `PrometheusRule` is notify-only only when every Alertmanager receiver it routes to is one the operator names as email, chat or paging (receiver types only — never URLs or tokens; `operator-stated`). A webhook, or anything that scales, restarts or remediates, makes it app-facing; receivers not checked → app-facing
 - Backup, snapshot and recovery-point schedules (score them under category 2)
 - Scaling counts alone: desired count, replicas, min / max size (score them under category 1)
 - IAM for humans and CI/CD roles (not a role the workload runs as)
@@ -215,7 +225,7 @@ Category 11 is **fail-closed** (`SKILL.md` → Scoring Rules). A changed attribu
 | Workload permissions removed or narrowed | task / function / instance-profile role policy, IRSA / Pod Identity role policy, resource policy (bucket, queue, key) | the ServiceAccount's role annotation, RBAC for in-cluster API calls | task role / function role ARN | the SDK call for each removed action (`sqs:SendMessage` → `SendMessage(`), the resource name / ARN |
 | Env var / config key removed, renamed, or value format changed | `environment` / `secrets` in task definitions, Lambda `environment`, SSM parameter names | `env`, `envFrom`, ConfigMap / Secret **keys**, mounted file paths | `environment`, `secrets`, Lambda `Environment` names | the old and new names (`Getenv`, `process.env`, `os.environ`, config struct tags); how the value is parsed |
 | Endpoint identity: hostname, port, path, protocol | DB / cache endpoint after replace, listener port, target-group health-check path, DNS record, queue / topic / bucket / table rename or replace | `Service` port / port name, `Ingress` path, container port, probe path | `portMappings`, `healthCheck` command / path | the host / port / path the app dials or serves; the health-check handler |
-| Engine or runtime version | `engine_version` (major), cache `engine_version`, Lambda `runtime`, OpenSearch / Kafka version | image of a sidecar or dependency chart (DB, broker) | Lambda `runtime` | driver / client library version in the lockfile (`go.mod`, `package-lock.json`, `requirements*.txt`, `pom.xml`) |
+| Engine or runtime version | `engine_version` (major), cache `engine_version`, Lambda `runtime`, OpenSearch / Kafka version | image of a sidecar or dependency chart (DB, broker) | Lambda `runtime` | driver / client library version in the lockfile (`go.mod`, `package-lock.json`, `requirements*.txt`, `pom.xml`); compatibility with the new version is a `docs:` claim (the driver's or engine's support matrix) |
 | Limits the app must fit inside | SQS visibility timeout, ALB / NLB idle timeout, DB `max_connections` (parameter group), Lambda timeout / memory / reserved concurrency, API Gateway timeout | CPU / memory limits, `terminationGracePeriodSeconds`, HPA min / max | task CPU / memory, Lambda timeout / memory | processing time, connection pool size, request timeout, shutdown handling |
 | CDN, edge and request routing | CloudFront cache behaviors (`path_pattern`, `allowed_methods`), cache policy (cache key: headers / cookies / query strings; TTLs), origin request policy, CloudFront Functions / Lambda@Edge, ALB listener rules, API Gateway routes / authorizers / stage variables, WAF rules | `Ingress` paths, rewrites and annotations, Gateway API routes, service-mesh routing | — | the routes under the pattern; whether each response depends on the user (cookies, `Authorization`, session) or on headers / query strings left out of the cache key; whether the app sets `Cache-Control` / `Vary`; HTTP methods the routes need. A cookie-dependent response under a cache key without that cookie is served to other users: also score it under category 9 |
 | Encryption key on data the app reads | KMS key change on bucket / table / queue / secret | — | — | whether the app's role can use the new key (`kms:Decrypt`) — usually an IAM check, not code |
@@ -246,11 +256,13 @@ When the operator opts into L3, run these from `examples/aws.md` / `examples/kub
 |----------|---------------|-----------------|
 | Resource health | Current error rate, CPU/memory saturation, alarms / alerts in firing state on the changed resources | Error rate > baseline, saturation > 70%, or a firing alarm → elevate resource health score. This is the only evidence that can make category 10 Green |
 | Reversibility | Backups / snapshots / versioning / PITR for stateful resources being destroyed or changed one-way | No recent recovery point → keep Red; recovery point exists → record it, the hard block still needs justification |
-| Observability readiness | Verify alarms/dashboards exist in the live system (not just in IaC) | Alarms defined in code but not present live → IaC drift, elevate observability score |
+| Blast radius | Replicas, Multi-AZ, PodDisruptionBudget, rolling-update / deployment settings | Softeners present → `live:` evidence for the Disruption field. Absent → disruption is not softened |
+| Dependency impact | Consumers of the changed resource (`examples/` → Disruption and dependents) | Any consumer → at least Yellow. None found → `live:` evidence for Green |
+| Observability readiness | Verify alarms/dashboards exist in the live system and are enabled (not just in IaC) | Alarms defined in code but not present live → IaC drift, elevate observability score. Present and enabled → `live:` evidence for Green |
 | Timing context | Current request rate vs. baseline — is this peak traffic? | Request rate > 1.5x baseline → peak traffic, elevate timing score |
 | Change velocity | Recent deployments in the last 24h; last successful apply | Multiple recent deploys → elevate change velocity score |
 | Cost impact | Current spend rate on resources being changed | Use to validate or adjust L1 cost estimate |
-| Application compatibility | For a removed permission or resource: role last-accessed, `simulate-principal-policy`, send / publish activity on the resource (`examples/aws.md` → Application Compatibility Checks) | Used recently → supports a Red found in code; unused over ≥ 30 days **and** no use in the source → Green. Live data alone never shows how the app fails |
+| Application compatibility | For a removed permission or resource: role last-accessed, `simulate-principal-policy`, send / publish activity on the resource (`examples/aws.md` → Application Compatibility Checks). For a removed Service port or Ingress path, or narrowed RBAC: traffic on that port / path over ≥ 30 days (`examples/kubernetes.md` → Application Compatibility Checks) | Used recently → supports a Red found in code; unused over ≥ 30 days **and** no use in the source → Green. Live data alone never shows how the app fails |
 
 ## Rationalization Prevention
 
@@ -266,4 +278,7 @@ When the operator opts into L3, run these from `examples/aws.md` / `examples/kub
 | "This is just a config change, not infrastructure" | STOP — config changes cause more outages than infrastructure changes. Evaluate the same 11 categories. |
 | "Scaling down saves money, so cost is Yellow" | STOP — a cost decrease is cost-Green. The risk is lost capacity: score it under blast radius and resource health. |
 | "The resource shows 0 errors, so it's healthy and needed" | STOP — 0 errors ≠ used or necessary. A resource can run error-free and still be pure waste (an idle poller). Judge resource health on useful activity, not just the absence of failures. |
+| "This attribute isn't in the one-way table, so it's reversible" | STOP — the table is a starting point. Unlisted means unchecked: find the docs for the attribute, or the category is ⚪. |
+| "It's a decrease (or a delete), so cost is Green" | STOP — final snapshots, retained backups and committed purchases keep billing. Check what it leaves behind. |
+| "The catalog lists no dependents, so nothing consumes it" | STOP — a catalog is a lead from when it was written. Confirm with code or a live query. |
 | "Releasing this Elastic IP is safe, nothing internal uses it" | STOP — a partner firewall may allowlist the public IP. Release is irreversible. Run the external-allowlist check (≥ 6mo zero egress + operator confirmation) before scoring Green. |
