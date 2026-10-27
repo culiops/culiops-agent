@@ -18,7 +18,7 @@ Apply in this order (whole private-key blocks first, then ARNs, so an account ID
 | 8 | GitHub token | `\bgh[pousr]_[A-Za-z0-9]{20,}`, `\bgithub_pat_[A-Za-z0-9_]{20,}` | `<redacted-secret>` |
 | 9 | Slack token | `\bxox[abpr]-[A-Za-z0-9-]{10,}` | `<redacted-secret>` |
 | 10 | JWT-shaped token | `eyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+`, and `Bearer \S+` | `<redacted-secret>` |
-| 11 | Inline credential | `(?i)[a-z_]*(secret\|password\|passwd\|token\|api[_-]?key)[a-z_]*["']?\s*[=:]\s*\S+` | `<redacted-secret>` |
+| 11 | Inline credential | `(?i)[a-z_]*(secret\|password\|passwd\|token\|api[_-]?key)[a-z_]*["']?\s*[=:]\s*\S+`; also Kubernetes credential material: the value of `client-key-data`, `client-certificate-data` or `certificate-authority-data` in a kubeconfig, and every value under a Secret's `data:` or `stringData:` | `<redacted-secret>` |
 | 12 | Plan, diff or state output | any `terraform plan`, diff or state text, including counts such as "1 to add, 1 to destroy" | never in a draft; summarise in words from the Change Plan. The fact table may cite counts |
 
 Examples (input then output):
@@ -35,6 +35,7 @@ Examples (input then output):
 | `ghp_EXAMPLEexampleEXAMPLE00` | `<redacted-secret>` |
 | `xoxp-EXAMPLE-only-0000` | `<redacted-secret>` |
 | `STRIPE_API_KEY=example_only_value` | `<redacted-secret>` |
+| `client-key-data: ZXhhbXBsZS1vbmx5` (kubeconfig) | `<redacted-secret>` |
 | `-----BEGIN RSA PRIVATE KEY-----` … `-----END RSA PRIVATE KEY-----` | `<redacted-secret>` |
 
 Friendly resource names (`billing-sessions`, `billing-api`) stay: a message without them is useless. Pattern 3 matches an account ID wherever it is embedded; it only requires that the digits are not part of a longer digit run.
