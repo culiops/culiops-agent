@@ -64,7 +64,7 @@ Cost items go to `iac-change-execution` one at a time. Each skill also runs on i
 - **Fails closed.** Unknown is never treated as safe. An unverified claim can't justify a delete, replace or resize, and a missing signal lowers the verdict.
 - **No company assumptions.** Nothing assumes your roles, chat or ticket tool, account layout, naming, Git host, or whether CI applies on merge.
 
-Everything a skill writes goes under `.culiops/<skill-name>/` in your repo, so it's easy to find, regenerate, or gitignore.
+Everything a skill writes goes under `.culiops/<skill-name>/` in your repo, so it's easy to find, regenerate, or gitignore. To keep records out of your repos (personal notes, sensitive output), set `CULIOPS_HOME`: skills then write to `$CULIOPS_HOME/<owner>/<repo>/<skill-name>/` and never offer to commit.
 
 ## Repository layout
 
