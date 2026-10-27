@@ -20,13 +20,15 @@ With a separate repo, the verdict came only from the live send metric (`NumberOf
 | Search | `SendMessage`, `LEDGER_QUEUE_URL`, `Getenv`, `/healthz` in the checkout |
 | Silent breakage | `main.go:48-51` logs `WARN … (non-fatal)` and returns 201. `/healthz` is a static 200. So health, 5xx and alarms stay green after apply |
 | Security vs breakage | Category 9 is Green (a narrowing). Category 11 is Red. The two are scored separately |
+| Step 5b | Verdict is RED — soft block, so fresh eyes is not required (the operator acknowledges each Red with a reason). Record line: `Fresh eyes: not required (verdict RED — soft block)` |
+| Narrowing needs the full documents | The plan shows `# (1 unchanged attribute hidden)` inside the policy, so the diff alone cannot show effective access. The after document is read in full from `infra/iam.tf:7-17` (`Version` plus one `Allow` statement; the hidden attribute is `Version`), the before document is that plus the removed statement (`plan:28-37`). Compared statement by statement: one `Allow` removed, the other unchanged, no `Deny` / `NotAction` / `Principal` / `Condition` added |
 | Live evidence for category 11 | `live:13` IAM last-accessed shows `sqs` today. `live:15` shows about 1,150 sends a day |
 
 ## Scoring
 
 | # | Category | Score | Signal |
 |---|---|---|---|
-| 1 | Blast radius | 🟢 | 1 in-place change, one role, one region (`plan:11-45`) |
+| 1 | Blast radius | 🟢 | 1 in-place change, one role, one region (`plan:11-45`). Disruption `none`: no task definition is in the plan, so nothing restarts (`plan:`); IAM changes become visible after propagation, not through a restart (`docs:` https://docs.aws.amazon.com/IAM/latest/UserGuide/troubleshoot.html, read 2026-10-27) |
 | 2 | Reversibility | 🟡 | Policy rollback is minutes. Ledger entries lost meanwhile are not restored (`app:…/main.go:48-51`) |
 | 3 | Change velocity | 🟢 | No other commits in 7 days (fixture condition) |
 | 4 | Dependency impact | 🟡 | Ledger feeds finance reconciliation (`app:…/main.go:49`). No catalog |
@@ -34,7 +36,7 @@ With a separate repo, the verdict came only from the live send metric (`NumberOf
 | 6 | Operator familiarity | 🟡 | "A few times" |
 | 7 | Observability readiness | 🔴 | No alarms in the IaC; alarm existence unverified live |
 | 8 | Cost impact | 🟢 | No new resources |
-| 9 | Security posture | 🟢 | Narrowing, explicit ARN (`plan:28-37`) |
+| 9 | Security posture | 🟢 | Narrowing, explicit ARN (`plan:28-37`); full before and after documents compared (`code:infra/iam.tf:7-17`, `plan:28-37`) |
 | 10 | Resource health | 🟢 | `live:3,7,8,9`. Does not clear category 11 |
 | 11 | Application compatibility | 🔴 | `app:cartapi-app@37df8d8:cmd/cartapi/main.go:65` still calls `SendMessage`. Silent failure at `:48-51` |
 

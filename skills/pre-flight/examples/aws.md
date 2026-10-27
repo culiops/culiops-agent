@@ -95,6 +95,17 @@ The live identity must match the target recorded in Step 1. If it doesn't, stop 
 
 ---
 
+## Disruption and dependents (categories 1 and 4)
+
+Live evidence for what softens a disruption and for what consumes the changed resource. What the *attribute change itself* does (reboot, failover, replace) comes from the AWS documentation (`docs:`), not from these reads.
+
+- RDS Multi-AZ and queued changes: `aws rds describe-db-instances --db-instance-identifier {instance} --region {region} --query 'DBInstances[].{multiAz:MultiAZ,pending:PendingModifiedValues}'`
+- ECS deployment settings: `aws ecs describe-services --cluster {cluster} --services {service} --region {region} --query 'services[].{desired:desiredCount,deploy:deploymentConfiguration}'`
+- What uses a security group (network interfaces attached to it): `aws ec2 describe-network-interfaces --filters Name=group-id,Values={sg-id} --region {region} --query 'NetworkInterfaces[].{id:NetworkInterfaceId,desc:Description,instance:Attachment.InstanceId}'`
+- What consumes a queue / stream: `aws lambda list-event-source-mappings --event-source-arn {arn} --region {region} --query 'EventSourceMappings[].{fn:FunctionArn,state:State}'`. Other consumers (containers polling the queue) are not visible here: say so, and the category stays Yellow.
+
+---
+
 ## Application Compatibility Checks (category 11)
 
 Live evidence of whether a contract the plan removes is still used. They complement the app source (Step 3b) and never replace it: use shows *that* the app calls something, only the code shows what it does when the call fails.
@@ -121,7 +132,7 @@ Live evidence of whether a contract the plan removes is still used. They complem
 
 Find alarms by what they watch, not by name — an alarm named differently from the service is still the alarm that matters.
 
-- Alarms on a metric of the changed resource: `aws cloudwatch describe-alarms-for-metric --namespace AWS/ECS --metric-name CPUUtilization --dimensions Name=ClusterName,Value={cluster} Name=ServiceName,Value={service} --region {region} --query 'MetricAlarms[].{name:AlarmName,state:StateValue}'` (repeat per namespace / metric the change touches)
+- Alarms on a metric of the changed resource: `aws cloudwatch describe-alarms-for-metric --namespace AWS/ECS --metric-name CPUUtilization --dimensions Name=ClusterName,Value={cluster} Name=ServiceName,Value={service} --region {region} --query 'MetricAlarms[].{name:AlarmName,state:StateValue,actionsEnabled:ActionsEnabled}'` (repeat per namespace / metric the change touches; `actionsEnabled: false` means the alarm will not notify, so it does not count as in place)
 - Everything currently firing in the region: `aws cloudwatch describe-alarms --state-value ALARM --region {region} --query '{metric:MetricAlarms[].{name:AlarmName,ns:Namespace,metric:MetricName,dims:Dimensions},composite:CompositeAlarms[].AlarmName}'` — then keep the ones whose dimensions reference the changed resources
 - If the team uses an alarm-name prefix convention, `--alarm-name-prefix {prefix}` is a shortcut, never the only check
 - Alarm history (last 24h): `aws cloudwatch describe-alarm-history --alarm-name {alarm} --history-item-type StateUpdate --start-date {T-24h} --end-date {now} --region {region}`

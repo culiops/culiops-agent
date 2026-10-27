@@ -1,6 +1,6 @@
 # Dry-run of `pre-flight` against `low-risk-cloudwatch-alarm`
 
-Simulated run of the 7-step skill against this fixture. Recorded on 2026-04-23; re-run 2026-10-26 against the evidence rule (live health evidence required for GREEN).
+Simulated run of the 7-step skill against this fixture. Recorded on 2026-04-23; re-run 2026-10-26 against the evidence rule (live health evidence required for GREEN); re-run 2026-10-27 against the decision-evidence rules (dated price source, live alarm check, `docs:` / `catalog:` / `assessor:` classes, fresh eyes on YELLOW).
 
 ## What the fixture exercised
 
@@ -13,19 +13,20 @@ Simulated run of the 7-step skill against this fixture. Recorded on 2026-04-23; 
 | L1 change velocity | `git log --since=7.days -- main.tf variables.tf` returned 0 commits → Green |
 | L1 dependency impact | CloudWatch alarm has no downstream consumers → Green |
 | L1 observability readiness | The change itself adds monitoring — improves observability → Green |
-| L1 cost impact | CloudWatch alarm cost: $0.10/month per alarm → negligible → Green |
+| L1 cost impact | The only new resource is an alarm, so the cost exemption applies, but only with a price lookup. AWS Price List file for `AmazonCloudWatch`, `us-east-1`, publication 2026-10-07, read 2026-10-27: `CW:AlarmMonitorUsage` (standard resolution) 0.10 USD per alarm. One alarm → negligible → Green (`plan:`, price lookup dated 2026-10-27) |
 | L1 security posture | No IAM, network, encryption, or public-access changes → Green |
 | L2 timing context | Operator answered: no incident (Q1), no freeze (Q2), not peak (Q3) → Green |
 | L2 operator familiarity | Operator answered: changed this service many times (Q4), experienced with Terraform (Q5) → Green |
 | L2 cost impact | Operator answered: negligible (Q6) → confirms L1 Green |
 | L3 target check | `aws sts get-caller-identity` account and `--region us-east-1` match the plan's target |
+| L3 alarm check (`live:4`) | `aws cloudwatch describe-alarms-for-metric` on `AWS/ECS` `CPUUtilization` for the service's dimensions, with `ActionsEnabled` in the output, returns no alarm. The plan therefore creates an alarm and overwrites none, and no existing alarm on this metric is disabled → supports categories 7 and 4 |
 | L3 resource health | Operator approved the read-only batch. `ecs describe-services` running = desired, no pending; `describe-alarms --state-value ALARM` shows nothing on `orderapi-prod` dimensions → Green (`live:2`, `live:3`) |
-| Evidence rule | Category 10 Green cites live evidence; categories 2 and 9 cite the plan |
+| Evidence rule | Category 10 Green cites live evidence; categories 1, 2, 4 and 9 cite the plan; category 8 cites the plan and the dated price lookup; category 7 cites the plan and `live:4`. No score rests on a behaviour claim, so no `docs:` page is needed: a pure alarm addition needs none |
 | Category 11 not triggered | Adding an alarm changes no app-facing attribute → Green from the plan, Q8 not asked |
 
 | Monitoring-only change | The only change is an alarm with no output / export changed, so dependency impact (4), observability readiness (7) and cost impact (8) are Green from the plan without a catalog. Before 2026-10-26 the rules forced 4 = ⚪ and 7 / 8 = Yellow, so this fixture's GREEN was unreachable |
 | Fresh eyes on GREEN | A separate reviewer, given the evidence and rules but not the scores, scored all 11 Green. One of its flags (a "missing" `alarm_description`) was rejected by citing `main.tf:10` |
-| Not verified (examples the record lists) | The apply identity used by CI (the live check proves only the operator's CLI). Whether an out-of-band alarm with the same name exists (`PutMetricAlarm` upserts). The SNS subscriber protocols: an auto-remediation Lambda or HTTPS endpoint would make the alarm app-affecting |
+| Not verified (examples the record lists) | The apply identity used by CI (the live check proves only the operator's CLI). Whether an out-of-band alarm with the same name exists on a different metric (`PutMetricAlarm` upserts; `live:4` covers only alarms on this metric). That the new alarm exists and is enabled after apply (repeat `live:4`, expect `actionsEnabled: true` and the state to leave `INSUFFICIENT_DATA`). The SNS subscriber protocols: an auto-remediation Lambda or HTTPS endpoint would make the alarm app-affecting |
 
 ## Findings and fixes applied
 
@@ -50,7 +51,9 @@ If the L3 subscription-protocol query isn't run, nothing shows the alarm is noti
 
 ### Variant: L3 declined
 
-Same inputs, operator answers "no" to L3. Category 10 → ⚪ (the operator saying "it's fine" is `operator-stated`, not evidence). 1 ⚪ caps the verdict → **YELLOW — proceed with caution**, with the mitigation "approve the L3 health checks to clear ⚪".
+Same inputs, operator answers "no" to L3. Category 10 → ⚪ (the operator saying "it's fine" is `operator-stated`, not evidence). Category 7 has no `live:4` either, so it is Yellow (an alarm that exists only in code), and the cost lookup still stands because it is a documentation lookup, not an L3 query. The ⚪ and Yellow cap the verdict at **YELLOW — proceed with caution**, with the mitigation "approve the L3 health checks to clear ⚪".
+
+Fresh eyes runs on this YELLOW verdict (it runs on everything except RED — soft block): a separate reviewer gets the plan, code and L2 answers and the rules, not the scores. The record's `## Verification` line reads `Fresh eyes: agreed` (or lists the categories it disagreed on).
 
 ## What a produced report would look like
 
@@ -63,4 +66,5 @@ Same inputs, operator answers "no" to L3. Category 10 → ⚪ (the operator sayi
 - No hard blocks, no acknowledged risks, no mitigations needed
 - L1 detail: Terraform plan adds 1 `aws_cloudwatch_metric_alarm`, 0 changes, 0 destroys. Git history shows no recent changes to these files.
 - L2 context: normal hours, no incidents, experienced operator
-- L3: target check + `ecs describe-services` + firing-alarm check (summarized results)
+- L3: target check + `ecs describe-services` + firing-alarm check + alarms on the metric with `ActionsEnabled` (`live:4`) (summarized results)
+- Cost evidence: the Price List lookup (file, region, publication date, read date)

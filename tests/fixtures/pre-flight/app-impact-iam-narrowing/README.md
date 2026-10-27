@@ -26,7 +26,7 @@ When the app code sits inside the IaC repo, the skill finds it without being ask
 
 - Say the app still calls `sqs:SendMessage` on the ledger queue, citing the app source file and line.
 - Say the failure is silent: logged as non-fatal, invisible to 5xx / health / alarms. So resource health being Green does not clear this.
-- Not score this change as safe because it narrows privilege. Narrowing IAM scores Green on security posture, but that Green says nothing about breakage.
+- Not score this change as safe because it narrows privilege. Narrowing IAM scores Green on security posture, but that Green says nothing about breakage. It is Green only because the full before and after policy documents were compared: the plan alone hides an attribute (`# (1 unchanged attribute hidden)`).
 - End with a verdict that is not GREEN, and name the mitigation: keep the statement, or change the app first and then remove it.
 
 ## A correct assessment MUST NOT
