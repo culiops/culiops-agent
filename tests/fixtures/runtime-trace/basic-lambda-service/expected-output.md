@@ -59,11 +59,11 @@ Resolved by Resource Explorer `Search` `tag:service=payments` (free) before the 
 
 *Auto-generated from sections below. Verify against tables before consuming.*
 
-- Spend attributable to tag `service=payments`: $23.02 over 30 closed days (Lambda 80.0%, DynamoDB 18.2%, SQS 1.8%). DynamoDB `payments-idempotency` is $4.18 of that; its metrics are not collected (resource type has no examples file).
-- Shared NAT / data-transfer cost is not attributable by tag; account-level context only. If any payments Lambda runs in a VPC, its outbound traffic may bill on shared infrastructure not covered by this profile.
-- Management events show who managed these resources (`PaymentsDeployRole` = CI, and `alice`). Who is configured to call them is in Wiring: API Gateway -> `payments-charge`; `payments-retry-queue` -> `payments-refund`. Data-plane callers are not observed.
-- `payments-cleanup`: no activity observed in 14d; window too short to judge periodic jobs — ask the outgoing team what payments-cleanup does.
-- No resources outside us-east-1 (aggregator-Region view with tags, indexes in 17 Regions, search complete).
+- Spend attributable to tag `service=payments`: $23.02 over 30 closed days (Lambda 80.0%, DynamoDB 18.2%, SQS 1.8%) (Spend Profile, `ce-001`). DynamoDB `payments-idempotency` is $4.18 of that; its metrics are not collected (resource type has no examples file; Gaps).
+- Shared NAT / data-transfer cost is not attributable by tag; account-level context only (Spend Profile, account-level context note; no figure). If any payments Lambda runs in a VPC, its outbound traffic may bill on shared infrastructure not covered by this profile.
+- Management events show who managed these resources (Principals table: `PaymentsDeployRole` = CI, 3 events; `alice`, 2 events). Who is configured to call them is in Wiring: API Gateway -> `payments-charge`; `payments-retry-queue` -> `payments-refund`. Data-plane callers are not observed.
+- `payments-cleanup`: no activity observed in 14d (Activity Baselines, `no-activity-14d`, no datapoints); window too short to judge periodic jobs — ask the service owner or previous owners what payments-cleanup does.
+- No resources outside us-east-1 (Cross-Region Footprint: us-east-1 count 5 of 5; aggregator-Region view with tags, indexes in 17 Regions, search complete).
 
 ## Spend Profile (Cost Explorer)
 
@@ -123,7 +123,7 @@ Principals touching this service:
 | arn:aws:iam::123456789012:role/PaymentsDeployRole | AssumedRole | 2026-05-09T14:22:25Z | 3 |
 | arn:aws:iam::123456789012:user/alice | IAMUser | 2026-05-10T09:15:11Z | 2 |
 
-Notable change events:
+Notable change events: 3 shown of 5 fetched (every `ReadOnly=false` event; `GetFunction` and `DescribeTable` are read-only); truncated: no.
 
 | Time (UTC) | Event | Principal | Resource | EventId |
 |---|---|---|---|---|
@@ -131,13 +131,13 @@ Notable change events:
 | 2026-05-09T14:22:18Z | UpdateFunctionCode | PaymentsDeployRole | payments-charge | 1a2b3c4d-... |
 | 2026-05-09T14:22:25Z | UpdateFunctionConfiguration | PaymentsDeployRole | payments-charge | 2b3c4d5e-... |
 
-`payments-cleanup` and `payments-retry-queue` have no management events in the 90-day window.
+`payments-cleanup` and `payments-retry-queue`: none found by this lookup (`ResourceName` matches only events that list the resource; Event history covers 90 days of management events in us-east-1 only). This is not evidence that nothing touched them.
 
-**Open question for the outgoing team:** are `PaymentsDeployRole` and `alice` the only expected managers of these resources?
+**Open question:** which of these principals are expected? (`PaymentsDeployRole` and `alice`; no runbook was supplied to this run.)
 
 ## Wiring (configured callers)
 
-Free, read-only calls. This block shows what is **configured** to call each resource (resource-based policies, event source mappings, queue policies), not who actually called. Identity-based grants (IAM roles with `lambda:InvokeFunction`) and EventBridge / Scheduler targets are not enumerated.
+Read-only calls (~$0.00; within free tiers). This block shows what is **configured** to call each resource (resource-based policies, event source mappings, queue policies), not who actually called. Identity-based grants (IAM roles with `lambda:InvokeFunction`) and EventBridge / Scheduler targets are not enumerated.
 
 | Target | Configured caller | Mechanism | Call ID |
 |---|---|---|---|
@@ -146,7 +146,9 @@ Free, read-only calls. This block shows what is **configured** to call each reso
 | payments-retry-queue | role `payments-charge-exec` may `sqs:SendMessage` | Queue policy (`sqs:GetQueueAttributes` Policy) | `wr-007` |
 | payments-cleanup | none found | `GetPolicy` -> ResourceNotFoundException (no resource policy); no event source mappings | `wr-003`, `wr-006` |
 
-Also read: `payments-refund` has no resource policy (`wr-002`); `payments-charge` and `payments-cleanup` have no event source mappings (`wr-004`, `wr-006`); `payments-retry-queue` has no `RedriveAllowPolicy`, so it is not configured as a dead-letter queue for other queues (`wr-007`).
+Also read: `payments-refund` has no resource policy (`wr-002`); `payments-charge` and `payments-cleanup` have no event source mappings (`wr-004`, `wr-006`); `payments-retry-queue` has no `RedriveAllowPolicy` (`wr-007`) and `sqs:ListDeadLetterSourceQueues` returned an empty list (`wr-008`), so no queue redrives into it: it is not a dead-letter queue (same-account sources only).
+
+*Permitted, not observed; "none found" is not "no callers".*
 
 ## Activity Baselines (CloudWatch)
 
@@ -166,12 +168,12 @@ Also read: `payments-refund` has no resource policy (`wr-002`); `payments-charge
 
 Verdict definitions (all thresholds are heuristics, not facts about this service):
 
-- `healthy` — `heuristic:` Lambda: Errors/Invocations < 1% and no throttles reported.
-- `draining` — `heuristic:` SQS, not a DLQ (no queue in the resolved set names it as `deadLetterTargetArn`, no `RedriveAllowPolicy`): oldest-message age returns to baseline across the window rather than rising.
+- `healthy` — `heuristic:` Lambda: Errors/Invocations < 1% and no throttles reported. It describes these two metrics only, not the service's health.
+- `draining` — `heuristic:` SQS, not a DLQ (`sqs:ListDeadLetterSourceQueues` returned an empty list, `wr-008`): oldest-message age returns to baseline across the window rather than rising.
 - `no-activity-14d` — Invocations returned no datapoints for the 14d window and `ListMetrics` lists the metric (`no-data (metric exists)`). This is an observation about a 14-day window, not a judgement about the function.
 - DynamoDB `payments-idempotency`: metrics not collected (see Gaps).
 
-**`payments-cleanup`:** the empty `Invocations` series was not read as zero. Existence check `cw-002` (`ListMetrics`, `AWS/Lambda` / `Invocations` / `FunctionName=payments-cleanup`) returned the metric, so the dimensions and Region are right. No activity observed in 14d; window too short to judge periodic jobs — ask the outgoing team what payments-cleanup does.
+**`payments-cleanup`:** the empty `Invocations` series was not read as zero. Existence check `cw-002` (`ListMetrics`, `AWS/Lambda` / `Invocations` / `FunctionName=payments-cleanup`) returned the metric, so the dimensions and Region are right. No activity observed in 14d; window too short to judge periodic jobs — ask the service owner or previous owners what payments-cleanup does.
 
 ## Cross-Region Footprint (Resource Explorer)
 
@@ -194,20 +196,22 @@ Checks that make a cross-Region claim valid:
 
 ## Gaps and Caveats
 
-- CloudTrail LookupEvents covers management events only, last 90 days. A multi-Region trail `mgmt-trail` exists (S3 archive), so older history is available there but was not queried. Data-event activity (S3 reads, Lambda invokes, SQS sends) is not visible.
-- Wiring shows configured access paths, not observed callers. Identity-based grants and EventBridge / Scheduler rules are not enumerated, so "no configured caller found" for `payments-cleanup` is not evidence that nothing invokes it.
+- CloudTrail LookupEvents covers management events only, last 90 days, per Region (`docs:` https://docs.aws.amazon.com/awscloudtrail/latest/userguide/view-cloudtrail-events.html). A multi-Region trail `mgmt-trail` exists (S3 archive), so older history is available there but was not queried. Data-event activity (S3 reads, Lambda invokes, SQS sends) is not visible.
+- Wiring shows configured access paths, not observed callers. Identity-based grants and EventBridge / Scheduler rules are not enumerated, so "no configured caller found" for `payments-cleanup` is not evidence that nothing invokes it. Same-account SQS callers can be allowed by their own IAM policy (`docs:` https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/troubleshooting-access-denied.html); same-account Lambda `InvokeFunction` through an identity policy is `UNVERIFIED`.
+- The resource set is tag-resolved: untagged or unindexed resources of the service are not in it.
+- Dead-letter status of `payments-retry-queue` covers same-account source queues only; a source queue in another account is `UNVERIFIED`.
 - Spend is tag-attributed only. Untagged or shared cost (NAT Gateway, data transfer, any untagged log ingest) is not attributable and is excluded. Credits, tax, refunds and upfront/recurring fees are excluded by record type.
 - CloudWatch baselines come from standard metrics. Custom application metrics (if any) not captured. A 14-day window cannot show monthly or quarterly jobs.
 - DynamoDB metrics not collected — resource type `dynamodb:table` has no file under `examples/aws/` in this version. Open question for follow-up.
-- Open question for outgoing team: what is `payments-cleanup` for, and how is it triggered?
-- Open question for outgoing team: is deploy role `PaymentsDeployRole` shared across services or specific to payments? Need to know before takeover.
+- Open question for the service owner or previous owners: what is `payments-cleanup` for, and how is it triggered?
+- Open question for the service owner or previous owners: is deploy role `PaymentsDeployRole` shared across services or specific to payments? Need to know before takeover.
 
 ## Glossary
 
 - **Tag-attributed spend:** cost Cost Explorer assigns to resources carrying the cost-allocation tag `service=payments`. It is not the whole bill for the service's dependencies.
 - **Four golden signals:** traffic, latency, errors, saturation (Google SRE book, Ch. 6).
-- **CloudTrail LookupEvents 90-day cap:** AWS-imposed limit on Event history. Anything older requires the trail's S3 archive (Athena), which is out of scope.
-- **Event history:** CloudTrail's default, trail-independent record of the last 90 days of management events in a Region.
+- **CloudTrail LookupEvents 90-day cap:** AWS-imposed limit on Event history. Anything older requires the trail's S3 archive (Athena), which is out of scope. (`docs:` https://docs.aws.amazon.com/awscloudtrail/latest/userguide/view-cloudtrail-events.html)
+- **Event history:** CloudTrail's default, trail-independent record of the last 90 days of management events in a Region. (`docs:` same page)
 
 ## How to re-run this analysis
 
@@ -230,7 +234,7 @@ Sidecars contain **projected fields only** (request + selected response fields; 
 | ce-001 | Cost Explorer | ce:GetCostAndUsage (SERVICE, DAILY, tag-filtered), 1 page | $0.01 | Gate 3 row 1; Gate 4 CE block |
 | ce-002 | Cost Explorer | ce:GetCostAndUsage (USAGE_TYPE, DAILY, tag-filtered), 1 page | $0.01 | Gate 3 row 2; Gate 4 CE block |
 | ct-001..005 | CloudTrail | cloudtrail:LookupEvents, 5 series x 1 page | $0.00 | Gate 3 row 3; Gate 4 CloudTrail block |
-| wr-001..007 | Wiring | lambda:GetPolicy x3, lambda:ListEventSourceMappings x3, sqs:GetQueueAttributes x1 | $0.00 | Gate 3 row 4; Gate 4 Wiring block |
+| wr-001..008 | Wiring | lambda:GetPolicy x3, lambda:ListEventSourceMappings x3, sqs:GetQueueAttributes x1, sqs:ListDeadLetterSourceQueues x1 | ~$0.00 (within free tiers) | Gate 3 row 4; Gate 4 Wiring block |
 | cw-001 | CloudWatch | cloudwatch:GetMetricData, 23 metrics | $0.00023 | Gate 3 row 5; Gate 4 CloudWatch block |
 | cw-002 | CloudWatch | cloudwatch:ListMetrics (existence check, 1 request) | $0.00 (free tier) | Gate 3 row 6 (conditional); Gate 4 CloudWatch block |
 

@@ -13,13 +13,13 @@
 Same as basic-lambda-service except:
 
 1. GATE 1a — `ListIndexes` returns `{"Indexes": []}`; no `GetIndex` / `ListViews` / `GetView` follow-ups.
-2. Gate 2 — RE ✗, resolution fallback ✓.
+2. Gate 2 — RE ✗, resolution fallback `untested` (no probe).
 3. Step 2b — `tag:GetResources` (`tg-001`) instead of `resource-explorer-2:Search` (`re-001`).
 4. Gate 4 — four source blocks (CE, CloudTrail, Wiring, CloudWatch).
 
 ## Acceptance check
 
-- Capability matrix shows RE as "— skipped" and the tagging-API fallback as ✓.
+- Capability matrix shows RE as "— skipped" and the tagging-API fallback as `untested` (never ✓ without a probe).
 - The resolved resource set is present and sourced from `tg-001`.
 - Cross-Region section says "not verifiable" and offers the three options; the phrases "none outside primary Region" and "no cross-region drift" do not appear.
 - Skill never proposes enabling RE as something it will do itself.

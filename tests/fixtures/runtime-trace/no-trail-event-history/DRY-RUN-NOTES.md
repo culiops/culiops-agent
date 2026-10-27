@@ -13,7 +13,7 @@
 
 1. Gate 1 — operator inputs accepted.
 2. GATE 1a — `DescribeTrails` returns `{"trailList": []}`; `LookupEvents` (1 page) succeeds; the remaining probes as in basic-lambda-service.
-3. Gate 2 — capability matrix: CloudTrail ✓ ("Event history only; no trail configured"). No "proceed without CloudTrail?" question.
+3. Gate 2 — capability matrix: CloudTrail ✓ probed ("Event history only; no trail configured"). No "proceed without CloudTrail?" question.
 4. Step 2b / Gate 3 — as basic-lambda-service; plan includes the CloudTrail rows.
 5. Gate 4 — four source blocks: CE, CloudTrail, Wiring, CloudWatch.
 6. Gate 5 / Gate 6 — as basic-lambda-service.

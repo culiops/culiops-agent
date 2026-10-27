@@ -36,7 +36,7 @@ Resolved at Step 2b (`re-001`): 6 resources. 5 in us-east-1 (as in basic-lambda-
 
 - *(carry over basic-lambda-service items)*
 - **Cross-Region scope:** Resource Explorer surfaced 1 resource in us-west-2. CloudTrail Event history, Wiring reads and CloudWatch queries were run in us-east-1 only; control-plane events, configured callers and activity baselines for `payments-archive` are NOT captured in this profile. **Re-run with `--region us-west-2` or expand the scoping primitive to cover it.**
-- Open question for outgoing team: is `payments-archive` in us-west-2 in scope for the takeover? Why us-west-2?
+- Open question for the service owner or previous owners: is `payments-archive` in us-west-2 in scope for the takeover? Why us-west-2?
 
 ---
 

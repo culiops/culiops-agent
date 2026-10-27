@@ -1,5 +1,5 @@
 {
-  "_note": "Wiring block: free, read-only calls (lambda:GetPolicy, lambda:ListEventSourceMappings, sqs:GetQueueAttributes). They show what is CONFIGURED to call each resource, not who actually called. Region us-east-1. A ResourceNotFoundException from lambda:GetPolicy is the normal answer for a function with no resource-based policy: it is recorded as 'none', it is NOT an API failure and does not trigger the stop-on-error rule.",
+  "_note": "Wiring block: free, read-only calls (lambda:GetPolicy, lambda:ListEventSourceMappings, sqs:GetQueueAttributes, sqs:ListDeadLetterSourceQueues). They show what is CONFIGURED to call each resource, not who actually called. Region us-east-1. A ResourceNotFoundException from lambda:GetPolicy is the normal answer for a function with no resource-based policy: it is recorded as 'none', it is NOT an API failure and does not trigger the stop-on-error rule.",
   "wr-001": {
     "api": "lambda:GetPolicy",
     "request": {"FunctionName": "payments-charge"},
@@ -52,6 +52,12 @@
         "Policy": "{\"Version\":\"2012-10-17\",\"Statement\":[{\"Sid\":\"charge-send\",\"Effect\":\"Allow\",\"Principal\":{\"AWS\":\"arn:aws:iam::123456789012:role/payments-charge-exec\"},\"Action\":\"sqs:SendMessage\",\"Resource\":\"arn:aws:sqs:us-east-1:123456789012:payments-retry-queue\"}]}"
       }
     },
-    "interpreted_as": "queue policy grants SendMessage to role payments-charge-exec; no RedriveAllowPolicy -> not configured as a DLQ for other queues"
+    "interpreted_as": "queue policy grants SendMessage to role payments-charge-exec; no RedriveAllowPolicy; DLQ status is decided by wr-008"
+  },
+  "wr-008": {
+    "api": "sqs:ListDeadLetterSourceQueues",
+    "request": {"QueueUrl": "https://sqs.us-east-1.amazonaws.com/123456789012/payments-retry-queue"},
+    "response": {"queueUrls": []},
+    "interpreted_as": "empty list -> no queue redrives into payments-retry-queue (same-account sources only) -> not a dead-letter queue"
   }
 }

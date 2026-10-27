@@ -17,7 +17,7 @@ Same as basic-lambda-service.
 ## Expected gate behavior
 
 - **GATE 1a:** `DescribeTrails` -> `{"trailList": []}` (free, informs the Gap only). `LookupEvents` with `MaxResults=1` returns an event (this is the capability test). Everything else as in basic-lambda-service.
-- **Gate 2:** capability matrix shows CloudTrail ✓ with the note "Event history only; no trail configured". The operator is NOT asked whether to proceed without CloudTrail.
+- **Gate 2:** capability matrix shows CloudTrail ✓ probed with the note "Event history only; no trail configured". The operator is NOT asked whether to proceed without CloudTrail.
 - **Step 2b / Gate 3:** unchanged from basic-lambda-service; the plan keeps the 5 CloudTrail `LookupEvents` series (free). Plan estimate and projected total are the same as basic ($0.0202 / $0.0302).
 - **Gate 4:** four source blocks (CE, CloudTrail, Wiring, CloudWatch). CloudTrail returns the same events as basic-lambda-service.
 - **Output:** "Control-Plane Activity (CloudTrail)" is populated normally. "Gaps and Caveats" carries: "no trail configured: history older than 90 days and data events are not available".

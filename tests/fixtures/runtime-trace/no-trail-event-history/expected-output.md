@@ -35,7 +35,7 @@ Principals touching this service:
 | arn:aws:iam::123456789012:role/PaymentsDeployRole | AssumedRole | 2026-05-09T14:22:25Z | 3 |
 | arn:aws:iam::123456789012:user/alice | IAMUser | 2026-05-10T09:15:11Z | 2 |
 
-Notable change events:
+Notable change events: 3 shown of 5 fetched (every `ReadOnly=false` event); truncated: no.
 
 | Time (UTC) | Event | Principal | Resource | EventId |
 |---|---|---|---|---|

@@ -14,7 +14,7 @@ For each ECS service in scope, the skill fetches these metrics.
 
 **Verdict heuristic:**
 
-- `no-activity-14d` — `RunningTaskCount` average is 0 throughout the window. If Container Insights is off (`RunningTaskCount` → `metric-not-found`), the verdict comes from `AWS/ECS` CPU alone: CPU datapoints present → tasks were running; none → `unknown` (log gap: "Container Insights not enabled").
+- `no-activity-14d` — `RunningTaskCount` average is 0 throughout the window. This means **no tasks ran**, not "no traffic": a service with tasks running and no requests is not detected here (read the load balancer or API rows). If Container Insights is off (`RunningTaskCount` → `metric-not-found`), the verdict comes from `AWS/ECS` CPU alone: CPU datapoints present → tasks were running; none → `unknown` (log gap: "Container Insights not enabled").
 - `heuristic: healthy` — peak CPU < 80% and peak Memory < 80%.
 - `heuristic: saturated` — peak CPU ≥ 80% OR peak Memory ≥ 80%.
 - `unknown` — CPU and memory both `metric-not-found`.
