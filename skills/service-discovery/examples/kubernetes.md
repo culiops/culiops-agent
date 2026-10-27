@@ -175,7 +175,7 @@ The skill uses `helm list` and `helm history` (when allowed) and the label fallb
 
 ## GitOps (ArgoCD / Flux)
 
-If the cluster is managed by ArgoCD or Flux, the **desired state** lives in Git, not in `helm`/`kubectl apply`. Inspect both the GitOps controller and the cluster state. Owner signals: ArgoCD label `argocd.argoproj.io/instance` or annotation `argocd.argoproj.io/tracking-id`; Flux labels `kustomize.toolkit.fluxcd.io/name` and `helm.toolkit.fluxcd.io/name`.
+If the cluster is managed by ArgoCD or Flux, the **desired state** lives in Git, not in `helm`/`kubectl apply`. Inspect both the GitOps controller and the cluster state. Owner signals and their caveats: see "Owner detection" in `cloud-discovery/kubernetes.md`.
 
 - ArgoCD: `argocd app list` / `argocd app history {app}` (requires ArgoCD CLI + login)
 - ArgoCD app detail — **terminal only** (can print Helm parameters): `argocd app get {app}`
@@ -201,7 +201,7 @@ Listed here so runbooks can reference a known mutation by name. **Each is `MUTAT
 - `kubectl --context {context} scale deploy/{deployment} --replicas={n}` — changes capacity
 - `kubectl --context {context} rollout restart deploy/{deployment}` — rolls all pods
 - `kubectl --context {context} rollout undo deploy/{deployment} --to-revision={n}` — reverts to prior version
-- `kubectl --context {context} delete pod/{pod}` — evicts a single pod (blast radius usually small, but approve)
+- `kubectl --context {context} delete pod/{pod}` — removes one pod; the impact depends on the workload's replica count and any PodDisruptionBudget (state both from the catalog or `UNVERIFIED`)
 - `kubectl --context {context} drain {node}` — evicts all pods from a node
 - `kubectl --context {context} cordon {node}` / `uncordon {node}` — pause/resume scheduling
 - `kubectl --context {context} apply -f ...` / `kubectl --context {context} edit ...` / `kubectl --context {context} patch ...` — any spec change

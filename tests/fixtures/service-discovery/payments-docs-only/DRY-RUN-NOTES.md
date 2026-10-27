@@ -1,6 +1,6 @@
 # Dry-run of `service-discovery` against `payments-docs-only`
 
-Simulated run of the real-discovery path against this fixture. First recorded 2026-04-24; re-run 2026-10-26 for the membership/absence rules, the Medium cap on document hints, the probe-batch gate, secrets by projection and the Mermaid + unknown-region cases.
+Simulated run of the real-discovery path against this fixture. First recorded 2026-04-24; re-run 2026-10-26 for the membership/absence rules, the Medium cap on document hints, the probe-batch gate, secrets by projection and the Mermaid + unknown-region cases; re-run 2026-10-27 for the same-identifier rule for High, the derived-pattern rule for membership, `declared` vs `observed` envelopes and edge bases.
 
 ## Goal
 
@@ -15,7 +15,7 @@ Validate the real-discovery workflow end-to-end: no IaC in the repo, only docume
 | Structured diagram parsing (Mermaid) | `flows.mmd` matched by `doc-detectors/mermaid.md` — 5 resource nodes, 1 external `Client` node, 5 edges (one dotted), no subgraph, no region |
 | Text keyword extraction | `runbook.md` matched by `doc-detectors/markdown.md` — 5 resource mentions, account ID, two candidate regions, 6 CloudWatch alarm names, 1 SNS topic, 1 secret name, incident procedures |
 | Image vision (simulated) | `infra-overview.png` matched by `doc-detectors/image.md` — placeholder 1x1 PNG; vision would extract resource boxes and arrows from a real diagram |
-| Document hints capped at Medium | Every doc-derived hint is at most Medium (the draw.io nodes are no longer High); only a live match raises a row to High |
+| Document hints capped at Medium | Every doc-derived hint is at most Medium (the draw.io nodes are no longer High); only a live match on the **same identifier** raises a row to High. A match on name or type alone stays Medium with the `name-match-only` flag |
 | Region unknown → ask | `flows.mmd` has no region; `runbook.md` names `us-east-1` (normal) and `us-west-2` (failover drills) without saying which serves; the profile has no default region → the skill asks the operator |
 | Probe batch approved before running | `sts get-caller-identity` and `configure get region` are listed and approved before any call |
 | Converging discovery merge | Document hints (Seed A: 5 unique) merged with cloud results (Seed B); exercises membership signals and every flag |
@@ -151,7 +151,7 @@ Cloud context: provider AWS; account `123456789012`; region **unresolved** (see 
 |----------|--------|--------|
 | `payments-dlq` | tag `service=payments` (the service tag key) | joins inventory, `undocumented` |
 | `payments-db-ro-1..3` | referenced by confirmed `payments-db` (`ReadReplicaSourceDBInstanceIdentifier`) | join inventory, `undocumented` |
-| `analytics-db` | none: no `service` tag, name outside the confirmed `payments-<component>` pattern, no reference from a confirmed resource | **Unattributed — operator assigns** (not in the inventory) |
+| `analytics-db` | none: no `service` tag, name outside the `payments-<component>` pattern (derived only from rows 1-5, which carry the `service=payments` tag found by Q1), no reference from a confirmed resource | **Unattributed — operator assigns** (not in the inventory) |
 
 **Absence classification:**
 
@@ -163,13 +163,22 @@ Cloud context: provider AWS; account `123456789012`; region **unresolved** (see 
 
 | # | Resource | Type | Source | Confidence | Flag |
 |---|----------|------|--------|------------|------|
-| 1 | `payments-alb` | ALB | docs + cloud | **High** | |
+| 1 | `payments-alb` | ALB | docs + cloud | **Medium** | `name-match-only` |
 | 2 | `payments-api` | ECS Fargate | docs + cloud | **High** | |
 | 3 | `payments-db` | RDS PostgreSQL 15 | docs + cloud | **High** | |
-| 4 | `payments-cache` | ElastiCache Redis 7 | docs + cloud | **High** | |
+| 4 | `payments-cache` | ElastiCache Redis 7 | docs + cloud | **Medium** | `name-match-only` |
 | 5 | `payments-dlq` | SQS Queue | cloud only (tag) | **Medium** | `undocumented` |
 | 6-8 | `payments-db-ro-1..3` | RDS read replica | cloud only (reference) | **Medium** | `undocumented` |
 | 9 | `payments-legacy-worker` | EC2 | docs only | **Low** | `documented-not-found` |
+
+Identifier check behind the confidence column. The documents give names, never ARNs, so a match counts as the same identifier only where the document's parts plus the confirmed account and region determine the ARN:
+
+| Row | Determined ARN | Cloud ARN | Result |
+|-----|----------------|-----------|--------|
+| `payments-api` | `arn:aws:ecs:us-east-1:123456789012:service/payments-prod/payments-api` (account, cluster and name from `runbook.md`; region confirmed at Gate 4) | same | High |
+| `payments-db` | `arn:aws:rds:us-east-1:123456789012:db:payments-db` (account and name from `runbook.md`) | same | High |
+| `payments-alb` | not determined: the ARN ends in a hash no document states | `…loadbalancer/app/payments-alb/abc123` | Medium, `name-match-only` |
+| `payments-cache` | not determined: the runbook describes a replication group, Q1 returned a cache-cluster ARN | `…:cluster:payments-cache` | Medium, `name-match-only` |
 
 Unattributed — operator assigns: `analytics-db` (RDS, `arn:aws:rds:us-east-1:123456789012:db:analytics-db`).
 
@@ -196,11 +205,11 @@ Every command is projected (`--query`) and carries `--profile payments-ro --regi
 - **`payments-dlq` holds 14,200 messages** and nothing allows a redrive back to a source queue.
 - **SNS `payments-alerts` → PagerDuty** (HTTPS subscription): outside the service boundary, recorded as a boundary dependency.
 
-**Dependency walking:**
+**Dependency walking** (each edge is `live:` from the enrichment commands above; whether an edge is on the synchronous request path is labelled `inferred` until the operator confirms it, and the operator confirmed the trees at Gate 7):
 
-- ALB → ECS service (target group membership): critical path
-- ECS → RDS (security group rule allowing 5432): critical path
-- ECS → ElastiCache (security group rule allowing 6379): critical path
+- ALB → ECS service (target group membership): critical path, `inferred`
+- ECS → RDS (security group rule allowing 5432): critical path, `inferred` (a rule shows allowed traffic, not a call)
+- ECS → ElastiCache (security group rule allowing 6379): critical path, `inferred`
 - ECS → Secrets Manager (task-definition secret reference `payments/prod/db-credentials`, value never read): critical path (startup dependency)
 - ECS → ECR (image pull): critical path (deployment dependency)
 - RDS primary → 3 read replicas
@@ -225,7 +234,7 @@ Zero IaC tools, four document formats matched, real-discovery offered at a gate.
 
 ### F2 — Hint deduplication across four source types works
 
-The four core resources appear in all four sources (draw.io, Mermaid, runbook, image) and the legacy worker in two (runbook, Mermaid). The consolidation yields **5 unique hints**: four core at Medium (documents alone never reach High) and the legacy worker at Medium.
+The four core resources appear in all four sources (draw.io, Mermaid, runbook, image) and the legacy worker in two (runbook, Mermaid). The consolidation yields **5 unique hints**: four core at Medium (documents alone never reach High) and the legacy worker at Medium. After the cloud merge, two of the four reach High (same identifier) and two stay Medium (`name-match-only`).
 
 ### F3 — `documented-not-found` handling works as designed
 
@@ -263,14 +272,14 @@ No source settles the region (profile empty, `flows.mmd` silent, runbook names t
 - Header: discovery source=real-discovery, date=2026-10-26, cloud context=AWS / `123456789012` / `us-east-1`, documents used=`architecture.drawio`, `flows.mmd`, `runbook.md`, `infra-overview.png`.
 - `## Overview` — payment processing API, discovered via real-discovery (documents + live cloud APIs), runs on ECS Fargate in us-east-1.
 - `## Prerequisites` — `aws` CLI v2; auth via `aws sso login` or IAM credentials; least-privilege: scoped read (ECS, RDS, ElastiCache, SQS attributes, ELBv2, CloudWatch, EC2 describe, SNS list) **without** `secretsmanager:GetSecretValue`; mutations listed (ECS service update, RDS failover — both flagged `MUTATION`).
-- `## Resource Inventory` — 8 rows (4 High, 4 Medium/undocumented):
+- `## Resource Inventory` — 8 rows (2 High, 6 Medium: 2 `name-match-only`, 4 `undocumented`):
 
   | Category | Type | Name | Confidence | Flag | Source | Owner |
   |----------|------|------|------------|------|--------|-------|
-  | network | ALB | `payments-alb` | High | | docs + cloud | cloudformation (`payments-edge`) |
+  | network | ALB | `payments-alb` | Medium | `name-match-only` | docs + cloud | cloudformation (`payments-edge`) |
   | compute | ECS Fargate | `payments-api` | High | | docs + cloud | unknown |
   | database | RDS PostgreSQL 15 | `payments-db` | High | | docs + cloud | unknown |
-  | database | ElastiCache Redis 7 | `payments-cache` | High | | docs + cloud | unknown |
+  | database | ElastiCache Redis 7 | `payments-cache` | Medium | `name-match-only` | docs + cloud | unknown |
   | database | RDS read replica | `payments-db-ro-1`, `-ro-2`, `-ro-3` | Medium | `undocumented` | cloud only | unknown |
   | messaging | SQS Queue | `payments-dlq` | Medium | `undocumented` | cloud only | cloudformation (`payments-async`) |
 
@@ -278,8 +287,8 @@ No source settles the region (profile empty, `flows.mmd` silent, runbook names t
 
 - `## Naming Patterns` — `payments-<component>` detected from actual resource names.
 - `## Identifying Dimensions` — ECS cluster name, RDS Multi-AZ status and replica number, Fargate task revision, image tag.
-- `## Dependency Graph` — ALB → ECS (critical path), ECS → RDS (critical path), ECS → ElastiCache (critical path), ECS → Secrets Manager `payments/prod/db-credentials` (startup, name only), RDS → 3 replicas, CloudWatch → SNS → PagerDuty (boundary). `payments-dlq` has no inbound edge from any confirmed resource — recorded as isolated.
-- `## Signal Envelopes` — from the CloudWatch alarm thresholds found in enrichment (5xx rate > 1%, p99 > 2000ms, DB connections > 80%, DB CPU > 80%, cache memory > 75%, cache evictions > 100/min).
+- `## Dependency Graph` — ALB → ECS (critical path, `inferred`), ECS → RDS (critical path, `inferred`), ECS → ElastiCache (critical path, `inferred`), ECS → Secrets Manager `payments/prod/db-credentials` (startup, name only), RDS → 3 replicas, CloudWatch → SNS → PagerDuty (boundary). `payments-dlq` has no inbound edge from any confirmed resource — recorded as isolated.
+- `## Signal Envelopes` — `declared`: the CloudWatch alarm definitions read in enrichment (5xx rate > 1%, p99 > 2000ms, DB connections > 80%, DB CPU > 80%, cache memory > 75%, cache evictions > 100/min). No `observed` entries: enrichment read configuration and alarm definitions, not metric statistics, so there is no baseline to record.
 - `## Investigation Runbooks` — 3 trees: "payment requests slow", "payment requests erroring", "DLQ messages accumulating".
 - `## Stack-Specific Tooling` — `examples/aws.md`; PagerDuty as "ask the team".
 - `## Unresolved References` — `payments-legacy-worker` (EC2): "Referenced in `runbook.md` and `flows.mmd` as 'being migrated to ECS'. `not-found (queried 123456789012/us-east-1)`: the documented instance ID `i-0abc123def456789a` does not exist there. May be decommissioned, renamed, or in another account/region."

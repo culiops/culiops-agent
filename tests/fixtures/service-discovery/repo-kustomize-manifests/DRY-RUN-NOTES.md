@@ -1,6 +1,6 @@
 # Dry-run of `service-discovery` against `repo-kustomize-manifests`
 
-Simulated run of the IaC path against this fixture, 2026-10-26. This is the first fixture for the raw-manifests detector (`tool-detectors/kubernetes.md`) and for Kustomize `secretGenerator` handling.
+Simulated run of the IaC path against this fixture, 2026-10-26; re-run 2026-10-27 for the deployed-ref, membership, edge-basis and mutation-route rules. This is the first fixture for the raw-manifests detector (`tool-detectors/kubernetes.md`) and for Kustomize `secretGenerator` handling.
 
 ## What the fixture exercised
 
@@ -58,9 +58,17 @@ Naming pattern: `notifier-<component>` (labels `app.kubernetes.io/name=notifier`
 - Upstream (cross-stack, not chased): Secret `notifier-worker-secrets` (not in repo); SQS queue `notifier-jobs` (from `QUEUE_URL`, a cloud resource outside the stack); SMTP host `smtp.example.internal` (config value); Argo CD itself (`argocd` namespace) as the deployer of the worker; container registry `registry.example.com`.
 - The Argo CD `Application` is recorded as the deploy unit, with `repoURL` (no userinfo to strip), `path`, `targetRevision: main` and destination `notifier-jobs`; `syncPolicy.automated` (prune, selfHeal) is noted because it means live drift is auto-reverted.
 
+### Evidence rules (re-run 2026-10-27)
+
+- **Deployed ref** *(Gate 1)*: for the worker it is `main`, from `code: argocd/worker.yaml:10` (`targetRevision`). For `overlays/prod` nothing in the repo shows it (the same gap as the open question above), so it is `UNVERIFIED`; the operator is asked and the answer is recorded `operator-stated`, or the stamp keeps `UNVERIFIED` if nobody knows. `git status --short` is shown at the gate.
+- **Membership** *(Gate 2)*: not asked. Every row is named `notifier-<component>` and carries the label `app.kubernetes.io/name: notifier` (`base/deployment.yaml:6`, `manifests/worker/deployment.yaml:6`). Recorded `membership: single prefix notifier, code:base/deployment.yaml:6, manifests/worker/deployment.yaml:6`; Unattributed: none.
+- **Owner** is read from the repo (the Argo CD `Application` for the worker, the overlay for the API), as before. No live labels are read in this run, so the Argo CD / Helm label rules for live objects do not apply.
+- **Edges** *(Gate 3)*: the worker's links (Secret, SQS queue, SMTP host) are `code:` for the reference. Whether the SMTP host and queue are on a synchronous path is not shown, so each is `critical-path: unknown` until confirmed. `Downstream: none found in this repo — consumers in other repos / stacks are not visible`.
+- **Mutation steps in runbooks** *(Gate 4)*: the worker is owned by Argo CD with `selfHeal: true` (`argocd/worker.yaml:18`), so a hand `kubectl scale` is reverted at the next sync (`docs: https://argo-cd.readthedocs.io/en/stable/user-guide/auto_sync/`). The first route is a Git change to `replicas` in `manifests/worker/deployment.yaml:9`; the direct command is a labelled emergency option. The blast radius of a restart cites the Kubernetes docs fetched in the session and the limiters from code (replicas 3 for the worker, 4 for the API at `overlays/prod/patch-replicas.yaml:6`); no PodDisruptionBudget is in this repo and no live check ran, so where the docs or the PDB state are missing the step reads `blast radius UNVERIFIED — assume the whole service`.
+
 ### Steps 4-5: runbooks and catalog
 
-Runbooks and the catalog follow the usual structure (not reproduced). The catalog's Resource Inventory is the table above; Stack-Specific Tooling is `examples/kubernetes.md`; Assumptions and Caveats lists: `secrets.env` not opened, `${IMAGE_TAG}` unresolved, API overlay deploy unit unknown, live verification not performed.
+Runbooks and the catalog follow the usual structure (not reproduced). The catalog's Resource Inventory is the table above; Stack-Specific Tooling is `examples/kubernetes.md`; Assumptions and Caveats lists: `secrets.env` not opened, `${IMAGE_TAG}` unresolved, API overlay deploy unit and deployed ref unknown, live verification not performed, Unattributed: none, and the **Completeness** line (the inventory lists what the code declares; resources created outside it are not listed). The stamp carries `Working tree` and `Deployed ref` lines.
 
 ## Acceptance checks
 
@@ -73,3 +81,6 @@ Runbooks and the catalog follow the usual structure (not reproduced). The catalo
 7. `API_TOKEN` appears as `<set in manifests/worker/configmap.yaml:11>`.
 8. `${IMAGE_TAG}` is listed as unresolved; no value is invented.
 9. No `kubectl get secret`, no `-o yaml`, and `kubectl kustomize overlays/prod` is **not** run: rendering would read `secrets.env` and emit a Secret with its values. The inventory is built statically from `kustomization.yaml`, the base and the patch.
+10. The worker's runbook mutation steps name the Argo CD owner and give a Git change first; any `kubectl scale` is labelled as an emergency option, with the Argo CD auto-sync docs cited.
+11. No blast radius is stated from memory: each cites docs plus code, or reads `blast radius UNVERIFIED — assume the whole service`.
+12. The membership question is not asked (single prefix `notifier`); the catalog records why.

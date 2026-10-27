@@ -36,6 +36,7 @@ Apply the Secret-bearing files rule to every source above.
 
 ## Resource extraction
 - Rendering: `helm template` is allowed ONLY as a local, read-only render with the instance's values files; its output is projected before use (kind / name / namespace + non-secret fields; Secret objects names and keys only). `helm get *`, `helm install`, `helm upgrade`, `helm rollback` and `helm uninstall` are forbidden.
+- `helm template` renders locally and fakes in-cluster lookups (`docs: https://helm.sh/docs/helm/helm_template/`, read 2026-10-27), so a field that depends on `lookup` is unresolved, not the rendered value. Pass no flag that contacts a cluster (`--dry-run=server` does).
 - If `helm template` is unavailable or not approved, extract statically from `templates/` and mark every `{{ }}`-dependent field unresolved.
 - Each rendered Kubernetes resource → one inventory entry; raw type is `<apiVersion>/<kind>` (e.g., `apps/v1/Deployment`, `v1/Service`)
 - `Chart.yaml` `dependencies:` (Helm 3) or `requirements.yaml` (Helm 2) → sub-chart references; chase only if the sub-chart is bundled in `charts/`
