@@ -68,7 +68,7 @@ Retention above the 24h default is billed (provisioned: `extended_retention_shar
 
 ## Evidence thresholds — lever (c): switch `StreamMode` (Principle 2 cost-direction)
 
-This is the textbook Principle 2 case. **Never assume direction.** One mode switch per 24h per stream.
+This is the textbook Principle 2 case. **Never assume direction.** Mode switches are rate-limited per stream; read the current limit in the docs before relying on it (docs: https://docs.aws.amazon.com/streams/latest/dev/how-do-i-size-a-stream.html).
 
 Compute steps (mandatory before recommending the switch):
 
@@ -96,13 +96,13 @@ Compute steps (mandatory before recommending the switch):
 
 | Signal | Query | Effect |
 |--------|-------|--------|
-| Hours since last mode switch (CloudTrail `UpdateStreamMode`, management event, 90d) | `cloudtrail lookup-events` | < 24 → defer the switch (rate-limited), not a 🚫 |
+| Hours since last mode switch (CloudTrail `UpdateStreamMode`, management event, 90d) | `cloudtrail lookup-events` | inside the documented rate-limit window → defer the switch (rate-limited), not a 🚫 |
 | Producers using `ExplicitHashKey` / shard-aware partitioning | operator / code | present → Blast 🟡; verify routing assumptions after the switch |
 
 ## Reversibility classification
 - **Lever (a) shard count:** 🟢 reversible — `update-shard-count` reshards back. ~minutes.
 - **Lever (b) retention reduction:** 🔴 — records older than new retention are immediately deleted, irrecoverable. Reversibility classifies the **action**, not the parameter; this lever is 🔴 even though the parameter can be re-raised.
-- **Lever (c) mode switch:** 🟡 — fully reversible but rate-limited to one switch per 24h. Rollback waits.
+- **Lever (c) mode switch:** 🟡 — reversible but rate-limited per stream (see the Principle 2 section above for the docs link). A rollback may have to wait for the window.
 
 **Default for the composed playbook:** 🟡 — the playbook's reversibility is the most restrictive lever in the operator's chosen set. If only lever (a) is proposed: 🟢. If lever (b) is included: 🔴. If only lever (c): 🟡.
 
@@ -114,6 +114,6 @@ Compute steps (mandatory before recommending the switch):
 "Per-lever rollback:
 - **Shard count:** `aws kinesis update-shard-count --target-shard-count <original> --scaling-type UNIFORM_SCALING`. Takes minutes; consumer offsets preserved via shard close/open semantics.
 - **Retention:** `aws kinesis increase-stream-retention-period --retention-period-hours <original>` — but records deleted during the reduction window are NOT restored. There is no records-side undo.
-- **Mode switch:** `aws kinesis update-stream-mode --stream-arn <arn> --stream-mode-details StreamMode=<original>`. Must wait 24h since last switch.
+- **Mode switch:** `aws kinesis update-stream-mode --stream-arn <arn> --stream-mode-details StreamMode=<original>`. Subject to the same rate limit.
 
 **Principle 2 reminder:** the cost-direction math in lever (c) is computed against bill-derived rates (or Pricing API) × observed utilization. If either changes materially (regional repricing, workload shape shift), rerun the math before reapplying any mode change. The cheaper mode flips; the operator should set a calendar reminder to recompute quarterly if the workload is in the marginal band (p99/avg ratio 2–5)."

@@ -25,7 +25,7 @@ An Elastic IP has **no activity metric**: nothing measures traffic "through" an 
 2. NLB static-IP references: `aws elbv2 describe-load-balancers --query 'LoadBalancers[?AvailabilityZones[?LoadBalancerAddresses[?AllocationId==`<eipalloc-id>`]]].LoadBalancerArn'` (per region). NAT Gateway use: `aws ec2 describe-nat-gateways --filter Name=nat-gateway-address.allocation-id,Values=<eipalloc-id>` (verify filter name).
 3. `aws route53 list-hosted-zones` (public and private), then per zone list ALL records (paginate: `aws route53 list-resource-record-sets --hosted-zone-id <zone-id>`) and match client-side `Type == A` records whose `ResourceRecords[].Value` equals the `PublicIp`. No server-side contains filter exists.
 4. (Optional) idle duration: `aws cloudtrail lookup-events --lookup-attributes AttributeKey=ResourceName,AttributeValue=<eipalloc-id> --start-time <now-90d>` — last `DisassociateAddress` / first `AllocateAddress` (free, management events, 90 days max; verify that these events record the allocation ID as a resource, otherwise ⚪). No events in 90d while currently unassociated ⇒ unassociated for the whole 90d.
-5. External DNS and third-party allowlists (partner firewalls, SaaS IP allowlists, hardcoded configs) **cannot be swept by this skill.** Record a Gap; ask the owner. An `operator-stated` "no external allowlist" is accepted, citing who said so.
+5. External DNS and third-party allowlists (partner firewalls, SaaS IP allowlists, hardcoded configs) **cannot be swept by this skill.** Record a Gap; ask the owner. An `operator-stated` "no external allowlist" is recorded, citing who said so, but it does not clear the idle-ambiguous route: only the owner's answer to the dev-note does (Law 3).
 
 ## Evidence thresholds
 
@@ -43,7 +43,7 @@ There is no 🚫 trigger: no activity signal exists to observe.
 | Route53 A record to the IP | 3 | ≥ 1 → Blast 🔴 (a record to an unassociated IP is already broken or stale — owner decides) |
 | NLB static-IP / NAT Gateway reference | 2 | any → ❔ `not-idle` (association missed by Query 1) |
 | IaC reference (`code:`) | 0 | 1–2 → Dependency 🟡; ≥ 3 → Dependency 🔴 |
-| External allowlist / external DNS (unswept) | 5 | unless operator-stated none → idle-ambiguous |
+| External allowlist / external DNS (unswept) | 5 | idle-ambiguous (an operator-stated "none" does not clear it) |
 
 **Tier:** a delete of an unassociated EIP with Evidence 🟢 routes to **🔵 Requires owner confirmation** — public-IP release is irreversible in identity, and external allowlists cannot be enumerated (matches pre-flight's hard block on releasing a public IP with an unconfirmed external allowlist). Reversibility and Blast are still recorded.
 

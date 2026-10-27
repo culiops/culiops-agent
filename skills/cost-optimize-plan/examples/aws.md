@@ -42,7 +42,7 @@ aws sts get-caller-identity --output json
 
 **IAM:** `sts:GetCallerIdentity`. **API cost:** none.
 
-- `Account` MUST equal the upstream report's `Scope` account. Mismatch → **STOP the batch** (not ⚪): nothing queried so far means anything.
+- `Account` MUST equal the item's account: the upstream report's `Scope` account, or for an `org-wide` report the account in the item's ARN / line item (run the check once per account). Mismatch → **STOP the batch** (not ⚪): nothing queried so far means anything.
 - Region = the resource's own region (from its ARN or the report). Pass `--region` explicitly on every call. LookupEvents and CloudWatch are **regional**; global services are queried in `us-east-1` (Route53, CloudFront, IAM) — Global Accelerator's API endpoint is `us-west-2`.
 - Record `live:0a` with account ID, region and timestamp.
 
@@ -65,8 +65,8 @@ Owner values (record exactly one):
 | `eks-nodegroup` | `eks:nodegroup-name` | Target is the nodegroup → ❔ `owned-by-eks-nodegroup` (unless the playbook is `rightsize-eks-nodegroup`). |
 | `karpenter` | `karpenter.sh/nodepool` | Target is the NodePool → ❔ `owned-by-karpenter`. |
 | `cloudformation` | `aws:cloudformation:stack-name` (also covers Serverless / SAM / CDK) | Outside the supported stack → ❔ `unsupported-owner`; the skill stops on that item. |
-| `unmanaged` | No IaC match, no controller tag | "Re-apply old IaC" rollback is **not** available; Reversibility cannot be 🟢 on that basis. |
-| `unknown` | Probe could not run (IaC repo not supplied, tagging API denied) | Treat as `unmanaged` for Reversibility; Dimension 4 scores ⚪. |
+| `unmanaged` | IaC repo(s) supplied and searched with no match, AND the full tag set was read and none names a controller or automation | "Re-apply old IaC" rollback is **not** available; Reversibility cannot be 🟢 on that basis. |
+| `unknown` | Probe could not run (IaC repo not supplied, tagging API denied), or a tag looks like a controller / automation tag that is not in the rows above | Treat as `unmanaged` for Reversibility; Dimension 4 scores ⚪. If it is a delete, say which tag was unrecognized. |
 
 **Drift:** if an IaC value differs from the live value (e.g. instance type, memory size), record a drift row (`code:<path:line>` vs `live:<query #>`); never resolve it silently.
 
