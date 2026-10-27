@@ -21,7 +21,46 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - **iac-change-execution: no assumed pipeline.** The PR path follows the delivery model. When changes are applied by hand, merging applies nothing, and the skill says so. A new record line `Applied: yes — verified / yes — not verified / no — PR open / no — merged, apply pending` states what actually happened. The `Outcome` vocabulary is unchanged, so `change-comms` still works.
 - **iac-change-execution: fixes.** The Integration section's pre-flight reuse rule now points to the plan-hash rule in Step 4b. Before this fix it still allowed reuse on a matching commit SHA. The `change-comms` offers no longer assume an "EM" or Jira.
 
+- **All skills: generic, and evidence for every decision** (the audit in #23). Every recommendation, score, tier, verdict and outcome label now names the evidence it rests on. How AWS, Kubernetes or a tool *behaves* needs `plan:`, `live:` or `docs: <URL>` read in the session; recall is `UNVERIFIED` and never decides. No skill assumes one company's roles, chat or ticket tool, or a pipeline that applies on merge.
+- **All skills: source order.** The installed tool's own output for the target (`terraform plan`, provider schema, `kubectl explain`, CLI help) comes first, because it matches the versions in use. Official docs for the version in use come next, cited with URL, date and the sentence relied on. Recall comes last.
+- **pre-flight.**
+  - New evidence classes `docs:`, `catalog:` and `assessor:`. A behaviour claim that makes a score safer needs `docs:` or `live:`, else the category is unknown.
+  - The one-way table can raise a score but never clear one, and gains managed-service upgrades (EKS, ElastiCache), namespaces and PVCs.
+  - Dependency Green needs code or live evidence; a catalog that lists nothing gives Yellow. Observability Green needs a live check.
+  - Fresh eyes runs on every verdict except RED soft block. A reused record re-asks timing and re-checks health at apply time.
+  - Timing means someone is on hand at apply time; health works without SLOs; Kubernetes parity in the examples.
+- **cost-optimize-plan.**
+  - Four playbook statements were wrong against current AWS docs and are fixed: Recycle Bin covers EBS volumes; DynamoDB and Kinesis mode-switch limits; unsupported EC2/RDS downtime figures removed.
+  - Constraint 16: behaviour claims in playbooks are leads until confirmed by `docs:` or live.
+  - `Realizable` is covered / not covered / unknown, and totals and ranking count only realizable rows.
+  - A delete with unknown dependencies, blast radius or reversibility goes to 🔴 (`dependency-unknown`). Operator say-so no longer clears owner confirmation for Elastic IP and load-balancer deletes.
+  - Kubernetes workload / PVC remediation is stated as not supported yet (no playbook; listed for manual review; #6).
+- **cloud-cost-investigate.**
+  - Payer detection fails closed: an `AccessDenied` is no longer read as "not the payer".
+  - Anomaly drivers get a tie test (amount, timing, cause): `confirmed` / `probable` / `candidate` / `unexplained`. `expected` needs a cited plan or pattern.
+  - Confidence labels have floors; `operator-stated` and `UNVERIFIED` cap at `low`. `Realizable` has three states and totals sum per rate basis.
+  - Tag keys are the team's own and checked for activation date. The IaC repo can be a local checkout or `gh`.
+  - Kubernetes: idle cost is shown, request savings count only with node reduction. The anomaly path, extra sweeps and owner mapping say "not supported yet".
+- **runtime-trace.** SQS dead-letter status comes from `sqs:ListDeadLetterSourceQueues` (new IAM action). Unknown payer status is treated as payer. Notable change events show "N shown of M"; an empty CloudTrail result reads "none found by this lookup". Wiring is permitted, not observed. `runtime-profile-schema: 2` is unchanged.
+- **service-discovery.** A stack is no longer assumed to be one service: membership is asked when more than one name prefix shows or membership cannot be proven. The catalog stamps the deployed ref and working-tree state. Runbook blast radius needs `docs:` plus code, else `UNVERIFIED`. `critical-path: unknown` replaces a default. Declared vs observed envelopes. Argo CD owner key corrected.
+- **service-takeover.**
+  - Kubernetes checks apply to any cluster, not only EKS. Intake takes the delivery model, kube context / namespace, and "no outgoing respondent".
+  - Any `✗` or `✗ conflict` makes the verdict `not-ready`. `N/A` needs a cited record; the restore test (item 24) needs a restore record; an override needs the artifact that resolves the item. The verdict states "evidence as of".
+  - Readiness baseline `template-version` is now 3.
+- **change-comms: tool- and org-agnostic** (#21).
+  - The description and triggers name the message kinds (heads-up, result, ticket-closing comment) and the audience (service owners, reviewers, on-call, a manager). Google Chat, Slack and Jira are examples, not the scope.
+  - The draft is plain text by default. Formatting notes for Google Chat, Slack, Microsoft Teams, Jira, Linear and GitHub / GitLab are optional. Naming Google Chat, Slack or Jira gives the same output as before.
+  - Reads the `Applied:` record line from `iac-change-execution`. `Outcome:` values are unchanged.
+  - Claims trace to the record: impact is shown beside the plan's Disruption entry, the rollback line keeps its one-way / untested label, a clean re-plan is never written as "healthy". Kubernetes credentials are redacted.
+- **iac-change-execution.** Reusing a pre-flight record re-asks timing and re-runs the health checks at apply time, matching pre-flight's reuse contract.
+
 - **Repo renamed from `culiops-agent` to `culiops-skills`.** The plugin and marketplace are still named `culiops`, so skill names (`culiops:pre-flight` and the rest) and existing installs are unaffected. GitHub redirects the old URL.
+
+### Breaking
+
+- **service-takeover:** verdicts are stricter. Takeovers that were `partial` with an alerting or dependency conflict are now `not-ready`. Baseline `template-version` 3.
+- **cost-optimize-plan:** deletes with unknown dependencies move from 🟡 to 🔴.
+- **change-comms:** the default output is plain text, not Google Chat. Name the tool to get its format.
 
 ## [0.13.0] — 2026-10-26
 
