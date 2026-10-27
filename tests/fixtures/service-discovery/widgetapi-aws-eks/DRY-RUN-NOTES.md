@@ -1,6 +1,6 @@
 # Dry-run of `service-discovery` against `widgetapi-aws-eks`
 
-Simulated run of the IaC path against this fixture. First recorded 2026-04-15; re-run 2026-10-26 for secrets-by-projection, the Secrets Store CSI template and Step 2V (live cross-check). Instance: `prod`.
+Simulated run of the IaC path against this fixture. First recorded 2026-04-15; re-run 2026-10-26 for secrets-by-projection, the Secrets Store CSI template and Step 2V (live cross-check); re-run 2026-10-27 for the deployed-ref, membership, parameter-provenance and evidence-label rules. Instance: `prod`.
 
 ## What the fixture exercised
 
@@ -18,6 +18,9 @@ Simulated run of the IaC path against this fixture. First recorded 2026-04-15; r
 | Naming patterns | `widgetapi-${env}-<component>` detected consistently across all TF resources |
 | Conditional resources | RDS `deletion_protection` on env==prod; CloudFront `price_class` on env==prod; cache `automatic_failover_enabled` on num_nodes>1; Helm `web.autoscaling.enabled`, `ingress.enabled`, `podDisruptionBudget.enabled`, `secretsStore.enabled` |
 | Step 2V live cross-check | Offered at Gate 2, accepted; 29 projected reads; 2 drift rows, 1 not found (below) |
+| Deployed ref | Nothing in the repo shows which ref is applied: `README.md:28-29` describes a manual `terraform apply -var-file=...` and `helm upgrade` ("or similar"), and there is no CI file or Argo CD / Flux object. The skill asks and records `Deployed ref: main (operator-stated)` |
+| Membership (stack is not a service) | Not asked: one name prefix `widgetapi` in every stack (`infra/main.tf:32`, `platform/main.tf:32`, release and chart name `widgetapi`). Recorded `membership: single prefix widgetapi, code:infra/main.tf:32, platform/main.tf:32`; Unattributed is empty |
+| Parameter provenance | Every prod value is recorded `value <- file:line` (e.g. `db_instance_class <- infra/envs/prod.tfvars:10`). The `-var-file` the apply uses is not visible to the repo, so the operator names it at Gate 1 (`operator-stated`). Variables that have a default and no prod value would read `default / source unconfirmed`; none do in prod |
 
 ## Secrets handling (what the skill reads and records)
 
@@ -58,6 +61,14 @@ One line per third-party tool outside `examples/`. The README previously listed 
 ### F6 — Declared SLO vs "no SLO declared" *(fixed in this fixture's expectations)*
 
 The earlier notes said nothing declared an SLO. `docs/oncall.md:22` declares availability + latency, target 99.9% over 30 days. Step 4 Anchor now reads: "SLO per `docs/oncall.md:22` (doc claim, unverified): 99.9% / 30d; no latency threshold stated". The only **code**-declared saturation limit remains HPA target CPU 65% (`values-prod.yaml:14`).
+
+### F7 — Evidence labels and the questions Gate 1 now asks *(re-run 2026-10-27)*
+
+- **Deployed ref** is asked because the repo does not show it (see table above); the stamp gets `Deployed ref: main — operator-stated` and `Working tree: clean`. `git status --short` on the three stack paths is shown at the gate.
+- **Membership** is not asked here (single prefix, proven from code). A repo where `infra/` also held another service's tables or queues would trigger the question.
+- **Terraform order.** Both stacks use `-var-file` only, so the precedence list in `tool-detectors/terraform.md` does not decide any value. No value is recorded `default / source unconfirmed`.
+- **Conditional resources** (RDS `deletion_protection`, CloudFront `price_class`, cache failover) are marked present or not from confirmed prod values, not `present?`.
+- **`helm template`** is not run: the skill has no need to render, and if it did it would treat `lookup`-dependent fields as unresolved.
 
 ## Inventory row count (prod): 29, per stack
 
@@ -118,7 +129,7 @@ Matches the code (`region = "eu-west-1"`, cluster `widgetapi-prod`). Every call 
 
 No `kubectl get secret`, no `-o json|yaml`, no `get-secret-value`, no `describe-db-instances` without `--query`.
 
-**Results:** 26 `✓ matches`, 2 drift, 1 not found, 0 not checked.
+**Results:** 26 `✓ matches (<fields compared>)` (the fields are the batch's *Compared fields* column, e.g. row 19 reads `✓ matches (type, scheme)`), 2 drift, 1 not found, 0 not checked.
 
 | # | Row | Live | Detail |
 |---|-----|------|--------|
@@ -126,7 +137,7 @@ No `kubectl get secret`, no `-o json|yaml`, no `get-secret-value`, no `describe-
 | 27 | HPA `widgetapi-web` | `drift: maxReplicas code=20 live=30` | code: `values-prod.yaml:13`. Live value was edited with `kubectl`/another pipeline |
 | 29 | SecretProviderClass `widgetapi-db` | `not found in arn:aws:eks:eu-west-1:123456789012:cluster/widgetapi-prod / ns widgetapi` | `error: the server doesn't have a resource type "secretproviderclass"`: the Secrets Store CSI Driver CRD is not installed in this cluster, so `secretsStore.enabled: true` in `values-prod.yaml:20` has never been deployed (or the deploy fails). The query could see the type (the API server answered), so this is a real `not found`, not `not-queryable`. The driver and the AWS provider are cluster add-ons outside this repo: open question |
 
-Row 20 note: the first attempt in `eu-west-1` returned an empty list; CloudFront is global, so the skill re-queried in `us-east-1` (Constraint: global services in `us-east-1`) and got `✓ matches`. Empty is not absent.
+Row 20 note: the first attempt in `eu-west-1` returned an empty list; CloudFront is global, so the skill re-queried in `us-east-1` (Constraint: global services in `us-east-1`; the account is in the standard AWS partition) and got `✓ matches (price class, enabled)`. Empty is not absent.
 
 Drift rows go at the top of Assumptions and Caveats; the catalog keeps the **code** value as declared and shows the live value beside it. Nothing is silently resolved.
 
@@ -134,7 +145,7 @@ Drift rows go at the top of Assumptions and Caveats; the catalog keeps the **cod
 
 `.culiops/service-discovery/widgetapi-prod.md` would contain:
 
-- Header: `Cataloged from commit` SHA, date=2026-10-26, instance=prod, tools=Terraform/Helm, `**Live verification:** performed 2026-10-26 against 123456789012/eu-west-1, context arn:aws:eks:eu-west-1:123456789012:cluster/widgetapi-prod` (account `123456789012`, `eu-west-1`, context `arn:aws:eks:eu-west-1:123456789012:cluster/widgetapi-prod`).
+- Header: `Cataloged from commit` SHA, date=2026-10-26, instance=prod, tools=Terraform/Helm, `**Working tree:** clean`, `**Deployed ref:** main — operator-stated`, `**Live verification:** performed 2026-10-26 against 123456789012/eu-west-1, context arn:aws:eks:eu-west-1:123456789012:cluster/widgetapi-prod` (account `123456789012`, `eu-west-1`, context `arn:aws:eks:eu-west-1:123456789012:cluster/widgetapi-prod`).
 - `## Overview` — fictional HTTP API, runs on EKS, env=prod in eu-west-1.
 - `## Prerequisites` — `aws` v2, `kubectl` ≥ 1.28, `helm` ≥ 3.12; auth `aws eks update-kubeconfig --name widgetapi-prod`; least privilege: AWS `ReadOnlyAccess` (or scoped, **without** `secretsmanager:GetSecretValue`) + Kubernetes `view` role in `widgetapi` namespace (note: `view` cannot read Secrets, which is intended) + Datadog read-only API key; mutations listed (kubectl rollout restart, helm rollback, kubectl scale).
 - `## Resource Inventory` — 29 rows grouped by category, with `Owner` (`terraform infra`, `terraform platform`, `helm widgetapi`) and `Live` columns. Excerpt:
@@ -144,13 +155,13 @@ Drift rows go at the top of Assumptions and Caveats; the catalog keeps the **cod
   | `aws_db_instance` | `widgetapi-prod-db` | terraform infra | drift: instance_class code=db.m6g.large live=db.m6g.xlarge (Q5) |
   | `autoscaling/v2/HorizontalPodAutoscaler` | `widgetapi-web` | helm widgetapi | drift: maxReplicas code=20 live=30 (Q27) |
   | `secrets-store.csi.x-k8s.io/v1/SecretProviderClass` | `widgetapi-db` | helm widgetapi | not found in arn:aws:eks:eu-west-1:123456789012:cluster/widgetapi-prod / ns widgetapi (Q29) |
-  | `aws_lb` | `widgetapi-prod-alb` | terraform platform | ✓ matches (Q19) |
+  | `aws_lb` | `widgetapi-prod-alb` | terraform platform | ✓ matches (type, scheme) (Q19) |
 
 - `## Naming Patterns` — `widgetapi-${env}-<component>` with `{env}` placeholder.
 - `## Identifying Dimensions` — env, region, pod/replica, CloudFront geography, DB primary vs replica.
-- `## Dependency Graph` — platform → infra (cross-stack); helm → platform + infra (cross-stack); remote registry modules by source + version (not fetched); secret references (names/ARNs only): `widgetapi/prod/db` (CSI), RDS-managed secret from `DB_SECRET_ARN`, Kubernetes Secrets `widgetapi`, `datadog-secret`; third-party: Datadog, PagerDuty (code + doc), Stripe, SendGrid, LaunchDarkly (doc only); critical-path edges marked.
-- `## Signal Envelopes` — availability SLO 99.9% / 30d, `source=doc` (`docs/oncall.md:22`), Medium, to be verified against Datadog monitor `widgetapi-prod-slo-burn`; no latency threshold stated; HPA target CPU 65% is the one code-declared saturation limit; rest "not declared".
-- `## Investigation Runbooks` — 5 trees (latency, 5xx, upload failures, async delay, auth failures).
+- `## Dependency Graph` — platform → infra (cross-stack); helm → platform + infra (cross-stack); remote registry modules by source + version (not fetched); secret references (names/ARNs only): `widgetapi/prod/db` (CSI), RDS-managed secret from `DB_SECRET_ARN`, Kubernetes Secrets `widgetapi`, `datadog-secret`; third-party: Datadog, PagerDuty (code + doc), Stripe, SendGrid, LaunchDarkly (doc only); each edge records its basis (`code:` / `operator-stated` / `inferred`). Edges the code cannot show as synchronous (the SQS async queue, Datadog, PagerDuty, and the three doc-only SaaS) are `critical-path: unknown` until the operator confirms at the dependency gate; none is defaulted to async. `Downstream: none found in this repo — consumers in other repos / stacks are not visible`.
+- `## Signal Envelopes` — availability SLO 99.9% / 30d, `declared` in a doc (`docs/oncall.md:22`, `source=doc`), Medium, to be verified against Datadog monitor `widgetapi-prod-slo-burn`; no latency threshold stated; HPA target CPU 65% is the one code-`declared` saturation limit; rest "not declared". No `observed` entry: Step 2V reads configuration, not metric statistics.
+- `## Investigation Runbooks` — 5 trees (latency, 5xx, upload failures, async delay, auth failures). Every `MUTATION` step (`kubectl rollout restart`, `helm rollback`, `kubectl scale`) states its blast radius from evidence: the behaviour cites a Kubernetes or Helm docs URL fetched this session, and the limiters cite code (web `minReplicas: 4` at `values-prod.yaml:12`, PodDisruptionBudget `minAvailable: 1` at `values.yaml:36`). If the docs were not fetched the step reads `blast radius UNVERIFIED — assume the whole service`. The Owner of the workload is Helm (no GitOps controller in the repo), so the first route is a values/chart change and `helm upgrade`; a direct `kubectl scale` is shown as a labelled emergency option that becomes drift at the next release.
 - `## Stack-Specific Tooling` — `examples/aws.md` + `examples/kubernetes.md`; notes for Datadog/PagerDuty/Stripe/SendGrid/LaunchDarkly.
-- `## Assumptions and Caveats` — drift rows first (Q5, Q27); Q29 not found; Helm image tag is env-specific (2026.04.1 prod, 2026.04.1-rc3 staging); catalog never read Terraform state or any secret value.
+- `## Assumptions and Caveats` — drift rows first (Q5, Q27); Q29 not found; **Unattributed:** none (single prefix `widgetapi`, membership proven from code); **Completeness:** the inventory lists what the code declares; resources created outside it (console, runtime, other stacks) are not listed, e.g. the logs bucket below; Helm image tag is env-specific (2026.04.1 prod, 2026.04.1-rc3 staging); catalog never read Terraform state or any secret value.
 - `## Open Questions` — Is the Secrets Store CSI Driver + AWS provider installed or planned? S3 bucket `widgetapi-logs-eu-west-1` (ALB/CloudFront logs, `docs/oncall.md:14-15`) is not in any stack in this repo: who owns it? Are Stripe/SendGrid/LaunchDarkly still in use (doc-only)?

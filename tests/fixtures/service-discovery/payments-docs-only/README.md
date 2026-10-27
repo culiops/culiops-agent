@@ -27,7 +27,7 @@ A synthetic repo used to validate the `service-discovery` skill's real-discovery
 | Image vision (simulated) | `infra-overview.png` detected via `doc-detectors/image.md` — placeholder image; DRY-RUN-NOTES describes what vision would extract |
 | Cloud context resolution | Account `123456789012` from `runbook.md`; region unknown (two candidates, profile has none) → operator asked; probe batch shown and approved before it runs (`sts get-caller-identity`, `configure get region`) |
 | Converging discovery merge | Document hints (Seed A, capped at Medium) merged with simulated cloud query results (Seed B) — membership signals, `undocumented`, `documented-not-found`, and the Unattributed list |
-| Confidence flags | `undocumented` (DLQ and 3 read replicas, cloud only, each with a membership signal), `documented-not-found` (legacy worker in docs only), Unattributed (`analytics-db`) |
+| Confidence flags | `undocumented` (DLQ and 3 read replicas, cloud only, each with a membership signal), `name-match-only` (ALB and cache: docs name them, but no document determines the cloud identifier), `documented-not-found` (legacy worker in docs only), Unattributed (`analytics-db`) |
 | Owner column | `aws:cloudformation:stack-name` tag on the ALB and the DLQ → `cloudformation (<stack>)`; other rows `unknown` |
 | Secrets by projection | Enrichment uses projected `--query` fields only; the DB credentials secret is recorded by name `payments/prod/db-credentials`, never fetched; SNS subscription endpoints are withheld |
 | Same catalog output format | Real-discovery produces the same `.culiops/service-discovery/payments.md` format as IaC path |

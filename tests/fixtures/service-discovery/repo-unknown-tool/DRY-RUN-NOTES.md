@@ -1,6 +1,6 @@
 # Dry-run of `service-discovery` against `repo-unknown-tool`
 
-Simulated run of the IaC path against this fixture. First recorded 2026-04-15; re-run 2026-10-26 for secrets-by-projection.
+Simulated run of the IaC path against this fixture. First recorded 2026-04-15; re-run 2026-10-26 for secrets-by-projection; re-run 2026-10-27 for the stamp lines, deployed ref and Completeness caveat.
 
 ## What the fixture exercised
 
@@ -29,6 +29,8 @@ After this answer, the skill proceeds with operator-supplied mappings:
 - Identifying dimensions: replicas=4, ports=[8080]
 - Signal envelope: not declared
 - Cross-stack dependencies: none declared
+
+The stamp carries `Working tree` and `Deployed ref`; nothing in the repo shows the ref and the operator's "teach me" answer did not name one, so it is `UNVERIFIED` after the ask (or `operator-stated` if given). Membership is not asked: one service `api` from one descriptor, recorded `membership: single service, operator-stated (teach me answer)`. The caveats also carry the **Completeness** line (the inventory lists what the code and the operator's mapping declare; resources created outside them are not listed).
 
 The produced catalog would include the mandatory Assumptions caveat (Step 5 §10):
 
