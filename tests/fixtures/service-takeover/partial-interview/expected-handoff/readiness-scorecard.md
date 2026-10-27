@@ -4,17 +4,17 @@ service: payments
 account: "123456789012"
 region: us-east-1
 generated-at: 2026-05-12T16:00:00Z
-verdict: partial
+verdict: not-ready
 ---
 
 # Readiness Scorecard — payments
 
-**Verdict: partial** — 11 ✓ verified, 3 ✓ attested, 5 ◐ operator-stated, 0 ✗, 1 ✗ conflict, 5 ?, 0 N/A (25 items). 10 verification checks (listed per item) could move it toward `ready`.
-**Why:** `◐` on items 10, 13, 15, 17, 21; `?` on items 14, 22, 23, 24, 25; `✗`/`✗ conflict` only outside the not-ready categories (item 19).
+**Verdict: not-ready** — 10 ✓ verified, 3 ✓ attested, 5 ◐ operator-stated, 0 ✗, 1 ✗ conflict, 6 ?, 0 N/A (25 items). Evidence as of 2026-05-12T14:05:00Z.
+**Why:** `✗ conflict` in Dependencies (19).
 **Generated:** 2026-05-12T16:00:00Z
 **Operator:** alice (arn:aws:iam::123456789012:user/alice)
 
-Rules applied: `readiness-scorecard-baseline.md` (template-version 2). One evidence class per item; a non-empty interview answer is at most `◐`; empty is `?`, never `✗`; arithmetic pass rates are shown per category but never decide the verdict. Citations are package-relative (`interview-questionnaire.md` is the snapshot of `filled-interview.md`).
+Rules applied: `readiness-scorecard-baseline.md` (template-version 3). One evidence class per item; a non-empty interview answer is at most `◐`; empty is `?`, never `✗`; arithmetic pass rates are shown per category but never decide the verdict. Citations are package-relative (`interview-questionnaire.md` is the snapshot of `filled-interview.md`).
 
 ---
 
@@ -24,20 +24,20 @@ Rules applied: `readiness-scorecard-baseline.md` (template-version 2). One evide
 |---|---|---|---|---|---|---|---|---|
 | Access | 1-3 | 2 | 1 | 0 | 0 | 0 | 0 | 0 |
 | Inventory | 4-6 | 3 | 0 | 0 | 0 | 0 | 0 | 0 |
-| Runtime | 7-9 | 3 | 0 | 0 | 0 | 0 | 0 | 0 |
+| Runtime | 7-9 | 2 | 0 | 0 | 0 | 0 | 1 | 0 |
 | Alerting | 10-12 | 0 | 2 | 1 | 0 | 0 | 0 | 0 |
 | Runbooks | 13-14 | 0 | 0 | 1 | 0 | 0 | 1 | 0 |
 | Deploy & Rollback | 15-18 | 2 | 0 | 2 | 0 | 0 | 0 | 0 |
 | Dependencies | 19-21 | 1 | 0 | 1 | 0 | 1 | 0 | 0 |
 | Compliance | 22-25 | 0 | 0 | 0 | 0 | 0 | 4 | 0 |
-| **Total** | **25** | **11** | **3** | **5** | **0** | **1** | **5** | **0** |
+| **Total** | **25** | **10** | **3** | **5** | **0** | **1** | **6** | **0** |
 
 ## What would move this toward `ready`
 
+- **Conflict (item 19, High):** identify `legacy-orders-exec`. Any `✗ conflict` makes the verdict `not-ready`; clearing it moves the verdict to `partial`.
+- **Checks (cheapest first):** a CloudWatch query for the DynamoDB `payments-ledger` metrics (7, `?`); `describe-alarms` (10) and `simulate-principal-policy` with `get-context-keys-for-principal-policy` for `platform-team-deploy` (15), which were not run because the batch was declined.
+- **Documents to open:** the runbook and rollback links (13, 17); the Stripe contract owner with procurement (21).
 - **Outgoing-team follow-ups (5 `?`):** Section 10 (items 22-25), the incident history (14). Empty is `?`, never `✗`.
-- **Read-only checks that would verify `◐`:** `describe-alarms` (10), `simulate-principal-policy` for `platform-team-deploy` (15).
-- **Operator actions:** open the runbook and rollback links (13, 17); confirm the Stripe contract owner (21).
-- **Conflict (item 19):** identify `legacy-orders-exec`; it is outside the not-ready categories, so it keeps the verdict at `partial` rather than `not-ready`, but it is still a High question.
 
 ---
 
@@ -59,8 +59,8 @@ Offered by default at Gate 6; alice declined it at 2026-05-12T15:49:00Z (time). 
 ### Item 1 — Operator has IAM read in target account — ✓ verified
 
 - **Mark:** ✓ verified
-- **Evidence:** [evidence: state.md:71]
-- **Notes:** `aws sts get-caller-identity --query Account` returned the intake account 123456789012; only the derived fact is recorded.
+- **Evidence:** [evidence: state.md:71]; [evidence: state.md:72]
+- **Notes:** `aws sts get-caller-identity --query Account` returned the intake account 123456789012. That call needs no permission, so the CloudTrail Event-history read (`lookup-events`, which does) is the proof of read access: it succeeded in the same account. Only derived facts are recorded.
 
 ### Item 2 — Deploy role identified — ✓ verified
 
@@ -79,8 +79,8 @@ Offered by default at Gate 6; alice declined it at 2026-05-12T15:49:00Z (time). 
 ### Item 4 — Resources enumerated — ✓ verified
 
 - **Mark:** ✓ verified
-- **Evidence:** [evidence: service-catalog.md:17; service-catalog.md:34-41]
-- **Notes:** 8 attributed rows from real-discovery (live by construction), none `not found`. The 2 Unattributed items (API Gateway `abc123def456`, SNS `payments-events`) are not counted.
+- **Evidence:** [evidence: service-catalog.md:17; service-catalog.md:34-41; service-catalog.md:45-46]; [evidence: runtime-profile.md:202]
+- **Notes:** 8 attributed rows from real-discovery (live by construction), none `not found`. The 2 Unattributed items (API Gateway `abc123def456`, SNS `payments-events`) are each dispositioned in the catalog (recorded by the operator as dependencies, not inventory). All 8 resources the profile lists under Resources by region (3 Lambdas, 2 queues, 1 table, 2 secrets) appear in the catalog.
 
 ### Item 5 — Cross-region footprint known — ✓ verified
 
@@ -96,11 +96,12 @@ Offered by default at Gate 6; alice declined it at 2026-05-12T15:49:00Z (time). 
 
 ## Category: Runtime (items 7–9)
 
-### Item 7 — Activity baseline captured — ✓ verified
+### Item 7 — Activity baseline captured — ?
 
-- **Mark:** ✓ verified
-- **Evidence:** [evidence: runtime-profile.md:168, runtime-profile.md:176]
-- **Notes:** 5 rows with data (3 Lambda, 2 SQS), none `no-data`. DynamoDB `payments-ledger` metrics are not collected (gap in the profile).
+- **Mark:** ?
+- **Evidence:** [evidence: runtime-profile.md:168, runtime-profile.md:176]; [evidence: runtime-profile.md:212]
+- **Notes:** 3 of 4 compute and data-store resources covered: the 3 Lambdas have rows with data (so do the 2 SQS queues), none `no-data`. DynamoDB `payments-ledger` has no row: the profile lists its metrics as not collected. One resource without a baseline row makes the item `?` (n of m covered), not `✓ verified`.
+- **Check that would verify it:** A CloudWatch query for the table's metrics over a stated window, recorded as `[query: … @ …]` (operator action; `runtime-trace` does not cover `dynamodb:table`).
 
 ### Item 8 — Deploy events history captured — ✓ verified
 
@@ -121,7 +122,7 @@ Offered by default at Gate 6; alice declined it at 2026-05-12T15:49:00Z (time). 
 - **Mark:** ◐ operator-stated
 - **Evidence:** [stated: interview-questionnaire.md:113]
 - **Notes:** 5 alarms named in the interview.
-- **Check that would verify it:** `aws cloudwatch describe-alarms --profile prod-main --region us-east-1 --alarm-name-prefix payments- --query 'MetricAlarms[].{Name:AlarmName,Metric:MetricName,Ns:Namespace,Actions:length(AlarmActions)}'` (batch declined).
+- **Check that would verify it:** `aws cloudwatch describe-alarms --profile prod-main --region us-east-1 --alarm-name-prefix payments- --query 'MetricAlarms[].{Name:AlarmName,Metric:MetricName,Ns:Namespace,Dims:Dimensions,Actions:AlarmActions,Enabled:ActionsEnabled,State:StateValue}'` (batch declined). `✓ verified` needs every compute and data-store resource covered by error, latency and saturation alarms, each enabled with an action and not in `INSUFFICIENT_DATA`; the DynamoDB table and Lambda saturation are the likely gaps.
 
 ### Item 11 — On-call rotation configured — ✓ attested
 
@@ -158,7 +159,7 @@ Offered by default at Gate 6; alice declined it at 2026-05-12T15:49:00Z (time). 
 - **Mark:** ◐ operator-stated
 - **Evidence:** [stated: interview-questionnaire.md:92, interview-questionnaire.md:95]
 - **Notes:** The interview says the role was granted deploy permissions on 2026-05-08.
-- **Check that would verify it:** `aws iam simulate-principal-policy --profile prod-main --policy-source-arn arn:aws:iam::123456789012:role/platform-team-deploy --action-names lambda:UpdateFunctionCode lambda:UpdateFunctionConfiguration --resource-arns <payments-authorizer ARN> <payments-capture ARN> <payments-reconciler ARN> --query 'EvaluationResults[].{Action:EvalActionName,Resource:EvalResourceName,Decision:EvalDecision}'` (batch declined).
+- **Check that would verify it:** `aws iam simulate-principal-policy --profile prod-main --policy-source-arn arn:aws:iam::123456789012:role/platform-team-deploy --action-names lambda:UpdateFunctionCode lambda:UpdateFunctionConfiguration --resource-arns <payments-authorizer ARN> <payments-capture ARN> <payments-reconciler ARN> --query 'EvaluationResults[].{Action:EvalActionName,Resource:EvalResourceName,Decision:EvalDecision}'`, then `aws iam get-context-keys-for-principal-policy --profile prod-main --policy-source-arn arn:aws:iam::123456789012:role/platform-team-deploy --query 'ContextKeyNames'` to show no condition key was left without a value (batch declined).
 
 ### Item 16 — Deploy process documented — ✓ verified
 

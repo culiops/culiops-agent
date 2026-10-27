@@ -17,7 +17,7 @@ operator: arn:aws:iam::123456789012:user/alice
 - **Run started:** 2026-05-12T14:00:00Z
 - **Run completed:** 2026-05-12T16:05:00Z
 - **Skill version:** service-takeover v0.6.0
-- **Intake:** service `payments`, account 123456789012, region us-east-1, intent `takeover`; Pay Team -> Platform Team; handoff 2026-06-15
+- **Intake:** service `payments`, account 123456789012, region us-east-1, delivery model: CI/CD pipeline (GitHub Actions, on merge); intent `takeover`; Pay Team -> Platform Team; handoff 2026-06-15
 
 ---
 
@@ -31,7 +31,7 @@ operator: arn:aws:iam::123456789012:user/alice
 | 3 | Discovery snapshot — validate, same-target check, snapshot | done | 2026-05-12T14:30:00Z | 2026-05-12T14:33:00Z | alice at 2026-05-12T14:33:00Z |
 | 4 | Runtime profile — `runtime-trace` (its own 7 gates: 1, 1a, 2–6) | done | 2026-05-12T14:33:00Z | 2026-05-12T15:05:00Z | alice at 2026-05-12T15:05:00Z |
 | 5 | Interview — emit questionnaire; ingest filled version | done | 2026-05-12T15:05:00Z | 2026-05-12T15:45:00Z | alice at 2026-05-12T15:45:00Z; sections: 7 complete / 2 partial / 2 empty; operator chose accept-as-is for Sections 3, 6, 10, 11 |
-| 6 | Readiness scorecard — auto-mark, Step 6 verification batch, attestations | done | 2026-05-12T15:45:00Z | 2026-05-12T16:00:00Z | alice at 2026-05-12T16:00:00Z; verdict: partial |
+| 6 | Readiness scorecard — auto-mark, Step 6 verification batch, attestations | done | 2026-05-12T15:45:00Z | 2026-05-12T16:00:00Z | alice at 2026-05-12T16:00:00Z; verdict: not-ready |
 | 7 | Handoff package assembly | done | 2026-05-12T16:00:00Z | 2026-05-12T16:05:00Z | alice at 2026-05-12T16:05:00Z |
 
 ---
@@ -99,14 +99,15 @@ Each snapshot is compared with the intake values (service `payments`, account 12
 2026-05-12T15:45:00Z  Gate 5 sign-off by alice
 2026-05-12T15:45:00Z  Step 6 started — auto-marking scorecard from artifacts
 2026-05-12T15:46:00Z  Operator confirmed deploy role payments-deploy-role (item 2: ◐ -> ✓ verified)
-2026-05-12T15:48:00Z  Step 6 verification batch proposed: 2 read-only AWS commands (items 10, 15) + artifact comparisons
+2026-05-12T15:48:00Z  Step 6 verification batch proposed: 3 read-only AWS commands (items 10, 15 x2) + artifact comparisons
 2026-05-12T15:49:00Z  Batch declined by alice (time) — items 10 and 15 stay ◐
 2026-05-12T15:52:00Z  Item 3 attested by alice (console + CLI)
 2026-05-12T15:54:00Z  Item 11 attested by alice (PagerDuty rotation visible)
 2026-05-12T15:56:00Z  Item 12 attested by alice (test page received)
-2026-05-12T16:00:00Z  Scorecard written: 11 ✓ verified, 3 ✓ attested, 5 ◐, 0 ✗, 1 ✗ conflict, 5 ?, 0 N/A. Verdict: partial
+2026-05-12T16:00:00Z  Scorecard written: 10 ✓ verified, 3 ✓ attested, 5 ◐, 0 ✗, 1 ✗ conflict, 6 ?, 0 N/A. Verdict: not-ready. Evidence as of 2026-05-12T14:05:00Z
 2026-05-12T16:00:00Z  Step 6 gate sign-off by alice
 2026-05-12T16:00:00Z  Step 7 started — handoff package assembly
+2026-05-12T16:05:00Z  Evidence is 34 days older than the handoff date 2026-06-15 (freshness window 7 days): offered a re-run of the Step 6 checks before assembly; alice declined and will re-run them in the week before the handoff
 2026-05-12T16:05:00Z  Handoff package assembled: 8 files (5 written by the skill in expected-handoff/; 3 snapshots from mock-artifacts/ and filled-interview.md)
 2026-05-12T16:05:00Z  Reminder printed: private repo only; check branch and remote visibility before committing
 2026-05-12T16:05:00Z  Step 7 gate sign-off by alice. Run complete

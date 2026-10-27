@@ -6,7 +6,7 @@ The operator ran `service-discovery` against the payments service 14 days ago (5
 
 ## Operator inputs
 
-Same as happy-path, plus: "Pre-existing service-discovery catalog at `.culiops/service-discovery/payments-catalog.md` (14 days old)." Interview variant B.
+Same as happy-path (including the delivery model: a GitHub Actions pipeline deploys on merge), plus: "Pre-existing service-discovery catalog at `.culiops/service-discovery/payments-catalog.md` (14 days old)." Interview variant B.
 
 ## Expected gate behavior
 
@@ -17,6 +17,6 @@ Same as happy-path, plus: "Pre-existing service-discovery catalog at `.culiops/s
 
 ## Notable findings
 
-- Verdict: **partial** (15 ✓ verified, 3 ✓ attested, 6 ◐, 0 ✗, 1 ✗ conflict, 0 ?, 0 N/A).
+- Verdict: **not-ready** (12 ✓ verified, 3 ✓ attested, 8 ◐, 0 ✗, 1 ✗ conflict, 1 ?, 0 N/A): the one `✗ conflict` (item 19) decides it, in any category.
 - 9-file package: the usual 8 plus `service-catalog.2026-04-28.md`.
 - The stale catalog lowered nothing: the re-run catalog is live-backed.

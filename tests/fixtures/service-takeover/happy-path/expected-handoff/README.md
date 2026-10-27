@@ -18,14 +18,14 @@ incoming-team: Platform Team
 - **Handoff date:** 2026-06-15
 - **From:** Pay Team (Bob L. — bob@example.com, Carol P. — carol@example.com)
 - **To:** Platform Team
-- **Readiness verdict:** not-ready — item 15 fails (the incoming deploy role cannot deploy) and items 18, 19 and 25 are interview-vs-artifact conflicts; 6 items are operator-stated (`◐`). 12 ✓ verified, 3 ✓ attested, 6 ◐, 1 ✗, 3 ✗ conflict, 0 ?, 0 N/A. Clearing the 4 blockers moves it to `partial`.
-- **Open questions count:** 4 high / 6 medium / 2 low
+- **Readiness verdict:** not-ready — item 15 fails (the incoming deploy role cannot deploy) and items 18, 19 and 25 are interview-vs-artifact conflicts; 8 items are operator-stated (`◐`) and 1 is unknown (`?`). 9 ✓ verified, 3 ✓ attested, 8 ◐, 1 ✗, 3 ✗ conflict, 1 ?, 0 N/A. Evidence as of 2026-05-12T14:05:00Z. Clearing the 4 blockers moves it to `partial`.
+- **Open questions count:** 4 high / 9 medium / 1 low
 - **Top 5 open questions:**
   1. Incoming role `platform-team-deploy` cannot deploy yet (item 15) (HIGH-1)
   2. DR plan names a us-west-2 standby that no source shows (item 25 conflict) (HIGH-2)
   3. Deploy frequency: 3-5/week stated, 5 runs in 90 days observed (item 18 conflict) (HIGH-3)
   4. `legacy-orders-exec` may send to `payments-capture-queue` but is not a listed caller (item 19 conflict) (HIGH-4)
-  5. Restore test is operator-stated, not attested (item 24) (MED-1)
+  5. DynamoDB `payments-ledger` has no activity baseline (item 7 `?`) (MED-1)
 
 ## What this package contains
 

@@ -18,14 +18,14 @@ incoming-team: Platform Team
 - **Handoff date:** 2026-06-15
 - **From:** Pay Team (Bob L. — bob@example.com, Carol P. — carol@example.com)
 - **To:** Platform Team
-- **Readiness verdict:** partial — no item fails outright; item 19 is a conflict (outside the not-ready categories) and 6 items are operator-stated (`◐`). 15 ✓ verified, 3 ✓ attested, 6 ◐, 0 ✗, 1 ✗ conflict, 0 ?, 0 N/A. The 14-day-old catalog was re-run; 3 resources are new since then.
-- **Open questions count:** 1 high / 7 medium / 2 low
+- **Readiness verdict:** not-ready — item 19 is an interview-vs-artifact conflict (any `✗ conflict` makes the verdict `not-ready`); 8 items are operator-stated (`◐`) and 1 is unknown (`?`). 12 ✓ verified, 3 ✓ attested, 8 ◐, 0 ✗, 1 ✗ conflict, 1 ?, 0 N/A. Evidence as of 2026-05-12T14:05:00Z. Clearing the blocker moves it to `partial`. The 14-day-old catalog was re-run; 3 resources are new since then.
+- **Open questions count:** 1 high / 10 medium / 1 low
 - **Top 5 open questions:**
   1. `legacy-orders-exec` may send to `payments-capture-queue` but is not a listed caller (item 19 conflict) (HIGH-1)
-  2. Drift since the 2026-04-28 catalog: 3 resources are new (`payments-capture-dlq`, 2 secrets) (MED-1)
-  3. Restore test is operator-stated, not attested (item 24) (MED-2)
-  4. Runbook, postmortem and rollback links not yet opened (items 13, 14, 17) (MED-3)
-  5. Stripe contract owner and PII scope need confirmation (items 21, 22) (MED-4)
+  2. DynamoDB `payments-ledger` has no activity baseline (item 7 `?`) (MED-1)
+  3. Alarm coverage is incomplete (item 10 `◐`) (MED-2)
+  4. Retention period is not a configured period (item 23 `◐`) (MED-3)
+  5. Runbook, postmortem and rollback links not yet opened (items 13, 14, 17) (MED-4)
 
 ## What this package contains
 
@@ -43,7 +43,7 @@ incoming-team: Platform Team
 ## First-day actions for Platform Team
 
 - [ ] Read this README in full.
-- [ ] Read HIGH-1 (the unexplained queue sender) and MED-1 (what changed since 2026-04-28).
+- [ ] Read HIGH-1 (the unexplained queue sender) and MED-7 (what changed since 2026-04-28).
 - [ ] Compare `service-catalog.2026-04-28.md` with `service-catalog.md` if you need the earlier picture.
 - [ ] Open the runbook, postmortem and rollback links; subscribe to the 5 alerts in Section 5.
 - [ ] Request that alice's console Secrets Manager read access be revoked after handoff.
