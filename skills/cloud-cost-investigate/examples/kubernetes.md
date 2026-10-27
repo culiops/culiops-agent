@@ -6,6 +6,10 @@ Read-only commands per workflow step. All commands use `get`, `describe`, `top`,
 
 **Dollars here are an allocation model, not the bill.** OpenCost / Kubecost price nodes from list or custom pricing unless cloud billing integration is configured. Label every K8s figure `allocation-model` (Principle 4). On EKS, the same node spend appears in the AWS bill as EC2 — never add an AWS report's EC2 line and a K8s allocation together.
 
+**Docs behind the claims** (read in this session before quoting them in a report): OpenCost `/allocation` parameters and idle cost — `https://opencost.io/docs/integrations/api/` · HPA targets are a percentage of requests — `https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale/` · node removal / consolidation — `https://karpenter.sh/docs/concepts/disruption/` (or the installed autoscaler's docs). A claim with no page read this session is `UNVERIFIED`. The OpenCost API page does not document `accumulate`, `filterNamespaces` or `filterLabels` for `/allocation` (read 2026-10-27); check them against the installed version.
+
+**Namespace, service and port in the commands below are chart defaults** — use the namespace and service that the Step 1 detection printed. Label keys (`app`, `service`) are examples: use the key the catalog or the operator names (for instance `app.kubernetes.io/name`).
+
 **Never copy pod specs or kubeconfig into the report** (Constraint 10): `kubectl describe pod` and `get pods -o json` print literal `env:` values, and `kubectl config view` prints exec-plugin args / env. Use the projected forms below.
 
 ## Step 1 — Detect & Scope: cloud detection
@@ -80,6 +84,8 @@ curl 'http://kubecost.example/model/allocation?window=30d&aggregate=namespace&ac
 **RBAC:** `port-forward` requires `pods/portforward` permission on the `kubecost` namespace.
 **API cost:** none (in-cluster query).
 
+**Kubernetes: a "what changed" source for anomaly drivers (new workloads, node-pool changes, GitOps revisions) is not supported yet.** Report allocation deltas only and name no cause.
+
 ## Step 2B — Waste mode
 
 ### Over-requested / idle workloads — over the window, not a snapshot
@@ -97,7 +103,9 @@ curl -s 'http://localhost:9003/allocation?window=30d&aggregate=controller&accumu
 # version's API docs; a missing field is UNVERIFIED, not 0.
 ```
 
-A controller whose CPU **and** memory efficiency stay low over ≥ 30d is a **rightsize-requests** candidate (`allocation-model`, confidence ≤ `medium`). A low average with a high peak is not one — check the peak before calling it over-requested. "Idle → delete a workload" is never inferred from usage alone: zero-traffic services may be standbys or batch. That is an owner question.
+A controller whose CPU **and** memory efficiency stay low over ≥ 30d is a **rightsize-requests** candidate (`allocation-model`, confidence ≤ `medium`). A low average with a high peak is not one: take the peak, and OOM-kill and CPU-throttle history, from Prometheus (`max_over_time` on the usage series) when it exists. Without it the row is `UNVERIFIED` (cap `low`). Check for an HPA or VPA on the controller first: HPA targets are a percentage of requests, so lowering requests changes scaling.
+
+**Lower requests are not a saving yet.** The AWS bill falls only when nodes go away. Until node-level slack (requested vs allocatable, `aggregate=node`) and a removal path — an autoscaler or consolidation policy, or a planned nodegroup resize — are shown, the row is `Realizable: conditional on node reduction` and stays out of the totals. "Idle → delete a workload" is never inferred from usage alone: zero-traffic services may be standbys or batch. That is an owner question.
 
 `kubectl top pods -A` remains useful only to spot-check a live moment; never cite it as window evidence.
 
@@ -124,10 +132,22 @@ kubectl get pods -A -o jsonpath='{range .items[*]}{.metadata.namespace}{" "}{ran
 | PVC `Pending` | **No** — nothing provisioned yet (often `WaitForFirstConsumer`) | Informational (hygiene), $0 |
 | PVC `Lost` | **No** — the backing PV is gone | Informational (hygiene), $0 |
 
+**Kubernetes: orphan snapshots, idle load balancers and empty-node sweeps are not supported yet.**
+
 **RBAC:** `get pods`, `get pvc`, `get pv` require standard read permissions; the allocation API needs `pods/portforward` (Step 2A). `kubectl top` additionally requires Metrics Server.
 **API cost:** none.
 
 ## Step 2C — Attribution mode
+
+### Idle and shared cost — context, not service cost
+
+OpenCost returns `__idle__` (capacity paid for but used by no workload) only when asked; `includeIdle` defaults to `false`, and `shareIdle` defaults to `false` (`docs: https://opencost.io/docs/integrations/api/`). Without `includeIdle=true`, namespace and service totals do not add up to the cluster's cost, and the gap is silent.
+
+```bash
+curl 'http://localhost:9003/allocation?window=30d&aggregate=namespace&accumulate=true&includeIdle=true'
+```
+
+Report idle, system namespaces (`kube-system`, monitoring, ingress) and node overhead as **context cost** beside the service's direct cost. Spread them over services (`shareIdle=true`, or a stated method) only when the operator chooses it, and then label the figure `shared-allocated: <method>`. Never present an allocated figure as the service's direct cost.
 
 ### OpenCost — cost filtered by label
 

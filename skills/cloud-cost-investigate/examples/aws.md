@@ -17,6 +17,8 @@ Read-only commands per workflow step. All commands are `Get*` / `Describe*` / `L
 
 **Cost Explorer pricing.** $0.01 per request and **each paginated page is a request**; there is no free tier (AWS Cost Explorer pricing page, verified 2026-10-26 — re-check before quoting). Estimate pages, not calls: DAILY × 30d × 50 services paginates.
 
+**Docs behind the billing claims** (read in this session before quoting them in a report; re-check, they move): Cost Explorer retention, refresh and per-page price — `https://docs.aws.amazon.com/cost-management/latest/userguide/ce-what-is.html` · how a Savings Plan is applied (hourly, largest-saving usage first, no carry-over) — `https://repost.aws/knowledge-center/savings-plans-billing` · `DescribeOrganization` works from any account — `https://docs.aws.amazon.com/sdk-for-go/api/service/organizations/index.html` · cost-allocation tag activation — `https://docs.aws.amazon.com/awsaccountbilling/latest/aboutv2/activating-tags.html`. A claim with no page read this session is `UNVERIFIED`.
+
 ## Step 1 — Detect & Scope: cloud detection + scoping probe
 
 ```bash
@@ -32,16 +34,20 @@ Scoping probe — shown as a mini batch and run only on approval (GATE 1a):
 aws sts get-caller-identity --output json
 # 2. Human-readable alias (may be empty)
 aws iam list-account-aliases --query "AccountAliases[]"
-# 3. Payer or member? Member / standalone accounts get AccessDenied or
-#    AWSOrganizationsNotInUseException — record "not payer" and move on.
+# 3. Payer or member? Works from any account in the organization.
+#    MasterAccountId == caller → payer; different → member;
+#    AWSOrganizationsNotInUseException → standalone;
+#    any other error (AccessDenied included) → payer status unverified, treat as payer.
 aws organizations describe-organization \
   --query "Organization.[MasterAccountId,Id]"
-#    caller account == MasterAccountId → payer → LINKED_ACCOUNT filter on every CE call
-# 4. Regions with spend (sweep regions), last 30d, usage only.
-#    Run after #3: if payer, wrap the filter with LINKED_ACCOUNT as shown above.
+#    payer or unverified → LINKED_ACCOUNT filter on every CE call (a no-op on a member / standalone account)
+# 4. Regions with spend (sweep regions), last 30d, usage only. AmortizedCost: covered
+#    usage carries its commitment rate, so a region served by a Savings Plan is not
+#    read as empty and skipped.
+#    Run after #3: if payer or unverified, wrap the filter with LINKED_ACCOUNT as shown above.
 aws ce get-cost-and-usage \
   --time-period Start=$(date -u -d '32 days ago' +%Y-%m-%d),End=$(date -u -d '2 days ago' +%Y-%m-%d) \
-  --granularity MONTHLY --metrics UnblendedCost \
+  --granularity MONTHLY --metrics AmortizedCost \
   --filter '{"Dimensions":{"Key":"RECORD_TYPE","Values":["Usage","DiscountedUsage","SavingsPlanCoveredUsage"]}}' \
   --group-by Type=DIMENSION,Key=REGION
 ```
@@ -118,13 +124,31 @@ aws rds describe-reserved-db-instances \
 aws ce get-cost-and-usage \
   --time-period Start=<start>,End=<end> \
   --granularity DAILY \
-  --metrics UnblendedCost \
+  --metrics AmortizedCost UsageQuantity \
   --filter '{"And":[{"Dimensions":{"Key":"SERVICE","Values":["Amazon Elastic Compute Cloud - Compute"]}},{"Dimensions":{"Key":"RECORD_TYPE","Values":["Usage","DiscountedUsage","SavingsPlanCoveredUsage"]}}]}' \
   --group-by Type=DIMENSION,Key=USAGE_TYPE
+# UsageQuantity per usage type: units up, rate flat = more usage; units flat, $/unit up
+# = rate change (commitment expiry, tier, credit). Compare like usage types only.
 ```
 
 **IAM:** `ce:GetCostAndUsage`.
 **API cost:** $0.01 per page.
+
+### Tying a driver to a change (Amount / Timing / Cause)
+
+Amount and Timing come from the calls above (the day the DAILY series steps; units × bill-derived rate). Cause is a named change, read from one of:
+
+```bash
+# Who/what created or changed it (Event history, <= 90 days, management events)
+aws cloudtrail lookup-events --region <r> \
+  --lookup-attributes AttributeKey=ResourceName,AttributeValue=<resource-id> \
+  --start-time <start-iso> --end-time <end-iso> \
+  --query "Events[].[EventTime,EventName,Username]"
+# Repo history for the resource definition (local checkout, or: gh api repos/<owner>/<repo>/commits?path=<file>&since=<start-iso>)
+git log --since=<start-iso> --format='%h %ad %s' --date=short -- <path>
+```
+
+Three legs cited = `confirmed`; fewer, see SKILL.md Step 4A. A CloudTrail row proves who changed the resource, not that the change moved the bill.
 
 ### New resources in an anomalous window
 
@@ -281,18 +305,19 @@ aws lambda list-event-source-mappings --event-source-arn <arn>
 aws ce get-cost-and-usage \
   --time-period Start=<start>,End=<end> \
   --granularity MONTHLY \
-  --metrics UnblendedCost \
-  --group-by Type=TAG,Key=Service
+  --metrics AmortizedCost \
+  --filter '{"Dimensions":{"Key":"RECORD_TYPE","Values":["Usage","DiscountedUsage","SavingsPlanCoveredUsage"]}}' \
+  --group-by Type=TAG,Key=<tag-key>
 ```
 
-Resources missing the tag appear under the key `Service$` (nothing after the `$`). The tag must be activated as a cost-allocation tag to appear at all. The skill flags these as "untagged spend" under Informational — never as "waste".
+`<tag-key>` is the team's own key (catalog or operator-confirmed; `aws ce list-cost-allocation-tags --status Active` lists the options). Resources missing the tag appear under the key `<tag-key>$` (nothing after the `$`). The tag must be activated as a cost-allocation tag to appear at all. The skill flags these as "untagged spend" under Informational — never as "waste".
 
 **IAM:** `ce:GetCostAndUsage`.
 **API cost:** $0.01 per page.
 
 ### Commitment coverage for candidates (Principle 4 — realizable)
 
-Same `ce get-savings-plans-coverage` / `ce get-reservation-coverage` calls as anomaly mode, filtered to the services carrying rightsize / delete candidates. Savings Plans coverage groups only by `INSTANCE_FAMILY`, `REGION` or `SERVICE`; RI coverage can group by `INSTANCE_TYPE` (CLI help). Covered capacity → the row's `Realizable` is `covered until <end>` and it leaves the totals.
+Same `ce get-savings-plans-coverage` / `ce get-reservation-coverage` calls as anomaly mode, filtered to the services carrying rightsize / delete candidates. Savings Plans coverage groups only by `INSTANCE_FAMILY`, `REGION` or `SERVICE`; RI coverage can group by `INSTANCE_TYPE` (CLI help). Any coverage → the row's `Realizable` is `covered until <end>` and it leaves the totals (a freed Savings Plan commitment can be absorbed by other usage, so it is an owner decision, not a $0 verdict); no coverage fetched → `unknown`, also out of the totals; fetched and none → `yes`.
 
 ### Utilization metrics (required for activity verification)
 
@@ -419,9 +444,12 @@ aws cloudwatch get-metric-statistics \
 aws ce get-cost-and-usage \
   --time-period Start=<start>,End=<end> \
   --granularity MONTHLY \
-  --metrics UnblendedCost \
-  --filter '{"Tags":{"Key":"Service","Values":["<service-name>"]}}' \
+  --metrics AmortizedCost \
+  --filter '{"And":[{"Tags":{"Key":"<tag-key>","Values":["<service-name>"]}},{"Dimensions":{"Key":"RECORD_TYPE","Values":["Usage","DiscountedUsage","SavingsPlanCoveredUsage"]}}]}' \
   --group-by Type=DIMENSION,Key=USAGE_TYPE
+# Check the key's activation first (aws ce list-cost-allocation-tags --tag-keys <tag-key>,
+# LastUpdatedDate): a period before activation is UNVERIFIED, and so is a trend across it.
+# In a payer account add the LINKED_ACCOUNT filter inside the And (see top of file).
 ```
 
 **IAM:** `ce:GetCostAndUsage`.

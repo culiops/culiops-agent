@@ -43,7 +43,7 @@ Regional calls run once per sweep region and are shown as one row. Queries 1-4 a
 | 14 | `ce get-savings-plans-coverage` + `ce get-reservation-coverage` | EC2 | global | 2026-04 | `ce:GetSavingsPlansCoverage`, `ce:GetReservationCoverage` | $0.02 (2 requests) | `Realizable` |
 | 15 | `ce get-cost-and-usage` (EBS usage types, group `REGION` x `USAGE_TYPE`) | usage record types, `AmortizedCost` | global | 2026-04 | `ce:GetCostAndUsage` | $0.01 (1 page) | bill-derived $/GB-Mo |
 | 16 | `ce get-cost-and-usage-with-resources` (snapshot usage group, group `RESOURCE_ID`) | account | global | 2026-04-24..2026-05-01 (7d; resource-level data covers the last 14d, opt-in) | `ce:GetCostAndUsageWithResources` | $0.01 (1 page) | per-snapshot bill cost |
-| 17 | `ce get-cost-and-usage` (group `TAG:Service` x `SERVICE`) | usage record types, `AmortizedCost` | global | 2026-04 | `ce:GetCostAndUsage` | $0.01 (1 page) | untagged spend |
+| 17 | `ce get-cost-and-usage` (group `TAG:Service` x `SERVICE`) + `ce list-cost-allocation-tags --tag-keys Service` | usage record types, `AmortizedCost` | global | 2026-04 | `ce:GetCostAndUsage`, `ce:ListCostAllocationTags` | $0.01 (1 page) | untagged spend; the tag key is the operator-confirmed `Service`, and a figure that spans a key's activation is `UNVERIFIED` |
 
 **Total estimated API cost:** $0.05 for the batch (plus $0.01 probe). CloudTrail `LookupEvents` is throttled (2 requests/s per region): 12 lookups are spaced out.
 **IAM permissions needed:** the consolidated list of the IAM column plus the probe's `sts:GetCallerIdentity`, `iam:ListAccountAliases`, `organizations:DescribeOrganization`.
@@ -55,7 +55,7 @@ Regional calls run once per sweep region and are shown as one row. Queries 1-4 a
 - Q5-Q7 return `compute-optimizer.json` (one combined fixture file for three calls): 3 EC2 recs (two us-east-1, one eu-west-1), 1 EBS rec, 1 RDS rec (`Optimized`).
 - Q8 returns `unattached-volumes.json` (12 volumes: 8 us-east-1, 4 eu-west-1; 3,300 GB).
 - Q9 returns `detach-events.json`; Q10 returns `snapshots-older-than-30d.json` (47); Q11 + Q12 return `snapshot-checks.json`.
-- Q13 + Q14 return `commitment-coverage.json`; Q15 returns `ebs-cost-by-usage-type.json`; Q16 returns `snapshot-cost-by-resource.json`; Q17 returns `untagged-spend.json` ($8,000.00).
+- Q13 + Q14 return `commitment-coverage.json`; Q15 returns `ebs-cost-by-usage-type.json`; Q16 returns `snapshot-cost-by-resource.json`; Q17 returns `untagged-spend.json` ($8,000.00) and `tag-activation.json` (`Service` is `Active`, `LastUpdatedDate` 2025-09-02, before the cost window, so the untagged figure does not span an activation).
 - Every query status `ok`. Rows: Q5 3, Q6 1, Q7 1, Q8 12, Q9 12 lookups (11 with a DetachVolume event), Q10 47, Q11 40 live volume ids, Q12 4 AMI snapshot refs.
 
 ## Step 4 - Drill-down decision (GATE 3 batch)
@@ -155,19 +155,23 @@ Q22: `db-legacy-pg13` is absent from `describe-db-instances` in both regions (de
 
 ### Untagged spend
 
-Q17: $8,000.00 with no `Service` tag (EC2 $5,200.00, EBS $1,800.00, S3 $1,000.00). Untagged is not waste: Informational, owner unknown, no savings.
+Q17: $8,000.00 with no `Service` tag (EC2 $5,200.00, EBS $1,800.00, S3 $1,000.00); the key has been active since 2025-09-02, before the window, so the figure is not `UNVERIFIED`. Untagged is not waste: Informational, owner unknown, no savings.
 
 ### Threshold and totals
 
-All 10 rows are above $5/mo (smallest $13.50); nothing is dropped.
+All 10 rows are above $5/mo (smallest $13.50); nothing is dropped (the report's Gaps section says so: 0 candidates under $5/mo).
 
-| Bucket | Rows | Amount |
-|--------|------|--------|
-| High | 1, 2 | $80.00 + $35.20 = **$115.20** |
-| Medium (counted) | 3, 4, 5, 6 | $124.00 + $78.00 + $31.50 + $13.50 = **$247.00** |
-| Medium, covered (excluded) | 7 | $280.00 |
-| Low | 8, 9, 10 | $80.00 + $40.00 + $32.00 = **$152.00** |
-| **Total counted** | | **$514.20** |
+Summed per rate basis, never blended (`bill-derived` and `list-price` dollars are not the same kind of number):
+
+| Rate basis | Bucket | Rows | Amount |
+|------------|--------|------|--------|
+| `bill-derived` | High | 1, 2 | $80.00 + $35.20 = **$115.20** |
+| `bill-derived` | Medium | 5, 6 | $31.50 + $13.50 = **$45.00** |
+| `bill-derived` | Low | 8, 9, 10 | $80.00 + $40.00 + $32.00 = **$152.00** |
+| `list-price` | Medium | 3, 4 | $124.00 + $78.00 = **$202.00** |
+| `list-price` | Medium, covered (excluded) | 7 | $280.00 |
+
+Rows 5 and 6 stay `medium`, not `high`: the rate is bill-derived, but snapshot storage is incremental and chained, so the bill-attributed cost is an upper bound of what a delete frees (Principle 4).
 
 ## Step 5 - Compose report
 
@@ -193,18 +197,25 @@ Queries run: rows 1-23 as above, each with status `ok` and a row count; extracte
 
 | # | Action | Resource(s) | Owner | Est. savings | Realizable | Source | Rate | Confidence | Evidence |
 |---|--------|-------------|-------|--------------|------------|--------|------|------------|----------|
-| 1 | Delete 5 unattached EBS volumes (us-east-1) | `vol-0aaaa0003bbbb0003`, `vol-0aaaa0004bbbb0004`, `vol-0aaaa0005bbbb0005`, `vol-0aaaa0006bbbb0006`, `vol-0aaaa000bbbbb000b` | unknown (no IaC repo given) | $80.00/mo | ✓ no commitment applies to EBS (live:13) | line-item-computation | bill-derived | high | available (live:8); last DetachVolume 2026-02-12..2026-03-03, 66-85d ago (live:9); no PV/CSI/CFN tags (live:8); 1,000 GB x $0.0800 = 3,300.00/41,250 GB-Mo (live:15) |
-| 2 | Delete 4 unattached EBS volumes (eu-west-1) | `vol-0aaaa0007bbbb0007`, `vol-0aaaa0008bbbb0008`, `vol-0aaaa0009bbbb0009`, `vol-0aaaa000abbbb000a` | unknown (no IaC repo given) | $35.20/mo | ✓ no commitment applies to EBS (live:13) | line-item-computation | bill-derived | high | available (live:8); last DetachVolume 2026-02-09..2026-03-05, 64-88d ago (live:9); no PV/CSI/CFN tags (live:8); 400 GB x $0.0880 = 1,980.00/22,500 GB-Mo (live:15) |
-| 3 | Rightsize prod-api-worker-02 c5.2xlarge to c5.xlarge (us-east-1) | `i-0bbbb3333cccc4444` | unknown (no IaC repo given) | $124.00/mo | ✓ c5 us-east-1: 0% SP/RI coverage (live:14) | compute-optimizer | list-price | medium | CO rec (live:5, 14d lookback); 30d hourly CPU avg 4.1%, p99 8.8%, 99% of hours < 10% (live:18, live:19) |
-| 4 | Rightsize prod-batch-runner-01 m5.xlarge to m5.large (eu-west-1) | `i-0cccc5555dddd6666` | unknown (no IaC repo given) | $78.00/mo | ✓ m5 eu-west-1: 0% SP/RI coverage; the m5 plan is us-east-1 only (live:13, live:14) | compute-optimizer | list-price | medium | CO rec (live:5); 30d hourly CPU avg 2.6%, p99 5.7%, 100% of hours < 10% (live:18, live:19) |
-| 5 | Delete 12 orphan-candidate snapshots (us-east-1) | 12 snapshot ids (listed in the notes) | unknown (no IaC repo given) | $31.50/mo | ✓ no commitment applies | line-item-computation | bill-derived | medium | all 3 orphan checks pass: source volume gone (live:11), no AMI reference (live:12), no AWS Backup/DLM marker (live:10); bill-attributed cost $7.35 over 7d x 30/7 (live:16); upper bound, chain effect |
-| 6 | Delete 5 orphan-candidate snapshots (eu-west-1) | 5 snapshot ids (listed in the notes) | unknown (no IaC repo given) | $13.50/mo | ✓ no commitment applies | line-item-computation | bill-derived | medium | all 3 orphan checks pass (live:10, live:11, live:12); bill-attributed cost $3.15 over 7d x 30/7 (live:16); upper bound, chain effect |
-| 7 | Rightsize prod-api-worker-01 m5.4xlarge to m5.2xlarge (us-east-1) | `i-0aaaa1111bbbb2222` | unknown (no IaC repo given) | $280.00/mo | **covered until 2027-02-14** (EC2 Instance SP, m5, us-east-1, 100% covered: live:13, live:14); billed at the $3,024.00/mo commitment either way (amortized covered usage; $4,200.00 on-demand value), so the $280.00 list-price saving is not on the bill; excluded from totals | compute-optimizer | list-price | medium | CO rec (live:5); 30d hourly CPU avg 3.8%, p99 9.4%, 99% of hours < 10% (live:18, live:19) |
-| 8 | Delete unattached EBS volume (detached 3 days ago) | `vol-0xxxx1234abcd5678` (1,000 GB) | unknown (no IaC repo given) | $80.00/mo | ✓ no commitment applies | line-item-computation | bill-derived | low | `window-too-short`: DetachVolume 2026-05-05 (live:9); 1,000 GB x $0.0800 (live:15). Alternative, not counted: resize 1,000 to 250 GB, CO $60.00/mo list-price (live:6). Re-check on/after 2026-07-04 (60d) |
-| 9 | Confirm owner, then delete or snapshot-and-delete the PV volume | `vol-0aaaa0001bbbb0001` (500 GB) | kubernetes-pv (PVC `orders/data-orders-pg-0`, cluster `acme-prod-eks`) | $40.00/mo | ✓ no commitment applies | line-item-computation | bill-derived | low | PV/CSI tags (live:8); DetachVolume 2026-02-22, 75d ago (live:9). A StatefulSet scaled to 0 holds data: owner confirm before any delete. 500 GB x $0.0800 (live:15) |
-| 10 | Delete unattached EBS volume, detach date unknown | `vol-0aaaa0002bbbb0002` (400 GB) | unknown (no IaC repo given) | $32.00/mo | ✓ no commitment applies | line-item-computation | bill-derived | low | `window-unverified`: available (live:8) but no DetachVolume event in the 90-day history (live:9), CreateTime 2025-10-17 is not an unused-since date. 400 GB x $0.0800 (live:15) |
+| 1 | Snapshot, then delete 5 unattached EBS volumes (us-east-1) | `vol-0aaaa0003bbbb0003`, `vol-0aaaa0004bbbb0004`, `vol-0aaaa0005bbbb0005`, `vol-0aaaa0006bbbb0006`, `vol-0aaaa000bbbbb000b` | unknown (no IaC repo given) | $80.00/mo | yes (EBS is not commitment-eligible, live:13) | line-item-computation | bill-derived | high | available (live:8); last DetachVolume 2026-02-12..2026-03-03, 66-85d ago (live:9); no PV/CSI/CFN tags (live:8); 1,000 GB x $0.0800 = 3,300.00/41,250 GB-Mo (live:15) |
+| 2 | Snapshot, then delete 4 unattached EBS volumes (eu-west-1) | `vol-0aaaa0007bbbb0007`, `vol-0aaaa0008bbbb0008`, `vol-0aaaa0009bbbb0009`, `vol-0aaaa000abbbb000a` | unknown (no IaC repo given) | $35.20/mo | yes (EBS is not commitment-eligible, live:13) | line-item-computation | bill-derived | high | available (live:8); last DetachVolume 2026-02-09..2026-03-05, 64-88d ago (live:9); no PV/CSI/CFN tags (live:8); 400 GB x $0.0880 = 1,980.00/22,500 GB-Mo (live:15) |
+| 3 | Rightsize prod-api-worker-02 c5.2xlarge to c5.xlarge (us-east-1) | `i-0bbbb3333cccc4444` | unknown (no IaC repo given) | $124.00/mo | yes (coverage fetched, none for c5 us-east-1: 0% SP/RI, live:14) | compute-optimizer | list-price | medium | CO rec (live:5, 14d lookback); 30d hourly CPU avg 4.1%, p99 8.8%, 99% of hours < 10% (live:18, live:19) |
+| 4 | Rightsize prod-batch-runner-01 m5.xlarge to m5.large (eu-west-1) | `i-0cccc5555dddd6666` | unknown (no IaC repo given) | $78.00/mo | yes (coverage fetched, none for m5 eu-west-1: 0% SP/RI; the m5 plan is us-east-1 only, live:13, live:14) | compute-optimizer | list-price | medium | CO rec (live:5); 30d hourly CPU avg 2.6%, p99 5.7%, 100% of hours < 10% (live:18, live:19) |
+| 5 | Tag for a hold period, then delete 12 orphan-candidate snapshots (us-east-1) | 12 snapshot ids (listed in the notes) | unknown (no IaC repo given) | $31.50/mo | yes (not commitment-eligible) | line-item-computation | bill-derived | medium | all 3 orphan checks pass: source volume gone (live:11), no AMI reference (live:12), no AWS Backup/DLM marker (live:10); bill-attributed cost $7.35 over 7d x 30/7 (live:16); upper bound, chain effect |
+| 6 | Tag for a hold period, then delete 5 orphan-candidate snapshots (eu-west-1) | 5 snapshot ids (listed in the notes) | unknown (no IaC repo given) | $13.50/mo | yes (not commitment-eligible) | line-item-computation | bill-derived | medium | all 3 orphan checks pass (live:10, live:11, live:12); bill-attributed cost $3.15 over 7d x 30/7 (live:16); upper bound, chain effect |
+| 7 | Rightsize prod-api-worker-01 m5.4xlarge to m5.2xlarge (us-east-1) | `i-0aaaa1111bbbb2222` | unknown (no IaC repo given) | $280.00/mo | **covered until 2027-02-14** (EC2 Instance SP, m5, us-east-1, 100% covered: live:13, live:14); owner decision, excluded from totals. Bill view: the m5 usage is billed at the $3,024.00/mo commitment ($4,200.00 on-demand value). A Savings Plan applies hourly to the eligible usage that earns the most, with no carry-over (docs: https://repost.aws/knowledge-center/savings-plans-billing, read 2026-05-08). Coverage for the m5 family in us-east-1 is 100%, so no uncovered m5 usage exists to absorb the freed commitment and the saving would be about $0 until the plan ends (live:14) | compute-optimizer | list-price | medium | CO rec (live:5); 30d hourly CPU avg 3.8%, p99 9.4%, 99% of hours < 10% (live:18, live:19) |
+| 8 | Snapshot, then delete unattached EBS volume (detached 3 days ago) | `vol-0xxxx1234abcd5678` (1,000 GB) | unknown (no IaC repo given) | $80.00/mo | yes (not commitment-eligible) | line-item-computation | bill-derived | low | `window-too-short`: DetachVolume 2026-05-05 (live:9); 1,000 GB x $0.0800 (live:15). Alternative, not counted: resize 1,000 to 250 GB, CO $60.00/mo list-price (live:6). Re-check on/after 2026-07-04 (60d) |
+| 9 | Confirm owner, then delete or snapshot-and-delete the PV volume | `vol-0aaaa0001bbbb0001` (500 GB) | kubernetes-pv (PVC `orders/data-orders-pg-0`, cluster `acme-prod-eks`) | $40.00/mo | yes (not commitment-eligible) | line-item-computation | bill-derived | low | PV/CSI tags (live:8); DetachVolume 2026-02-22, 75d ago (live:9). A StatefulSet scaled to 0 holds data: owner confirm before any delete. 500 GB x $0.0800 (live:15) |
+| 10 | Snapshot, then delete unattached EBS volume, detach date unknown | `vol-0aaaa0002bbbb0002` (400 GB) | unknown (no IaC repo given) | $32.00/mo | yes (not commitment-eligible) | line-item-computation | bill-derived | low | `window-unverified`: available (live:8) but no DetachVolume event in the 90-day history (live:9), CreateTime 2025-10-17 is not an unused-since date. 400 GB x $0.0800 (live:15) |
 
-**Total estimated savings:** $115.20/mo (high) + $247.00/mo (medium) + $152.00/mo (low) = $514.20/mo. Row 7 ($280.00/mo, `covered until 2027-02-14`) is excluded from the totals.
+**Total estimated savings, per rate basis (no blended figure):**
+
+| Rate basis | High | Medium | Low | Rows |
+|------------|------|--------|-----|------|
+| `bill-derived` | $115.20/mo | $45.00/mo | $152.00/mo | 1, 2 / 5, 6 / 8, 9, 10 |
+| `list-price` | - | $202.00/mo | - | 3, 4 |
+
+Row 7 ($280.00/mo `list-price`, `Realizable: covered until 2027-02-14`) is excluded from the totals. Each saving is counted once: row 8's resize alternative is not added, and the 4 snapshots whose source volumes are in rows 1-2 are not in rows 5-6 until those volumes are deleted.
 
 ### Informational / excluded
 
@@ -223,6 +234,8 @@ Queries run: rows 1-23 as above, each with status `ok` and a row count; extracte
 - Snapshot savings are bill-attributed upper bounds (chained, incremental storage).
 - `vol-0aaaa0002bbbb0002`: no DetachVolume event in the 90-day history; unused-since date unknown (`window-unverified`).
 - Compute Optimizer savings are on-demand list prices (savings-estimation mode with discounts not enabled); rows 3, 4 and 7 are `list-price`.
+- 0 candidates under $5/mo were dropped.
+- Row 7 coverage is read per service / family / region (m5, us-east-1), not per instance.
 
 ### Next steps (informational)
 

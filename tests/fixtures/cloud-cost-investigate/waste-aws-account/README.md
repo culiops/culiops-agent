@@ -19,7 +19,11 @@ Fixture "now" is 2026-05-08; the cost window is the complete month 2026-04-01 to
 - **Mode detection from question phrasing:** "waste audit / delete or rightsize" gives waste mode (suggested at GATE 1).
 - **Payer vs member and regions (H1/H2):** the scoping probe (`scoping-probe.json`) shows the caller is NOT the payer (`MasterAccountId` 999988887777), so no `LINKED_ACCOUNT` filter is needed (a payer variant would need it on every CE call). CE by `REGION` gives us-east-1 62.0%, eu-west-1 35.0%, NoRegion 3.0%; sweeps run in BOTH regions, findings exist in both, and the report header lists `Regions covered`.
 - **Compute Optimizer is a lead, not a saving (H6):** CO rows start at `low`; after the 30d hourly drill-down (`utilization-metrics.json`) they are `medium`; rate basis is `list-price`.
-- **Commitment coverage (Principle 4):** the m5 us-east-1 instance is 100% covered by an EC2 Instance Savings Plan until 2027-02-14, so its Realizable is `covered until 2027-02-14` and it leaves the totals. In the amortized view its cost is the $3,024.00/mo commitment ($4,200.00 at on-demand value), paid either way; Compute Optimizer's $280.00 is an on-demand figure. The m5 instance in eu-west-1 is NOT covered (the plan is region-bound); the c5 instance is not covered.
+- **Confidence floors (Law 3):** `high` needs a bill-derived rate, `live:` activity or event evidence, the window met and `Realizable` known. Rows 1-2 meet all four. Rows 3, 4 and 7 have the same evidence with a `list-price` rate: `medium`. Rows 5-6 have a bill-derived but upper-bound rate: `medium`. Rows 8-10 miss the window or the owner: `low`.
+- **Realizable states:** `yes` (coverage fetched, none for that service / family / region; EBS and snapshots are not commitment-eligible), `covered until <date>` (row 7), `unknown` (none in this fixture). Only `yes` rows count toward totals.
+- **Remediation ladder:** every delete row names its reversible first step (snapshot a volume, hold-tag a snapshot), with the delete last.
+- **Tag activation:** `tag-activation.json` shows the `Service` key active before the window, so the untagged-spend figure is not `UNVERIFIED`.
+- **Commitment coverage (Principle 4):** the m5 us-east-1 instance is 100% covered by an EC2 Instance Savings Plan until 2027-02-14, so its Realizable is `covered until 2027-02-14` (an owner decision) and it leaves the totals. In the amortized view its cost is the $3,024.00/mo commitment ($4,200.00 at on-demand value); Compute Optimizer's $280.00 is an on-demand figure. Coverage is read for the m5 family in us-east-1, and it is 100%, so no uncovered m5 usage could absorb a freed commitment (a Savings Plan applies hourly to the eligible usage that earns the most; `docs:` cited in the notes). The m5 instance in eu-west-1 is NOT covered (the plan is region-bound); the c5 instance is not covered.
 - **EBS unused-since window (H7):** `detach-events.json` gives CloudTrail `DetachVolume` times. 9 volumes were detached 64-88 days ago (eligible, `high`); 1 was detached 3 days ago (`low`, `window-too-short`); 1 has no event in the 90-day history (`low`, `window-unverified`); 1 carries `kubernetes.io/created-for/pvc/name` + `ebs.csi.aws.com/cluster` (Owner `kubernetes-pv`, `low`, data, owner confirm).
 - **Dedup (Step 4B):** `vol-0xxxx1234abcd5678` is in both the Compute Optimizer EBS output (resize 1,000 to 250 GB) and the unattached list. The skill keeps ONE row, the delete row, and notes the resize as the alternative; it is not counted twice.
 - **Bill-derived rates (Principle 4):** the EBS rate comes from `ebs-cost-by-usage-type.json` (gp3: us-east-1 $0.0800, eu-west-1 $0.0880 per GB-Mo = cost / usage quantity). EC2 figures are Compute Optimizer's on-demand prices, labelled `list-price`.
@@ -45,6 +49,7 @@ Fixture "now" is 2026-05-08; the cost window is the complete month 2026-04-01 to
 | `snapshot-cost-by-resource.json` | CE `get-cost-and-usage-with-resources`, 7 days, per snapshot ARN (bill-derived cost) |
 | `commitment-coverage.json` | Savings Plan description, RI list, SP and RI coverage, plus the amortized view of the covered m5 usage |
 | `untagged-spend.json` | CE spend with no `Service` tag |
+| `tag-activation.json` | `ce list-cost-allocation-tags` for `Service` (status and `LastUpdatedDate`), part of Query 17 |
 | `utilization-metrics.json` | 30d hourly CPU for the 3 CO instances (summary envelope over 720 datapoints) + existence checks |
 | `db-binding-metrics.json` | Aurora writer CPU + FreeableMemory + DatabaseConnections (hourly summary envelope) |
 | `residual-charge.json` | CE extended-support line for a deleted instance + `describe-db-instances` |
@@ -54,18 +59,18 @@ Fixture "now" is 2026-05-08; the cost window is the complete month 2026-04-01 to
 
 | Finding | Source | Rate | Confidence | Est. savings |
 |---------|--------|------|------------|-------------|
-| Delete 5 unattached EBS volumes, us-east-1 (detached >= 60d) | line-item-computation | bill-derived | high | $80.00/mo |
-| Delete 4 unattached EBS volumes, eu-west-1 (detached >= 60d) | line-item-computation | bill-derived | high | $35.20/mo |
+| Snapshot, then delete 5 unattached EBS volumes, us-east-1 (detached >= 60d) | line-item-computation | bill-derived | high | $80.00/mo |
+| Snapshot, then delete 4 unattached EBS volumes, eu-west-1 (detached >= 60d) | line-item-computation | bill-derived | high | $35.20/mo |
 | Rightsize EC2 `i-0bbbb` c5.2xlarge to c5.xlarge | compute-optimizer | list-price | medium | $124.00/mo |
 | Rightsize EC2 `i-0cccc` m5.xlarge to m5.large (eu-west-1) | compute-optimizer | list-price | medium | $78.00/mo |
-| Delete 12 orphan-candidate snapshots, us-east-1 | line-item-computation | bill-derived | medium | $31.50/mo |
-| Delete 5 orphan-candidate snapshots, eu-west-1 | line-item-computation | bill-derived | medium | $13.50/mo |
-| Rightsize EC2 `i-0aaaa` m5.4xlarge to m5.2xlarge | compute-optimizer | list-price | medium | $280.00/mo, **covered until 2027-02-14, excluded from totals** |
-| Delete 1,000 GB volume detached 3 days ago (CO resize noted as alternative) | line-item-computation | bill-derived | low | $80.00/mo |
+| Hold-tag, then delete 12 orphan-candidate snapshots, us-east-1 | line-item-computation | bill-derived | medium | $31.50/mo |
+| Hold-tag, then delete 5 orphan-candidate snapshots, eu-west-1 | line-item-computation | bill-derived | medium | $13.50/mo |
+| Rightsize EC2 `i-0aaaa` m5.4xlarge to m5.2xlarge | compute-optimizer | list-price | medium | $280.00/mo, **covered until 2027-02-14 (owner decision), excluded from totals** |
+| Snapshot, then delete 1,000 GB volume detached 3 days ago (CO resize noted as alternative) | line-item-computation | bill-derived | low | $80.00/mo |
 | Confirm owner of Kubernetes PV volume, 500 GB | line-item-computation | bill-derived | low | $40.00/mo |
-| Delete 400 GB volume, detach date unverified | line-item-computation | bill-derived | low | $32.00/mo |
+| Snapshot, then delete 400 GB volume, detach date unverified | line-item-computation | bill-derived | low | $32.00/mo |
 
-**Total estimated savings: $115.20/mo high + $247.00/mo medium + $152.00/mo low = $514.20/mo.** The covered row ($280.00/mo at list price) is excluded.
+**Total estimated savings, per rate basis (no blended figure):** `bill-derived` $115.20/mo high + $45.00/mo medium + $152.00/mo low; `list-price` $202.00/mo medium. The covered row ($280.00/mo at list price) is excluded.
 
 Informational / excluded (no savings claimed, NOT in the remediation table):
 
