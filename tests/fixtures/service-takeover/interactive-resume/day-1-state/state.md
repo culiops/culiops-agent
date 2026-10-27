@@ -17,7 +17,7 @@ operator: arn:aws:iam::123456789012:user/alice
 - **Run started:** 2026-05-05T09:00:00Z
 - **Run completed:** in progress — paused 2026-05-05T10:30:00Z
 - **Skill version:** service-takeover v0.6.0
-- **Intake:** service `payments`, account 123456789012, region us-east-1, intent `takeover`; Pay Team -> Platform Team; handoff 2026-06-15
+- **Intake:** service `payments`, account 123456789012, region us-east-1, delivery model: CI/CD pipeline (GitHub Actions, on merge); intent `takeover`; Pay Team -> Platform Team; handoff 2026-06-15
 
 ---
 

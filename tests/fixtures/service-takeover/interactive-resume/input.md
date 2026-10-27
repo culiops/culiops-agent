@@ -6,7 +6,7 @@ Multi-day takeover. On Day 1 (2026-05-05) the operator runs intake, the audit an
 
 ## Day 1 operator inputs
 
-Same as happy-path Gate 1 inputs. Then: Gates 1, 1.5, 2, 3 completed; at Gate 4 the operator types "pause" before approving the runtime-trace invocation. The skill writes `day-1-state/state.md` (Steps 1-3 done, 4-7 pending, pause note). The catalog is generated 2026-05-05T10:20Z.
+Same as happy-path Gate 1 inputs (including the delivery model: a GitHub Actions pipeline deploys on merge). Then: Gates 1, 1.5, 2, 3 completed; at Gate 4 the operator types "pause" before approving the runtime-trace invocation. The skill writes `day-1-state/state.md` (Steps 1-3 done, 4-7 pending, pause note). The catalog is generated 2026-05-05T10:20Z.
 
 ## Day 7 operator action
 
@@ -17,6 +17,6 @@ Same as happy-path Gate 1 inputs. Then: Gates 1, 1.5, 2, 3 completed; at Gate 4 
 
 ## Notable findings
 
-- Verdict: **partial** (14 ✓ verified, 3 ✓ attested, 6 ◐, 0 ✗, 2 ✗ conflict, 0 ?, 0 N/A): two conflicts (item 10: an alarm named in the interview is absent; item 19: unlisted queue sender), neither in a not-ready category.
+- Verdict: **not-ready** (12 ✓ verified, 3 ✓ attested, 7 ◐, 0 ✗, 2 ✗ conflict, 1 ?, 0 N/A): two conflicts (item 10: an alarm named in the interview is absent; item 19: unlisted queue sender); any `✗ conflict` decides the verdict.
 - The expected handoff is **not** a copy of happy-path: different variant, different marks, timestamps spanning both sessions, the Day-7 resume addendum in the plan.
 - `expected-handoff/state.md` equals `day-7-state/state.md`.

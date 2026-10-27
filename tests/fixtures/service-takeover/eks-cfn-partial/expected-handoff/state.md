@@ -17,7 +17,7 @@ operator: arn:aws:iam::123456789012:user/alice
 - **Run started:** 2026-05-12T13:30:00Z
 - **Run completed:** 2026-05-12T16:00:00Z
 - **Skill version:** service-takeover v0.6.0
-- **Intake:** service `search-api`, account 123456789012, region eu-west-1, intent `takeover`; Search Team -> Platform Team; handoff 2026-06-22
+- **Intake:** service `search-api`, account 123456789012, region eu-west-1, Kubernetes context `platform-eks`, namespace `search`; delivery model: CI/CD pipeline (GitHub Actions runs `helm upgrade --install`); intent `takeover`; Search Team -> Platform Team; handoff 2026-06-22
 
 ---
 
@@ -71,6 +71,8 @@ Each snapshot is compared with the intake values (service `search-api`, account 
 | identity-probe-result | `aws sts get-caller-identity --profile prod-main --query Account` | caller account = intake account (123456789012): yes | 2026-05-12T13:35:00Z |
 | cloudtrail-event-history | `aws cloudtrail lookup-events --max-results 1 --profile prod-main --region eu-west-1 --query 'Events[0].EventTime'` | Event history readable: yes | 2026-05-12T13:36:00Z |
 | resource-explorer-index | `aws resource-explorer-2 list-indexes --profile prod-main --region eu-west-1 --query 'Indexes[].{Region:Region,Type:Type}'` | aggregator index in eu-west-1: yes | 2026-05-12T13:37:00Z |
+| kubernetes-target-identity | `kubectl config current-context`; `kubectl get namespace search -o name` | current context = intake context (`platform-eks`): yes; namespace `search` exists: yes | 2026-05-12T13:38:00Z |
+| kubernetes-access-list | `kubectl auth can-i --list -n search` (as the operator, no `--as`) | get/list allowed on deployments, services, ingresses, pods and configmaps in `search`: yes | 2026-05-12T13:39:00Z |
 
 ---
 
@@ -83,6 +85,8 @@ Each snapshot is compared with the intake values (service `search-api`, account 
 2026-05-12T13:35:00Z  Probe identity-probe-result: caller account matches intake (derived fact only)
 2026-05-12T13:36:00Z  Probe cloudtrail-event-history: Event history readable in eu-west-1 (lookup-events --max-results 1; derived fact only)
 2026-05-12T13:37:00Z  Probe resource-explorer-index: aggregator index present in eu-west-1 (derived fact only)
+2026-05-12T13:38:00Z  Probe kubernetes-target-identity: current context = intake context; namespace exists (derived fact only)
+2026-05-12T13:39:00Z  Probe kubernetes-access-list: get/list on workload objects allowed in namespace search (derived fact only)
 2026-05-12T13:40:00Z  Execution plan emitted to execution-plan.md
 2026-05-12T13:42:00Z  Step 1.5 gate sign-off by alice — plan approved
 2026-05-12T13:42:00Z  Step 2 started — ONE service-discovery delegation printed (real-discovery: 1 diagram + live AWS APIs + kube context platform-eks, namespace search)
@@ -100,15 +104,16 @@ Each snapshot is compared with the intake values (service `search-api`, account 
 2026-05-12T15:30:00Z  Step 6 started — auto-marking scorecard from artifacts
 2026-05-12T15:32:00Z  Step 6 verification batch proposed: 2 read-only AWS commands (items 10, 24)
 2026-05-12T15:33:00Z  Batch approved by alice; identity re-checked (account 123456789012)
-2026-05-12T15:35:10Z  Batch 1/2 describe-alarms: 4 alarms, names match the interview, all with actions -> item 10 ✓ verified
-2026-05-12T15:35:40Z  Batch 2/2 describe-replication-groups: SnapshotRetentionLimit 7 -> item 24 stays ◐ (restore test unattested)
+2026-05-12T15:35:10Z  Batch 1/2 describe-alarms: 4 alarms, names match the interview, all enabled with actions, state OK; none for the S3 bucket, cache errors/latency or the Deployment -> item 10 ◐
+2026-05-12T15:35:40Z  Batch 2/2 describe-replication-groups: SnapshotRetentionLimit 7 -> item 24 stays ◐ (restore test has no record)
 2026-05-12T15:38:00Z  Operator opened 3 runbook links, the rollback runbook and the postmortem (items 13, 14, 17: ◐ -> ✓ verified)
 2026-05-12T15:42:00Z  Item 3 attested by alice (console + CLI)
 2026-05-12T15:44:00Z  Item 11 attested by alice (PagerDuty rotation visible)
 2026-05-12T15:46:00Z  Item 12 attested by alice (test page received)
-2026-05-12T15:55:00Z  Scorecard written: 12 ✓ verified, 3 ✓ attested, 8 ◐, 0 ✗, 0 ✗ conflict, 1 ?, 1 N/A. Verdict: partial
+2026-05-12T15:55:00Z  Scorecard written: 9 ✓ verified, 3 ✓ attested, 10 ◐, 0 ✗, 0 ✗ conflict, 3 ?, 0 N/A. Verdict: partial. Evidence as of 2026-05-12T13:35:00Z
 2026-05-12T15:55:00Z  Step 6 gate sign-off by alice
 2026-05-12T15:55:00Z  Step 7 started — handoff package assembly
+2026-05-12T16:00:00Z  Evidence is 41 days older than the handoff date 2026-06-22 (freshness window 7 days): offered a re-run of the Step 6 checks before assembly; alice declined and will re-run them in the week before the handoff
 2026-05-12T16:00:00Z  Handoff package assembled: 8 files (5 written by the skill in expected-handoff/; 3 snapshots from mock-artifacts/ and filled-interview.md)
 2026-05-12T16:00:00Z  Reminder printed: private repo only; check branch and remote visibility before committing
 2026-05-12T16:00:00Z  Step 7 gate sign-off by alice. Run complete

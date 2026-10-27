@@ -1,6 +1,6 @@
 ---
 name: service-takeover
-description: Use when the user wants to take over an AWS service from another team — especially when there's no documentation, no infrastructure-as-code, and only diagram images. Triggers include "service takeover", "handoff service X", "we're taking over service from team Y", "I need to onboard onto service X". Orchestrator skill that guides the operator through eight gates: intake, information audit, discovery (delegates to service-discovery), catalog verification, runtime profile (delegates to runtime-trace), outgoing-team interview (doc-driven async), readiness scorecard (Production Readiness Review style, strict evidence classes), handoff package assembly. Produces a self-contained directory at .culiops/service-takeover/<service>/ that the receiving team can read to be operational on day one. Resumable across multi-day takeover sessions. AWS (incl. EKS) only.
+description: Use when the user wants to take over an AWS service from another team — especially when there's no documentation, no infrastructure-as-code, and only diagram images. Triggers include "service takeover", "handoff service X", "we're taking over service from team Y", "I need to onboard onto service X". Orchestrator skill that guides the operator through eight gates: intake, information audit, discovery (delegates to service-discovery), catalog verification, runtime profile (delegates to runtime-trace), outgoing-team interview (doc-driven async), readiness scorecard (Production Readiness Review style, strict evidence classes), handoff package assembly. Produces a self-contained directory at .culiops/service-takeover/<service>/ that the receiving team can read to be operational on day one. Resumable across multi-day takeover sessions. AWS services; workloads on any Kubernetes cluster (EKS or not) are checked with kubectl and helm, but runtime-trace covers AWS resources only.
 ---
 
 # Service Takeover
@@ -68,20 +68,20 @@ not approval. (Same pattern as runtime-trace and service-discovery.)
 
 - Law 1 (no writes): inherited; transitive across delegated steps. If a sibling skill would require a write API to satisfy a step, that step is out of scope.
 - Law 2 (no programmatic invocation): the orchestrator prints the exact sibling-skill invocation as instruction text for the operator. The operator runs the sibling skill, the operator confirms the artifact path, the orchestrator resumes. There is no "auto" path.
-- Law 3 (evidence-backed, strict): the readiness scorecard's value is the evidence trail. Marks use the evidence classes in `templates/readiness-scorecard-baseline.md`: `✓ verified` (cited artifact line or live read-only query), `✓ attested` (only for facts no artifact can prove — items 3, 11, 12), `◐ operator-stated` (an interview answer on a checkable fact), `✗`, `✗ conflict` (interview vs artifact disagree), `?`, `N/A`. Any `◐` or `?` caps the verdict at `partial`.
+- Law 3 (evidence-backed, strict): the readiness scorecard's value is the evidence trail. Marks use the evidence classes in `templates/readiness-scorecard-baseline.md`: `✓ verified` (cited artifact line or live read-only query), `✓ attested` (only for facts no artifact can prove — items 3, 11, 12), `◐ operator-stated` (an interview answer on a checkable fact), `✗`, `✗ conflict` (interview vs artifact disagree), `?`, `N/A`. Any `◐` or `?` caps the verdict at `partial`; any `✗` or `✗ conflict` makes it `not-ready`.
 - Law 4 (resumability): the orchestrator always reads `state.md` before proposing actions. It never re-runs completed steps without operator confirmation.
 
 ## Constraints (Non-Negotiable)
 
 1. **Artifacts and live evidence are the source of truth; the interview is testimony.** Every readiness item, every handoff-package claim, every action in the audit trail must trace to either: (a) a prior-step artifact (catalog, runtime profile), (b) a cited read-only query result, (c) an interview answer — recorded as `◐ operator-stated` when the fact is checkable, (d) an operator attestation for facts no artifact can prove, or (e) an out-of-scope acknowledgement. Where testimony and evidence disagree, the item is `✗ conflict`, never silently resolved.
 2. **No assumptions.** When an artifact is missing, the relevant readiness items are marked `?` (unknown), not auto-passed.
-3. **Strict scope per run — one verified target.** One service, one AWS account, one primary region. Every snapshotted artifact is checked against intake (account, region, service) and for age before it is used (Gate 3, Step 4). A mismatch stops the run. Multi-account is out of scope (sibling skills handle their own per-run scope).
+3. **Strict scope per run — one verified target.** One service, one AWS account, one primary region — plus, when workloads run in a cluster, one Kubernetes context and namespace. Every snapshotted artifact is checked against intake (account, region, service) and for age before it is used (Gate 3, Step 4). A mismatch stops the run. Multi-account is out of scope (sibling skills handle their own per-run scope).
 4. **No secrets, ever.** Inherited from `service-discovery` and `runtime-trace` — secret-shaped values are never read from any source. The interview questionnaire records *references* to secrets (where they live, who owns them), never values; tokens never appear in URLs. Targeted CLI commands are projected (`--query`) and only the derived fact is recorded — never pasted raw output. Ingest (Step 5b) scans the filled questionnaire for secret-shaped strings and asks before keeping any.
-5. **Read-only IAM only.** No IAM policy is required by `service-takeover` itself beyond what sibling skills require. The skill never asks for write perms.
+5. **Read-only access only.** The sibling skills list the permissions they need. The Step 1.5 probes and the Step 6 verification batch need their own; they are listed in the baseline ("Permissions for the probes and the batch") and shown to the operator before the batch runs. The skill never asks for write perms.
 6. **Operator confirmation at every gate.** Eight gates. None are optional. Optional *batches* (Step 6 verification) are offered at a gate, never skipped silently.
 7. **Sibling skill artifacts are consumed read-only.** `service-takeover` never modifies, renames or deletes the catalog or runtime profile — it reads them, snapshots them into the handoff package, and cites them. Earlier snapshots are kept inside the takeover directory as `<name>.<YYYY-MM-DD>.md`.
 8. **Out-of-scope actions require five-field approval.** Same pattern as `runtime-trace`.
-9. **Evidence citations in the readiness scorecard.** Every mark carries `[evidence: <path>:<line>]` (or `<path>#<heading>` where no line exists), `[query: <command> @ <timestamp>]`, or `[attested: <note>]`. No bare mark without provenance.
+9. **Evidence citations in the readiness scorecard.** Every mark carries `[evidence: <path>:<line>]` (or `<path>#<heading>` where no line exists), `[query: <command> @ <timestamp>]`, `[docs: <URL> @ <date read>]` (official AWS / Kubernetes documentation read in this session, for what a setting or metric means), or `[attested: <note>]`. No bare mark without provenance. Recalled behaviour is not evidence.
 
 ## Rationalization Prevention
 
@@ -98,7 +98,9 @@ not approval. (Same pattern as runtime-trace and service-discovery.)
 | "I'll generate a runbook section from the runtime profile's no-activity callout" | STOP — `service-takeover` does not generate runbooks or recommendations. Runbook items go in the interview as questions; if no runbook exists, the readiness scorecard flags the gap. |
 | "The interview says alarms/backups/deploy access exist, so the item passes" | STOP — that's `◐ operator-stated`. Offer the Step 6 verification check; only its result can make it `✓ verified`. |
 | "The interview and the runtime profile disagree, I'll go with the interview — they know the service" | STOP — mark `✗ conflict`, cite both, raise it as a High open question. |
-| "Most items pass, so the verdict is ready" | STOP — the verdict is strict: any `◐` or `?` → `partial`; any `✗` in Access / Runtime / Deploy & Rollback / Compliance → `not-ready`. |
+| "The interview says there are no external APIs / no PII / no incidents, so the item is N/A" | STOP — that is testimony. `N/A` needs a cited artifact or record; an interview statement alone is `◐`. |
+| "CloudTrail shows no deploys, so the stated deploy frequency is wrong" | STOP — CI and GitOps deploys may not appear as API calls by a person's role. Use the evidence source that matches the delivery model; a source that cannot see the deploys gives `?`, never `✗ conflict`. |
+| "Most items pass, so the verdict is ready" | STOP — the verdict is strict: any `✗` or `✗ conflict` in any category → `not-ready`; otherwise any `◐` or `?` → `partial`. |
 | "The catalog and the runtime profile are both for 'payments', good enough" | STOP — compare account, region and service from each artifact's stamp/frontmatter with intake. Different environment = stop. |
 | "The handoff package is large, I'll symlink the catalog instead of copying" | STOP — package must be self-contained. Copy, never symlink. |
 
@@ -124,7 +126,9 @@ Skill prompts for and the operator supplies:
 
 - **Service name** (free text, used in output directory).
 - **AWS account ID** + **primary region**.
-- **Intent category** (structured): `takeover` is the default and primary use case. Other categories (`drift-check`, `post-incident`, `pre-cost-opt`) are valid invocation triggers but produce a leaner output (smaller scorecard, no full interview).
+- **Kubernetes** (only if workloads run in a cluster): cluster, context name, namespace(s).
+- **Delivery model** — how changes reach production: applied by a person (IAM role or kubeconfig), a CI/CD pipeline (on merge or on trigger), or a GitOps controller in the cluster. Free text; the interview (Section 4) and the IaC or controller files confirm it. It decides which evidence the Deploy & Rollback items use.
+- **Intent category** (structured): `takeover` is the default and primary use case. Other categories (`drift-check`, `post-incident`, `pre-cost-opt`) are valid invocation triggers but produce a leaner output (no full interview). All 25 items are still marked: the items the missing interview would have answered are `?`, so a lean run's verdict is at most `partial`.
 - **Intent context** (free text, mandatory): why this run, when the handoff is scheduled, who it's for.
 - **Available materials**: which inputs the operator already has:
   - Diagram images (paths)
@@ -132,7 +136,7 @@ Skill prompts for and the operator supplies:
   - Existing `service-discovery` catalog (path, if any)
   - Existing `runtime-trace` runtime profile (path, if any)
   - Outgoing team contact info (free text, for the interview header)
-- **Outgoing team** (free text): which team is handing off, primary contact person.
+- **Outgoing team** (free text): which team is handing off, primary contact person. If there is no outgoing team or nobody can answer (orphaned or vendor-run service), say so: Gate 5 records no respondent, its sections stay empty and the items that depend on them are `?`. The skill does not fill them in.
 - **Incoming team** (free text): who the receiver is — appears in the handoff README.
 
 If the operator is re-invoking on an existing `<service>` (state file exists at `.culiops/service-takeover/<service>/state.md`), the skill reads the state file first and resumes from the current step. Re-invocation skips intake fields that were captured in the initial run unless the operator explicitly resets them.
@@ -147,14 +151,17 @@ Skill produces `.culiops/service-takeover/<service>/execution-plan.md` with a ta
 |---|---|---|---|---|---|
 | Architecture understanding | 2 diagram PNGs at `<path>` | — | input to Step 2 (real-discovery reads them) | $0 | auto |
 | Resource enumeration from IaC | none | full | none — IaC unavailable; Step 2 uses real-discovery | $0 | auto |
-| Live resource enumeration | none | full | run `service-discovery` real-discovery mode | $0 (read-only) | needed |
+| Live resource enumeration | none | full | run `service-discovery` real-discovery mode | priced at its own cost gate | needed |
 | Cross-region inventory | none | full | covered by runtime-trace (Resource Explorer) | $0 | covered |
-| Activity baseline | none | full | run `runtime-trace` | ~$0.05 | needed |
+| Activity baseline | none | full | run `runtime-trace` | priced at its own cost gate | needed |
 | Target identity | intake says `123456789012` / `us-east-1` | unverified | run `aws sts get-caller-identity --profile <p> --query Account` and `aws configure get region --profile <p>` | $0 | needed |
+| Target identity (Kubernetes) | intake says context `<ctx>` / namespace `<ns>` | unverified | run `kubectl config current-context` and `kubectl get namespace <ns> -o name`; if the catalog names a cluster, confirm the context points at it | not priced (cluster API read) | needed |
 | CloudTrail Event history | unknown | unknown | run `aws cloudtrail lookup-events --max-results 1 --profile <p> --region us-east-1 --query 'Events[0].EventTime'` (Event history needs no trail) | $0 | needed |
 | Tag scoping | tag `service=payments` supplied | — | proceed | $0 | auto |
 | Existing service-discovery catalog | none | full | covered above | — | — |
 | Existing runtime-trace profile | none | full | covered above | — | — |
+
+**Cost column.** A sibling-skill row is priced at that skill's own cost gate. A targeted command shows `$0` only when official documentation read in this session says the call is free (`docs: <URL>`); otherwise write `unknown`. Read-only does not mean free — the Cost Explorer API, for one, bills per request.
 
 **Action types the orchestrator may propose:**
 
@@ -176,7 +183,7 @@ One delegation to `service-discovery`, routed by what intake found:
 - **No IaC (diagrams/docs only)** → service-discovery's real-discovery path (documents → live read-only queries in one flow, with its own gates).
 - **Only CloudFormation / SAM / Serverless / CDK** → service-discovery recognises them as unsupported and offers real-discovery; accept it. Resources are recorded with `Owner: cloudformation (<stack>)`.
 
-1. Skill prints the exact `service-discovery` invocation (path, service name, instance, the intake account/region/profile and, for EKS, the kube context).
+1. Skill prints the exact `service-discovery` invocation (path, service name, instance, the intake account/region/profile and, when workloads run in a cluster, the kube context).
 2. Operator runs `service-discovery` end-to-end and returns the catalog path.
 
 If the existing-artifact branch was selected at Step 1.5, skip to Gate 3 with that artifact.
@@ -193,7 +200,7 @@ If the existing-artifact branch was selected at Step 1.5, skip to Gate 3 with th
 1. Skill prints the exact `runtime-trace` invocation with the agreed scoping primitive (a cost-allocation tag where one exists — the only way spend can be attributed), intent category (always `takeover` when invoked from this skill unless operator overrode at Step 1), and the `--redact` flag IF the operator indicated the handoff package may be shared externally.
 2. Operator runs `runtime-trace` end-to-end (which has its own 7 gates).
 3. When complete, operator provides the runtime-profile path back.
-4. **Same target + schema.** Compare the profile frontmatter (`account`, `region`, `service`) with intake; mismatch → stop. Read `runtime-profile-schema`; a schema-1 profile is accepted with a "re-run recommended — older format lacks Wiring and cross-Region verification" open question, and items 5 and 19 are `?`.
+4. **Same target + schema.** Compare the profile frontmatter (`account`, `region`, `service`) with intake; mismatch → stop. Read `runtime-profile-schema`; a schema-1 profile is accepted with a "re-run recommended — older format lacks Wiring and cross-Region verification" open question, and items 5 and 19 are `?`. In-cluster workloads are a recorded gap in the profile ("not traced"): items 7–9 and 19 for them need the Kubernetes checks in the baseline, else `?`.
 5. Skill snapshots `<service>-runtime-profile.md` into the takeover directory (earlier snapshot kept dated, as in Step 3). State file updated.
 
 ### Step 5 — Outgoing-team interview (Gate 5)
@@ -252,11 +259,13 @@ Mark every item from evidence using the classes, rules and verification checks i
 
 #### Marking rules (summary — the baseline is authoritative)
 
-1. **Evidence classes.** `✓ verified` (cited artifact line or live read-only query) · `✓ attested` (items 3, 11, 12 only) · `◐ operator-stated` (interview answer on a checkable fact) · `✗` · `✗ conflict` · `?` · `N/A`. A non-empty interview answer is at most `◐`; empty is `?`, never `✗`.
-2. **Artifact items (1, 4–9)** come from `state.md`, the catalog and the runtime profile, read with their current schemas: item 4/6 count only attributed rows and need a live-backed catalog for `✓ verified`; item 5 needs the runtime profile's cross-Region verification to have passed ("not verifiable" → `?`); item 9 is management principals only.
+1. **Evidence classes.** `✓ verified` (cited artifact line or live read-only query) · `✓ attested` (items 3, 11, 12 only) · `◐ operator-stated` (interview answer on a checkable fact) · `✗` · `✗ conflict` · `?` · `N/A`. A non-empty interview answer is at most `◐`; empty is `?`, never `✗`. `N/A` needs a cited artifact or record that says the item does not apply; an interview statement alone is `◐`.
+2. **Artifact items (1, 4–9)** come from `state.md`, the catalog and the runtime profile, read with their current schemas: item 1 needs a permission-requiring read to have succeeded, not only the identity probe; items 4 and 7 need coverage of every compute and data-store resource, not one row; item 4/6 count only attributed rows and need a live-backed catalog for `✓ verified`; item 5 needs the runtime profile's cross-Region verification to have passed ("not verifiable" → `?`); item 9 is management principals only. Workloads in a cluster use the Kubernetes checks in the baseline.
 3. **Conflict check.** Every interview answer with an artifact counterpart is compared (deploy frequency vs change events, upstream callers vs Wiring, downstream vs dependency graph, DR regions vs Cross-Region Footprint, secrets vs catalog references, backups vs catalog config). Disagreement → `✗ conflict`, both sources cited, High open question.
-4. **Step 6 verification batch (optional, offered by default).** For each `◐` item with a verification check (10, 15, 18–20, 23–25), the skill proposes the read-only projected command (`--profile`/`--region` pinned, identity re-checked). On approval the results are recorded as `[query: … @ …]` and move items to `✓ verified`, `✗` or `✗ conflict`. Skipped → items stay `◐`.
-5. **Verdict (strict).** `ready` only if every item is `✓ verified`, `✓ attested` or `N/A`. Any `✗` / `✗ conflict` in Access, Runtime, Deploy & Rollback or Compliance → `not-ready`. Otherwise → `partial`. Pass rates are shown per category but never decide the verdict.
+4. **Step 6 verification batch (optional, offered by default).** For each `◐` item with a verification check (10, 15, 18–20, 23–25), the skill proposes the read-only projected command (`--profile`/`--region` pinned, identity re-checked). On approval the results are recorded as `[query: … @ …]` and move items to `✓ verified`, `✗` or `✗ conflict`. Skipped → items stay `◐`. The baseline gives the Kubernetes equivalent where one exists and lists the read-only permissions the batch needs.
+5. **Verdict (strict).** `ready` only if every item (and every operator-supplied extra) is `✓ verified`, `✓ attested` or `N/A`. Any `✗` or `✗ conflict` in any category → `not-ready`. Otherwise → `partial`. Pass rates are shown per category but never decide the verdict.
+6. **Priority and order.** Open questions rank High = every `✗` and `✗ conflict`; Medium = every `?` and `◐`; Low = notes on `✓` items. Within a level, the cheapest resolution first (a Step 6 check, then a document to open, then an outgoing-team follow-up). Each entry names its item number and mark. The README's top 5 is the first five.
+7. **Evidence as of.** The verdict states the oldest timestamp behind any `✓`. At Gate 7, if the handoff date is more than the team's freshness window (default 7 days) after that, offer to re-run the Step 6 checks before assembling the package.
 
 #### Output structure
 
@@ -264,9 +273,9 @@ Mark every item from evidence using the classes, rules and verification checks i
 # Readiness Scorecard — <service>
 
 ## Verdict
-- Overall: <ready / not-ready / partial> — strict rule (any ◐ or ? → partial; ✗ in Access/Runtime/Deploy & Rollback/Compliance → not-ready).
+- Overall: <ready / not-ready / partial> — strict rule (any ✗ or ✗ conflict → not-ready; otherwise any ◐ or ? → partial). Evidence as of <oldest timestamp behind any ✓>.
 - Counts: <n> verified · <n> attested · <n> operator-stated · <n> ✗ · <n> conflict · <n> unknown · <n> N/A.
-- Blocking items: <every ✗ / ✗ conflict, then every ? in Access/Runtime/Deploy & Rollback/Compliance>.
+- Blocking items: <every ✗ / ✗ conflict first, then every ? and ◐, in the priority order of rule 6>.
 - To reach ready: <n> verification checks available (listed under each ◐ item).
 
 ## Per-category summary
@@ -285,12 +294,12 @@ For each of 25 items:
 - Each command run, its timestamp, the derived fact, and the item(s) it moved.
 
 ## Manual override log
-- For each override: timestamp, item #, old mark → new mark, reason. An override cannot produce `✓ verified` without a cited artifact or query.
+- For each override: timestamp, item #, old mark → new mark, reason. An override that clears a `✗`, `✗ conflict` or `◐` needs the artifact or query that resolves it, not a reason alone.
 ```
 
 #### Optional extras
 
-Operator may supply `.culiops/service-takeover/<service>/extra-checklist.md` with additional items, parsed and merged into the scorecard alongside the baseline. Extras use the same evidence classes, coexist as a separate section ("Operator-supplied extras"), and never change the baseline verdict rule.
+Operator may supply `.culiops/service-takeover/<service>/extra-checklist.md` with additional items, parsed and merged into the scorecard alongside the baseline. Extras use the same evidence classes and coexist as a separate section ("Operator-supplied extras"), and the same verdict rule counts them: an extra that is `✗` makes the verdict `not-ready`, one that is `◐` or `?` keeps it `partial`. This is how a team adds its own requirements.
 
 ### Step 7 — Handoff package (Gate 7)
 
@@ -319,7 +328,7 @@ Self-contained 1–2 page summary; the receiving team should be able to read jus
 - Handoff date: <date>
 - From: <outgoing team>
 - To: <incoming team>
-- Readiness verdict: <ready / not-ready / partial> (strict; see scorecard for blocking items and the checks that would reach ready)
+- Readiness verdict: <ready / not-ready / partial> (strict; see scorecard for blocking items and the checks that would reach ready), evidence as of <timestamp>
 - Top 5 open questions:
   1. ...
 
@@ -333,9 +342,9 @@ Self-contained 1–2 page summary; the receiving team should be able to read jus
 ## First-day actions for <incoming team>
 - Read readiness-scorecard.md verdict and gaps
 - Schedule follow-up with <outgoing-team contact> on top 3 open questions
-- Verify console + CLI access in account <id>
+- Verify console + CLI access in account <id> (and cluster access to <context>/<namespace> if workloads run in a cluster)
 - Run the pending verification checks listed in readiness-scorecard.md
-- Subscribe to existing alerts (see runbook section of catalog)
+- Subscribe to existing alerts (see interview Section 5)
 
 ## Standards this package follows
 - Production Readiness Review (PRR) — SRE book Ch. 32
@@ -431,7 +440,7 @@ skills/service-takeover/
     └── auto-mark-rules.md                ← per-item auto-mark logic reference
 ```
 
-No `examples/aws/` directory — `service-takeover` doesn't have per-resource definitions of its own. Resource type coverage is inherited from `service-discovery` (AWS + Kubernetes) and `runtime-trace` (per-AWS-resource; EKS in-cluster workloads are a recorded gap).
+No `examples/aws/` directory — `service-takeover` doesn't have per-resource definitions of its own. Resource type coverage is inherited from `service-discovery` (AWS + Kubernetes) and `runtime-trace` (per-AWS-resource; in-cluster workloads, on EKS or any other cluster, are a recorded gap).
 
 Fixtures for testing live under `tests/fixtures/service-takeover/<scenario>/`. See Testing below.
 
@@ -450,11 +459,11 @@ Three layers, ordered by build effort:
 
 3. **Negative-case fixtures:**
    - `happy-path` — full run; the Step 6 verification batch finds the incoming deploy role missing (item 15 `✗`) and the interview's DR and deploy-frequency claims conflict with artifacts → `not-ready`.
-   - `partial-interview` — operator chose to proceed despite empty SLO/DR sections; verify readiness scorecard correctly marks them as `?`.
+   - `partial-interview` — operator chose to proceed despite empty SLO/DR sections; verify readiness scorecard correctly marks them as `?`; its one `✗ conflict` still makes the verdict `not-ready`.
    - `existing-stale-catalog` — execution plan offers verify path; operator chooses re-run; old snapshot kept as `service-catalog.<date>.md` and diffed.
    - `runtime-trace-skipped` — operator chose to skip runtime-trace; scorecard's Runtime category goes to `?`.
    - `interactive-resume` — Day 1 stops at Gate 3; Day 7 re-invokes; the catalog's age is shown and the operator chooses use-as-is; state file resumes from Step 4.
-   - `eks-cfn-partial` — EKS service with CloudFormation-owned resources and unattributable spend; one `?` and a few `◐` → exactly `partial`.
+   - `eks-cfn-partial` — EKS service with CloudFormation-owned resources and unattributable spend; the in-cluster workloads give three `?` and several `◐`, nothing fails → exactly `partial`.
 
 ## Versioning
 

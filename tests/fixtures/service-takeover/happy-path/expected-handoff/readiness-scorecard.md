@@ -9,12 +9,12 @@ verdict: not-ready
 
 # Readiness Scorecard — payments
 
-**Verdict: not-ready** — 12 ✓ verified, 3 ✓ attested, 6 ◐ operator-stated, 1 ✗, 3 ✗ conflict, 0 ?, 0 N/A (25 items).
-**Why:** `✗` / `✗ conflict` in Deploy & Rollback (15, 18); Compliance (25).
+**Verdict: not-ready** — 9 ✓ verified, 3 ✓ attested, 8 ◐ operator-stated, 1 ✗, 3 ✗ conflict, 1 ?, 0 N/A (25 items). Evidence as of 2026-05-12T14:05:00Z.
+**Why:** `✗` / `✗ conflict` in Deploy & Rollback (15, 18); Dependencies (19); Compliance (25).
 **Generated:** 2026-05-12T16:05:00Z
 **Operator:** alice (arn:aws:iam::123456789012:user/alice)
 
-Rules applied: `readiness-scorecard-baseline.md` (template-version 2). One evidence class per item; a non-empty interview answer is at most `◐`; empty is `?`, never `✗`; arithmetic pass rates are shown per category but never decide the verdict. Citations are package-relative (`interview-questionnaire.md` is the snapshot of `filled-interview.md`).
+Rules applied: `readiness-scorecard-baseline.md` (template-version 3). One evidence class per item; a non-empty interview answer is at most `◐`; empty is `?`, never `✗`; arithmetic pass rates are shown per category but never decide the verdict. Citations are package-relative (`interview-questionnaire.md` is the snapshot of `filled-interview.md`).
 
 ---
 
@@ -24,29 +24,29 @@ Rules applied: `readiness-scorecard-baseline.md` (template-version 2). One evide
 |---|---|---|---|---|---|---|---|---|
 | Access | 1-3 | 2 | 1 | 0 | 0 | 0 | 0 | 0 |
 | Inventory | 4-6 | 3 | 0 | 0 | 0 | 0 | 0 | 0 |
-| Runtime | 7-9 | 3 | 0 | 0 | 0 | 0 | 0 | 0 |
-| Alerting | 10-12 | 1 | 2 | 0 | 0 | 0 | 0 | 0 |
+| Runtime | 7-9 | 2 | 0 | 0 | 0 | 0 | 1 | 0 |
+| Alerting | 10-12 | 0 | 2 | 1 | 0 | 0 | 0 | 0 |
 | Runbooks | 13-14 | 0 | 0 | 2 | 0 | 0 | 0 | 0 |
 | Deploy & Rollback | 15-18 | 1 | 0 | 1 | 1 | 1 | 0 | 0 |
 | Dependencies | 19-21 | 1 | 0 | 1 | 0 | 1 | 0 | 0 |
-| Compliance | 22-25 | 1 | 0 | 2 | 0 | 1 | 0 | 0 |
-| **Total** | **25** | **12** | **3** | **6** | **1** | **3** | **0** | **0** |
+| Compliance | 22-25 | 0 | 0 | 3 | 0 | 1 | 0 | 0 |
+| **Total** | **25** | **9** | **3** | **8** | **1** | **3** | **1** | **0** |
 
 ## What would move this toward `ready`
 
 - **Blocking (clear first):** item 15 (deploy permission for `platform-team-deploy`; one re-run of the simulation), item 25 (show or retract the us-west-2 standby), item 18 (explain 3-5/week vs 5 observed runs), item 19 (identify `legacy-orders-exec`). Until these clear, the verdict stays `not-ready`.
-- **Then the 6 `◐` items:** 13, 14, 17 (operator opens the runbook, postmortem and rollback links), 21 (contract owner with procurement), 22 (PII scope with security), 24 (attested restore test).
-- No item is `?`.
+- **Then the `?` item:** 7 (a query for the DynamoDB `payments-ledger` metrics, which `runtime-trace` did not collect).
+- **Then the 8 `◐` items:** 10 (re-run `describe-alarms` once the missing alarms exist), 23 (retention period for `payments-ledger`), 13, 14, 17 (operator opens the runbook, postmortem and rollback links), 24 (a restore-test record), 21 (contract owner with procurement), 22 (PII scope with security).
 
 ---
 
 ## Step 6 verification batch
 
-Offered by default at Gate 6; alice approved it at 2026-05-12T15:50:00Z. Three read-only AWS commands, $0, `--profile prod-main --region us-east-1`, after `aws sts get-caller-identity` re-confirmed account 123456789012. The skill ran them; only the derived facts below are recorded. The comparisons below need no AWS call and were made from the artifacts.
+Offered by default at Gate 6; alice approved it at 2026-05-12T15:50:00Z. Three read-only AWS commands, cost `unknown` (no pricing source read), `--profile prod-main --region us-east-1`, after `aws sts get-caller-identity` re-confirmed account 123456789012. The skill ran them; only the derived facts below are recorded. The comparisons below need no AWS call and were made from the artifacts.
 
 | # | Item | Check (read-only, projected; `--profile`/`--region` pinned) | Derived fact (raw output not recorded) | Timestamp |
 |---|---|---|---|---|
-| 1 | 10 | `aws cloudwatch describe-alarms --profile prod-main --region us-east-1 --alarm-name-prefix payments- --query 'MetricAlarms[].{Name:AlarmName,Metric:MetricName,Ns:Namespace,Actions:length(AlarmActions)}'` | 5 alarms returned; names match the interview; each has >= 1 action | 2026-05-12T15:52:10Z |
+| 1 | 10 | `aws cloudwatch describe-alarms --profile prod-main --region us-east-1 --alarm-name-prefix payments- --query 'MetricAlarms[].{Name:AlarmName,Metric:MetricName,Ns:Namespace,Dims:Dimensions,Actions:AlarmActions,Enabled:ActionsEnabled,State:StateValue}'` | 5 alarms returned; names match the interview; each has >= 1 action, `ActionsEnabled: true`, state `OK`. Metrics: authorization success rate (custom), queue depth, DLQ depth, Lambda `Errors` (all payments-* functions), Lambda `Duration` p99. None on DynamoDB `payments-ledger`; no throttle or concurrency alarm on any Lambda | 2026-05-12T15:52:10Z |
 | 2 | 24 | `aws dynamodb describe-continuous-backups --profile prod-main --region us-east-1 --table-name payments-ledger --query 'ContinuousBackupsDescription.PointInTimeRecoveryDescription.PointInTimeRecoveryStatus'` | `ENABLED` on `payments-ledger` | 2026-05-12T15:52:40Z |
 | 3 | 15 | `aws iam simulate-principal-policy --profile prod-main --policy-source-arn arn:aws:iam::123456789012:role/platform-team-deploy --action-names lambda:UpdateFunctionCode lambda:UpdateFunctionConfiguration --resource-arns <payments-authorizer ARN> <payments-capture ARN> <payments-reconciler ARN> --query 'EvaluationResults[].{Action:EvalActionName,Resource:EvalResourceName,Decision:EvalDecision}'` | 6 of 6 results `implicitDeny` | 2026-05-12T15:53:20Z |
 | 4 | 6 | (artifact comparison, no AWS call) | interview Section 9 lists 2 Secrets Manager secrets; catalog Secret References lists the same 2 | 2026-05-12T15:53:20Z |
@@ -61,8 +61,8 @@ Offered by default at Gate 6; alice approved it at 2026-05-12T15:50:00Z. Three r
 ### Item 1 — Operator has IAM read in target account — ✓ verified
 
 - **Mark:** ✓ verified
-- **Evidence:** [evidence: state.md:71]
-- **Notes:** `aws sts get-caller-identity --query Account` returned the intake account 123456789012; only the derived fact is recorded.
+- **Evidence:** [evidence: state.md:71]; [evidence: state.md:72]
+- **Notes:** `aws sts get-caller-identity --query Account` returned the intake account 123456789012. That call needs no permission, so the CloudTrail Event-history read (`lookup-events`, which does) is the proof of read access: it succeeded in the same account. Only derived facts are recorded.
 
 ### Item 2 — Deploy role identified — ✓ verified
 
@@ -81,8 +81,8 @@ Offered by default at Gate 6; alice approved it at 2026-05-12T15:50:00Z. Three r
 ### Item 4 — Resources enumerated — ✓ verified
 
 - **Mark:** ✓ verified
-- **Evidence:** [evidence: service-catalog.md:17; service-catalog.md:34-41]
-- **Notes:** 8 attributed rows from real-discovery (live by construction), none `not found`. The 2 Unattributed items (API Gateway `abc123def456`, SNS `payments-events`) are not counted.
+- **Evidence:** [evidence: service-catalog.md:17; service-catalog.md:34-41; service-catalog.md:45-46]; [evidence: runtime-profile.md:202]
+- **Notes:** 8 attributed rows from real-discovery (live by construction), none `not found`. The 2 Unattributed items (API Gateway `abc123def456`, SNS `payments-events`) are each dispositioned in the catalog (recorded by the operator as dependencies, not inventory). All 8 resources the profile lists under Resources by region (3 Lambdas, 2 queues, 1 table, 2 secrets) appear in the catalog.
 
 ### Item 5 — Cross-region footprint known — ✓ verified
 
@@ -98,11 +98,12 @@ Offered by default at Gate 6; alice approved it at 2026-05-12T15:50:00Z. Three r
 
 ## Category: Runtime (items 7–9)
 
-### Item 7 — Activity baseline captured — ✓ verified
+### Item 7 — Activity baseline captured — ?
 
-- **Mark:** ✓ verified
-- **Evidence:** [evidence: runtime-profile.md:168, runtime-profile.md:176]
-- **Notes:** 5 rows with data (3 Lambda, 2 SQS), none `no-data`. DynamoDB `payments-ledger` metrics are not collected (gap in the profile).
+- **Mark:** ?
+- **Evidence:** [evidence: runtime-profile.md:168, runtime-profile.md:176]; [evidence: runtime-profile.md:212]
+- **Notes:** 3 of 4 compute and data-store resources covered: the 3 Lambdas have rows with data (so do the 2 SQS queues), none `no-data`. DynamoDB `payments-ledger` has no row: the profile lists its metrics as not collected. One resource without a baseline row makes the item `?` (n of m covered), not `✓ verified`.
+- **Check that would verify it:** A CloudWatch query for the table's metrics over a stated window, recorded as `[query: … @ …]` (operator action; `runtime-trace` does not cover `dynamodb:table`).
 
 ### Item 8 — Deploy events history captured — ✓ verified
 
@@ -118,11 +119,12 @@ Offered by default at Gate 6; alice approved it at 2026-05-12T15:50:00Z. Three r
 
 ## Category: Alerting (items 10–12)
 
-### Item 10 — Critical metrics have alarms — ✓ verified
+### Item 10 — Critical metrics have alarms — ◐ operator-stated
 
-- **Mark:** ✓ verified
-- **Evidence:** [stated: interview-questionnaire.md:119]; [query: aws cloudwatch describe-alarms --profile prod-main --region us-east-1 --alarm-name-prefix payments- --query 'MetricAlarms[].{Name:AlarmName,Metric:MetricName,Ns:Namespace,Actions:length(AlarmActions)}' @ 2026-05-12T15:52:10Z]
-- **Notes:** All 5 alarms named in the interview exist, each with at least one action, on the error, queue-depth, DLQ and latency metrics of the critical path.
+- **Mark:** ◐ operator-stated
+- **Evidence:** [stated: interview-questionnaire.md:119]; [query: aws cloudwatch describe-alarms --profile prod-main --region us-east-1 --alarm-name-prefix payments- --query 'MetricAlarms[].{Name:AlarmName,Metric:MetricName,Ns:Namespace,Dims:Dimensions,Actions:AlarmActions,Enabled:ActionsEnabled,State:StateValue}' @ 2026-05-12T15:52:10Z]
+- **Notes:** All 5 alarms named in the interview exist, each enabled with at least one action and in state `OK`. They do not cover every compute and data-store resource: the DynamoDB table `payments-ledger` has no alarm, and none of the Lambdas has a throttle or concurrency (saturation) alarm. Alarms existing is not the same as the service being covered.
+- **Check that would verify it:** Add the missing alarms (or record why a resource needs none), then re-run `describe-alarms` (Step 6 check).
 
 ### Item 11 — On-call rotation configured — ✓ attested
 
@@ -209,18 +211,19 @@ Offered by default at Gate 6; alice approved it at 2026-05-12T15:50:00Z. Three r
 - **Notes:** customer_id (UUID), masked card last-4, amounts, timestamps; KMS encryption; Stripe tokenizes card numbers. A PII answer is at most `◐`: it is a policy statement, not something AWS can confirm.
 - **Check that would verify it:** Security/compliance contact confirms the PII scope (operator action).
 
-### Item 23 — Data retention policy known — ✓ verified
+### Item 23 — Data retention policy known — ◐ operator-stated
 
-- **Mark:** ✓ verified
+- **Mark:** ◐ operator-stated
 - **Evidence:** [stated: interview-questionnaire.md:236]; [evidence: service-catalog.md:39]
-- **Notes:** 7 years plus a 90-day grace via TTL on `expires_at`. The catalog confirms TTL is enabled on that attribute (live); the per-record expiry values are data and were not read.
+- **Notes:** 7 years plus a 90-day grace via TTL on `expires_at`. The catalog confirms TTL is enabled on that attribute (live), but a TTL setting names only the attribute: each record's expiry time is data, so no configured period equals the stated one.
+- **Check that would verify it:** Open the retention policy or the writer code that sets `expires_at` (document the operator opens and cites), or read the stored expiry of a sample record.
 
 ### Item 24 — Backups configured and restore tested — ◐ operator-stated
 
 - **Mark:** ◐ operator-stated
 - **Evidence:** [stated: interview-questionnaire.md:239, interview-questionnaire.md:242]; [query: aws dynamodb describe-continuous-backups --profile prod-main --region us-east-1 --table-name payments-ledger --query 'ContinuousBackupsDescription.PointInTimeRecoveryDescription.PointInTimeRecoveryStatus' @ 2026-05-12T15:52:40Z]
 - **Notes:** PITR is `ENABLED` on the only stateful resource, so the backup half is confirmed. The restore test (2026-02-15, 18 minutes) was run by the Pay Team and is operator-stated.
-- **Check that would verify it:** Becomes `✓ verified` when the operator attests a restore test within 12 months (witness one, or have Carol repeat it).
+- **Check that would verify it:** Becomes `✓ verified` when there is a record of a restore test within 12 months: a ticket or runbook run log the operator opens and cites (the Pay Team's 2026-02-15 run, or one witnessed by the incoming team). The stated date alone stays `◐`.
 
 ### Item 25 — DR plan exists — ✗ conflict
 

@@ -18,14 +18,14 @@ incoming-team: Platform Team
 - **Handoff date:** 2026-06-22
 - **From:** Search Team (Lena M. — lena@example.com, Omar T. — omar@example.com)
 - **To:** Platform Team
-- **Readiness verdict:** partial — nothing fails; 1 item is `?` (8: no deploy history for the in-cluster Deployment) and 8 are `◐`. 12 ✓ verified, 3 ✓ attested, 8 ◐, 0 ✗, 0 ✗ conflict, 1 ?, 1 N/A. Five AWS resources are CloudFormation-owned; EKS in-cluster workloads are not traced.
-- **Open questions count:** 1 high / 4 medium / 1 low
+- **Readiness verdict:** partial — nothing fails; 3 items are `?` (7, 8, 9: the in-cluster Deployment has no baseline, no deploy history and no audit-log query) and 10 are `◐`. 9 ✓ verified, 3 ✓ attested, 10 ◐, 0 ✗, 0 ✗ conflict, 3 ?, 0 N/A. Evidence as of 2026-05-12T13:35:00Z. Five AWS resources are CloudFormation-owned; EKS in-cluster workloads are not traced.
+- **Open questions count:** 0 high / 6 medium / 1 low
 - **Top 5 open questions:**
-  1. No deploy history for the in-cluster Deployment (item 8 `?`; items 16, 18 unverifiable) (HIGH-1)
-  2. CloudFormation owns 5 of the 10 rows: confirm the change path (item 4 note) (MED-1)
-  3. Deploy role and Kubernetes access are unverified (items 2, 15, 16) (MED-2)
-  4. Where does the data come from in a Region-loss rebuild? (items 24, 25) (MED-3)
-  5. ALB clients are interview-stated only (item 19) (MED-4)
+  1. The in-cluster Deployment has no evidence: no deploy history, baseline or audit-log query (items 7, 8, 9 `?`; items 16, 18 unverifiable) (MED-1)
+  2. Alarm and alert-rule coverage is incomplete (item 10 `◐`) (MED-2)
+  3. Deploy role and Kubernetes access are unverified (items 2, 15, 16) (MED-3)
+  4. External API ownership has no record (item 21 `◐`) (MED-4)
+  5. ALB clients are interview-stated only (item 19) (MED-5)
 
 ## What this package contains
 
@@ -42,11 +42,11 @@ incoming-team: Platform Team
 ## First-day actions for Platform Team
 
 - [ ] Read this README in full.
-- [ ] Read HIGH-1: get `helm history` before relying on the deploy-frequency answer.
-- [ ] Read MED-1: the data layer is CloudFormation-owned; get the templates and the change-set process.
+- [ ] Read MED-1: get `helm history` before relying on the deploy-frequency answer.
+- [ ] Read LOW-1: the data layer is CloudFormation-owned; get the templates and the change-set process.
 - [ ] Confirm your EKS access entry and RBAC (item 15) with `kubectl auth can-i`.
 - [ ] Subscribe to the 4 alerts in Section 5; read the landmines in Section 7.
-- [ ] Verify your team's IAM identities have console + CLI access to AWS account **123456789012** in region **eu-west-1**.
+- [ ] Verify your team's IAM identities have console + CLI access to AWS account **123456789012** in region **eu-west-1** (and `kubectl` access to context **platform-eks**, namespace **search**).
 
 ## Standards this package follows
 

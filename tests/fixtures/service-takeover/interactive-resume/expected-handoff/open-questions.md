@@ -3,8 +3,8 @@ open-questions-schema: 2
 service: payments
 generated-at: 2026-05-12T09:40:00Z
 high-priority-count: 2
-medium-priority-count: 6
-low-priority-count: 3
+medium-priority-count: 8
+low-priority-count: 2
 ---
 
 # Open Questions — payments
@@ -16,12 +16,12 @@ low-priority-count: 3
 | Priority | Count |
 |---|---|
 | High | 2 |
-| Medium | 6 |
-| Low | 3 |
+| Medium | 8 |
+| Low | 2 |
 
 Two High conflicts. The run spanned two sessions (2026-05-05 and 2026-05-12); the catalog was reused at 7 days old by operator choice.
 
-Every `✗ conflict` in the scorecard is High by rule. `◐` and `?` items are listed in the scorecard with the check that would settle each; only the ones that need someone else's action appear here.
+Priority follows the scorecard rule: every `✗` and `✗ conflict` is High; every `?` and `◐` is Medium; notes on `✓` items are Low. Within a level the cheapest resolution comes first (a Step 6 check, then a document to open, then an outgoing-team follow-up). Each entry names its item and mark.
 
 ---
 
@@ -47,15 +47,23 @@ Every `✗ conflict` in the scorecard is High by rule. `◐` and `?` items are l
 
 ## Medium Priority (should resolve within 30 days of handoff)
 
-### MED-1 — Restore test is operator-stated, not attested (item 24)
+### MED-1 — DynamoDB `payments-ledger` has no activity baseline (item 7, `?`)
 
-- **Source:** readiness-scorecard.md item 24; interview Section 10; catalog PITR row
-- **Detail:** Backups are in place on `payments-ledger` (PITR). The 2026-02-15 restore test was run by the Pay Team; nobody on the incoming team has witnessed one.
-- **Suggested action:** Witness a PITR restore into a scratch table (Carol repeats it), then attest the date.
-- **Owner:** alice (Platform Team) and Carol P.
-- **Target date:** 2026-07-15
+- **Source:** readiness-scorecard.md item 7; runtime-profile.md Gaps and Caveats
+- **Detail:** 3 of 4 compute and data-store resources have a baseline row; `runtime-trace` does not collect `dynamodb:table` metrics. Until the table has one, item 7 is `?`.
+- **Suggested action:** Query the table's CloudWatch metrics over a stated window and record the query (check, then add to the scorecard).
+- **Owner:** alice (Platform Team)
+- **Target date:** 2026-06-08
 
-### MED-2 — Runbook, postmortem and rollback links not yet opened (items 13, 14, 17)
+### MED-2 — Retention period is not a configured period (item 23, `◐`)
+
+- **Source:** readiness-scorecard.md item 23; interview Section 10; catalog `payments-ledger` row
+- **Detail:** The interview says 7 years plus a 90-day grace. TTL on `expires_at` is enabled, but each record's expiry is data, so no configuration shows the period.
+- **Suggested action:** Open the retention policy, or the code that sets `expires_at`, and cite it.
+- **Owner:** alice (Platform Team) and Bob L.
+- **Target date:** 2026-06-15
+
+### MED-3 — Runbook, postmortem and rollback links not yet opened (items 13, 14, 17, `◐`)
 
 - **Source:** readiness-scorecard.md items 13, 14, 17
 - **Detail:** 5 runbooks, 2 postmortems and the rollback runbook are listed under docs.example.com; none has been opened by the incoming team.
@@ -63,7 +71,15 @@ Every `✗ conflict` in the scorecard is High by rule. `◐` and `?` items are l
 - **Owner:** alice (Platform Team)
 - **Target date:** 2026-06-08
 
-### MED-3 — Stripe contract owner and PII scope need confirmation (items 21, 22)
+### MED-4 — Restore test has no record (item 24, `◐`)
+
+- **Source:** readiness-scorecard.md item 24; interview Section 10; catalog PITR row
+- **Detail:** Backups are in place on `payments-ledger` (PITR). The 2026-02-15 restore test is a date the Pay Team stated; the incoming team has no ticket or run log for it.
+- **Suggested action:** Open the Pay Team's ticket or runbook run log for that test and cite it, or witness a PITR restore into a scratch table (Carol repeats it) and record the run.
+- **Owner:** alice (Platform Team) and Carol P.
+- **Target date:** 2026-07-15
+
+### MED-5 — Stripe contract owner and PII scope need confirmation (items 21, 22, `◐`)
 
 - **Source:** readiness-scorecard.md items 21, 22; interview Sections 8 and 10
 - **Detail:** Contract ownership (Bob L., renewal 2027-03) and the PII scope are policy statements AWS cannot confirm.
@@ -71,7 +87,7 @@ Every `✗ conflict` in the scorecard is High by rule. `◐` and `?` items are l
 - **Owner:** alice (Platform Team)
 - **Target date:** 2026-06-15
 
-### MED-4 — alice's console read access to Secrets Manager should be revoked after handoff
+### MED-6 — alice's console read access to Secrets Manager should be revoked after handoff
 
 - **Source:** interview-questionnaire.md Sections 9 and 11
 - **Detail:** alice has console read access to the payments secrets for debugging.
@@ -79,7 +95,7 @@ Every `✗ conflict` in the scorecard is High by rule. `◐` and `?` items are l
 - **Owner:** alice and Pay Team
 - **Target date:** 2026-06-16
 
-### MED-5 — Is `payments-deploy-role` shared with other services?
+### MED-7 — Is `payments-deploy-role` shared with other services?
 
 - **Source:** runtime-profile.md Control-Plane Activity (open question)
 - **Detail:** The role is the principal on every deploy event; its other uses are unknown.
@@ -87,7 +103,7 @@ Every `✗ conflict` in the scorecard is High by rule. `◐` and `?` items are l
 - **Owner:** alice (Platform Team)
 - **Target date:** 2026-06-15
 
-### MED-6 — How is `payments-reconciler` triggered?
+### MED-8 — How is `payments-reconciler` triggered?
 
 - **Source:** runtime-profile.md Wiring and Gaps
 - **Detail:** No resource policy or event source mapping was found; EventBridge/Scheduler rules are not enumerated. The activity baseline shows one invocation a day.
@@ -111,13 +127,6 @@ Every `✗ conflict` in the scorecard is High by rule. `◐` and `?` items are l
 - **Source:** service-catalog.md Unattributed list; runtime-profile.md Spend (account context)
 - **Detail:** Neither carries the `service` tag; the gateway also fronts other services.
 - **Suggested action:** Decide whether to tag them or keep them as dependencies.
-- **Owner:** alice (Platform Team)
-
-### LOW-3 — DynamoDB `payments-ledger` metrics are not collected
-
-- **Source:** runtime-profile.md Gaps
-- **Detail:** `dynamodb:table` has no examples file in this runtime-trace version.
-- **Suggested action:** Read the table metrics from the console when needed.
 - **Owner:** alice (Platform Team)
 
 ---

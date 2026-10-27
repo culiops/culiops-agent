@@ -18,14 +18,14 @@ incoming-team: Platform Team
 - **Handoff date:** 2026-06-15
 - **From:** Pay Team (Bob L. — bob@example.com, Carol P. — carol@example.com)
 - **To:** Platform Team
-- **Readiness verdict:** partial — 4 items are `?` (5, 7, 8, 9: no runtime profile) and 11 are `◐`; nothing fails. 7 ✓ verified, 3 ✓ attested, 11 ◐, 0 ✗, 0 ✗ conflict, 4 ?, 0 N/A. Reaching `ready` needs the runtime profile first.
-- **Open questions count:** 1 high / 4 medium / 1 low
+- **Readiness verdict:** partial — 4 items are `?` (5, 7, 8, 9: no runtime profile) and 14 are `◐`; nothing fails. 4 ✓ verified, 3 ✓ attested, 14 ◐, 0 ✗, 0 ✗ conflict, 4 ?, 0 N/A. Evidence as of 2026-05-12T14:05:00Z. Reaching `ready` needs the runtime profile first.
+- **Open questions count:** 0 high / 7 medium / 1 low
 - **Top 5 open questions:**
-  1. No runtime profile: items 5, 7, 8, 9 are `?`; items 2, 16, 18, 19, 25 cannot be cross-checked (HIGH-1)
-  2. Restore test is operator-stated, not attested (item 24) (MED-1)
-  3. Runbook, postmortem and rollback links not yet opened (items 13, 14, 17) (MED-2)
-  4. Stripe contract owner and PII scope need confirmation (items 21, 22) (MED-3)
-  5. alice's console read access to Secrets Manager should be revoked after handoff (MED-4)
+  1. No runtime profile: items 5, 7, 8, 9 are `?`; items 4, 2, 16, 18, 19, 25 cannot be cross-checked (MED-1)
+  2. Alarm coverage is incomplete (item 10 `◐`) (MED-2)
+  3. Retention period is not a configured period (item 23 `◐`) (MED-3)
+  4. Runbook, postmortem and rollback links not yet opened (items 13, 14, 17) (MED-4)
+  5. Restore test has no record (item 24 `◐`) (MED-5)
 
 ## What this package contains
 
@@ -41,7 +41,7 @@ incoming-team: Platform Team
 ## First-day actions for Platform Team
 
 - [ ] Read this README in full.
-- [ ] Read HIGH-1: run runtime-trace and resume at Step 4 before relying on this scorecard.
+- [ ] Read MED-1 first (there is no High item): run runtime-trace and resume at Step 4 before relying on this scorecard.
 - [ ] Open the runbook, postmortem and rollback links; subscribe to the 5 alerts in Section 5.
 - [ ] Request that alice's console Secrets Manager read access be revoked after handoff.
 - [ ] Verify your team's IAM identities have console + CLI access to AWS account **123456789012** in region **us-east-1**.

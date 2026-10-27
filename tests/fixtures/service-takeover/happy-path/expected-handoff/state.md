@@ -17,7 +17,7 @@ operator: arn:aws:iam::123456789012:user/alice
 - **Run started:** 2026-05-12T14:00:00Z
 - **Run completed:** 2026-05-12T16:10:00Z
 - **Skill version:** service-takeover v0.6.0
-- **Intake:** service `payments`, account 123456789012, region us-east-1, intent `takeover`; Pay Team -> Platform Team; handoff 2026-06-15
+- **Intake:** service `payments`, account 123456789012, region us-east-1, delivery model: CI/CD pipeline (GitHub Actions, on merge); intent `takeover`; Pay Team -> Platform Team; handoff 2026-06-15
 
 ---
 
@@ -100,15 +100,16 @@ Each snapshot is compared with the intake values (service `payments`, account 12
 2026-05-12T15:46:00Z  Operator confirmed deploy role payments-deploy-role (item 2: ◐ -> ✓ verified)
 2026-05-12T15:48:00Z  Step 6 verification batch proposed: 3 read-only AWS commands (items 10, 24, 15) + artifact comparisons
 2026-05-12T15:50:00Z  Batch approved by alice; identity re-checked (account 123456789012)
-2026-05-12T15:52:10Z  Batch 1/3 describe-alarms: 5 alarms, names match the interview, all with actions -> item 10 ✓ verified
+2026-05-12T15:52:10Z  Batch 1/3 describe-alarms: 5 alarms, names match the interview, all enabled with actions, state OK; no alarm on DynamoDB payments-ledger and none on Lambda saturation -> item 10 ◐
 2026-05-12T15:52:40Z  Batch 2/3 describe-continuous-backups: PITR ENABLED -> item 24 stays ◐ (restore test unattested)
 2026-05-12T15:53:20Z  Batch 3/3 simulate-principal-policy for platform-team-deploy: 6/6 implicitDeny -> item 15 ✗
 2026-05-12T15:58:00Z  Item 3 attested by alice (console + CLI)
 2026-05-12T16:00:00Z  Item 11 attested by alice (PagerDuty rotation visible)
 2026-05-12T16:02:00Z  Item 12 attested by alice (test page received)
-2026-05-12T16:05:00Z  Scorecard written: 12 ✓ verified, 3 ✓ attested, 6 ◐, 1 ✗, 3 ✗ conflict, 0 ?, 0 N/A. Verdict: not-ready
+2026-05-12T16:05:00Z  Scorecard written: 9 ✓ verified, 3 ✓ attested, 8 ◐, 1 ✗, 3 ✗ conflict, 1 ?, 0 N/A. Verdict: not-ready. Evidence as of 2026-05-12T14:05:00Z
 2026-05-12T16:05:00Z  Step 6 gate sign-off by alice
 2026-05-12T16:05:00Z  Step 7 started — handoff package assembly
+2026-05-12T16:10:00Z  Evidence is 34 days older than the handoff date 2026-06-15 (freshness window 7 days): offered a re-run of the Step 6 checks before assembly; alice declined and will re-run them in the week before the handoff
 2026-05-12T16:10:00Z  Handoff package assembled: 8 files (5 written by the skill in expected-handoff/; 3 snapshots from mock-artifacts/ and filled-interview.md)
 2026-05-12T16:10:00Z  Reminder printed: private repo only; check branch and remote visibility before committing
 2026-05-12T16:10:00Z  Step 7 gate sign-off by alice. Run complete

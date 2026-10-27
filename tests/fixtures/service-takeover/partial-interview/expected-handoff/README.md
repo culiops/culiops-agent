@@ -18,14 +18,14 @@ incoming-team: Platform Team
 - **Handoff date:** 2026-06-15
 - **From:** Pay Team (Bob L. — bob@example.com, Carol P. — carol@example.com)
 - **To:** Platform Team
-- **Readiness verdict:** partial — no item fails outright, but 5 items are `?` (14 and 22-25: the outgoing team left Sections 3, 6 and 10 empty or partial) and 5 are `◐`; item 19 is a conflict outside the not-ready categories. 11 ✓ verified, 3 ✓ attested, 5 ◐, 0 ✗, 1 ✗ conflict, 5 ?, 0 N/A.
-- **Open questions count:** 3 high / 6 medium / 2 low
+- **Readiness verdict:** not-ready — item 19 is an interview-vs-artifact conflict (any `✗ conflict` makes the verdict `not-ready`); 6 items are `?` (7, 14 and 22-25: no baseline for the table, and the outgoing team left Sections 3, 6 and 10 empty or partial) and 5 are `◐`. 10 ✓ verified, 3 ✓ attested, 5 ◐, 0 ✗, 1 ✗ conflict, 6 ?, 0 N/A. Evidence as of 2026-05-12T14:05:00Z. Clearing the conflict moves it to `partial`.
+- **Open questions count:** 1 high / 9 medium / 1 low
 - **Top 5 open questions:**
   1. `legacy-orders-exec` may send to `payments-capture-queue` but is not a listed caller (item 19 conflict) (HIGH-1)
-  2. Section 10 is empty: PII, retention, backups, restore test and DR are unknown (items 22-25) (HIGH-2)
-  3. Section 3 is empty: SLOs, SLIs, error budget and dashboards not provided (HIGH-3)
-  4. Incident history, recurring issues, MTTR and change failure rate are empty (item 14 `?`) (MED-1)
-  5. Verification batch declined: items 10 and 15 are unverified (MED-2)
+  2. DynamoDB `payments-ledger` has no activity baseline (item 7 `?`) (MED-1)
+  3. Verification batch declined: items 10 and 15 are unverified (MED-2)
+  4. Runbook and rollback links not yet opened (items 13, 17) (MED-3)
+  5. Stripe contract owner needs confirmation (item 21) (MED-4)
 
 ## What this package contains
 
@@ -42,9 +42,9 @@ incoming-team: Platform Team
 ## First-day actions for Platform Team
 
 - [ ] Read this README in full.
-- [ ] Read the High items first: HIGH-1, HIGH-2, HIGH-3.
+- [ ] Read HIGH-1 first (the one conflict), then MED-5 to MED-7: the empty Sections 10, 6 and 3.
 - [ ] Send Sections 3, 6, 10 and 11 back to **Bob L. (bob@example.com)** with the current partial answers preserved.
-- [ ] Run the two skipped read-only checks (`describe-alarms`, `simulate-principal-policy` for `platform-team-deploy`) and record the facts.
+- [ ] Run the skipped read-only checks (`describe-alarms`; `simulate-principal-policy` and `get-context-keys-for-principal-policy` for `platform-team-deploy`) and record the facts.
 - [ ] Subscribe to the 5 alerts in `interview-questionnaire.md` Section 5 and read the landmines in Section 7 before any change.
 - [ ] Verify your team's IAM identities have console + CLI access to AWS account **123456789012** in region **us-east-1**.
 

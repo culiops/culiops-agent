@@ -18,14 +18,14 @@ incoming-team: Platform Team
 - **Handoff date:** 2026-06-15
 - **From:** Pay Team (Bob L. — bob@example.com, Carol P. — carol@example.com)
 - **To:** Platform Team
-- **Readiness verdict:** partial — no item fails outright; items 10 (an alarm named in the interview does not exist) and 19 (unexplained queue sender) are conflicts outside the not-ready categories, and 6 items are operator-stated (`◐`). 14 ✓ verified, 3 ✓ attested, 6 ◐, 0 ✗, 2 ✗ conflict, 0 ?, 0 N/A.
-- **Open questions count:** 2 high / 6 medium / 3 low
+- **Readiness verdict:** not-ready — items 10 (an alarm named in the interview does not exist) and 19 (unexplained queue sender) are interview-vs-artifact conflicts (any `✗ conflict` makes the verdict `not-ready`); 7 items are operator-stated (`◐`) and 1 is unknown (`?`). 12 ✓ verified, 3 ✓ attested, 7 ◐, 0 ✗, 2 ✗ conflict, 1 ?, 0 N/A. Evidence as of 2026-05-05T09:08:00Z. Clearing both conflicts moves it to `partial`.
+- **Open questions count:** 2 high / 8 medium / 2 low
 - **Top 5 open questions:**
   1. Alarm `payments-latency-p99` is named in the interview but not in the account (item 10 conflict) (HIGH-1)
   2. `legacy-orders-exec` may send to `payments-capture-queue` but is not a listed caller (item 19 conflict) (HIGH-2)
-  3. Restore test is operator-stated, not attested (item 24) (MED-1)
-  4. Runbook, postmortem and rollback links not yet opened (items 13, 14, 17) (MED-2)
-  5. Stripe contract owner and PII scope need confirmation (items 21, 22) (MED-3)
+  3. DynamoDB `payments-ledger` has no activity baseline (item 7 `?`) (MED-1)
+  4. Retention period is not a configured period (item 23 `◐`) (MED-2)
+  5. Runbook, postmortem and rollback links not yet opened (items 13, 14, 17) (MED-3)
 
 ## What this package contains
 

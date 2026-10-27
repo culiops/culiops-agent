@@ -9,12 +9,12 @@ verdict: partial
 
 # Readiness Scorecard — search-api
 
-**Verdict: partial** — 12 ✓ verified, 3 ✓ attested, 8 ◐ operator-stated, 0 ✗, 0 ✗ conflict, 1 ?, 1 N/A (25 items). 9 verification checks (listed per item) could move it toward `ready`.
-**Why:** `◐` on items 2, 15, 16, 18, 19, 22, 24, 25; `?` on item 8.
+**Verdict: partial** — 9 ✓ verified, 3 ✓ attested, 10 ◐ operator-stated, 0 ✗, 0 ✗ conflict, 3 ?, 0 N/A (25 items). 13 verification checks (listed per item) could move it toward `ready`. Evidence as of 2026-05-12T13:35:00Z.
+**Why:** `◐` on items 2, 10, 15, 16, 18, 19, 21, 22, 24, 25; `?` on items 7, 8, 9 (the in-cluster workloads have no evidence).
 **Generated:** 2026-05-12T15:55:00Z
 **Operator:** alice (arn:aws:iam::123456789012:user/alice)
 
-Rules applied: `readiness-scorecard-baseline.md` (template-version 2). One evidence class per item; a non-empty interview answer is at most `◐`; empty is `?`, never `✗`; arithmetic pass rates are shown per category but never decide the verdict. Citations are package-relative (`interview-questionnaire.md` is the snapshot of `filled-interview.md`).
+Rules applied: `readiness-scorecard-baseline.md` (template-version 3). One evidence class per item; a non-empty interview answer is at most `◐`; empty is `?`, never `✗`; arithmetic pass rates are shown per category but never decide the verdict. Citations are package-relative (`interview-questionnaire.md` is the snapshot of `filled-interview.md`).
 
 ---
 
@@ -24,30 +24,30 @@ Rules applied: `readiness-scorecard-baseline.md` (template-version 2). One evide
 |---|---|---|---|---|---|---|---|---|
 | Access | 1-3 | 1 | 1 | 1 | 0 | 0 | 0 | 0 |
 | Inventory | 4-6 | 3 | 0 | 0 | 0 | 0 | 0 | 0 |
-| Runtime | 7-9 | 2 | 0 | 0 | 0 | 0 | 1 | 0 |
-| Alerting | 10-12 | 1 | 2 | 0 | 0 | 0 | 0 | 0 |
+| Runtime | 7-9 | 0 | 0 | 0 | 0 | 0 | 3 | 0 |
+| Alerting | 10-12 | 0 | 2 | 1 | 0 | 0 | 0 | 0 |
 | Runbooks | 13-14 | 2 | 0 | 0 | 0 | 0 | 0 | 0 |
 | Deploy & Rollback | 15-18 | 1 | 0 | 3 | 0 | 0 | 0 | 0 |
-| Dependencies | 19-21 | 1 | 0 | 1 | 0 | 0 | 0 | 1 |
+| Dependencies | 19-21 | 1 | 0 | 2 | 0 | 0 | 0 | 0 |
 | Compliance | 22-25 | 1 | 0 | 3 | 0 | 0 | 0 | 0 |
-| **Total** | **25** | **12** | **3** | **8** | **0** | **0** | **1** | **1** |
+| **Total** | **25** | **9** | **3** | **10** | **0** | **0** | **3** | **0** |
 
 ## What would move this toward `ready`
 
-- **The one `?` (item 8):** `helm history search-api -n search` gives the Deployment's deploy history; it also settles 16 and 18 (operator action, not an AWS read).
-- **The 8 `◐` items:** 2, 15, 16 (access entry and RBAC checks), 18, 19 (confirm with the Web and Mobile teams), 22 (security confirms PII scope), 24 (attested restore test), 25 (how data reaches eu-central-1).
+- **The 3 `?` items (7, 8, 9 — the in-cluster Deployment has no evidence):** `helm history search-api -n search` gives the deploy history (8) and also settles 16 and 18; a query against the cluster's metrics backend over a stated window gives the activity baseline (7); the control-plane audit log, if enabled, says who changed cluster objects (9). These are operator actions, not AWS reads.
+- **The 10 `◐` items:** 10 (alarm coverage; `kubectl get prometheusrules -n search` for the in-cluster alert rules), 2, 15, 16 (access entry and RBAC checks), 21 (a vendor or contract register entry), 18, 19 (confirm with the Web and Mobile teams), 22 (security confirms PII scope), 24 (a restore-test record), 25 (how data reaches eu-central-1).
 - Nothing fails or conflicts, so the verdict is `partial`. CloudFormation ownership of 5 rows is recorded (item 4 note) and does not change a mark.
 
 ---
 
 ## Step 6 verification batch
 
-Offered by default at Gate 6; alice approved it at 2026-05-12T15:33:00Z. Two read-only AWS commands, $0, `--profile prod-main --region eu-west-1`, after `aws sts get-caller-identity` re-confirmed account 123456789012. Only derived facts are recorded.
+Offered by default at Gate 6; alice approved it at 2026-05-12T15:33:00Z. Two read-only AWS commands, cost `unknown` (no pricing source read), `--profile prod-main --region eu-west-1`, after `aws sts get-caller-identity` re-confirmed account 123456789012. Only derived facts are recorded.
 
 | # | Item | Check (read-only, projected; `--profile`/`--region` pinned) | Derived fact (raw output not recorded) | Timestamp |
 |---|---|---|---|---|
-| 1 | 10 | `aws cloudwatch describe-alarms --profile prod-main --region eu-west-1 --alarm-name-prefix search- --query 'MetricAlarms[].{Name:AlarmName,Metric:MetricName,Ns:Namespace,Actions:length(AlarmActions)}'` | 4 alarms returned; names match the interview; each has >= 1 action | 2026-05-12T15:35:10Z |
-| 2 | 24 | `aws elasticache describe-replication-groups --profile prod-main --region eu-west-1 --replication-group-id search-cache --query 'ReplicationGroups[].SnapshotRetentionLimit'` | SnapshotRetentionLimit = 7 | 2026-05-12T15:35:40Z |
+| 1 | 10 | `aws cloudwatch describe-alarms --profile prod-main --region eu-west-1 --alarm-name-prefix search- --query 'MetricAlarms[].{Name:AlarmName,Metric:MetricName,Ns:Namespace,Dims:Dimensions,Actions:AlarmActions,Enabled:ActionsEnabled,State:StateValue}'` | 4 alarms returned; names match the interview; each has >= 1 action, `ActionsEnabled: true`, state `OK`. Metrics: ALB 5XX, ALB target response p95, queue oldest-message age, cache CPU. None for the S3 bucket, none for cache errors or latency, none for the in-cluster Deployment | 2026-05-12T15:35:10Z |
+| 2 | 24 | `aws elasticache describe-replication-groups --profile prod-main --region eu-west-1 --replication-group-id search-cache --query 'ReplicationGroups[].SnapshotRetentionLimit'` (docs: https://docs.aws.amazon.com/cli/latest/reference/elasticache/describe-replication-groups.html @ 2026-05-12) | SnapshotRetentionLimit = 7 (days automatic snapshots are kept; 0 would mean backups off) | 2026-05-12T15:35:40Z |
 | 3 | 6 | (artifact comparison, no AWS call) | interview Section 9 lists 1 Secrets Manager secret and 1 Kubernetes Secret; catalog Secret References lists the same 2 | 2026-05-12T15:35:40Z |
 | 4 | 20 | (artifact comparison, no AWS call) | interview downstream list (3) = catalog outbound dependencies (3) | 2026-05-12T15:35:40Z |
 
@@ -58,8 +58,8 @@ Offered by default at Gate 6; alice approved it at 2026-05-12T15:33:00Z. Two rea
 ### Item 1 — Operator has IAM read in target account — ✓ verified
 
 - **Mark:** ✓ verified
-- **Evidence:** [evidence: state.md:71]
-- **Notes:** Caller account equals the intake account 123456789012; derived fact only.
+- **Evidence:** [evidence: state.md:71]; [evidence: state.md:72]; [evidence: state.md:74]; [evidence: state.md:75]
+- **Notes:** Caller account equals the intake account 123456789012. That call needs no permission, so the CloudTrail Event-history read (which does) is the proof of AWS read access. For the cluster: `kubectl config current-context` equals the intake context `platform-eks` and `kubectl auth can-i --list -n search` shows get/list on the workload objects. Derived facts only.
 
 ### Item 2 — Deploy role identified — ◐ operator-stated
 
@@ -96,11 +96,12 @@ Offered by default at Gate 6; alice approved it at 2026-05-12T15:33:00Z. Two rea
 
 ## Category: Runtime (items 7–9)
 
-### Item 7 — Activity baseline captured — ✓ verified
+### Item 7 — Activity baseline captured — ?
 
-- **Mark:** ✓ verified
+- **Mark:** ?
 - **Evidence:** [evidence: runtime-profile.md:131, runtime-profile.md:135]
-- **Notes:** Two AWS rows with data (ALB, SQS). **Gap: EKS in-cluster workloads are not traced** ([evidence: runtime-profile.md:137]); the Deployment itself has no baseline here. Passes for the AWS resources only.
+- **Notes:** 0 of 3 compute and data-store resources covered: the Deployment (**gap: EKS in-cluster workloads are not traced**, [evidence: runtime-profile.md:137]), the ElastiCache group and the S3 bucket have no baseline row. The two rows that exist (ALB, SQS) are not those types. A point-in-time `kubectl get deploy` would not be a baseline.
+- **Check that would verify it:** A query against the cluster's metrics backend for the Deployment over a stated window, recorded as `[query: … @ …]`; the cache and bucket metrics are not collected by `runtime-trace` either (operator action).
 
 ### Item 8 — Deploy events history captured — ?
 
@@ -109,19 +110,21 @@ Offered by default at Gate 6; alice approved it at 2026-05-12T15:33:00Z. Two rea
 - **Notes:** 6 management events exist, all on data-layer or load-balancer resources (CloudFormation role, load-balancer controller, alice); none is a deploy to compute. Helm rollouts are Kubernetes API calls, not CloudTrail management events.
 - **Check that would verify it:** `helm history search-api -n search` (operator; not an AWS read) would give the deploy history.
 
-### Item 9 — Managing principals enumerated (management events) — ✓ verified
+### Item 9 — Managing principals enumerated (management events) — ?
 
-- **Mark:** ✓ verified
+- **Mark:** ?
 - **Evidence:** [evidence: runtime-profile.md:100, runtime-profile.md:101, runtime-profile.md:102]
-- **Notes:** 3 managing principals (management events only). This does not say who calls the service.
+- **Notes:** 3 managing principals for the AWS resources (management events only). Who changed the Deployment and other cluster objects is not in CloudTrail Event history; no control-plane audit-log query was recorded, so the in-cluster half is unknown. This does not say who calls the service.
+- **Check that would verify it:** If the cluster's audit log is enabled (on EKS it goes to CloudWatch Logs), query it for changes to objects in namespace `search` over a stated window and cite the query (operator action).
 
 ## Category: Alerting (items 10–12)
 
-### Item 10 — Critical metrics have alarms — ✓ verified
+### Item 10 — Critical metrics have alarms — ◐ operator-stated
 
-- **Mark:** ✓ verified
-- **Evidence:** [stated: interview-questionnaire.md:68]; [query: aws cloudwatch describe-alarms --profile prod-main --region eu-west-1 --alarm-name-prefix search- --query 'MetricAlarms[].{Name:AlarmName,Metric:MetricName,Ns:Namespace,Actions:length(AlarmActions)}' @ 2026-05-12T15:35:10Z]
-- **Notes:** All 4 alarms named in the interview exist, each with an action (ALB 5XX, ALB p95, queue age, cache CPU).
+- **Mark:** ◐ operator-stated
+- **Evidence:** [stated: interview-questionnaire.md:68]; [query: aws cloudwatch describe-alarms --profile prod-main --region eu-west-1 --alarm-name-prefix search- --query 'MetricAlarms[].{Name:AlarmName,Metric:MetricName,Ns:Namespace,Dims:Dimensions,Actions:AlarmActions,Enabled:ActionsEnabled,State:StateValue}' @ 2026-05-12T15:35:10Z]
+- **Notes:** All 4 alarms named in the interview exist, each enabled with an action and in state `OK` (ALB 5XX, ALB p95, queue age, cache CPU). They do not cover every compute and data-store resource: nothing alarms on the S3 bucket, the cache's errors or latency, or the in-cluster Deployment, and no alert-rule or notification-route check was made for the cluster.
+- **Check that would verify it:** `kubectl get prometheusrules -n search` (where the Prometheus Operator CRD is installed, otherwise the monitoring backend's rules listing) plus the notification route to a receiver; add or justify the missing alarms and re-run `describe-alarms`.
 
 ### Item 11 — On-call rotation configured — ✓ attested
 
@@ -193,11 +196,12 @@ Offered by default at Gate 6; alice approved it at 2026-05-12T15:33:00Z. Two rea
 - **Evidence:** [stated: interview-questionnaire.md:91]; [evidence: service-catalog.md:57]
 - **Notes:** ElastiCache `search-cache`, SQS `search-reindex-queue` and the S3 bucket are exactly the catalog's outbound dependencies.
 
-### Item 21 — External API ownership known — N/A
+### Item 21 — External API ownership known — ◐ operator-stated
 
-- **Mark:** N/A
+- **Mark:** ◐ operator-stated
 - **Evidence:** [stated: interview-questionnaire.md:92] — "None"
-- **Notes:** Explicit statement that no external APIs are used; the catalog's outbound list has none either.
+- **Notes:** The interview says none, and the catalog's outbound list has none. That is testimony plus an absence in discovery, not a record: no vendor or contract register is cited.
+- **Check that would verify it:** Cite a vendor or contract register entry that lists no external API for this service (then `N/A`).
 
 ## Category: Compliance (items 22–25)
 
@@ -217,9 +221,9 @@ Offered by default at Gate 6; alice approved it at 2026-05-12T15:33:00Z. Two rea
 ### Item 24 — Backups configured and restore tested — ◐ operator-stated
 
 - **Mark:** ◐ operator-stated
-- **Evidence:** [stated: interview-questionnaire.md:108, interview-questionnaire.md:109]; [query: aws elasticache describe-replication-groups --profile prod-main --region eu-west-1 --replication-group-id search-cache --query 'ReplicationGroups[].SnapshotRetentionLimit' @ 2026-05-12T15:35:40Z]
-- **Notes:** ElastiCache snapshot retention is 7 days (matches the interview) and the S3 bucket is versioned (catalog). The 2026-03-02 restore test was run by the Search Team and is operator-stated.
-- **Check that would verify it:** Becomes `✓ verified` when the operator attests a restore test within 12 months.
+- **Evidence:** [stated: interview-questionnaire.md:108, interview-questionnaire.md:109]; [query: aws elasticache describe-replication-groups --profile prod-main --region eu-west-1 --replication-group-id search-cache --query 'ReplicationGroups[].SnapshotRetentionLimit' @ 2026-05-12T15:35:40Z]; [docs: https://docs.aws.amazon.com/cli/latest/reference/elasticache/describe-replication-groups.html @ 2026-05-12]
+- **Notes:** ElastiCache snapshot retention is 7 days (matches the interview). The S3 bucket is versioned (catalog), but no backup check is listed for S3, so it is unchecked (`?`) for backups and is not counted as backed up. The 2026-03-02 restore test was run by the Search Team and is operator-stated: no ticket or run log is cited.
+- **Check that would verify it:** Becomes `✓ verified` when a record of a restore test within 12 months exists (a ticket or runbook run log the operator opens and cites), and the bucket's backup is checked against its documentation.
 
 ### Item 25 — DR plan exists — ◐ operator-stated
 
