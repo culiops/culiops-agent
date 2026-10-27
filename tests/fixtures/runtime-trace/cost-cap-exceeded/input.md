@@ -22,12 +22,12 @@ Tag-based: `service=platform-core`.
 
 - Gate 1: accepted with the metric-cap override and the CE window recorded.
 - GATE 1a: 10 read-only probes; only the CE probe is billed ($0.01).
-- Gate 2: all sources available.
+- Gate 2: no source is ✗ (Resource Explorer, CloudTrail, Cost Explorer ✓ probed; Wiring and `GetMetricData` `untested`).
 - Step 2b: free Resource Explorer `Search` `tag:service=platform-core` resolves **612** resources (`Count.Complete=true`).
 - Gate 3: plan priced against the 612 resources:
   - CE: ~110 pages x $0.01 = **$1.10**
   - CloudWatch: 12,000 metrics / 1,000 x $0.01 = **$0.12**
-  - CloudTrail, Wiring, Resource Explorer: free
+  - CloudTrail, Resource Explorer: free; Wiring: ~$0.00 (reads within free tiers)
   - Plan estimate **$1.22**; already spent in GATE 1a **$0.01**; cumulative **$1.23** > $1.00.
   Skill **REFUSES to proceed.** Prints the plan with arithmetic, the cap, "Cannot proceed: estimated cumulative cost $1.23 exceeds the hard cap of $1.00." and three options: (a) reduce scope, (b) raise the cap with documented justification (recorded in the audit trail), (c) abort.
 - If the operator chooses (b), the cap-raise event is logged with the justification and Gate 3 is re-run with the new cap. If (a) or (c), no further billable calls are made.

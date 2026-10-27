@@ -18,7 +18,7 @@ Cost Explorer bills **$0.01 per request, and every page is a request**. The CE g
 |---|---|---|---|---|---|---|
 | 1 | Cost Explorer | `ce:GetCostAndUsage` | DAILY, GROUP BY SERVICE + USAGE_TYPE, Filter Tags `service=platform-core` | 2025-05-11 -> 2026-05-11 (365d) | ~219,000 group rows (365 days x ~600 service/usage-type groups) at ~2,000 rows/page = ~110 pages x $0.01 | $1.10 |
 | 2 | CloudTrail | `cloudtrail:LookupEvents` | one series per resource name, 612 series, page cap 20, <= 2 req/s | 90d | free | $0.00 |
-| 3 | Wiring | `lambda:GetPolicy`, `lambda:ListEventSourceMappings`, `sqs:GetQueueAttributes`, ... | per applicable resource | n/a | free, read-only | $0.00 |
+| 3 | Wiring | `lambda:GetPolicy`, `lambda:ListEventSourceMappings`, `sqs:GetQueueAttributes`, `sqs:ListDeadLetterSourceQueues`, ... | per applicable resource | n/a | read-only; within free tiers | ~$0.00 |
 | 4 | CloudWatch | `cloudwatch:GetMetricData` | **12,000 metrics** (operator override of default 200 cap) | 14d | 12,000 / 1,000 x $0.01 | $0.12 |
 | — | Resource Explorer | `resource-explorer-2:Search` | tag:service=platform-core (already run at Step 2b, 612 resources) | n/a | free | $0.00 |
 
