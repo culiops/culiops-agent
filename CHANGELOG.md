@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Added
+
+- **All skills:** opt-in `CULIOPS_HOME`. When set, records go to `$CULIOPS_HOME/<owner>/<repo>/<skill-name>/` instead of `.culiops/` in the repo, and skills skip every commit offer. Unset keeps the old behaviour. An unwritable root stops the run; it never falls back into the repo.
+
 ## [0.14.0] — 2026-10-27
 
 ### Changed
