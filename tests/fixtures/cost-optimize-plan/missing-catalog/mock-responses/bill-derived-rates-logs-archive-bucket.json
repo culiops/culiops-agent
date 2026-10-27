@@ -1,5 +1,5 @@
 {
-  "_note": "Query 10 (Principle 4). ce get-cost-and-usage, S3 line items for logs-archive-bucket, 30d. FICTIONAL account: effective rates are fixture values chosen so the arithmetic is checkable; NOT AWS list prices. Target-class rates have no usage in the bill, so they come from the Pricing API fallback.",
+  "_note": "Query 10 (Principle 4). ce get-cost-and-usage, S3 line items for logs-archive-bucket, 30d. FICTIONAL account: effective rates are fixture values chosen so the arithmetic is checkable; NOT AWS list prices. Target-class rates have no usage in the bill, so they come from the Pricing API fallback (pricing get-products, AmazonS3, us-east-1, read 2026-05-28).",
   "line_items": [
     {"usage_type": "TimedStorage-ByteHrs (Standard)", "usage_GB_month": 3695, "cost_usd": 199.5, "effective_usd_per_GB_month": 0.0540, "label": "bill-derived"},
     {"usage_type": "Glacier Flexible Retrieval storage", "effective_usd_per_GB_month": 0.0036, "label": "pricing-api-fallback"},
