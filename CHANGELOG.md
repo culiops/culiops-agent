@@ -4,6 +4,12 @@ All notable changes to the `culiops` plugin will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Changed
+
+- **Repo renamed from `culiops-agent` to `culiops-skills`.** The plugin and marketplace are still named `culiops`, so skill names (`culiops:pre-flight` and the rest) and existing installs are unaffected. GitHub redirects the old URL.
+
 ## [0.13.0] — 2026-10-26
 
 ### Added
@@ -78,7 +84,7 @@ A review of all seven skills. The supported stack is narrowed to **AWS + Terrafo
 
 ### Removed
 
-Everything below is kept at tag [`archive/multi-cloud-v0.10.0`](https://github.com/culiops/culiops-agent/tree/archive/multi-cloud-v0.10.0).
+Everything below is kept at tag [`archive/multi-cloud-v0.10.0`](https://github.com/culiops/culiops-skills/tree/archive/multi-cloud-v0.10.0).
 
 - GCP and Azure examples: `skills/{cloud-cost-investigate,iac-change-execution,pre-flight,service-discovery}/examples/{gcp,azure}.md`.
 - GCP and Azure cloud-discovery templates: `skills/service-discovery/cloud-discovery/{gcp,azure}.md`.
