@@ -18,7 +18,7 @@ incoming-team: <team-name>
 - **Handoff date:** <date>
 - **From:** <outgoing team>
 - **To:** <incoming team>
-- **Readiness verdict:** <ready / not-ready / partial> — `ready` only if every item is ✓ verified / ✓ attested / N/A; any ◐ or ? → partial; any ✗ in Access, Runtime, Deploy & Rollback or Compliance → not-ready. To reach ready: <n> checks (listed in `readiness-scorecard.md`).
+- **Readiness verdict:** <ready / not-ready / partial> — `ready` only if every item is ✓ verified / ✓ attested / N/A; any ✗ or ✗ conflict → not-ready; otherwise any ◐ or ? → partial. Evidence as of <oldest timestamp behind any ✓>. To reach ready: <n> checks (listed in `readiness-scorecard.md`).
 - **Open questions count:** <high>/<medium>/<low>
 - **Top 5 open questions:**
   1. <question>
@@ -44,7 +44,7 @@ incoming-team: <team-name>
 - [ ] Read this README in full.
 - [ ] Skim `readiness-scorecard.md` and note any **✗**, **◐** or **?** items in your team's tracker. Treat **✗ conflict** as high priority: the interview and the artifacts disagree.
 - [ ] Schedule a 30-minute follow-up with **<outgoing-team primary contact>** to cover the top-3 open questions above.
-- [ ] Verify your team's IAM identities have console + CLI access to AWS account **<account-id>** in region **<region>**.
+- [ ] Verify your team's IAM identities have console + CLI access to AWS account **<account-id>** in region **<region>** (and, if workloads run in a cluster, `kubectl` access to context **<context>**, namespace **<namespace>**).
 - [ ] Subscribe to the alerts listed in `interview-questionnaire.md` Section 5 on your team's paging tool.
 - [ ] Read the top-3 runbooks referenced in `interview-questionnaire.md` Section 6.
 - [ ] Note the landmines in Section 7 of the interview — surface them in your next team standup before any change.

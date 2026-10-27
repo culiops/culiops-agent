@@ -17,15 +17,15 @@ For each of the 25 baseline items, the auto-mark rule is a function of:
 | `✗` | Fails | Explicit negative in an artifact or answer ("no DR plan"), or a verified absence. |
 | `✗ conflict` | Interview and artifact disagree | Both sources cited. Always a High open question. |
 | `?` | Unknown | Missing, empty, ambiguous, or "not verifiable". |
-| `N/A` | Does not apply | Explicit statement that it does not apply. |
+| `N/A` | Does not apply | A cited artifact or record says so. An interview statement alone is `◐`. |
 
 Presence of an interview answer yields `◐`, never `✓`. There is no "non-empty ⇒ pass" rule.
 
 ## Verdict rule
 
 - `ready` only if every item is `✓ verified`, `✓ attested` or `N/A`.
-- Any `◐` or `?` → `partial`.
-- Any `✗` or `✗ conflict` in Access, Runtime, Deploy & Rollback or Compliance → `not-ready`.
+- Otherwise, any `◐` or `?` → `partial`.
+- Any `✗` or `✗ conflict`, in any category → `not-ready`.
 
 For every `◐` item the scorecard lists the read-only check that would verify it. The optional **Step 6 verification batch** (offered by default, projected and approved like Step 1.5 commands) runs them and turns `◐` into `✓ verified` or `✗ conflict`. Skipping it leaves the items `◐` and the verdict `partial`.
 
@@ -37,7 +37,7 @@ Every `✓ verified` and `✗ conflict` carries `[evidence: <path>:<line>]` wher
 
 | Item | Artifact(s) needed | Step 6 verification batch |
 |---|---|---|
-| 1 | state.md (Step 1.5 probe; `sts get-caller-identity` account must equal intake) | — |
+| 1 | state.md (Step 1.5 probe; `sts get-caller-identity` account must equal intake, plus one permission-requiring read that succeeded) | — |
 | 2 | runtime-profile.md (Control-Plane Activity) — a hint only; operator confirms | — |
 | 3 | [attested] | — |
 | 4 | service-catalog.md (attributed rows only) | — |
@@ -63,7 +63,7 @@ Every `✓ verified` and `✗ conflict` carries `[evidence: <path>:<line>]` wher
 | 24 | interview-questionnaire.md (Section 10 — Backup strategy + Last backup-restore test) | **Yes** — RDS / DynamoDB / AWS Backup (restore test itself stays ◐ or attested) |
 | 25 | interview-questionnaire.md (Section 10 — Disaster recovery plan) | — |
 
-Item 9 is "Managing principals enumerated (management events)" — those are who changed the service, not who calls it. Callers come from runtime-profile Wiring (item 19). Item 13 is "Top runbooks exist (≥3)".
+Items 2, 8, 15, 16 and 18 depend on the delivery model; items 1, 7–10, 15, 19 and 24 have `Kubernetes:` lines in the baseline (item 18 uses item 8's history). Item 9 is "Managing principals enumerated (management events)" — those are who changed the service, not who calls it. Callers come from runtime-profile Wiring (item 19). Item 13 is "Top runbooks exist (≥3)".
 
 ## Rule patterns
 

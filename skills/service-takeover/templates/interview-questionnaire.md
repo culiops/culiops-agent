@@ -57,7 +57,7 @@ Fill in answers under each `_To be filled in: ___` marker. Sections may be answe
 
 ## 4. Deploy process
 
-- **How does code reach prod?** CI/CD tool, deploy script, manual steps.
+- **How does code reach prod?** Applied by a person (IAM role / kubeconfig), a CI/CD pipeline (on merge or on trigger), a GitOps controller, a deploy script, manual steps.
   _To be filled in: ___
 - **How does config reach prod?** Same as code? Separate path?
   _To be filled in: ___
@@ -67,9 +67,9 @@ Fill in answers under each `_To be filled in: ___` marker. Sections may be answe
   _To be filled in: ___
 - **Rollback procedure** — exact steps. When was rollback last exercised?
   _To be filled in: ___
-- **Deploy permissions** — who can deploy? IAM role / user list.
+- **Deploy permissions** — who can deploy? IAM roles / users, pipeline or Git-host permissions, cluster RBAC.
   _To be filled in: ___
-- **Incoming team's deploy role ARN** — the exact IAM role ARN the incoming team will deploy with (e.g. `arn:aws:iam::<account-id>:role/<name>`), and whether it already has the deploy permissions above. If it doesn't exist yet, say "to be created". The skill uses this ARN to check the permission with a read-only policy simulation.
+- **How the incoming team will deploy** — with its own identity (the exact IAM role ARN, e.g. `arn:aws:iam::<account-id>:role/<name>`, or the cluster subject / ServiceAccount) or through the pipeline or GitOps repo (which repo and which permission). Say whether it already has what it needs; if not, "to be created". The skill checks an IAM role with a read-only policy simulation and a cluster subject with `kubectl auth can-i`; pipeline or repo permission needs a record you can open.
   _To be filled in: ___
 
 ### 4b — IaC & ownership
