@@ -97,7 +97,8 @@ resource "aws_cloudwatch_metric_alarm" "paymentapi_cpu_high" {
 
 ## Step 5 — Verify & Record
 
-- PR path: "PR created. Pipeline will handle apply and verification."
+- PR path: the fixture has no CI or GitOps config, so the delivery model is `UNVERIFIED` and the operator is asked how changes are applied. The next-step message follows the answer (CI / GitOps: "After merge, `<pipeline>` applies it"; by hand: "merging applies nothing").
+- Record: `Outcome: completed` (PR created) with `Applied: no — PR open`. Not `yes — verified`.
 - Writes execution record to `.culiops/iac-change-execution/paymentapi-cpu-alarm-<timestamp>.md`
 - GATE 5: offers to commit the record
 

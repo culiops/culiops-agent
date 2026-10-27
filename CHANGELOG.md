@@ -8,6 +8,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Changed
 
+- **iac-change-execution: self-review before every gate.**
+  - **Plan self-check (6 items) before GATE 1** and **diff self-check (6 items) before GATE 2.** The diff check covers scope, plan ↔ hunk mapping, conventions against a cited example, silently weakened safety settings (Terraform / AWS and Kubernetes), secrets and formatting. It re-runs after every revision.
+  - **Fresh eyes:** a separate reviewer in a fresh context gets the request, plan, evidence and diff, but not the author's conclusions. It runs on every phase except add-only ones that touch no access control, network exposure, DNS, data store, secrets / KMS or lifecycle setting. If unsure, it runs.
+  - The record logs both results.
+- **iac-change-execution: evidence for decisions, not only facts.**
+  - New evidence classes `plan:` and `docs: <URL>` (official documentation read in the session) for how a change behaves. Recalled behaviour is not evidence.
+  - Each phase now has a **Disruption** field (none / restart / failover / replace) with evidence, which Step 4a checks against the plan action.
+  - Rollback is marked reversible / one-way / irreversible with evidence, or `untested`.
+  - Delivery model and environment selection must cite where they were found, else `UNVERIFIED` and the operator is asked.
+  - Health checks report before vs after values.
+- **iac-change-execution: no assumed pipeline.** The PR path follows the delivery model. When changes are applied by hand, merging applies nothing, and the skill says so. A new record line `Applied: yes — verified / yes — not verified / no — PR open / no — merged, apply pending` states what actually happened. The `Outcome` vocabulary is unchanged, so `change-comms` still works.
+- **iac-change-execution: fixes.** The Integration section's pre-flight reuse rule now points to the plan-hash rule in Step 4b. Before this fix it still allowed reuse on a matching commit SHA. The `change-comms` offers no longer assume an "EM" or Jira.
+
 - **Repo renamed from `culiops-agent` to `culiops-skills`.** The plugin and marketplace are still named `culiops`, so skill names (`culiops:pre-flight` and the rest) and existing installs are unaffected. GitHub redirects the old URL.
 
 ## [0.13.0] — 2026-10-26
