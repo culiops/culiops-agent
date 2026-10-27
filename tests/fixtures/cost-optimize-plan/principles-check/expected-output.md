@@ -39,11 +39,12 @@ All queries executed 2026-05-29 14:32-14:36 UTC. Row numbering: `0a` target chec
 | 10 | Switch orders-canonical to on-demand | cloudwatch:GetMetricData (Consumed R/W CU, 15d @ 60s) | cloudwatch:GetMetricData | ok | per-minute peak read 171 / write 80 CU/s (peak/avg 1.24 / 1.18): steady, not spiky |
 | 11 | Switch orders-canonical to on-demand | ce:GetReservationCoverage (DynamoDB, 30d) | ce:Get* | ok | 0% reserved: no commitment absorbs a change |
 | 12 | Switch orders-canonical to on-demand | ce:GetCostAndUsage (DynamoDB provisioned line items, 30d) | ce:GetCostAndUsage | ok | bill-derived provisioned rates (fictional account): 180,000 RCU-hours $26.46, 90,000 WCU-hours $66.15 |
-| 13 | Switch orders-canonical to on-demand | pricing:GetProducts (AmazonDynamoDB, ap-southeast-1) | pricing:GetProducts | ok | on-demand request-unit rates (fixture values; fallback because the bill has no on-demand usage for this table) |
+| 13 | Switch orders-canonical to on-demand | pricing:GetProducts (AmazonDynamoDB, ap-southeast-1; read 2026-05-29) | pricing:GetProducts | ok | on-demand request-unit rates (fixture values; fallback because the bill has no on-demand usage for this table) |
+| d1 | Delete cron-backfill-2024 | docs read: https://docs.aws.amazon.com/cli/v1/reference/lambda/delete-function.html (read 2026-05-29) | none (public page) | ok | without a `Qualifier`, `delete-function` deletes all versions and aliases; a deleted function cannot be recovered |
 
 Optional query declined at GATE 2: `application-autoscaling:DescribeScalingPolicies` (the IaC sets static capacity; no autoscaling) - listed in Gaps.
 
-**Total estimated API cost:** 2 Cost Explorer requests (billed per request) plus free describe/list/Pricing calls and a few GetMetricData calls: well under $0.25.
+**Total estimated API cost:** 2 Cost Explorer requests (billed per request) plus free describe/list/Pricing calls and a few GetMetricData calls: well under $0.25. The documentation read (`d1`) costs $0.
 
 ### Principle 2 cost-direction computation (item #2)
 
@@ -74,7 +75,7 @@ Result: `$92.61/mo current → $465.00/mo proposed (+402%, i.e. +$372.39/mo)`. T
 | 🚫 Do not act | 1 | ($80/mo claim direction-inverted; no saving to capture from this action) |
 | ❔ Manual review | 0 | — |
 
-**Total plan savings:** $35/mo actionable.
+**Total plan savings:** $35/mo actionable. Totals count only `Realizable ✓` rows; item #1 is ✓ and item #2 (✗) contributes nothing.
 
 ## 🟢 Fast wins
 
@@ -84,14 +85,14 @@ No items in this tier.
 
 | # | Action | Resource | Owner | Savings | Realizable | Reversibility | Blast | Evidence | Dependency | Source | Rollback |
 |---|--------|----------|-------|---------|------------|---------------|-------|----------|------------|--------|----------|
-| 1 | Delete Lambda function cron-backfill-2024 | arn:aws:lambda:ap-southeast-1:123456789012:function:cron-backfill-2024 | terraform `code:terraform/lambda/cron-backfill-2024/main.tf:1` | $35/mo | ✓ provisioned concurrency billed on-demand, no commitment (upstream line item) | 🟡 terraform + artifact in repo | 🟡 default (wired, see below) | 🟢 live:3,7 | 🟡 code:rules.tf:3,14; live:2,6 | line-item-computation (medium) | Redeploy via IaC (~5-15 min) while the artifact is retrievable; event rules, resource-policy permissions and alias must be recreated from IaC |
+| 1 | Delete Lambda function cron-backfill-2024 | arn:aws:lambda:ap-southeast-1:123456789012:function:cron-backfill-2024 | terraform `code:terraform/lambda/cron-backfill-2024/main.tf:1` | $35/mo | ✓ provisioned concurrency billed on-demand, no commitment (upstream line item) | 🟡 terraform + artifact in repo; docs: https://docs.aws.amazon.com/cli/v1/reference/lambda/delete-function.html (d1) | 🟡 default (wired, see below) | 🟢 live:3,7 | 🟡 code:rules.tf:3,14; live:2,6 | line-item-computation (medium) | Redeploy through the repo's delivery path while the artifact is retrievable (the time it takes was not measured); event rules, resource-policy permissions and alias must be recreated from IaC |
 
 **Dimension detail:**
-- **Reversibility 🟡** — `delete-lambda.md`: 🟡 when the owner is terraform/lambroll AND the artifact is retrievable (it is: source in the repo, `code:main.tf:1`). There is no 🟢, and no "published version" mitigation: an unqualified `delete-function` removes versions 5-7 and the `live` alias too.
+- **Reversibility 🟡** — `delete-lambda.md`: 🟡 when the owner is terraform/lambroll AND the artifact is retrievable (it is: source in the repo, `code:main.tf:1`). There is no 🟢, and no "published version" mitigation: an unqualified `delete-function` removes versions 5-7 and the `live` alias too (docs d1).
 - **Blast 🟡** — playbook default; not bumped to 🟢 because queries 4-6 are not all empty (alias, policy, provisioned concurrency). Not 🔴: no API Gateway / ALB / CloudFront principal and no function URL.
 - **Evidence 🟢** — **Principle 1 applied:** the score rests on `Invocations` only. 0 over 90d at hourly granularity on the function and the `live` alias series (live:3; empty counted as zero only because the three Metrics-rule conditions hold), and the optional last-log row passes (last execution 2026-02-12, before the window; live:7). The 2 EventBridge rules in the resource policy, the alias and the provisioned concurrency are attachment and went to Blast / Dependency. Nothing was subtracted from `Invocations` (provisioned-concurrency invocations are real invocations; there are none).
-- **Dependency 🟡** — 2 IaC consumers outside the function block (the two rules, `code:rules.tf:3,14`), plus alias and policy (live:2,6).
-- **Not idle-ambiguous:** nothing fires on the schedules (0 invocations over 90d, including the weekly rule), so there is no "paused vs decommissioned" ambiguity left for an owner to resolve beyond the Gaps below.
+- **Dependency 🟡** — 2 IaC consumers outside the function block (the two rules, `code:rules.tf:3,14`), plus alias and policy (live:2,6). Repo searched: `~/acme-infra`; other repos were not supplied (Gaps).
+- **Not idle-ambiguous (Dimension 3, fail-closed rule):** a Lambda delete on an `Invocations` window is idle-ambiguous unless `code:` shows the window spans the workload's longest cycle. It does: the IaC defines a daily rule (`cron(0 2 * * ? *)`, `code:rules.tf:3`) and a weekly rule (`cron(0 3 ? * SUN *)`, `code:rules.tf:14`), so the longest known cycle is 7 days and the 90d window spans it. Nothing fired on either schedule (0 invocations over 90d, including the weekly rule), so there is no "paused vs decommissioned" ambiguity left for an owner to resolve beyond the Gaps below.
 
 > **Principle 1 callout:** the 2 attached rules would, under naive triage, read as "in use" and push this to 🚫. Activity (`Invocations` = 0 over 90d) says the function is idle; the rules say what must be coordinated before deleting.
 >
@@ -131,6 +132,7 @@ No items in this tier — both items had matching playbooks.
 - Item #2: the `direction-unverified` label from the upstream report is resolved here as ✗ (cost increases).
 - Optional `application-autoscaling:DescribeScalingPolicies` query declined at GATE 2 (static capacity in IaC); it does not affect any tier.
 - Window: upstream used 30d for the Lambda; this plan re-read it over 90d (Principle 3).
+- Item #1: the dependency search covers `~/acme-infra` only; other repos were not supplied.
 
 ## Next steps (informational)
 

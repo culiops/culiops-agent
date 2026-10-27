@@ -1,5 +1,5 @@
 {
-  "_note": "Query 13 (item #2). Pricing API (pricing get-products, AmazonDynamoDB, ap-southeast-1) - fallback because the bill has no on-demand usage for this table. FIXTURE VALUES, deliberately round and fictional; NOT AWS list prices. In a real run the skill reads the live Pricing API and labels the figures 'pricing-api'.",
+  "_note": "Query 13 (item #2). Pricing API (pricing get-products, AmazonDynamoDB, ap-southeast-1, read 2026-05-29) - fallback because the bill has no on-demand usage for this table. FIXTURE VALUES, deliberately round and fictional; NOT AWS list prices. In a real run the skill reads the live Pricing API and labels the figures 'pricing-api'.",
   "label": "pricing-api (fixture values)",
   "on_demand": {"read_request_unit_usd_per_million": 0.30, "write_request_unit_usd_per_million": 1.50}
 }

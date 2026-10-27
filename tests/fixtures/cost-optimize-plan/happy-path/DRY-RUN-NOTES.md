@@ -5,9 +5,10 @@
 1. **GATE 1 (Scope)** — Operator provides the path to the upstream report. Skill loads `upstream-report.md`, extracts the 3-item Remediation list, reads `**Cloud:** aws` (single-cloud) and `**Scope:** 123456789012 / acme-prod`. Records the **target**: account 123456789012, region ap-southeast-1 (from the resource IDs). Report `Date:` 2026-05-28 is fresh. $5/mo floor: all 3 items pass ($280, $100, $48). No catalog at `.culiops/service-discovery/`. Skill asks for the IaC repo path; operator supplies `~/acme-infra` (simulated). Operator confirms scope. Approved.
 
 2. **GATE 2 (Verification batch)** — Batch starts with Query 0: `0a` target check, then `0b-1..3` ownership probes. Skill then looks up playbooks: Per Step 2, each item's playbook queries are listed as conditional on Query 0b; here no owner routes to ❔, so none is skipped.
-   - Item #1 (rightsize EC2) → `rightsize-ec2.md` (queries 1-6) + the commitment-coverage check for `Realizable` (query 7).
+   - Item #1 (rightsize EC2) → `rightsize-ec2.md` (queries 1-6) + the commitment-coverage check for `Realizable` (query 7). Aggregate coverage 0% proves the instance is not covered (Constraint 9).
    - Item #2 (lifecycle S3) → `lifecycle-s3.md` (queries 8-14: lifecycle config, versioning, Intelligent-Tiering, size metrics, optional access-pattern evidence via Storage Class Analysis (operator opts in), object-size distribution, bill-derived rates).
    - Item #3 (delete EBS) → `delete-unattached-ebs.md` (queries 15-17).
+   Two documentation rows are added for the behaviour claims the tiers rest on (Constraint 16): `d1` EC2 change-instance-type page (item #1), `d2` S3 storage-class page (item #2). Cost $0.
    All playbooks present, no manual-review items, no dedup opportunities. IAM list and per-query cost itemized (Cost Explorer per request; S3 GETs for the SCA export and inventory report; LookupEvents free). Operator approves the full batch.
 
 3. **Step 3 (Execute)** — `0a` first: `sts get-caller-identity` account = `Scope`. Then `0b` for each item (owners: terraform, terraform, unmanaged — none routes to ❔). All 17 follow-up queries succeed. Empty results (`lookup-events` for the volume, `describe-alarms`, `rbin` rules) are interpreted under the Metrics rule / Constraint 12 only where applicable: `lookup-events` is a management-event source and the describe call succeeded, so empty = no attach/detach.
@@ -29,7 +30,9 @@
 - **Snapshot-validity rule** keeps a delete with an old snapshot at 🔴.
 - **Reversibility dominance:** Reversibility 🔴 forces 🔴 even with all other dimensions 🟢.
 - **No catalog does not silently produce 🟢 Dependency:** #1 gets 🟡 from a real IaC consumer; #3 gets 🟢 only because the grep ran and found nothing.
-- **Plan summary totals $428/mo**, matching the upstream report.
+- **Plan summary totals $428/mo**, matching the upstream report (all rows `Realizable ✓`, so all are counted).
+- **Behaviour claims cite docs** (Constraint 16): EC2 stop/start and Standard-IA readability carry `docs:` refs; the downtime figure from the old playbook is gone.
+- **`unmanaged` has positive evidence:** repo searched and the full tag set read, not just an absence of known tags. "No hit" names the repo searched.
 
 ## Acceptance check
 

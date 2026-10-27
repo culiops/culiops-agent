@@ -43,7 +43,7 @@ Scope: standalone and Multi-AZ **DB instances**. Aurora and DB-cluster members a
 
 ## Evidence thresholds
 
-Thresholds are defaults. "Req" = required: ⚪ on a required row forces Evidence ⚪ → 🔴.
+Thresholds are skill defaults (policy, not AWS guidance); a looser threshold goes to `Gaps` and the item cannot reach 🟢 on it. "Req" = required: ⚪ on a required row forces Evidence ⚪ → 🔴.
 
 | Signal | Req | 🟢 Threshold (safe to downsize) | 🚫 Trigger (do not downsize) |
 |--------|-----|-------------------------------|-------------------------------|
@@ -69,11 +69,11 @@ Thresholds are defaults. "Req" = required: ⚪ on a required row forces Evidence
 | IaC / catalog consumers (Dim 4) | `code:` | per Dimension 4 thresholds |
 
 ## Reversibility classification
-- **Default:** 🟢 reversible when Ownership is `terraform` — re-apply old IaC restores the original class. Multi-AZ resize involves a failover (brief outage); single-AZ resize is ~2-5 min downtime.
+- **Default:** 🟢 reversible when Ownership is `terraform` — re-apply old IaC restores the original class. Multi-AZ resize updates the standby, then fails over (typically 60–120 s); single-AZ is unavailable while the class changes, for a time proportional to recovery (docs: https://repost.aws/knowledge-center/rds-performance-impact).
 - **`unmanaged`:** 🟡 — manual `modify-db-instance` back to the old class; no IaC to re-apply.
 
 ## Blast radius classification
 - **Default:** 🔴 — RDS instances are typically depended on by many services. Bump down to 🟡 only if catalog confirms a single-consumer service AND no replicas.
 
 ## Rollback note (informational, shown in plan)
-"Re-apply old IaC to restore the original DB instance class (`unmanaged`: `modify-db-instance --db-instance-class <old>`). Multi-AZ resize fails over to the standby (brief read-write outage). Single-AZ resize requires ~2-5 min downtime. Defer to the maintenance window with `apply_immediately = false` (Terraform) / `--no-apply-immediately` if outage timing matters. Take a manual snapshot before the resize for the fastest rollback path. Parameter-group values derived from class memory (e.g. `max_connections`) change with the class and change back on rollback."
+"Re-apply old IaC to restore the original DB instance class (`unmanaged`: `modify-db-instance --db-instance-class <old>`). Multi-AZ resize fails over to the standby (brief read-write outage); single-AZ is unavailable while the class changes (docs: https://repost.aws/knowledge-center/rds-performance-impact). Defer to the maintenance window with `apply_immediately = false` (Terraform) / `--no-apply-immediately` if outage timing matters. Take a manual snapshot before the resize for the fastest rollback path. Parameter-group values derived from class memory (e.g. `max_connections`) change with the class and change back on rollback."

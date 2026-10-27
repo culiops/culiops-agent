@@ -7,7 +7,7 @@ applies_when: action == "rightsize" AND resource matches "arn:aws:dynamodb:*:tab
 
 # Verify: Rightsize DynamoDB table
 
-Covers two distinct rightsizing levers, which compose: (a) reduce provisioned capacity (provisioned mode), and (b) switch billing mode between provisioned and on-demand. Both are reversible; mode switch is rate-limited (one per 24 hours per table).
+Covers two distinct rightsizing levers, which compose: (a) reduce provisioned capacity (provisioned mode), and (b) switch billing mode between provisioned and on-demand. Both are reversible; mode switch is rate-limited (provisioned → on-demand: up to four per rolling 24 h; on-demand → provisioned: any time; docs: https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/bp-switching-capacity-modes.html, re-read before relying).
 
 ## Required IAM
 - `dynamodb:DescribeTable`
@@ -64,7 +64,7 @@ For the capacity-reduction lever: between 40% and 80% on a required utilization 
 
 ## Principle 2 — cost-direction check (mandatory for mode switches)
 
-This playbook's **most common trap**. Switching `PROVISIONED` ↔ `PAY_PER_REQUEST` is rate-limited (one per 24h per table) and the cheaper mode flips with workload shape. Compute, do not assume. The cost-direction result is a **cost result, not an activity signal**: it never scores Evidence 🚫. A failed check means the lever is not proposed: the item goes to 🚫 only if this is the lever the upstream report recommends (SKILL tier rule 1); otherwise the lever is dropped and recorded in Gaps.
+This playbook's **most common trap**. Switching `PROVISIONED` ↔ `PAY_PER_REQUEST` is rate-limited (see the limits at the top of this playbook) and the cheaper mode flips with workload shape. Compute, do not assume. The cost-direction result is a **cost result, not an activity signal**: it never scores Evidence 🚫. A failed check means the lever is not proposed: the item goes to 🚫 only if this is the lever the upstream report recommends (SKILL tier rule 1); otherwise the lever is dropped and recorded in Gaps.
 
 | Workload shape | Cheaper mode | Why |
 |---|---|---|
@@ -83,10 +83,10 @@ Compute steps before recommending a mode switch:
 
 ## Reversibility classification
 - **Default:** 🟢 reversible when Ownership is `terraform`. Capacity changes apply within minutes; mode switches within minutes (rate-limited). Re-apply old IaC restores. `unmanaged` → 🟡 (manual update-table back; no IaC).
-- **Caveat:** mode switch is rate-limited. If a switch is reversed within 24h, the rollback waits for the window. Surface this in the rollback note.
+- **Caveat:** a switch to on-demand is rate-limited; a switch back to provisioned is not (docs link at the top). Surface this in the rollback note.
 
 ## Blast radius classification
 - **Default:** 🟢 — capacity changes are transparent to consumers if rightsized correctly. Bump to 🟡 if throttle thresholds are within 20% (close call; a bad rightsize would cascade to consumer 5XX). Bump to 🔴 if the table is referenced by ≥ 3 services per catalog (production-critical shared table).
 
 ## Rollback note (informational, shown in plan)
-"Re-apply old IaC (`unmanaged`: `update-table` back to the old capacity/mode). Capacity changes take effect within minutes. **Mode switch (provisioned ↔ on-demand) is rate-limited** — a rollback of a mode switch must wait out the window. Pre-rightsize: ensure point-in-time recovery (PITR) is enabled or take an on-demand backup (`aws dynamodb create-backup`). **Principle 2 reminder:** the cost-direction math in this playbook is computed against bill-derived rates × observed utilization; if either changes materially (price change, traffic pattern shift), rerun the math before reapplying any mode change."
+"Re-apply old IaC (`unmanaged`: `update-table` back to the old capacity/mode). Capacity changes take effect within minutes. **Mode switch (provisioned ↔ on-demand) is rate-limited** — a switch to on-demand counts against the documented limit (a switch back to provisioned does not). Pre-rightsize: ensure point-in-time recovery (PITR) is enabled or take an on-demand backup (`aws dynamodb create-backup`). **Principle 2 reminder:** the cost-direction math in this playbook is computed against bill-derived rates × observed utilization; if either changes materially (price change, traffic pattern shift), rerun the math before reapplying any mode change."

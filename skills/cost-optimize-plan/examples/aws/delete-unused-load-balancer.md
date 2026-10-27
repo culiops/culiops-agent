@@ -35,7 +35,7 @@ Three types, three metric families. Identify the type first: ARN `loadbalancer/a
 6. **CloudFront** — `aws cloudfront list-distributions` (paginate), match `Origins.Items[].DomainName` client-side, case-insensitive. Also `aws cloudfront list-vpc-origins` — `OriginEndpointArn` equal to the LB ARN.
 7. **Global Accelerator** (API endpoint `us-west-2`) — `aws globalaccelerator list-accelerators --region us-west-2`, then `list-listeners --accelerator-arn`, then `list-endpoint-groups --listener-arn`; match `EndpointDescriptions[].EndpointId` to the LB ARN.
 8. **NLB wiring** — API Gateway REST VPC links: `aws apigateway get-vpc-links` (`targetArns` contains the NLB ARN). `aws apigatewayv2 get-vpc-links` lists subnet-based links with no LB ARN: for HTTP APIs the reference lives in integrations (`aws apigatewayv2 get-apis`, then `get-integrations --api-id <id>`, `IntegrationUri` = a listener ARN of this LB) — opt-in, one call per API (verify). VPC endpoint services (PrivateLink): `aws ec2 describe-vpc-endpoint-service-configurations` (per region) — `NetworkLoadBalancerArns` contains the NLB ARN.
-9. **External DNS** (Cloudflare, other registrars' DNS, on-prem) **cannot be swept by this skill.** Record a Gap in the plan: "external DNS not checked". Ask the operator; an `operator-stated` "no external DNS" is accepted, citing who said so.
+9. **External DNS** (Cloudflare, other registrars' DNS, on-prem) **cannot be swept by this skill.** Record a Gap in the plan: "external DNS not checked". Ask the operator; an `operator-stated` "no external DNS" is recorded, citing who said so, but it does not clear the idle-ambiguous route (Law 3).
 
 ## Evidence thresholds
 
@@ -58,10 +58,10 @@ Attachment never produces 🚫 (Principle 1).
 | Global Accelerator endpoint | 7 | ≥ 1 → Blast 🔴 |
 | API Gateway VPC link / HTTP API integration (NLB/ALB) | 8 | ≥ 1 → Blast 🔴 |
 | VPC endpoint service (PrivateLink, NLB) | 8 | ≥ 1 → Blast 🔴 (consumers in other accounts) |
-| External DNS not swept | 9 | unless operator-stated none → idle-ambiguous |
+| External DNS not swept | 9 | idle-ambiguous (an operator-stated "none" does not clear it) |
 | IaC references to the ARN / DNS name (`code:`) | 0 | 1–2 → Dependency 🟡; ≥ 3 → Dependency 🔴 |
 
-**Idle-ambiguous (🔵):** an LB with zero activity (Evidence 🟢) but any wiring above, or with unswept external DNS, routes the delete to 🔵 — only the owner can say decommissioned vs paused/seasonal. Only an LB with Evidence 🟢, no wiring found, and operator-stated no external DNS is a plain delete candidate.
+**Idle-ambiguous (🔵):** an LB with zero activity (Evidence 🟢) but any wiring above, or with unswept external DNS, routes the delete to 🔵 — only the owner can say decommissioned vs paused/seasonal. An LB with Evidence 🟢 and no wiring found still goes to 🔵 until the owner confirms there is no external DNS.
 
 ## Reversibility classification
 - **Default:** 🔴 irreversible. The LB DNS name is released on deletion; a recreated LB (even from IaC) gets a different DNS name, breaking every external reference. Owner `unmanaged` changes nothing.

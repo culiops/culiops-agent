@@ -43,7 +43,7 @@ applies_when: action == "rightsize" AND resource matches "i-*"
 
 ## Evidence thresholds
 
-Thresholds are defaults; adjust only with operator-stated reasons. "Req" = required: ⚪ on a required row forces Evidence ⚪ → 🔴.
+Thresholds are skill defaults (policy, not AWS guidance). An operator may tighten them; a looser threshold goes to `Gaps` and the item cannot reach 🟢 on it. "Req" = required: ⚪ on a required row forces Evidence ⚪ → 🔴.
 
 | Signal | Req | 🟢 Threshold (safe to downsize) | 🚫 Trigger (do not downsize) |
 |--------|-----|-------------------------------|-------------------------------|
@@ -69,11 +69,11 @@ If memory is `required` and no CWAgent data exists → ⚪ → Evidence 🔴 (ex
 | IaC / catalog references (Dim 4) | `code:` | per Dimension 4 thresholds |
 
 ## Reversibility classification
-- **Default:** 🟢 reversible when Ownership is `terraform` — re-apply old IaC restores the larger instance type. Requires a stop/start (downtime ~2-5 min) per resize.
+- **Default:** 🟢 reversible when Ownership is `terraform` — re-apply old IaC restores the larger instance type. Requires a stop/start per resize; the instance is down while stopped and the duration varies (docs: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/change-instance-type-of-ebs-backed-instance.html).
 - **`unmanaged`:** 🟡 — reversal is a manual stop / `modify-instance-attribute` / start; no IaC to re-apply.
 
 ## Blast radius classification
 - **Default:** 🟡 — touches a live resource. See the Attachment table. Bump to 🟢 if catalog confirms ≥ 2 healthy targets (Query 6) and the instance is not in an ASG (ASG members are already ❔ at step 0).
 
 ## Rollback note (informational, shown in plan)
-"Re-apply old IaC to restore the original instance type (`unmanaged`: stop, `modify-instance-attribute --instance-type`, start). Stop/start required for type change — service must tolerate ~2-5 min downtime OR be behind a load balancer with redundancy. A non-Elastic public IPv4 changes on stop/start. Pre-resize: take an AMI for the fastest restore if rollback becomes urgent."
+"Re-apply old IaC to restore the original instance type (`unmanaged`: stop, `modify-instance-attribute --instance-type`, start). Stop/start required for type change — service must tolerate the downtime while stopped OR be behind a load balancer with redundancy (docs: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/change-instance-type-of-ebs-backed-instance.html). A non-Elastic public IPv4 changes on stop/start (same page). Pre-resize: take an AMI for the fastest restore if rollback becomes urgent."

@@ -1,5 +1,5 @@
 {
-  "_note": "Query 14 (item #2, Principle 4). ce get-cost-and-usage, S3 line items for logs-bucket-app, 30d. FICTIONAL account: the effective rates below are fixture values chosen so the arithmetic is checkable. They are NOT AWS list prices. Standard-IA has no usage in this bucket's bill, so its rates come from the Pricing API fallback.",
+  "_note": "Query 14 (item #2, Principle 4). ce get-cost-and-usage, S3 line items for logs-bucket-app, 30d. FICTIONAL account: the effective rates below are fixture values chosen so the arithmetic is checkable. They are NOT AWS list prices. Standard-IA has no usage in this bucket's bill, so its rates come from the Pricing API fallback (pricing get-products, AmazonS3, ap-southeast-1, read 2026-05-28).",
   "line_items": [
     {
       "usage_type": "TimedStorage-ByteHrs (Standard)",

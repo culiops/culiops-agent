@@ -26,6 +26,8 @@ A fictional AWS account `123456789012` (`acme-prod`) in `ap-southeast-1`. The up
 - **Optional evidence row:** last log stream (`describe-log-streams`), opted in and passing. Dimension 3: an optional row that ran must pass; one declined at GATE 2 would not block 🟢 and would be listed in Gaps. Only an optional row that ran and came back ⚪ (e.g. log group retention shorter than the window) would make Evidence 🟡, and a delete with Evidence not 🟢 then lands in 🔴 (tier rule 3).
 - **Reversibility per `delete-lambda.md`:** 🟡 (terraform + retrievable artifact); never 🟢; unqualified delete removes all versions and aliases.
 - **Principle 2 ladder:** remove the provisioned concurrency first (it is the entire $35/mo).
+- **Fail-closed idle-ambiguous rule (Dimension 3):** the Lambda delete stays out of 🔵 only because `code:` (the rule schedules) shows the 90d window spans the longest cycle. The simulated IaC hits carry the schedule expressions for that reason.
+- **Docs row `d1`** (Lambda delete-function reference) backs the Reversibility behaviour claim (Constraint 16); the Pricing API fallback row names service, region and date.
 - **Principle 2 cost-direction math** with correct units, bill-derived rates, Pricing API fallback, `Realizable` ✗; resolves the upstream `direction-unverified` label. Tier rule 1 → 🚫 because the recommended lever is the one that loses.
 - **Secrets rule:** `get-function` is a `--query` projection; `Environment` and `Code.Location` never appear.
 - **No fabrication:** no capacity-reduction item is injected; the evidence in fact does not support one (73-76% utilization, per-minute peak 171/200).

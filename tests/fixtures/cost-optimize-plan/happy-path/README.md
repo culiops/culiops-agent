@@ -22,6 +22,7 @@ A fictional AWS account `123456789012` (`acme-prod`) in `ap-southeast-1`. The up
 - **`Realizable` column.** EC2: commitment coverage queried (0% SP/RI, on-demand). Lifecycle: cost-direction computed (net +$97/mo vs upstream $100/mo; bill-derived Standard rate, fixture Standard-IA rates).
 - **Lifecycle to an instantly readable class is 🟢 Fast win.** `lifecycle-s3.md`: a `Transition` to Standard-IA is Reversibility 🟢 (reads keep working; only Glacier Flexible / Deep Archive is 🟡, `Expiration` 🔴). The access-pattern row is `optional` for IA (no restore problem; retrieval fees are in the cost-direction row). It is run anyway via Storage Class Analysis (115 days of history, 0 GETs on objects aged >= 90d) and passes, which Dimension 3 requires of any optional row that ran. Object-size distribution from S3 Inventory (nothing under the 128 KiB IA minimum).
 - **EBS snapshot validity.** The only snapshot predates the detach and is older than the 90d CloudTrail window, so it is not provably valid; Reversibility 🔴 and the item is 🔴 Risky. Evidence is 🟢, so tier rule 3's "delete AND Evidence not 🟢" clause is not what fires.
+- **Docs rows `d1`, `d2`** back the two behaviour claims the tiers rest on (EC2 stop/start, Standard-IA readability); `docs:` refs appear in the Reversibility cells. Pricing-API fallback rates name query, region and date.
 - **Drift section** (code = live for the two IaC-owned items) and **evidence refs** (`live:<n>`, `code:<path:line>`).
 - **Ordering hint:** fresh final snapshot before the delete (#3).
 - **All queries succeed:** Gaps has no blocking entries.
@@ -59,7 +60,7 @@ Row = the `#` in the plan's "Verification queries run" table.
 | `mock-responses/bill-derived-rates-logs-bucket-app.json` | 14 | Bill-derived Standard rate + fixture Standard-IA rates (fictional) |
 | `mock-responses/describe-snapshots-vol-0xxxxxxxxxxxxxxx1.json` | 15 | One snapshot, predates the detach |
 | `mock-responses/lookup-events-ebs-90d.json` | 16 | Attach/Detach (management events): none in 90d |
-| `mock-responses/rbin-list-rules-ebs-snapshot.json` | 17 | No Recycle Bin rule |
+| `mock-responses/rbin-list-rules-ebs-snapshot.json` | 17 | No Recycle Bin rule for EBS snapshots (volume rules not queried) |
 | `expected-output.md` | — | The plan the skill produces at GATE 3 |
 | `DRY-RUN-NOTES.md` | — | Gate transitions and acceptance check |
 
