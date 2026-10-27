@@ -44,14 +44,17 @@ Planned: `incident-investigation`.
 ## How they fit together
 
 ```
-Take over a service   service-takeover ──► service-discovery + runtime-trace ──► readiness scorecard
+Take over a service
+  service-takeover ──► service-discovery + runtime-trace ──► scorecard
 
-Make a change         iac-change-execution (runs pre-flight) ──► apply or PR ──► change-comms
+Make a change
+  iac-change-execution (runs pre-flight) ──► apply or PR ──► change-comms
 
-Cut cost              cloud-cost-investigate ──► cost-optimize-plan ──► iac-change-execution, one item at a time
+Cut cost
+  cloud-cost-investigate ──► cost-optimize-plan ──► iac-change-execution
 ```
 
-Each skill also runs on its own. `iac-change-execution` runs pre-flight itself. Everywhere else, the skill gives you the exact command for the next one and you run it.
+Cost items go to `iac-change-execution` one at a time. Each skill also runs on its own. `iac-change-execution` runs pre-flight itself. Everywhere else, the skill gives you the exact command for the next one and you run it.
 
 ## How the skills behave
 
@@ -67,7 +70,7 @@ Everything a skill writes goes under `.culiops/<skill-name>/` in your repo, so i
 
 ```
 .claude-plugin/   Plugin and marketplace manifests
-skills/<name>/    SKILL.md plus examples/ and data directories (detectors, assessors, playbooks, templates)
+skills/<name>/    SKILL.md, examples/, detectors, assessors, playbooks, templates
 tests/fixtures/   End-to-end fixtures each skill is checked against
 CHANGELOG.md      Release history
 ```
