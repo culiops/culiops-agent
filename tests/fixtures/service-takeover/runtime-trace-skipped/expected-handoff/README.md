@@ -81,5 +81,5 @@ The package is sensitive. Before committing, check the current branch and the re
 
 ## Questions about this package itself
 
-- The skill source: `skills/service-takeover/SKILL.md` in the culiops-agent repo.
+- The skill source: `skills/service-takeover/SKILL.md` in the culiops-skills repo.
 - The `state.md` file in this directory for the audit trail.

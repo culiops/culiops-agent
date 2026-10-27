@@ -4,7 +4,7 @@ DevOps / SRE / cloud / platform-engineering skills for [Claude Code](https://cla
 
 CuliOps ships skills that activate automatically when you ask Claude to do operations work — discovering a service's resources, executing infrastructure-as-code change requests, investigating incidents, and more. Supported stack: **AWS + Terraform (ecspresso, lambroll) + Kubernetes (Helm, Kustomize, raw manifests)**. CloudFormation, SAM, Serverless Framework, CDK and Ansible are recognised (so a skill can tell you a resource is owned by one of them), but not supported: the skill says so and stops.
 
-GCP, Azure, Pulumi and Bicep support was removed in v0.11.0. The last multi-cloud version is kept at tag [`archive/multi-cloud-v0.10.0`](https://github.com/culiops/culiops-agent/tree/archive/multi-cloud-v0.10.0).
+GCP, Azure, Pulumi and Bicep support was removed in v0.11.0. The last multi-cloud version is kept at tag [`archive/multi-cloud-v0.10.0`](https://github.com/culiops/culiops-skills/tree/archive/multi-cloud-v0.10.0).
 
 ## Status
 
@@ -28,9 +28,11 @@ Planned (not yet shipped):
 Install via Claude Code's plugin system. From any Claude Code session:
 
 ```
-/plugin marketplace add culiops/culiops-agent
+/plugin marketplace add culiops/culiops-skills
 /plugin install culiops@culiops
 ```
+
+The repo was renamed from `culiops-agent` on 2026-10-27. The old path still redirects, and the plugin name `culiops` did not change, so existing installs keep working.
 
 That's it — skills are now available. Start a new conversation and they'll activate automatically when you ask for relevant work (e.g. "discover this service's resources").
 
