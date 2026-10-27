@@ -1,6 +1,6 @@
 ---
 name: runtime-trace
-description: Use when the user wants to build a runtime profile of an AWS service — what it actually costs, who manages it and what is wired to call it, what its activity baseline looks like, and where it actually lives across regions. Triggers include "runtime profile <service>", "trace runtime for <service>", "what's actually running for <service>". Useful for service takeovers (no docs, no IaC), drift checks after a previous discovery, post-incident retrospectives, and pre-cost-optimization baselining. Read-only; queries Cost Explorer, CloudTrail LookupEvents (Event history), CloudWatch GetMetricData, Resource Explorer, and free resource-policy reads. AWS APIs only; in-cluster Kubernetes workloads are recorded as a gap.
+description: Use when the user wants to build a runtime profile of an AWS service — what it actually costs, who manages it and what is wired to call it, what its activity baseline looks like, and where it actually lives across regions. Triggers include "runtime profile <service>", "trace runtime for <service>", "what's actually running for <service>". Useful for service takeovers (no docs, no IaC), drift checks after a previous discovery, post-incident retrospectives, and pre-cost-optimization baselining. Read-only; queries Cost Explorer, CloudTrail LookupEvents (Event history), CloudWatch GetMetricData, Resource Explorer, and read-only resource-policy and event-source-mapping reads. AWS APIs only; in-cluster Kubernetes workloads are recorded as a gap.
 ---
 
 # Runtime Trace
@@ -14,7 +14,7 @@ This skill answers four questions that infrastructure-as-code discovery cannot:
 3. **What does its activity look like?** (CloudWatch baselines for the four golden signals — traffic, latency, errors, saturation — over 14 days.)
 4. **Where does it actually live?** (Resource Explorer finds tagged resources outside the assumed primary region.)
 
-`runtime-trace` is a sibling to `service-discovery` (which catalogs resources from IaC or from live cloud APIs in real-discovery mode). It is **not** a cost-investigation tool (that's `cloud-cost-investigate`) and **not** an orchestrator — a future `service-takeover` skill will compose `service-discovery` + `runtime-trace` + interview/readiness steps into an end-to-end takeover workflow.
+`runtime-trace` is a sibling to `service-discovery` (which catalogs resources from IaC or from live cloud APIs in real-discovery mode). It is **not** a cost-investigation tool (that's `cloud-cost-investigate`) and **not** an orchestrator — `service-takeover` composes `service-discovery` + `runtime-trace` + interview/readiness steps into an end-to-end takeover workflow.
 
 ## References
 
@@ -27,7 +27,7 @@ The design draws on the following intellectual foundations. They are cited here 
 | **Site Reliability Engineering** — Ch. 6 "Monitoring Distributed Systems" | Source of the four-golden-signals framing (traffic, latency, errors, saturation). Justifies the CloudWatch metric set per resource type. |
 | **Working Effectively with Legacy Code** (Feathers) | "Characterization, not assumption" — prove what the system does before assuming what it should do. Justifies the "every claim cites its API call" discipline. |
 | **The Pragmatic Programmer** (Hunt, Thomas) — "Tracer Bullets" chapter | Source-by-source gate model: thin end-to-end probe per source before fanning out. Justifies per-source approval at Gate 4. |
-| **AWS Well-Architected Framework** — Operational Excellence pillar | Source of the readiness-question framing that downstream `service-takeover` will use. |
+| **AWS Well-Architected Framework** — Operational Excellence pillar | Source of the readiness-question framing that downstream `service-takeover` uses. |
 
 ## The Iron Law
 
@@ -65,12 +65,12 @@ Verbal "yes" without seeing the five fields is not approval.
 
 ## Constraints (Non-Negotiable)
 
-1. **The cloud APIs are the source of truth.** Every claim in the runtime profile must cite a specific API call, its parameters, and its timestamp. No outside-knowledge inference (e.g., "Lambda usually has X" without an actual `GetMetricData` response). A claim is only as wide as the query behind it: account-wide spend is never presented as the service's spend, a regional query is never presented as account-wide, and management events are never presented as "all callers".
+1. **The cloud APIs are the source of truth.** Every claim in the runtime profile must cite a specific API call, its parameters, and its timestamp. No outside-knowledge inference (e.g., "Lambda usually has X" without an actual `GetMetricData` response). A claim is only as wide as the query behind it: account-wide spend is never presented as the service's spend, a regional query is never presented as account-wide, and management events are never presented as "all callers". **Evidence classes:** a fact from this run's API calls is `live: <call ID>` (the citation above); a claim about how AWS *behaves* (what a metric counts, how long data is kept, which events appear where, what a call costs, when a tag takes effect) needs `docs: <URL>` read in this run or a row in "Verified AWS behaviour" (URL + date read). Recall is not evidence: a behaviour claim with neither is written as `UNVERIFIED` and never used to turn an unknown into a conclusion.
 2. **No assumptions.** If a metric is missing, a CloudTrail event is ambiguous, or a Cost Explorer line item is unattributable, the doc records "unknown" with the reason — never a guess.
 3. **Strict scope.** The resource set is resolved from the scoping primitive first (Step 2b) and shown to the operator; CloudTrail, wiring reads and CloudWatch then target exactly that set. Cost Explorer is filtered by the scoping tag. No fan-out across the account (no unfiltered CE as "service spend", no `EventSource` lookups by default).
 4. **No secrets, ever — by projection, not by regex.** Pattern-based redaction cannot recognise a secret stored under an innocent key (`DB_CONN`, `CONFIG`). So nothing unprojected is ever written: audit sidecars and the profile carry only the fields listed in "Audit sidecar projection" (Gate 6). CloudTrail `requestParameters`, `responseElements`, `sourceIPAddress`, `userAgent` and role session names (often an email) are never written to any file. Raw responses stay in the session.
 5. **Read-only IAM only.** The reference policy ships in `examples/iam-policy-readonly.json` and contains zero write actions. If a feature would require a write action, that feature is out of scope.
-6. **Resolve to a single, named, verified scope.** A run targets one AWS account + one primary region + one scoping primitive. Multi-account or multi-region-primary runs require separate invocations. The account is **verified, not trusted**: GATE 1a's `sts get-caller-identity` must match the operator-typed account ID, and the active CLI region (`AWS_REGION` / `AWS_DEFAULT_REGION` / profile) must match the primary region, or every regional call carries `--region` explicitly. In an Organizations management (payer) account, every CE call adds a `LINKED_ACCOUNT` filter for the target account.
+6. **Resolve to a single, named, verified scope.** A run targets one AWS account + one primary region + one scoping primitive. Multi-account or multi-region-primary runs require separate invocations. The account is **verified, not trusted**: GATE 1a's `sts get-caller-identity` must match the operator-typed account ID, and the active CLI region (`AWS_REGION` / `AWS_DEFAULT_REGION` / profile) must match the primary region, or every regional call carries `--region` explicitly. Payer status is `payer`, `member/standalone` or `unknown` (GATE 1a p3 denied). Every CE call adds a `LINKED_ACCOUNT` filter for the target account unless p3 positively showed member or standalone: `unknown` is treated as payer, because an unfiltered call in a payer returns the whole organization.
 7. **Operator confirmation at every gate.** Seven workflow gates exist (Section "Workflow & Gates"). None are optional. No gate may be auto-confirmed.
 8. **Out-of-scope actions require five-field approval.** See Iron Law.
 9. **Describe, never prescribe.** Verdicts carry no action words ("sunset", "delete", "remove", "rightsize", "candidate for …"). A 14-day window cannot judge a periodic job, and cost-skill Principle 3 requires 60–180 days of evidence before any delete. Any downstream skill that reads this profile treats its activity data as context, never as delete evidence.
@@ -112,8 +112,8 @@ Verbal "yes" without seeing the five fields is not approval.
 |---|---|---|---|
 | Cost Explorer | $0.01 per request (each page counts) | ≤10 requests/run incl. pages (16 with optional dimensions) | $0.10–$0.16 |
 | CloudTrail LookupEvents | free (Event history) | 20 pages per resource name (default), ≤2 req/s | $0.00 |
-| Wiring reads (resource policies, event-source mappings, target groups) | free | one call per resolved resource | $0.00 |
-| CloudWatch GetMetricData / ListMetrics | $0.01 / 1,000 metrics requested; ListMetrics free | 200 metrics/run | $0.002 |
+| Wiring reads (resource policies, event-source mappings, target groups, DLQ sources) | Lambda / ELB reads: free (not re-verified); SQS requests: billed past the 1M/month free tier (docs, see table below) | one call per resolved resource | ~$0.00 |
+| CloudWatch GetMetricData / ListMetrics | $0.01 / 1,000 metrics requested (never in the free tier); ListMetrics is an API request, free only inside the 1M/month free tier | 200 metrics/run | $0.002 |
 | Resource Explorer / Tagging API | free | — | $0.00 |
 | **Total worst case** | | | **~$0.16** |
 
@@ -130,7 +130,7 @@ Verbal "yes" without seeing the five fields is not approval.
 - **Why:** Bills don't lie — once they are scoped. A tag-filtered bill catches tagged dependencies the team forgot (an idempotency table, a log group, a Secrets Manager secret).
 - **Cost:** $0.01 per request, each page counts. Budget ≤10 requests per run.
 - **Output contribution:** "Spend by service" and "usage types" tables, with the attribution mode printed above them; "services billing but absent from the catalog" callout **only when the scoping primitive is a `service-discovery` catalog** (the comparison baseline is that catalog's resource types — without a catalog there is nothing to compare against, and the callout is omitted).
-- **Tag-allocation heuristic:** If a tag-filtered query returns $0.00 but the Step 2b resolution found resources carrying the tag, surface a TL;DR alert: *"likely cost-allocation tag not activated in Billing — recommend activating `<tag-key>` as a cost-allocation tag and re-running."* Tags only flow into Cost Explorer after Billing-console activation, and only from activation onward.
+- **Tag-allocation check:** If a tag-filtered query returns $0.00 but the Step 2b resolution found resources carrying the tag, run `ce:GetTags` (a conditional $0.01 row in the Gate 3 plan) for the window. Key **absent** → the key is not an active cost-allocation tag: surface a TL;DR alert to activate `<tag-key>` in Billing. Key **present** → the tag is active and the tagged resources had no charges in the window; say that, not "likely not activated". `docs:` inactive tags do not appear in Cost Explorer; activation can take up to 24 hours, and a cost-allocation tag backfill can add earlier months (once per 24 h), so a re-run right after activation may still show $0 — https://docs.aws.amazon.com/help-panel/awsaccountbilling/latest/console/hp-costallocation.html
 - **Edge case:** Cost Explorer must be enabled in the account (free, but opt-in for new accounts). If the GATE 1a probe fails with "not enabled", the source is skipped with a gap.
 
 ### b. CloudTrail LookupEvents — the management-event log
@@ -141,9 +141,10 @@ Verbal "yes" without seeing the five fields is not approval.
 - **Rate limit:** 2 requests/s per account per Region. The skill paces calls client-side to stay under it. A `ThrottlingException` gets **one** retry after a 2-second back-off — this is pacing, not a silent retry; a second failure stops the source and reports, per Gate 4.
 - **ResourceName filter format:** Use the **simple resource name** — the trailing element of the resource ARN (e.g., `paymentservice`), **not** a cluster-prefixed or composite identifier (e.g., NOT `culishop-lab-paymentservice`). CloudTrail records the resource name as the AWS service emitted it; ECS services record only their `ServiceName`. If a filter returns zero events when the resource is known to exist, retry with the trailing-element form before recording "no events" — and record which form was used.
 - **`EventSource` lookups are off by default.** `EventSource=lambda.amazonaws.com` returns every Lambda event in the account, not this service's. It runs only if the operator explicitly chooses it at Gate 3, and its results are labelled "account-wide, unscoped" and kept out of the principals table.
-- **Global-service events** (IAM, STS, Organizations) are recorded in `us-east-1`. When the primary Region is elsewhere and the principals table names roles, the plan offers an optional `us-east-1` series per role name (`ResourceName=<role-name>`) to catch role/policy changes.
+- **Global-service events:** IAM (and CloudFront; STS through its global endpoint) events are recorded in `us-east-1`; some other global-service events are logged in other Regions, and Organizations is not confirmed (docs below). When the primary Region is elsewhere and the principals table names roles, the plan offers an optional `us-east-1` series per role name (`ResourceName=<role-name>`) to catch role/policy changes. It is a best-effort look: "none found" there proves nothing.
+- **Empty is not "untouched".** Zero events for a resource means "none found by this lookup". `ResourceName` matches only events whose `Resources` list names the resource, and Event history holds 90 days of management events in one Region (docs below). The profile never writes "no principals touched this service" from an empty result.
 - **What it shows — and what it doesn't:** principals behind **management** events (create/update/delete, deploys, config changes, console and CLI reads that are management events). Data-plane activity — Lambda invokes, SQS sends/receives, DynamoDB item reads, S3 object access, HTTP requests through a load balancer — is never in Event history. The principals table is therefore "who *managed* this service", never "who calls it"; configured callers come from source c.
-- **Output contribution:** "Top API actions by event count"; "Principals touching this service" table (ARN, principal type, last-seen, event count) under the note *management events only*; "notable change events" timeline; cross-account principals callout; "principals not in any known runbook" open question.
+- **Output contribution:** "Top API actions by event count"; "Principals touching this service" table (ARN, principal type, last-seen, event count) under the note *management events only*; "notable change events" timeline (every `ReadOnly=false` event in the window); cross-account principals callout (principal account ≠ target account); an open question "which of these principals are expected?" — no runbook is supplied to this run, so nothing is claimed to be "unknown to a runbook".
 - **Edge cases:**
   - Probe fails with AccessDenied → source skipped, gap recorded, IAM fix named.
   - The 90-day limit is documented in the output. Anything older requires Athena over a trail's S3 archive, which is out of scope (Tier 2).
@@ -153,10 +154,11 @@ Verbal "yes" without seeing the five fields is not approval.
 - **Why:** Event history can't see who invokes a function or sends to a queue. Resource policies and event-source mappings show who is **configured** to.
 - **APIs (per resolved resource type):**
   - Lambda: `lambda:GetPolicy` (resource policy principals and source ARNs), `lambda:ListEventSourceMappings --function-name` (queues/streams that trigger it). Project out `Policy` statements' `Principal`, `Action`, `Condition.ArnLike/SourceArn` and the mappings' `EventSourceArn`, `State` — never `GetFunction` / `GetFunctionConfiguration` (they return environment variables).
-  - SQS: `sqs:GetQueueAttributes --attribute-names Policy RedrivePolicy RedriveAllowPolicy` (who may send; whether this queue is a DLQ or has one).
+  - SQS: `sqs:GetQueueAttributes --attribute-names Policy RedrivePolicy RedriveAllowPolicy` (who may send; whether this queue has a DLQ) and `sqs:ListDeadLetterSourceQueues` (which queues redrive into this one; non-empty = this queue is a DLQ).
   - ALB / NLB: `elasticloadbalancing:DescribeTargetGroups --load-balancer-arn` and `DescribeListeners` (what it forwards to).
   - Other types: not read; recorded as "wiring not collected for <type>".
-- **Cost:** free. One call per resolved resource; listed in the Gate 3 plan.
+- **Cost:** ~$0.00 (see the cost ceilings table). One call per resolved resource; listed in the Gate 3 plan.
+- **Permitted is not observed; empty is not "no callers".** A row is a caller the resource *allows* or is *wired to*, not one seen calling. Same-account callers can be allowed by their own identity-based policy with no row here (docs: SQS — same account, "either the queue policy or the IAM policy"; Lambda same-account `InvokeFunction` is `UNVERIFIED` this pass), and EventBridge / Scheduler targets are not enumerated. "None found" means exactly that and is written as such.
 - **Output contribution:** "Wiring (configured callers)" table: resource, caller (principal / source ARN / event source), mechanism (resource policy / event-source mapping / listener), citation.
 
 ### d. CloudWatch GetMetricData — the activity baseline (targeted)
@@ -168,7 +170,7 @@ Verbal "yes" without seeing the five fields is not approval.
 - **Cost:** $0.01 per 1,000 metrics requested. With the 200-metric cap, max $0.002 per run.
 - **Empty is not zero.** CloudWatch publishes no datapoint for a period in which nothing happened, and a wrong dimension, namespace or Region also returns an empty series. For every empty series the skill runs `ListMetrics` with the same namespace, metric name and dimensions (free; metrics stay listed for about two weeks after their last datapoint): listed → `no-data (metric exists)`; not listed → `metric-not-found` (wrong dimension, never emitted, or older than the listing window). Neither is ever written as `0`.
 - **Coverage heuristic:** If a metric returns fewer than 50% of expected datapoints (e.g., fewer than 168 over a 14-day hourly window), surface as a Gap: *"metric coverage <N>% — either intermittent activity or partial Container Insights / metric publisher configuration."* Operator decides which interpretation applies.
-- **Verdicts** are defined per resource type in the examples files. They are descriptions, never actions (Constraint 9). Thresholds are labelled `heuristic:` and the raw numbers are always shown next to the verdict.
+- **Verdicts** are defined per resource type in the examples files. They are descriptions, never actions (Constraint 9). Thresholds are labelled `heuristic:` and the raw numbers are always shown next to the verdict. `healthy`, `degraded`, `saturated` and `draining` describe only the metrics in that type's file (ECS: CPU and memory), never the service's health; the TL;DR names the metrics whenever it uses one.
 - **Uncovered resource types:** If a resource has no `examples/aws/<resource-type>.md` file, record "metrics not collected — resource type not yet supported" as a gap. Do not infer defaults.
 
 ### e. Resource Explorer — the cross-region inventory
@@ -178,12 +180,12 @@ Verbal "yes" without seeing the five fields is not approval.
 - **Cross-Region claims need three checks**, recorded in the profile:
   1. **Index type.** Only a view in the aggregator Region searches across Regions. A local index searches its own Region only.
   2. **Indexed Regions.** Regions without a local index are invisible even to the aggregator (`ListIndexes`).
-  3. **View properties.** The view must include the `tags` property for a `tag:` filter to be meaningful (`GetView` → `IncludedProperties`); `UNVERIFIED` against current AWS docs as of 2026-10-26 — the skill checks it rather than assuming either way.
+  3. **View properties.** The view must include the `tags` property for a `tag:` filter to be meaningful (`GetView` → `IncludedProperties`); `docs:` an included property can be shown in and filtered on in a view (`API_IncludedProperty`); the skill still reads `GetView` rather than assuming.
   Plus: `Search` returns `Count.Complete`; `false` means results were capped — record a Gap. Resource Explorer does not index every resource type.
   Only when all checks pass may the profile say "no resources outside the primary Region". Otherwise: **"cross-Region: not verifiable — <reason>"**.
 - **Why:** Catches resources tagged for the service but living outside the assumed primary region. The classic "we forgot we have a Lambda in us-west-2."
 - **Cost:** Free.
-- **Owner hint:** when the results carry tags, read `aws:cloudformation:stack-name` into an `Owner hint` column (CloudFormation, Serverless, SAM and CDK all deploy through stacks). Descriptive only — no extra queries, nothing stops.
+- **Owner hint:** when the results carry tags, read `aws:cloudformation:stack-name` into an `Owner hint` column (CloudFormation, Serverless, SAM and CDK all deploy through stacks). A tag key beginning `kubernetes.io/cluster/` (docs: EKS subnet-discovery article) is written as `associated with EKS cluster <name>`: the in-cluster object behind the resource is not traced (issue #10). Other controller tag keys are quoted verbatim, not interpreted. Descriptive only — no extra queries, nothing stops.
 - **Output contribution:** "Resources by region" table; "resources outside the assumed primary region" callout; verification status of the three checks.
 - **Edge case:** If Resource Explorer is not configured, the source is skipped with a "known gap — recommend creating an aggregator index (free) and re-running" note. Creating indexes or views is **not** something the skill does — that's an out-of-scope write action.
 
@@ -194,6 +196,22 @@ Verbal "yes" without seeing the five fields is not approval.
 3. **Read-only IAM.** Reference policy in `examples/iam-policy-readonly.json`. No write actions. CE and Resource Explorer APIs don't support resource-level ARN restrictions, so `Resource: "*"` is the AWS-imposed minimum — documented explicitly so the operator is not surprised.
 4. **Time windows are explicit.** Cost = closed 30d minus estimated days; CloudTrail = 90d; CloudWatch = 14d hourly; wiring and Resource Explorer = point-in-time. The output doc states these prominently.
 5. **Raw output stays in the session.** Gate 4 shows responses on screen; only projected fields reach files (Constraint 4).
+
+### Verified AWS behaviour (read 2026-10-27 unless noted)
+
+Static claims this skill relies on. A claim not in this table, and not read in the current run, is `UNVERIFIED` (Constraint 1). Re-read the URL before changing the claim.
+
+| Claim | Used in | docs |
+|---|---|---|
+| Event history is on by default; 90 days of management events per Region; separate from trails; no data events | source b | https://docs.aws.amazon.com/awscloudtrail/latest/userguide/view-cloudtrail-events.html |
+| `LookupEvents`: one lookup attribute; max 50 events/page; 2 requests/s per account per Region; each event's `Resources` lists resources it references | source b | https://docs.aws.amazon.com/awscloudtrail/latest/APIReference/API_LookupEvents.html , .../API_Event.html |
+| IAM / CloudFront / STS events are recorded in `us-east-1` for trails; Event history shows events in the Region where they occurred | source b | https://docs.aws.amazon.com/awscloudtrail/latest/userguide/cloudtrail-concepts.html |
+| Cost Explorer API: $0.01 per request ($0.01 per source for a custom billing view) | Cost Guardrails | https://aws.amazon.com/aws-cost-management/aws-cost-explorer/pricing/ |
+| Cost-allocation tags: inactive tags are absent from Cost Explorer; backfill exists | source a | https://docs.aws.amazon.com/help-panel/awsaccountbilling/latest/console/hp-costallocation.html |
+| `GetMetricData` $0.01 per 1,000 metrics requested; `ListMetrics` is a billed API request past the free tier; `ListMetrics` omits metrics with no data in two weeks | source d, Cost Guardrails | https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/metrics-classic-getdata.html , .../cloudwatch_billing.html , https://docs.aws.amazon.com/AmazonCloudWatch/latest/APIReference/API_ListMetrics.html |
+| SQS: DLQ moves are not counted in `NumberOfMessagesSent` (read 2026-10-26); metrics are emitted only while the queue is active; `ListDeadLetterSourceQueues` lists queues whose `RedrivePolicy` targets a DLQ; requests are billed past 1M/month | `examples/aws/sqs-queue.md`, source c | https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/sqs-available-cloudwatch-metrics.html , https://docs.aws.amazon.com/AWSSimpleQueueService/latest/APIReference/API_ListDeadLetterSourceQueues.html , https://aws.amazon.com/sqs/pricing/ |
+| SQS same-account access: queue policy or IAM policy | source c | https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/troubleshooting-access-denied.html |
+| Resource Explorer: cross-Region search only from a view in the aggregator Region; Regions without a local index are invisible (read 2026-10-26) | source e | https://docs.aws.amazon.com/resource-explorer/latest/userguide/manage-aggregator-region.html |
 
 ## Workflow & Gates
 
@@ -235,11 +253,11 @@ Show this batch as a table (call, region, est. cost) and run it only on approval
 |---|---|---|---|
 | p1 | `sts get-caller-identity` | free | Does the identity's account match the operator-typed account? (Mismatch → hard stop.) |
 | p2 | `iam list-account-aliases` | free | Account alias for the Overview. |
-| p3 | `organizations describe-organization` | free | Payer or member? `AWSOrganizationsNotInUseException` = standalone; `AccessDenied` in a member account is normal. Master account ID = caller account → payer → `LINKED_ACCOUNT` filter on every CE call. |
+| p3 | `organizations describe-organization` | free | Payer or member? `AWSOrganizationsNotInUseException` = standalone; master account ID = caller account → payer. `AccessDenied` → payer status `unknown` (recorded in the Overview, treated as payer). Payer / unknown → `LINKED_ACCOUNT` filter on every CE call. |
 | p4 | `resource-explorer-2 get-index` + `list-indexes` + `list-views` + `get-view` (primary Region) | free | Index type (local/aggregator), aggregator Region, indexed Regions, default view properties. |
 | p5 | `cloudtrail lookup-events --max-results 1` (primary Region) + `describe-trails` | free | Event history readable? Any trail (for the >90d / data-events Gap)? |
-| p6 | `ce get-cost-and-usage` — 1 day, 1 dimension (+ tag filter if tag primitive) | $0.01 | CE enabled and permitted? Does the tag filter return anything? |
-| p7 | `cloudwatch list-metrics` (1 page, primary Region) | free | CloudWatch read permitted? |
+| p6 | `ce get-cost-and-usage` — 1 day, 1 dimension (+ tag filter if tag primitive; + `LINKED_ACCOUNT` filter when p3 is payer or unknown) | $0.01 | CE enabled and permitted? Is the filter accepted? Does the tag filter return anything? (A rejected filter → stop and ask.) |
+| p7 | `cloudwatch list-metrics` (1 page, primary Region) | free tier | `ListMetrics` permitted? (Says nothing about `GetMetricData` — see Gate 2.) |
 
 Every probe is read-only and counts toward the run's cost total.
 
@@ -255,6 +273,8 @@ Built from the GATE 1a results, shown to the operator:
 | CloudWatch | ✓ / ✗ | will run / will skip / will fail without IAM change |
 | Resource Explorer | ✓ aggregator / ~ local only / ✗ | will run (cross-Region verifiable) / will run (single Region only) / will skip with gap |
 
+Status is `✓ probed` (a GATE 1a probe succeeded), `✗`, or `untested`. Wiring reads and `cloudwatch:GetMetricData` have no probe (p7 tests only `ListMetrics`), so they are `untested` until their first Gate 4 call; an AccessDenied there stops that source per Gate 4. A cell is never `✓` on assumption.
+
 Operator confirms the matrix and the spend-attribution mode. If a critical source is unavailable, operator can abort and fix the prerequisite (attach IAM perms, create an aggregator index, activate a cost-allocation tag) before re-running. **The skill does not perform these fixes.**
 
 ### Step 2b — Resolve the resource set
@@ -265,7 +285,7 @@ Free and read-only; runs right after Gate 2:
 - **ARN list** → used as given; each ARN's Region and type are parsed.
 - **Catalog** → the resources the `service-discovery` catalog lists, with their citations.
 
-Show the resolved set (ARN, type, Region, owner hint, metric file available?). Resources outside the primary Region are listed and marked "excluded from CloudTrail/CloudWatch pass — re-run with that Region". EKS clusters are marked "in-cluster workloads not traced". The operator confirms the set before Gate 3 is priced. This list is what CloudTrail, wiring and CloudWatch target — nothing else.
+Show the resolved set (ARN, type, Region, owner hint, metric file available?). Resources outside the primary Region are listed and marked "excluded from CloudTrail/CloudWatch pass — re-run with that Region". EKS clusters are marked "in-cluster workloads not traced". The operator confirms the set before Gate 3 is priced. This list is what CloudTrail, wiring and CloudWatch target — nothing else. It contains only resources that carry the tag (or were named) and are of an indexed type; untagged or unindexed resources of the same service are not in it, and the profile says so in Gaps.
 
 ### Step 3 — Query plan (Gate 3)
 
@@ -303,7 +323,7 @@ Gate 4 is **per-source**, not per-API-call. Approving "run all Cost Explorer que
 
 ### Step 5 — Synthesis (Gate 5)
 
-Skill assembles the runtime-profile draft (structure in "Output Document Structure" below) and shows it inline to the operator. Operator iterates: ask for revisions, request additional callouts, remove sections, correct mis-derived rows. **No single-shot — explicit iteration loop here.** Before showing the draft, the skill self-checks it: no action words in verdicts or TL;DR (Constraint 9); every spend number carries its attribution mode; no empty series written as 0; cross-Region claim matches the three RE checks. Skill does not proceed until operator says "approved."
+Skill assembles the runtime-profile draft (structure in "Output Document Structure" below) and shows it inline to the operator. Operator iterates: ask for revisions, request additional callouts, remove sections, correct mis-derived rows. **No single-shot — explicit iteration loop here.** Before showing the draft, the skill self-checks it: no action words in verdicts or TL;DR (Constraint 9); every spend number carries its attribution mode; no empty series written as 0; cross-Region claim matches the three RE checks; every TL;DR bullet names the row it came from and repeats that row's number; every AWS-behaviour statement in Gaps or the Glossary carries `docs:` or is marked `UNVERIFIED`. Skill does not proceed until operator says "approved."
 
 ### Step 6 — Write (Gate 6)
 
@@ -351,7 +371,7 @@ intent-category: <takeover | drift-check | post-incident | pre-cost-opt | other>
 - How fresh is this: generated <timestamp>; AWS state may have changed since. Re-run instructions at the bottom.
 
 ## Overview
-- Service (operator-supplied), account (+ alias), verified by `sts get-caller-identity` at <timestamp>; payer / member / standalone; primary region
+- Service (operator-supplied), account (+ alias), verified by `sts get-caller-identity` at <timestamp>; payer / member / standalone / unknown; primary region
 - Scoping primitive used (verbatim, every value listed)
 - Discovery source: runtime-trace v<x.y.z>
 - Run timestamp (UTC), operator (IAM principal)
@@ -361,7 +381,7 @@ intent-category: <takeover | drift-check | post-incident | pre-cost-opt | other>
 
 ## TL;DR
 *Auto-generated from sections below. Verify against tables before consuming.*
-- (≤5 bullets, headline findings)
+- (≤5 bullets, headline findings; each names the table row it comes from and repeats that row's number)
 
 ## Spend Profile (Cost Explorer)
 - Attribution mode, first line: "Spend attributed to <service> (tag <k>=<v>)" OR "Account context — NOT attributable to this service"
@@ -376,20 +396,21 @@ intent-category: <takeover | drift-check | post-incident | pre-cost-opt | other>
 - Source: Event history (trail present: yes/no). Lookup form used per resource; "truncated at N events" where the page cap hit
 - Top API actions by event count, last 90d
 - Principals touching this service (ARN, type, last-seen, event count) — preceded by: *management events only; these principals managed the resources. Data-plane callers are not visible here — see Wiring.*
-- Notable change events timeline (with EventId for console lookup)
-- Callout: cross-account principals
-- Callout: principals not in any known runbook (open question for takeover)
+- Notable change events timeline (with EventId for console lookup): every `ReadOnly=false` event in the window, heading line "N shown of M fetched; truncated: yes/no" (`service-takeover` counts deploy-style events from this list, so it is not sampled; if shortened for reading, say so in that line)
+- Callout: cross-account principals (principal account ≠ target account)
+- Open question: which of these principals are expected? (no runbook was supplied to this run)
 
 ## Wiring (configured callers)
 - Resource | Caller (principal / source ARN / event source) | Mechanism (resource policy / event-source mapping / listener) | Citation
 - "Wiring not collected for <type>" rows for types without a wiring read
+- Line under the table: *permitted, not observed; "none found" is not "no callers"*
 
 ## Activity Baselines (CloudWatch)
 - Per-resource four-golden-signals table, raw numbers always shown
   | Resource | Traffic | Latency p50/p99 | Errors | Saturation | Verdict |
 - Verdict vocabulary: `no-activity-14d`, `no-data (metric exists)`, `metric-not-found`, and the per-type heuristic verdicts from `examples/aws/` — never an action word
 - Peak-hour callout
-- No-activity callout: resources with zero observed activity in the window, each with an open question for the outgoing team ("is this a periodic job?"), never a recommendation
+- No-activity callout: resources with zero observed activity in the window, each with an open question for the service owner or previous owners ("is this a periodic job?"), never a recommendation
 - Each cell carries MetricDataQuery ID + Namespace/MetricName/Dimensions triple
 
 ## Cross-Region Footprint (Resource Explorer)
@@ -405,14 +426,16 @@ intent-category: <takeover | drift-check | post-incident | pre-cost-opt | other>
 - Unverifiable claims (anything inferred rather than directly observed)
 - Resource types not covered (e.g., "DynamoDB metrics not collected — resource type not yet supported in examples/aws/")
 - Data-plane callers not visible to Event history; no trail → nothing older than 90d, no data events
+- Wiring covers resource policies and event-source mappings only; same-account callers allowed by their own IAM policy are not listed
+- The resource set is tag-resolved: untagged or unindexed resources of the service are not in it
 - Resources outside the primary Region excluded from CloudTrail/CloudWatch; EKS in-cluster workloads not traced
-- Open questions for the outgoing team (feeds future service-takeover interview step)
+- Open questions for the service owner or previous owners (`service-takeover` turns these into interview questions)
 
 ## Glossary
 *Auto-generated; only terms that appear in this doc.*
 - NAT Gateway data transfer: <one-line>
 - Four golden signals: <one-line, cites SRE book ch. 6>
-- CloudTrail LookupEvents 90d cap: <one-line, AWS limit>
+- CloudTrail LookupEvents 90d cap: <one-line, AWS limit> (`docs:` URL)
 - (etc.)
 
 ## How to re-run this analysis
@@ -504,7 +527,7 @@ Documented explicitly so a future maintainer doesn't accidentally extend the ski
 - **X-Ray / OpenTelemetry traces** — useful when instrumented but rarely available in takeover scenarios.
 - **AWS Config history** — overlaps with CloudTrail Event history for our purposes.
 - **Other clouds** — not supported (multi-cloud content archived at tag `archive/multi-cloud-v0.10.0`).
-- **In-cluster Kubernetes tracing** — EKS workloads are recorded as a gap; a Kubernetes source (events, OpenCost allocation, Prometheus) needs its own design pass.
+- **In-cluster Kubernetes tracing** — EKS workloads are recorded as a gap (tracked in issue #10, parked until a real EKS target exists); a Kubernetes source (events, OpenCost allocation, Prometheus) needs its own design pass.
 - **IaC generation / state import** — even when the runtime profile reveals untracked resources, this skill does not generate Terraform/CDK.
-- **Service-takeover orchestration** — the broader takeover workflow (interview, readiness checklist, handoff package) is a separate skill built on top of `runtime-trace` later.
+- **Service-takeover orchestration** — the broader takeover workflow (interview, readiness checklist, handoff package) is the separate `service-takeover` skill, built on top of `runtime-trace`.
 - **Compute Optimizer / Trusted Advisor** — they provide optimization recommendations, which crosses into `cloud-cost-investigate` territory.

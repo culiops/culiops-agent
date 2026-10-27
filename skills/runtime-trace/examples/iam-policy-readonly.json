@@ -59,6 +59,7 @@
         "lambda:GetPolicy",
         "lambda:ListEventSourceMappings",
         "sqs:GetQueueAttributes",
+        "sqs:ListDeadLetterSourceQueues",
         "elasticloadbalancing:DescribeTargetGroups",
         "elasticloadbalancing:DescribeListeners"
       ],
