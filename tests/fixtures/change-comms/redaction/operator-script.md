@@ -1,6 +1,6 @@
 # Operator script — redaction
 
-Message types requested: heads-up. Platform: Google Chat (default).
+Message types requested: heads-up. Platform: Google Chat.
 
 1. `change-comms: heads-up for the orders-api RDS ingress restriction.`
 2. `Yes, that record and pre-flight.` (confirms `orders-api-restrict-rds-ingress-20261027-1315.md`)
