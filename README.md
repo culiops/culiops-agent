@@ -1,101 +1,91 @@
 # CuliOps
 
-DevOps / SRE / cloud / platform-engineering skills for [Claude Code](https://claude.com/claude-code).
+SRE, cloud-cost and infrastructure-change skills for [Claude Code](https://claude.com/claude-code), for teams on **AWS and Kubernetes**.
 
-CuliOps ships skills that activate automatically when you ask Claude to do operations work — discovering a service's resources, executing infrastructure-as-code change requests, investigating incidents, and more. Supported stack: **AWS + Terraform (ecspresso, lambroll) + Kubernetes (Helm, Kustomize, raw manifests)**. CloudFormation, SAM, Serverless Framework, CDK and Ansible are recognised (so a skill can tell you a resource is owned by one of them), but not supported: the skill says so and stops.
+You ask Claude for operations work in plain words ("is this safe to apply?", "why did our AWS bill spike?", "we're taking over service X"). The matching skill starts on its own. It shows you every command before it runs, asks for your approval at each step that matters, and backs every finding with evidence you can check.
 
-GCP, Azure, Pulumi and Bicep support was removed in v0.11.0. The last multi-cloud version is kept at tag [`archive/multi-cloud-v0.10.0`](https://github.com/culiops/culiops-skills/tree/archive/multi-cloud-v0.10.0).
+## Install
 
-## Status
-
-`v0.12.0` — Skills shipped:
-
-- **service-discovery** — scan a service's IaC code — or its documentation and diagrams when no IaC exists — and produce a troubleshooting-oriented inventory document (resource catalog, naming patterns, dependencies, per-alarm investigation runbooks). IaC path works with Terraform, Helm, Kustomize, raw Kubernetes manifests, ecspresso, lambroll; CloudFormation / SAM / Serverless / CDK / Ansible repos are recognised and stop (CloudFormation-only repos are offered the real-discovery path). Real-discovery path works with Draw.io, Mermaid, PlantUML diagrams, Markdown/text docs, and architecture images, verified against live AWS / Kubernetes APIs (read-only).
-- **pre-flight** — evaluate the risk of a proposed production action (IaC change, CLI command, or agent action) across 11 categories, including application compatibility (reads the app source locally or through `gh` when the change touches what the app depends on). Produces a go/no-go risk report with per-category scoring and actionable mitigations.
-- **iac-change-execution** — execute infrastructure changes safely with research-plan-approve-implement-verify workflow. Supports PR and direct-apply paths, multi-phase changes, and integrates with service-discovery and pre-flight.
-- **cloud-cost-investigate** — read-only cloud cost investigation in three modes (anomaly, waste, attribution). Produces a report with prioritized remediation list and source-labelled savings estimates. Works with AWS (Cost Explorer + Compute Optimizer + CloudWatch) and Kubernetes (OpenCost / Kubecost).
-- **cost-optimize-plan** — reads a `cloud-cost-investigate` report and produces a tiered, verified execution plan. Per-action safety verification ("no GetObject in 90d, no DNS pointing at it, no IAM principals with active usage") and four-dimension triage (reversibility, blast radius, evidence, dependency) assigns each item to 🟢 Fast win / 🟡 Coordinated / 🔵 Requires owner confirmation / 🔴 Risky / 🚫 Do not act / ❔ Manual review. Triage is governed by four Guiding Principles — verify activity, not attachment; verify the cost-change direction; scale the verification window to the action's destructiveness (resize ≥30d, delete 60–180d); cost from the bill and attribute to the metered dimension — so attached-but-idle resources are not assumed in use, mode-switch savings claims are recomputed before being trusted, short-window "idle" reads don't justify deletes, and idle-but-wired resources route to owner confirmation with a dev-note rather than a blind delete. Read-only. Sits between cloud-cost-investigate (input) and iac-change-execution (downstream); no automation handoff — operator drives. AWS-only in v1 (15 playbooks: 9 delete, 5 rightsize, 1 lifecycle); Kubernetes workload playbooks deferred.
-- **runtime-trace** — produce a self-contained AWS runtime profile of a service (tag-scoped spend, control-plane events, wiring, activity baselines, cross-region inventory) from cheap read-only APIs (Cost Explorer, CloudTrail Event history, resource policies / event-source mappings, CloudWatch, Resource Explorer). $1 cost cap, seven gates, every claim traceable; verdicts describe, never prescribe. Useful for service takeovers, drift checks, post-incident retrospectives, pre-cost-opt baselining.
-- **service-takeover** — orchestrate AWS (incl. EKS) service handoffs from another team when there's no documentation, no IaC, and only diagrams. Eight gates spanning intake, audit, discovery (delegated to service-discovery), catalog verification, runtime profile (delegated to runtime-trace), tribal-knowledge interview, PRR-style readiness scorecard with strict evidence classes, handoff package assembly. Self-contained output at `.culiops/service-takeover/<service>/`. Resumable across multi-day takeovers.
-- **change-comms** — draft the messages people need around an infrastructure change: a heads-up to the people affected (service owners, reviewers, on-call, a manager) before applying, a result message after, and a ticket-closing comment carrying the PR link. Facts come from the `iac-change-execution` and `pre-flight` records or the operator, and every fact is sourced; anything missing becomes a visible `<TODO>`. Paste-ready English, plain text by default, with formatting notes for Google Chat, Slack, Microsoft Teams, Jira, Linear and GitHub / GitLab. Common identifier and credential patterns (account IDs, ARNs, IPs, CIDRs, cloud keys, tokens, passwords in URLs, private keys, Kubernetes credentials) are redacted, with a redaction log; a credential found in a record or pasted by the operator is also flagged for rotation. Draft-only: it never sends anything. Output at `.culiops/change-comms/`.
-
-Planned (not yet shipped):
-
-- `incident-investigation` — future skill.
-
-## Installation
-
-Install via Claude Code's plugin system. From any Claude Code session:
+In any Claude Code session:
 
 ```
 /plugin marketplace add culiops/culiops-skills
 /plugin install culiops@culiops
 ```
 
-The repo was renamed from `culiops-agent` on 2026-10-27. The old path still redirects, and the plugin name `culiops` did not change, so existing installs keep working.
+Start a new conversation and the skills are available. Update with `/plugin marketplace update culiops`, remove with `/plugin uninstall culiops@culiops`.
 
-That's it — skills are now available. Start a new conversation and they'll activate automatically when you ask for relevant work (e.g. "discover this service's resources").
+You also need the CLIs for your stack (`aws`, `kubectl`, `helm`, `kustomize`, `terraform`, …). Each skill lists what it needs, including the read-only permissions, before it runs anything.
 
-To update later:
+## Supported stack
 
-```
-/plugin marketplace update culiops
-```
+| | Supported | Recognised only |
+|---|---|---|
+| **Cloud** | AWS, Kubernetes (EKS or any cluster) | — |
+| **IaC / deploy tools** | Terraform, ecspresso, lambroll, Helm, Kustomize, raw manifests | CloudFormation, SAM, Serverless Framework, CDK, Ansible |
 
-To uninstall:
+"Recognised only" means a skill can tell you a resource is owned by one of these tools, then says it is not supported and stops. It never improvises. GCP, Azure, Pulumi and Bicep were removed in v0.11.0; the last multi-cloud version is at tag [`archive/multi-cloud-v0.10.0`](https://github.com/culiops/culiops-skills/tree/archive/multi-cloud-v0.10.0).
 
-```
-/plugin uninstall culiops@culiops
-```
+## Skills
 
-### Requirements
+| Skill | Use it when you say… | You get | Changes anything? |
+|---|---|---|---|
+| [**service-discovery**](skills/service-discovery/SKILL.md) | "discover service X", "what does X use", "build a runbook for X" | A resource catalog with dependencies, naming patterns and per-alarm runbooks, from IaC code or, without IaC, from docs and diagrams checked against live state | No. Read-only |
+| [**runtime-trace**](skills/runtime-trace/SKILL.md) | "runtime profile for X", "what's actually running for X" | What an AWS service really costs, who changes it, what calls it, its activity baseline and where it lives | No. Read-only, API cost capped at $1 |
+| [**service-takeover**](skills/service-takeover/SKILL.md) | "we're taking over service X from team Y" | A guided takeover, ending in a readiness scorecard and a handoff package | No. Read-only |
+| [**pre-flight**](skills/pre-flight/SKILL.md) | "is this safe to apply?", "pre-flight this plan" | A GREEN / YELLOW / RED risk report across 11 categories, with mitigations | No. Read-only; live checks only if you opt in |
+| [**iac-change-execution**](skills/iac-change-execution/SKILL.md) | "resize the database", "add an alarm", "implement this ticket" | The change made in your IaC code: research, plan, code, pre-flight, apply or PR, verify | **Yes.** Edits code; applies only after your approval |
+| [**change-comms**](skills/change-comms/SKILL.md) | "draft a heads-up", "tell the service owners" | Paste-ready heads-up, result and ticket-closing messages, with secrets redacted | No. Drafts only, never sends |
+| [**cloud-cost-investigate**](skills/cloud-cost-investigate/SKILL.md) | "why did our bill spike?", "where can we save?", "what does X cost?" | A cost report (anomaly, waste or attribution) with a ranked remediation list | No. Read-only |
+| [**cost-optimize-plan**](skills/cost-optimize-plan/SKILL.md) | "which of these savings are safe to act on?" | Each recommendation verified and sorted from fast win to do-not-act, with rollback notes | No. Read-only; stops at the plan |
 
-- Claude Code with plugin support (see [Claude Code docs](https://code.claude.com/docs/en/plugins)).
-- For individual skills, stack-specific CLI tools (`aws`, `kubectl`, `helm`, `kustomize`, `terraform`, …) installed locally — each skill's prerequisites section tells you exactly what it needs before it will run.
+Planned: `incident-investigation`.
 
-## Skill Reference
-
-Each skill has its own `SKILL.md` under `skills/<name>/`:
-
-- [`skills/service-discovery/SKILL.md`](skills/service-discovery/SKILL.md)
-- [`skills/pre-flight/SKILL.md`](skills/pre-flight/SKILL.md)
-- [`skills/iac-change-execution/SKILL.md`](skills/iac-change-execution/SKILL.md)
-- [`skills/cloud-cost-investigate/SKILL.md`](skills/cloud-cost-investigate/SKILL.md)
-- [`skills/cost-optimize-plan/SKILL.md`](skills/cost-optimize-plan/SKILL.md)
-- [`skills/runtime-trace/SKILL.md`](skills/runtime-trace/SKILL.md)
-- [`skills/service-takeover/SKILL.md`](skills/service-takeover/SKILL.md)
-- [`skills/change-comms/SKILL.md`](skills/change-comms/SKILL.md)
-
-## Output Convention
-
-All documents produced by any `culiops` skill are written under **`.culiops/<skill-name>/`** at your repo root. For example, `service-discovery` writes catalogs to `.culiops/service-discovery/<service>[-<instance>].md`. This keeps plugin-generated artifacts separate from hand-written docs, makes them easy to find or regenerate, and lets you gitignore the whole `.culiops/` tree as a group if you prefer not to commit generated content.
-
-## Design Philosophy
-
-- **Iron Laws and gated workflows.** Every skill has explicit STOP gates where Claude must wait for human confirmation. No silent assumptions.
-- **Focused stack, generic within it.** Skills go deep on AWS + Terraform + Kubernetes rather than shallow across every cloud, and make no company-specific assumptions (naming, account layout, Git host, ticket system). Stack-specific examples live in `examples/` subdirectories. Document formats are extensible via data-only additions (`doc-detectors/`).
-- **Evidence-backed.** Every plan or finding cites code (`path:line`) and live read-only evidence, cross-checked; drift is surfaced, and an unverified claim never justifies a destroy, replace or resize.
-- **Book-informed design.** Skills are designed against industry best practices (Google SRE Book, *Infrastructure as Code*, *The Phoenix Project*, etc.) — wisdom is baked in invisibly, not cited.
-- **Dynamic model routing.** Each skill's `## Model Routing` section maps workflow steps to model tiers (opus for safety-critical analysis, sonnet for mechanical steps). The orchestrating model reads these hints and dispatches subagents accordingly — reducing cost and latency without compromising safety. Production-conservative by default: only route to a cheaper model when a human gate catches errors or the step is purely mechanical.
-
-## Repository Layout
+## How they fit together
 
 ```
-.claude-plugin/     Plugin + marketplace manifests
-skills/<name>/      One directory per skill; each has SKILL.md, examples/, and data directories (tool-detectors/, doc-detectors/, cloud-discovery/, assessors/)
-tests/fixtures/     End-to-end fixtures each skill is validated against
-CHANGELOG.md        Release history
+Take over a service
+  service-takeover ──► service-discovery + runtime-trace ──► scorecard
+
+Make a change
+  iac-change-execution (runs pre-flight) ──► apply or PR ──► change-comms
+
+Cut cost
+  cloud-cost-investigate ──► cost-optimize-plan ──► iac-change-execution
+```
+
+Cost items go to `iac-change-execution` one at a time. Each skill also runs on its own. `iac-change-execution` runs pre-flight itself. Everywhere else, the skill gives you the exact command for the next one and you run it.
+
+## How the skills behave
+
+- **You approve what matters.** Every skill has stop gates. Commands are shown in one batch before they run, read-only steps are kept apart from changes, and the permissions needed are listed up front.
+- **Evidence, not memory.** Every finding and every decision (a score, a tier, a verdict, "safe to delete") cites where it came from: code (`path:line`), a live read-only query, a plan, or official docs read in the session. When code and live state disagree, the skill shows the drift instead of picking one.
+- **Current sources first.** Cloud services and tools change faster than any model's training data. So the tool's own output for your target (`terraform plan`, `kubectl explain`, CLI help) comes first, then official docs for the version you run, then recall. Recall is marked `UNVERIFIED` and never decides anything.
+- **Fails closed.** Unknown is never treated as safe. An unverified claim can't justify a delete, replace or resize, and a missing signal lowers the verdict.
+- **No company assumptions.** Nothing assumes your roles, chat or ticket tool, account layout, naming, Git host, or whether CI applies on merge.
+
+Everything a skill writes goes under `.culiops/<skill-name>/` in your repo, so it's easy to find, regenerate, or gitignore.
+
+## Repository layout
+
+```
+.claude-plugin/   Plugin and marketplace manifests
+skills/<name>/    SKILL.md, examples/, detectors, assessors, playbooks, templates
+tests/fixtures/   End-to-end fixtures each skill is checked against
+CHANGELOG.md      Release history
 ```
 
 ## Contributing
 
-Issues and PRs welcome. New skills should follow the same shape:
+Issues and PRs are welcome. A new skill follows the same shape as the existing ones:
 
-- A `SKILL.md` with Iron Law, constraints, rationalization prevention, red flags, and a gated workflow.
-- A `## Model Routing` section in `SKILL.md` mapping each workflow step to a model tier (`opus` / `sonnet` / `orchestrator`) with inputs, outputs, and rationale. See existing skills for the table format. Route conservatively — if a step's error could affect safety, keep it on opus.
-- Stack-specific `examples/` with read-only CLI templates and least-privilege guidance.
+- A `SKILL.md` with an Iron Law, constraints, rationalization prevention, red flags and a gated workflow.
+- A `## Model Routing` table that maps each step to a model tier (`opus` for safety-critical analysis, `sonnet` for mechanical steps) with inputs, outputs and rationale. When a mistake in a step could affect safety, keep it on `opus`.
+- `examples/` with read-only CLI templates and least-privilege guidance, for AWS and Kubernetes alike.
 - At least one end-to-end fixture under `tests/fixtures/` with a `DRY-RUN-NOTES.md`.
+
+The skill designs draw on SRE and infrastructure books (the Google SRE books, *Infrastructure as Code*, *The Phoenix Project* and others).
 
 ## License
 
-MIT — see [LICENSE](LICENSE).
+MIT. See [LICENSE](LICENSE).

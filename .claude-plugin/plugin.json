@@ -1,6 +1,6 @@
 {
   "name": "culiops",
-  "description": "DevOps / SRE / platform-engineering skills for Claude Code on AWS + Terraform (ecspresso, lambroll) + Kubernetes (Helm, Kustomize, raw manifests): service discovery, pre-flight risk checks, IaC change execution, cloud cost investigation and optimization, runtime tracing, service takeover, and change communication drafts (Google Chat, Slack, Jira).",
+  "description": "SRE, cloud-cost and infrastructure-change skills for Claude Code on AWS + Terraform (ecspresso, lambroll) + Kubernetes (Helm, Kustomize, raw manifests): service discovery, pre-flight risk checks, IaC change execution, cloud cost investigation and optimization, runtime tracing, service takeover, and change-communication drafts for any chat or ticket tool.",
   "version": "0.13.0",
   "author": {
     "name": "chiplonton",
