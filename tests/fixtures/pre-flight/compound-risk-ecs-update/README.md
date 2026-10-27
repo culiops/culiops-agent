@@ -17,18 +17,18 @@ Three changes bundled in one deploy:
 
 Multiple Yellows → escalation:
 - Blast radius: **Yellow** (scale-down 4→2 halves capacity and redundancy; the container `healthCheck` path change decides whether ECS keeps the new tasks)
-- Reversibility: Green (ecspresso rollback available, image tags are immutable)
+- Reversibility: Green (`docs:` ecspresso rollback restores the previous task definition revision, which carries the image tag and the container health check; `live:6` the repository's image tags are immutable; the desired count is restored by re-deploying the previous service definition from git, and the ECS `UpdateService` documentation says a new `desiredCount` sets the number of tasks)
 - Change velocity: **Yellow** (2nd change to this service this week — image update on Monday)
-- Dependency impact: Green (no downstream consumers of this service's outputs)
+- Dependency impact: ⚪ (no catalog, and no `code` or `live` evidence shows nothing consumes the service; callers that dial it through the load balancer are invisible to every query)
 - Timing context: Green (normal hours, no freeze, no incidents)
 - Operator familiarity: **Yellow** (first time changing this specific service)
-- Observability readiness: Green (CloudWatch alarms exist for the ECS service)
+- Observability readiness: Green (CloudWatch alarms for ECS CPU / memory exist and are enabled: `live:5`)
 - Cost impact: Green (cost decreases; the capacity risk is scored under blast radius, not here)
 - Security posture: Green (no IAM/network/encryption changes)
 - Resource health: Green (live evidence — L3 approved: 4/4 tasks running, no alarm in `ALARM` on the service)
 - Application compatibility: ⚪ (the container `healthCheck` path changes to `/healthz`, an app-facing attribute; no app source in the fixture, so the skill can't confirm the new image serves it)
 
-3 Yellows + 1 ⚪ → **multi-Yellow escalation → RED — SOFT BLOCK**
+3 Yellows + 2 ⚪ → **multi-Yellow escalation → RED — SOFT BLOCK**
 
 ## What this fixture exercises
 

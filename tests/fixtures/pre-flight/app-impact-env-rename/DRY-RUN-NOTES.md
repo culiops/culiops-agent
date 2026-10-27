@@ -20,6 +20,7 @@ The gate said RED for the wrong reason. If the operator adds alarms (category 7)
 | No code search as evidence | `gh search code` was not used (default branch only) |
 | Findings | `app:acme-billing/invoicesvc@5f2c9a1:internal/config/config.go:17` reads `INVOICE_BUCKET` only → empty bucket, every `PutObject` fails (`internal/store/s3.go:6-7`). `:18` reads `PDF_TIMEOUT` only → falls back to 5s. `20` without a unit would fail `time.ParseDuration` even under the new name |
 | Silent breakage | `/healthz` returns 200 without touching S3 (`cmd/invoicesvc/main.go:17`), so ECS completes the rollout |
+| Step 5b | Verdict is RED — soft block, so fresh eyes is not required (the operator acknowledges each Red with a reason). Record line: `Fresh eyes: not required (verdict RED — soft block)` |
 | Operator premise | "The values are the same" is `operator-stated`. The app reads names, and one value changed format |
 
 ## Scoring
