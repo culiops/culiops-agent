@@ -9,6 +9,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ### Added
 
 - **All skills:** opt-in `CULIOPS_HOME`. When set, records go to `$CULIOPS_HOME/<owner>/<repo>/<skill-name>/` instead of `.culiops/` in the repo, and skills skip every commit offer. Unset keeps the old behaviour. An unwritable root stops the run; it never falls back into the repo.
+- **iac-change-execution: duplicate check in Step 1.** Before planning, the skill searches the whole repo for the change's identifiers (IPs / CIDRs, domains, resource names, ticket and linked-ticket keys), the git history (`--grep`, `-S`) and open branches / PRs. It classifies the change as not done, partly done, already done, in flight or reverted. Already done (confirmed live) stops before planning with no record; in flight and reverted stop and ask; partly done plans only the remainder. New evidence class `git:`.
+
+### Changed
+
+- **iac-change-execution: plan run by the operator or by PR automation.** Step 1 recognises PR-driven plan / apply (Atlantis, Terraform Cloud / Enterprise, Spacelift). Step 4a can print the exact commands for the operator, or use the PR's plan after the PR is opened. Pasted output is `plan:` evidence and feeds the cross-check and plan hash. Truncated output is not accepted, the target is `operator-stated`, the skill never posts plan / apply comments, and pre-flight clears before any apply or merge. The 4a prompt lists `terraform init` when it will run.
+
+### Fixed
+
+- **iac-change-execution: the change branch is created before any code is written.** Step 3 used to write to whatever branch was checked out, and Step 4c branched from that HEAD, so another ticket's commits could leak into the PR. The plan now proposes the branch (fetch, then create from `origin/<default>` or switch to an existing one) for approval at GATE 1, Step 3 switches before writing, and 4c only stages, commits and pushes. Step 1 reads code from `origin/<default>`. Uncommitted unrelated changes stop the run.
 
 ## [0.14.0] — 2026-10-27
 
