@@ -14,7 +14,7 @@ deploys: AWS resources via CloudFormation, SAM, Serverless Framework or CDK (rec
 List the stacks found (tool, file path, and stack/service name when the file states one), tell the operator these tools are not supported, and stop the IaC path for them. Do NOT extract resources, resolve parameters, or offer "teach me" — improvised support for an unsupported tool produces a catalog nobody has validated.
 
 ## Offer: real-discovery against live AWS
-For the resources these stacks own, offer real-discovery (supported, live AWS). Ownership is read from the `aws:cloudformation:stack-name` tag (SAM, Serverless and CDK all deploy through CloudFormation); record it as `Owner: cloudformation (<stack>)`. A repo containing only these tools goes straight to this offer.
+For the resources these stacks own, offer real-discovery (supported, live AWS). Ownership is read from the `aws:cloudformation:stack-name` tag (SAM, Serverless and CDK all deploy through CloudFormation); record it as `Owner: cloudformation (<stack>)` where the tag is present (propagation varies by resource type, so an untagged resource is `unknown`, not proof of another owner). A repo containing only these tools goes straight to this offer.
 
 ## Pre-import ownership check (read-only)
 Used so no skill imports or modifies a resource a stack owns. Run only after the operator approves the batch:

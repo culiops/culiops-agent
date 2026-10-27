@@ -25,7 +25,7 @@ ALL CLOUD QUERIES ARE READ-ONLY. NO EXCEPTIONS.
 
 ## Constraints (Non-Negotiable)
 
-1. **Code is the source of intent; live infrastructure is the source of state.** Every claim in the catalog must trace back to a specific file and line in the repo, or to a cited read-only live query. Do not invent resources, dependencies, or thresholds from outside knowledge of "what services usually look like." If neither the code nor a live query says it, the catalog does not say it. Where both exist and disagree, the catalog shows **both** values as drift — never silently picks one (Step 2V).
+1. **Code is the source of intent; live infrastructure is the source of state.** Every claim in the catalog must trace back to a specific file and line in the repo, or to a cited read-only live query. Do not invent resources, dependencies, or thresholds from outside knowledge of "what services usually look like." If neither the code nor a live query says it, the catalog does not say it. Where both exist and disagree, the catalog shows **both** values as drift — never silently picks one (Step 2V). Label the basis of every claim and decision: `code: <path>:<line>`, `live: <command>` (with the time it ran), `docs: <URL>` (official AWS / Kubernetes / tool documentation fetched in this session, with the date) for how something *behaves* (restart, failover, reconcile, revert), `operator-stated`, or `UNVERIFIED`. Behaviour recalled from memory is not evidence. `UNVERIFIED` is never written as `none`, `safe`, `small` or `not present`.
 2. **No assumptions.** If anything is unclear during discovery — a resource's purpose, a naming token, a dependency, an unresolved parameter, whether a conditional resource is enabled in the target instance — STOP and ask the human. An incomplete catalog with explicit questions is better than a complete catalog with wrong claims.
 3. **Stop at the stack boundary.** A "stack" is the deploy unit (Terraform root module, ecspresso/lambroll config, Helm release, Kustomize overlay, raw-manifest path + namespace). Read everything inside the in-scope stack(s); do NOT follow references into other stacks. Cross-stack references get recorded as *dependencies*, not chased.
 4. **Strict scope.** Anything outside the named repo paths — running cloud CLIs, modifying infrastructure, reading other repos, calling external APIs — requires explicit human approval before you do it.
@@ -61,6 +61,8 @@ ALL CLOUD QUERIES ARE READ-ONLY. NO EXCEPTIONS.
 | "The query returned every RDS in the region, they're probably all the service's" | STOP — cloud-only results need a membership signal; otherwise they go to "Unattributed — operator assigns". |
 | "Nothing came back, so the documented resource is gone" | STOP — empty is not absent. Was it queried in the right account/region? Is it global or untagged? Record `not-found (queried …)`, `not-queried` or `not-queryable`. |
 | "This is a serverless.yml, I'll use 'teach me' to catalog it" | STOP — Constraint 8. Recognised, unsupported: say so and stop the IaC path; offer real-discovery against live AWS. |
+| "Everything in this stack is the service" | STOP — a root module, chart or overlay can serve several services. Include a resource only with a membership signal (Step 2); the rest is Unattributed. |
+| "I know what restarting / failing over / deleting this does, so I'll state the blast radius" | STOP — recall is not evidence. Cite `docs:` for the behaviour and `code:` / `live:` for what limits it, or write `blast radius UNVERIFIED — assume the whole service`. |
 | "The code is the source of truth, so I don't need to look at live state" | STOP — offer Step 2V. Code is intent; a catalog that names resources that don't exist sends the on-caller the wrong way. |
 
 ## Red Flags — STOP and Follow Process
@@ -183,7 +185,7 @@ digraph discovery {
 
 **Detect the IaC tool(s) in the repo.** At the start of Step 1, load every file under `tool-detectors/*.md`. Each detector's `## File signatures` section defines what files signal that tool. Match the repo's files against every loaded detector. Record every tool that matches — a repo can use more than one. The currently-shipped detectors are listed in [`tool-detectors/README.md`](tool-detectors/README.md). Skip `.terraform/`, `node_modules/`, `cdk.out/`, vendored Helm subcharts (`charts/*/`) and `.git/` — they are downloaded or generated copies, not this repo's stacks.
 
-**Recognised but unsupported tools** (detectors marked *recognition only*: CloudFormation, SAM, Serverless Framework, CDK, Ansible): list each match with its stacks, tell the operator it is not supported, and exclude those stacks from the IaC path (Constraint 8). If they are the **only** IaC in the repo, offer real-discovery against live AWS instead (the resources they deploy are AWS resources, which are supported; owner = the `aws:cloudformation:stack-name` tag). In a mixed repo, catalog the supported stacks and record the unsupported ones under Assumptions and Caveats.
+**Recognised but unsupported tools** (detectors marked *recognition only*: CloudFormation, SAM, Serverless Framework, CDK, Ansible): list each match with its stacks, tell the operator it is not supported, and exclude those stacks from the IaC path (Constraint 8). If they are the **only** IaC in the repo, offer real-discovery against live AWS instead (the resources they deploy are AWS resources, which are supported; owner = the `aws:cloudformation:stack-name` tag, where present). That path starts with no resource hints (Seed A is empty unless the repo also holds documents): stack and file names are not resource hints, and the operator supplies the service tag key or name at Gate 4a. In a mixed repo, catalog the supported stacks and record the unsupported ones under Assumptions and Caveats.
 
 For each matched detector, the rest of Step 1 (stack boundary detection) and Steps 2–3 (parameter resolution, resource extraction, dependency derivation) consult the corresponding sections of that detector file (`## Stack boundary`, `## Parameter sources`, `## Resource extraction`, `## Typical cross-stack dependencies`). If a detector omits a section, that dimension is unknown for the matched tool — surface the gap and ask the human.
 
@@ -240,6 +242,8 @@ List the stacks. Note which produce one instance (one-off) vs. many (parameteriz
 
 Do NOT guess. Multi-instance repos are the norm; the wrong instance produces a wrong catalog.
 
+**Identify the ref that instance deploys from.** The catalog describes the code at one ref, so find which ref the instance is applied from: the branch or tag a pipeline applies, or the Argo CD / Flux `targetRevision` / `ref`. Cite where it was found (`code: <ci file or Application>:<line>`). If nothing in the repo shows it (manual delivery, an external pipeline), it is `UNVERIFIED`: ask, and record the answer as `operator-stated`. The checked-out branch is only a stand-in until then. Run `git status --short` on the stack paths and show uncommitted changes at the gate; the catalog does not describe uncommitted code as if it were a commit.
+
 **Detect the parameter sources for the chosen instance.** Examples by tool:
 
 - Terraform: `terraform.tfvars`, `*.auto.tfvars`, per-env `*.tfvars`, `TF_VAR_*` env vars (names only — ask the human for values), workspace name. **Never** state (Constraint 5); a `terraform_remote_state` lookup is recorded as a cross-stack dependency, not read.
@@ -257,6 +261,7 @@ Record where parameters come from, but do not resolve them yet. Apply Constraint
 > IaC tool(s) detected: `<list>`
 > In-scope stack(s): `<list>`
 > Target instance: `<the one the user named>`
+> Deployed ref: `<ref + basis (code: / operator-stated / UNVERIFIED)>`; checked out: `<branch@sha>`, working tree `<clean / N files changed>`
 > Parameter source(s) for this instance: `<list of files/refs>`
 > Out-of-scope (cross-stack refs to be recorded as dependencies, not followed): `<list>`
 >
@@ -268,11 +273,13 @@ Wait for human confirmation. Apply corrections and re-present until confirmed.
 
 ### Step 2: Resolve Parameters and Build Resource Inventory
 
-**Resolve parameters.** For each parameter the in-scope stack(s) declare, resolve it to the value used by the target instance. Sources of a value (in priority order, generally): explicit override → instance-specific file → environment-specific file → workspace mapping → declared default. Secret-shaped or `sensitive` values are never resolved — they appear as `<set in <file>:<line>>` (Constraint 5).
+**Resolve parameters.** For each parameter the in-scope stack(s) declare, resolve it to the value used by the target instance. Apply the precedence order in the matched detector's `## Parameter sources`. An order the detector marks `UNVERIFIED` is checked against the tool's own documentation (`docs: <URL>`, fetched this session) before it decides a value; if two sources set a value and the order is unverified, ask. Record each resolved value with where it came from (`value ← <file>:<line>`). A value that comes only from a declared default, or from a source the repo cannot show (variables injected by a pipeline or held in a remote workspace, `-var` flags, `valuesFrom`), is recorded `default / source unconfirmed` and the operator is asked where this instance's values come from; Step 2V is the live check for it. Secret-shaped or `sensitive` values are never resolved — they appear as `<set in <file>:<line>>` (Constraint 5).
 
 If a parameter cannot be resolved (file not present, registry not reachable, value comes from a runtime-only source like an SSM parameter) — DO NOT proceed, and do not fetch it. List the unresolved parameters and ask the human to provide values or to confirm "skip with placeholder, mark as unresolved in catalog."
 
 **Scan the in-scope stack(s).** Use file types from Step 1's tool detection. Read every IaC file in the stack(s). Read documentation files (`README.md`, `docs/**/*.md`) inside the stack(s) to pick up author-supplied context. Skip secrets-shaped files unconditionally.
+
+**Membership — a stack is not automatically a service.** A root module, chart or overlay may serve several services. Include a resource in the inventory only with a membership signal the code shows: the service token in its name or the naming pattern the operator confirms at this gate, a service tag / label whose value is the service (`Service`, `app`, `app.kubernetes.io/name`, …), a declaration in a module call, file or directory named for the service, or a reference from a resource already included. Resources in the stack with no such signal go to **Unattributed — operator assigns** (shown at the gate, recorded `operator-assigned` if moved into the inventory). Ask the operator which resources belong to the service only when the stack shows more than one service-looking name prefix, or when membership cannot be proven from evidence (fail closed: if unsure, ask). When the stack shows a single prefix and every resource carries it, do not ask; record why in the catalog, e.g. `membership: single prefix <x>, code:<path:line>`. If the whole stack is the service's, say so at the gate and give the basis (`code:` / `operator-stated`).
 
 **Use detector resource-extraction rules.** For each tool matched in Step 1, consult that tool's `## Resource extraction` section in its detector file. Apply the mappings to convert the tool's config keys into inventory rows. The `Type` field uses both the resolved cloud-resource equivalent (e.g., `aws_ecs_service`) AND the detector-prefixed raw type (e.g., `ecspresso/service`) so operators can see the deploy tool's role.
 
@@ -288,11 +295,11 @@ If a parameter cannot be resolved (file not present, registry not reachable, val
 | Signal envelope | For each critical-path resource, four lines: latency expectation (per percentile), traffic baseline, error budget / threshold, saturation limit (whichever bind first — CPU, memory, connections, queue depth). If declared in code (alarms, SLO objects, alerting rules) — quote it. If not declared — record `not declared` and surface it in the runbook. |
 | Source location | File + line range. |
 | Owner | The deploy tool that owns it (`terraform <root>`, `helm <release>`, `kustomize <overlay>`, `argocd <app>`, …). From live data: `cloudformation (<stack>)` when the `aws:cloudformation:stack-name` tag is present — recognition only. |
-| Live (Step 2V) | `✓ matches` / `drift: <field> code=<x> live=<y>` / `not found in <account>/<region>` / `not checked`, with the query # that produced it. |
+| Live (Step 2V) | `✓ matches (<fields compared>)` / `drift: <field> code=<x> live=<y>` / `not found in <account>/<region>` / `not checked`, with the query # that produced it. |
 
 **Detect the naming pattern.** Look across multiple resources for the recurring template (e.g., `${var.service}-${var.env}-${each.key}`). Convert to placeholder form and present it explicitly. Do not invent placeholders the repo does not actually use. If the pattern is inconsistent across resources — record both forms and flag.
 
-**Detect conditional / optional resources.** For each gated resource, write the gating expression and the resolved boolean for the target instance. A resource gated `enable_redis = true` in the target instance → mark "present"; gated and resolved false → mark "not present in this instance."
+**Detect conditional / optional resources.** For each gated resource, write the gating expression and the resolved boolean for the target instance. A resource gated `enable_redis = true` in the target instance → mark "present"; gated and resolved false → mark "not present in this instance." Do this only from a confirmed value; if the gating value is `default / source unconfirmed`, write "present?" or "not present?" and carry it to the caveats.
 
 **Present and STOP.**
 
@@ -306,6 +313,7 @@ If a parameter cannot be resolved (file not present, registry not reachable, val
 >
 > **Detected naming pattern(s):** `<list>`
 > **Optional resources NOT present in this instance:** `<list>`
+> **Unattributed — operator assigns:** `<stack resources with no membership signal, or "none — whole stack is the service (basis)", or "not asked — membership: single prefix <x>, code:<path:line>">`
 >
 > **Open questions:**
 > - …
@@ -324,7 +332,7 @@ Wait for confirmation. Apply corrections and re-present until confirmed.
 
 1. **Pin the identity.** Ask which AWS profile/region and/or kube context hold the target instance. Show and run (on approval) the probe: `aws sts get-caller-identity --profile <p> --query Account`, `aws configure get region --profile <p>` (STS does not return a region), `kubectl config current-context` / `kubectl --context <c> get ns <namespace> -o name`. The account/region/context must match what the code and the human say the instance is; a mismatch is a hard stop.
 2. **Plan the batch.** One projected read per inventoried resource, using the enrichment commands in `examples/aws.md` / `examples/kubernetes.md` (never a **terminal only** command). Show the table: `# | resource | command (with --profile/--region or --context) | fields compared | cost (free unless stated)`. Global resources (CloudFront, IAM, Route 53, WAF `CLOUDFRONT`) are queried in `us-east-1`. **GATE: approve the batch.**
-3. **Run and compare.** For each resource, fill the `Live` column: `✓ matches`, `drift: <field> code=<x> live=<y>`, `not found in <account>/<region>` (with the exact query), or `not checked (<reason>)`. Empty is not absent: before writing `not found`, confirm the query was in the right account/region and that the resource type is listable there.
+3. **Run and compare.** For each resource, fill the `Live` column: `✓ matches (<fields compared>)` (a match covers only the fields named), `drift: <field> code=<x> live=<y>`, `not found in <account>/<region>` (with the exact query), or `not checked (<reason>)`. Empty is not absent: before writing `not found`, confirm the query was in the right account/region and that the resource type is listable there.
 4. **Surface, don't resolve.** Drift rows are listed at the top of Assumptions and Caveats. The catalog keeps the code value as the declared value and shows the live value beside it; the human decides which is wrong.
 
 If declined, stamp the catalog `**Live verification:** not performed` and keep the `Live` column as `not checked`.
@@ -436,6 +444,7 @@ This step merges two independent discovery seeds to build a verified resource li
 > | 1 | `aws resourcegroupstaggingapi get-resources --tag-filters Key=Service,Values=prod-api --profile prod-ro --region us-east-1 --query 'ResourceTagMappingList[].{Arn:ResourceARN,Tags:Tags}'` | Tagged resources, us-east-1 | `cloud-discovery/aws.md` |
 > | 2 | `aws ec2 describe-instances --filters Name=vpc-id,Values=vpc-abc123 --profile prod-ro --region us-east-1 --query '<projection>'` | Instances in confirmed VPC | `cloud-discovery/aws.md` |
 > | 3 | `aws rds describe-db-instances --db-instance-identifier prod-api-db --profile prod-ro --region us-east-1 --query '<projection>'` | The documented DB only | `cloud-discovery/aws.md` |
+> | 4 | `kubectl --context prod-eks-cluster get deploy,sts,ds,svc,ing -n prod-api -l app=prod-api -o custom-columns=<projection>` | Workloads in the confirmed namespace | `cloud-discovery/kubernetes.md` |
 >
 > **GATE 4a: Approve these discovery queries?**"
 
@@ -443,15 +452,16 @@ If the operator declines specific broad queries (e.g., "don't scan all RDS insta
 
 **Execute approved queries.** Run each approved query and collect results. Do NOT run any query the operator did not approve.
 
-**Membership.** A cloud result belongs to this service only with a **membership signal**: the service tag key the operator confirmed (not a `Team` / `Owner` / `Project` match, which is only a hint), a name matching the confirmed naming pattern, or a reference from an already-confirmed resource (security group, target group, IAM role, event source, DNS record). Results without one go to an **Unattributed — operator assigns** list, never into the inventory by default. A region-wide query (e.g. every RDS instance in the region) is a search space, not a membership claim.
+**Membership.** A cloud result belongs to this service only with a **membership signal**: the service tag (AWS) or label (Kubernetes: `app`, `app.kubernetes.io/name`, …) key the operator confirmed (`Team` / `Owner` / `Project` tags and `component` / `part-of` labels are only hints), a name matching a naming pattern the operator states or one derived only from resources that already have another signal (a pattern derived from the unattributed results themselves is circular), or a reference from an already-confirmed resource (AWS: security group, target group, IAM role, event source, DNS record; Kubernetes: ownerReferences, a Service selector or Ingress backend naming a confirmed workload, a ServiceAccount / ConfigMap / PVC its pod spec uses). Results without one go to an **Unattributed — operator assigns** list, never into the inventory by default. A region-wide or namespace-wide query is a search space, not a membership claim.
 
-**Absence.** Empty is not absent. The Tagging API is regional and only returns tagged (or previously tagged) resources; global services (CloudFront, IAM, Route 53, WAF `CLOUDFRONT`) live in `us-east-1`; a wrong profile or region returns `[]`. Classify each documented resource that wasn't found as `not-found (queried <account>/<region> with <query #>)`, `not-queried` (operator declined, or no query covers its type), or `not-queryable` (global or untagged and no direct describe was run).
+**Absence.** Empty is not absent. The Tagging API is regional and only returns tagged (or previously tagged) resources; global services (CloudFront, IAM, Route 53, WAF `CLOUDFRONT`) live in `us-east-1`; a wrong profile or region returns `[]`. In Kubernetes a wrong context or namespace, an RBAC `Forbidden` and a missing CRD are likewise not absence. Classify each documented resource that wasn't found as `not-found (queried <account>/<region> with <query #>)`, `not-queried` (operator declined, or no query covers its type), or `not-queryable` (global or untagged and no direct describe was run).
 
 **Merge seeds and assign confidence.**
 
 | Condition | Confidence | Flag |
 |-----------|------------|------|
-| Resource found in docs and in cloud (with membership signal) | **High** | *(none)* |
+| Resource found in docs and in cloud (with membership signal), matched on the same identifier (full ARN, including one that the document's own parts plus the confirmed account and region fully determine; or kind + namespace + name in the confirmed context) | **High** | *(none)* |
+| Same, but matched on name or type alone | **Medium** | `name-match-only` |
 | Resource in docs only | **Low** | `documented-not-found` + absence class (`not-found (…)` / `not-queried` / `not-queryable`) |
 | Resource in cloud only, with membership signal | **Medium** | `undocumented` |
 | Resource in cloud only, no membership signal | — | listed under **Unattributed — operator assigns** |
@@ -504,7 +514,7 @@ Note but do not chase references that cross the service boundary (e.g., a securi
 
 **Report surprises.** If enrichment reveals resources that contradict document hints (e.g., a resource exists but with a different configuration than documented, or a documented relationship doesn't exist in practice), report them inline. This is informational — no gate required. The operator already confirmed the resource list at Gate 4b; surprises are noted in the catalog.
 
-**Build runbooks.** Follow the same Step 4 process as the IaC path: enumerate user-visible failure modes, build investigation-tree runbooks with upstream-first branches, validate with the operator. Real-discovery has an advantage here — live health data and actual resource configurations are available, making the signal envelopes concrete rather than code-declared.
+**Build runbooks.** Follow the same Step 4 process as the IaC path: enumerate user-visible failure modes, build investigation-tree runbooks with upstream-first branches, validate with the operator. Real-discovery has an advantage here — live health data and actual resource configurations are available. Live metrics give an **observed** baseline (statistic, window, date), recorded as `observed`, never as a limit or threshold. Only alarm, SLO and alerting-rule definitions that were read count as `declared`.
 
 **Present all runbooks and STOP.** Wait for the operator to validate the trees, same as Step 4 in the IaC path.
 
@@ -539,7 +549,7 @@ Note but do not chase references that cross the service boundary (e.g., a securi
 4. `## Naming Patterns` — detected from actual resource names rather than IaC templates.
 5. `## Identifying Dimensions` — derived from tags, naming patterns, and resource placement.
 6. `## Dependency Graph` — from Step 5R's dependency walking. Critical-path marked.
-7. `## Signal Envelopes` — from live metrics and alarm configurations discovered in Step 5R.
+7. `## Signal Envelopes` — declared alarms / SLOs marked `declared`; live metric statistics marked `observed (<statistic>, <window>, <date>)`.
 8. `## Investigation Runbooks` — from Step 5R's runbook building.
 9. `## Stack-Specific Tooling` — which `examples/<cloud>.md` file applies.
 10. `## Unresolved References` — `documented-not-found` resources (real-discovery-specific section).
@@ -577,12 +587,12 @@ For each dependency, record: the upstream resource (or stack), the linkage (outp
 
 - The upstream stack name (as the human knows it).
 - What the in-scope stack consumes from it.
-- The expected protocol / interface (HTTP, gRPC, queue, event bus, shared database, shared registry, etc.) inferred from the referenced resource type.
+- The expected protocol / interface (HTTP, gRPC, queue, event bus, shared database, shared registry, etc.). Cite the code that shows it (`code:`, e.g. a listener / target group, an endpoint in the service's environment, an event-source mapping); when it is only inferred from the referenced resource type, label it `inferred`.
 - Anything the human tells you about that stack's reliability characteristics (SLO, blast radius, on-call team).
 
 If the human can't characterize an upstream, mark it "**unknown — investigation entry point**" and surface it in the runbook so on-callers don't dead-end.
 
-**Critical-path classification.** For each direct dependency, ask: does a user request to this service synchronously traverse it? Yes → critical path. No → eventual / async / observability-only.
+**Critical-path classification.** For each direct dependency, ask: does a user request to this service synchronously traverse it? Yes → critical path. No → eventual / async / observability-only. Record the basis per edge (`code:` / `operator-stated` / `inferred`). Infrastructure code often cannot show whether a call is synchronous: then the edge is `critical-path: unknown`, confirmed at the gate, and never defaulted to async.
 
 **Render.** Produce a dependency graph (an indented list is fine if a DOT block isn't needed). Mark critical-path edges. Mark cross-stack dependencies. Mark cross-region / cross-account dependencies (these are blast-radius signals).
 
@@ -594,7 +604,7 @@ If the human can't characterize an upstream, mark it "**unknown — investigatio
 > - `<name>` [critical-path / async] — linkage: `<output X of stack Y>`; protocol: `<inferred>`; reliability characteristics: `<from human or "unknown">`
 > - …
 >
-> Downstream (depends on this service): `<derived from inbound references in the repo, plus anything the human knows>`
+> Downstream (depends on this service): `<inbound references found in the repo with code:, plus anything the human knows; if none, "none found in this repo — consumers in other repos / stacks are not visible", never "none">`
 >
 > Shared infrastructure (same-stack co-tenants whose failure correlates): `<list>`
 >
@@ -624,7 +634,7 @@ These categories replace the legacy alarm-name vocabulary ("5xx spike", "queue b
 2. **First branch — is this an upstream issue?** List the critical-path dependencies (from Step 3). For each: how to check it (named query / dashboard / metric — generic; the per-cloud commands live in `examples/`). If any upstream is unhealthy, the runbook for *this* service ends and the upstream's runbook takes over.
 3. **Second branch — narrow on identifying dimensions.** Use the dimensions captured in Step 2: is this affecting all tenants or one? all regions or one? all shards or one? all deployments or only the latest? Narrowing on dimensions is the single highest-leverage debugging move. Each narrowing answer rules hypotheses in or out.
 4. **Third branch — four-signals walk-through.** For each critical-path resource, in dependency order: check latency, traffic, errors, saturation against the envelope from Step 2. The envelope comparisons drive the next branch ("latency p99 above envelope on resource X → check X's saturation → check X's upstream"). If a resource has no declared envelope, the branch is "compare against last 7-day baseline."
-5. **Tools branch — what to look at, where.** For each check, name the dashboard / log query / CLI. The skill writes this generically here ("check ALB target group health"); the per-cloud `examples/<cloud>.md` provides exact CLIs. If the operator needs a permission or a secret to run a check, name it ("requires read access to <secret reference>"). Every prescribed CLI is **read-only by default** — the required least-privilege role lives in the matching `examples/<cloud>.md` preamble. If a step would change state (drain, restart, failover, invalidate, scale, rollback, DNS change, config change), label the step **`MUTATION — requires explicit approval`**, state the blast radius, state the elevated permission required, and instruct the operator to pause and confirm with the team before running. The runbook must never chain commands such that one command's output triggers the next without a human review pause.
+5. **Tools branch — what to look at, where.** For each check, name the dashboard / log query / CLI. The skill writes this generically here ("check ALB target group health"); the per-cloud `examples/<cloud>.md` provides exact CLIs. If the operator needs a permission or a secret to run a check, name it ("requires read access to <secret reference>"). Every prescribed CLI is **read-only by default** — the required least-privilege role lives in the matching `examples/<cloud>.md` preamble. If a step would change state (drain, restart, failover, invalidate, scale, rollback, DNS change, config change), label the step **`MUTATION — requires explicit approval`**, state the blast radius, state the elevated permission required, and instruct the operator to pause and confirm with the team before running. The blast radius comes from evidence, not recall: how the command behaves (restart, failover, eviction, reconcile) cites `docs: <URL>` fetched this session, and what limits it (replica count, PodDisruptionBudget, Multi-AZ, rolling-update settings) cites `code:` (or `live:` after Step 2V). If either is missing, write `blast radius UNVERIFIED — assume the whole service`, not a reassurance such as "small". Name the owner's route too: a hand change to a resource whose Owner is a GitOps controller can be reverted at the next sync (Argo CD self-heal re-syncs live state to Git — `docs: https://argo-cd.readthedocs.io/en/stable/user-guide/auto_sync/`) and one owned by an IaC tool shows as drift at the next apply, so give the change through its owner (Git change, paused sync, IaC change) as the first route and the direct command only as a labelled emergency option. The runbook must never chain commands such that one command's output triggers the next without a human review pause.
 6. **What this is NOT.** A line per false-friend: the symptoms that *look* like this category but are actually a different one, with a pointer to the right runbook.
 
 **Step 4c: Validate.** For each runbook tree, ask the human:
@@ -648,6 +658,8 @@ Only after Steps 1-4 are all confirmed.
 
 ```
 **Cataloged from commit:** `<short SHA>`
+**Working tree:** `clean` | `<N> uncommitted files in the stack`
+**Deployed ref:** `<ref>` — `code:` / `operator-stated` / `UNVERIFIED`
 **Cataloging date:** `<YYYY-MM-DD>`
 **Target instance:** `<instance name>`
 **IaC tool(s):** `<list>`
@@ -665,7 +677,7 @@ Only after Steps 1-4 are all confirmed.
 7. `## Signal Envelopes` — per critical-path resource, the four-signals envelope and where it's measured.
 8. `## Investigation Runbooks` — one per user-visible symptom from Step 4. Trees rendered as nested lists or DOT blocks.
 9. `## Stack-Specific Tooling` — which `examples/<cloud>.md` file applies, with a 1-line note for any third-party tool the catalog references that doesn't live in `examples/` (the operator will need to ask the team).
-10. `## Assumptions and Caveats` — **mandatory**. Drift status: the Step 2V drift rows first (or "live verification not performed — running infra may differ from code at commit X"). Recognised-unsupported stacks found in the repo and excluded. Unresolved parameters (any that were skipped). Steps requiring secrets or elevated permissions. Upstream stacks marked "unknown." Anything else the operator should not be surprised by. **Mandatory line if the escape hatch fired:** if any "teach me" or "ignore" answer was used in Step 1's "Detect unclassified deploy artifacts" sub-step, add the line: *"Tool `<X>` was not pre-known to the skill; the [stack boundary / parameter resolution / resource mapping] for this tool came from operator input during this scan and is not encoded in any detector file. Recommend contributing `tool-detectors/<X>.md`."*
+10. `## Assumptions and Caveats` — **mandatory**. Drift status: the Step 2V drift rows first (or "live verification not performed — running infra may differ from code at commit X"). Recognised-unsupported stacks found in the repo and excluded. Unresolved parameters (any that were skipped) and values resolved from a default or an unconfirmed source. The **Unattributed — operator assigns** list. **Completeness:** the inventory lists what the code declares (plus operator-assigned resources); resources created outside it (console, runtime, other stacks) are not listed. Steps requiring secrets or elevated permissions. Upstream stacks marked "unknown." Anything else the operator should not be surprised by. **Mandatory line if the escape hatch fired:** if any "teach me" or "ignore" answer was used in Step 1's "Detect unclassified deploy artifacts" sub-step, add the line: *"Tool `<X>` was not pre-known to the skill; the [stack boundary / parameter resolution / resource mapping] for this tool came from operator input during this scan and is not encoded in any detector file. Recommend contributing `tool-detectors/<X>.md`."*
 11. `## Open Questions` — anything the human said "I don't know, ask me later."
 
 **Placeholder taxonomy.** Use only the placeholders the repo actually uses, detected in Step 2. Common ones:

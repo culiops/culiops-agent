@@ -31,12 +31,14 @@ Multi-instance is expressed via:
 - `secrets*.yaml`, `*.sops.*`, `*.enc.*` are not opened at all; never run `sops -d`.
 
 ## Parameter sources (highest to lowest priority)
-- `-var key=value` and `-var-file=...` on the CLI. They are applied in command-line order, later wins (UNVERIFIED against current Terraform docs; confirm before relying on the order)
-- `*.auto.tfvars` / `*.auto.tfvars.json` (auto-loaded, alphabetical order)
-- `terraform.tfvars` / `terraform.tfvars.json` (auto-loaded)
+Order checked against https://developer.hashicorp.com/terraform/language/values/variables (read 2026-10-27):
+- `-var` and `-var-file` on the CLI "in the order provided", and variables set in HCP Terraform (the latter are not in the repo: ask). How repeated `-var` / `-var-file` flags interact beyond "in the order provided" is `UNVERIFIED`: ask when two of them set the same variable
+- `*.auto.tfvars` / `*.auto.tfvars.json` (auto-loaded, lexical order)
+- `terraform.tfvars.json`
+- `terraform.tfvars`
 - `TF_VAR_*` environment variables
-- Workspace-keyed values (e.g., `lookup(local.per_env, terraform.workspace, ...)`)
-- `variable` block defaults
+- `variable` block defaults (lowest; a value that comes only from here is `default / source unconfirmed`, see SKILL.md Step 2)
+- Workspace-keyed values (e.g., `lookup(local.per_env, terraform.workspace, ...)`) are a code expression over the above, not a source of their own
 - `terraform_remote_state` lookups (record the remote state as a cross-stack dependency, do NOT chase it)
 
 Apply the Secret-bearing files rule to every source above.

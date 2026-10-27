@@ -61,6 +61,8 @@ Teams use different label key conventions. **Run all candidate keys** and record
 | `service` | Explicit service label |
 | `component` | Component within a larger service |
 
+A label key is a membership signal only when the operator confirms it for this service. `component` names a part of a larger service, so it is a hint only (the Kubernetes counterpart of AWS `Project` / `Team` / `Owner` tags): its matches go to **Unattributed — operator assigns** unless another membership signal applies.
+
 For each variation, substitute the label selector:
 
 ```
@@ -171,15 +173,17 @@ Projected output maps to resource hints as follows:
 | `RELEASE` (`meta.helm.sh/release-name`) | Helm release | `widgetapi` |
 | Other `spec` fields | Used during enrichment through projected jsonpath only (see `examples/kubernetes.md`), never fetched whole | |
 
-**Owner detection (recognition only).** Read from the `LABELS` already fetched; no extra calls. First match wins; record the signal that matched.
+**Owner detection (recognition only).** Read from the labels and annotations already fetched. Record **every** signal that matched; the Owner is the controller that reconciles the object (Argo CD or Flux when present, otherwise Helm), and the other signals are listed beside it, e.g. `Owner: argocd (<application>) [also helm label: <release>]`. A chart sets its own `app.kubernetes.io/managed-by` label ("for finding all things managed by Helm", `docs: https://helm.sh/docs/chart_best_practices/labels/`, read 2026-10-27), so it says how the chart was written, not who applies it.
 
 | Signal | Result |
 |--------|--------|
-| label `app.kubernetes.io/managed-by: Helm` (+ `meta.helm.sh/release-name`) | `Owner: helm (<release>)` |
-| label `argocd.argoproj.io/instance` (label tracking) or annotation `argocd.argoproj.io/tracking-id` (annotation tracking; add column `TRACKING:.metadata.annotations.argocd\.argoproj\.io/tracking-id`) | `Owner: argocd (<application>)` |
-| label `kustomize.toolkit.fluxcd.io/name` | `Owner: flux-kustomization (<name>)` |
-| label `helm.toolkit.fluxcd.io/name` | `Owner: flux-helmrelease (<name>)` |
+| annotation `argocd.argoproj.io/tracking-id` (Argo CD's default tracking method; value `<app>:<group>/<kind>:<namespace>/<name>`). Annotations are not in `LABELS`: add `TRACKING:.metadata.annotations.argocd\.argoproj\.io/tracking-id` to the projection | `Owner: argocd (<application>)` |
+| label `argocd.argoproj.io/instance`, only if the cluster sets `application.instanceLabelKey` to it | `Owner: argocd (<application>)` |
+| label `app.kubernetes.io/instance` alone | **not a signal**: Argo CD's label tracking uses it, but Helm charts and operators set it too (`docs: https://argo-cd.readthedocs.io/en/stable/user-guide/resource_tracking/`, read 2026-10-27). Needs the annotation above or an Argo CD `Application` object that names the app |
+| label `kustomize.toolkit.fluxcd.io/name` | `Owner: flux-kustomization (<name>)` — `UNVERIFIED` label key (not in the Flux docs read 2026-10-27); confirm against the Flux `Kustomization` object |
+| label `helm.toolkit.fluxcd.io/name` | `Owner: flux-helmrelease (<name>)` — `UNVERIFIED` label key, as above |
+| label `app.kubernetes.io/managed-by: Helm` (+ `meta.helm.sh/release-name`) | `Owner: helm (<release>)` when no controller signal matched |
 | label `app.kubernetes.io/managed-by` with another value | `Owner: <value>` as written |
 | none | `Owner: unknown` |
 
-A GitOps controller label means the desired state lives in Git, not in the cluster: record the owner and do not treat the live object as the source of truth.
+A GitOps controller means the desired state lives in Git, not in the cluster: record the owner and do not treat the live object as the source of truth.

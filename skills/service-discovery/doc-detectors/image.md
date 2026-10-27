@@ -50,7 +50,7 @@ If you cannot confidently identify a resource type, still list it with [uncertai
 Return the structured lists exactly as produced by the model. Do not attempt post-processing or confidence filtering — the operator will review all items.
 
 ## Output
-**Output: hints only** — `source=doc`, confidence capped at Medium; only live evidence can raise it.
+**Output: hints only** — `source=doc`, confidence capped at Medium; only live evidence can raise it. Image-derived hints enter the catalog flow as **Low** whatever the model's own `high` / `low` label says; that label only records how clearly the item was read.
 
 ## What to extract
 - **Resource types**: from cloud-provider icons, shape conventions (cylinder = database, hexagon = service), and label text

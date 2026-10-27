@@ -28,7 +28,7 @@ These are a narrow subset of the `ReadOnlyAccess` managed policy. If the operato
 
 - **Projection only.** Output of these commands can reach the catalog. Select the allowlisted fields below; never `configuration`, never whole resource documents.
 - **Tagging API scope.** It is **regional** and returns only resources that are tagged, or were tagged at some point. Untagged resources and resources in other regions never appear.
-- **Global services** (CloudFront, IAM, Route 53, WAF with `CLOUDFRONT` scope) must be queried in `us-east-1` (`--region us-east-1`); a query in any other region returns nothing for them.
+- **Global services** (CloudFront, IAM, Route 53, WAF with `CLOUDFRONT` scope) must be queried in `us-east-1` (`--region us-east-1`) in the standard AWS partition; a query in any other region returns nothing for them. In another partition (GovCloud, China) the Region differs and is `UNVERIFIED`: ask the operator.
 - **Empty result ≠ absent.** Classify each documented or expected resource as exactly one of:
   - `not-found (queried <account>/<region>)` — a query that can see this kind of resource ran in that account/region and returned nothing.
   - `not-queried` — no query that could see it was run (not approved, wrong service, region skipped).
@@ -161,6 +161,6 @@ The Tagging API returns a `ResourceTagMappingList` array. Map each entry to a re
 | Tag | Result |
 |-----|--------|
 | `aws:cloudformation:stack-name` (+ `aws:cloudformation:logical-id`) | `Owner: cloudformation (<stack>)`. CloudFormation, SAM, CDK and Serverless deploy via stacks, so this covers them. The skill records the owner and does not parse or manage the stack. |
-| none | `Owner: unknown` (do not infer from `Team`/`Owner` tags; those are hints, not the deployment owner) |
+| none | `Owner: unknown` (do not infer from `Team`/`Owner` tags; those are hints, not the deployment owner). Stack tags are propagated per resource type (`docs: https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-resource-tags.html`, read 2026-10-27), so an untagged resource may still be stack-owned: `unknown`, not "not CloudFormation". Terraform, ecspresso and lambroll leave no native marker: `unknown` unless the operator names a tag convention. |
 
 For AWS Config results, `resourceType`, `resourceName`, `resourceId`, `awsRegion`, `accountId` and `tags` map directly to the hint fields (and the same Owner rule applies to `tags`). There is no `configuration` column to use: enrichment of a discovered resource uses the projected commands in `examples/aws.md`.

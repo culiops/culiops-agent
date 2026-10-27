@@ -27,6 +27,7 @@ Keyword and pattern extraction from prose text.
 
 1. **Cloud resource type keywords**: scan for mentions of cloud resource types. AWS keywords plus generic technologies:
    - **AWS**: RDS, Aurora, DynamoDB, ElastiCache, Redshift, S3, ECS, EKS, EC2, Lambda, Fargate, ALB, NLB, CLB, API Gateway, CloudFront, Route 53, SQS, SNS, Kinesis, EventBridge, Step Functions, CodePipeline, CodeBuild, IAM, KMS, Secrets Manager, Parameter Store, VPC, WAF, ACM, EFS, EBS, ECR, MSK, MQ, AppSync, Cognito, SES, CloudWatch, X-Ray, OpenSearch
+   - **Kubernetes**: Deployment, StatefulSet, DaemonSet, CronJob, Job, Service, Ingress, ConfigMap, HPA, PVC, namespace, Helm release, Argo CD, Flux, Kustomize, EKS
    - **Generic**: PostgreSQL, MySQL, Redis, Memcached, Elasticsearch, Kafka, RabbitMQ, MongoDB, Cassandra, NGINX, HAProxy, Consul, Vault, Terraform, Kubernetes, Docker
 2. **Resource names**: look for names adjacent to resource type keywords, especially:
    - Backtick-quoted: `` `orders-db` ``
