@@ -119,13 +119,14 @@ jq --argjson level "$LEVEL" --argjson inc "$START_S" '
 ```
 <!-- doc: https://jqlang.org/manual/ -->
 
-CloudWatch: one query file with `Period` 3600 and the statistic from the table above, one entry per signal and per sibling (`Id`s such as `main_err`, `canary_err`; an `Id` starts with a lowercase letter). The pull ends at the incident start, so no incident hour needs filtering out; `$LEVELS` maps each `Id` to its incident level.
+CloudWatch: one query file with `Period` 3600 and the statistic from the table above, one entry per signal and per sibling (`Id`s such as `main_err`, `canary_err`; an `Id` starts with a lowercase letter). A count metric reported only when non-zero (here `HTTPCode_Target_5XX_Count`) has no datapoint in a quiet hour, which would leave median and p95 computed over the error hours alone; pull it raw with `"ReturnData": false` and return `FILL(raw, 0)` instead. Latency is never filled: an hour with no requests has no latency, not zero latency. The pull ends at the incident start, so no incident hour needs filtering out; `$LEVELS` maps each `Id` to its incident level.
 
 ```bash
 cat > "$RUN/q-recur-3600.json" <<'EOF'
-[ {"Id": "main_err", "MetricStat": {"Period": 3600, "Stat": "Sum",
+[ {"Id": "main_err_raw", "ReturnData": false, "MetricStat": {"Period": 3600, "Stat": "Sum",
     "Metric": {"Namespace": "AWS/ApplicationELB", "MetricName": "HTTPCode_Target_5XX_Count",
       "Dimensions": [{"Name": "LoadBalancer", "Value": "app/<lb-name>/<lb-id>"}, {"Name": "TargetGroup", "Value": "targetgroup/<tg-name>/<tg-id>"}]}}},
+  {"Id": "main_err", "Expression": "FILL(main_err_raw, 0)", "Period": 3600, "Label": "5xx per hour, zero-filled"},
   {"Id": "main_p99", "MetricStat": {"Period": 3600, "Stat": "p99",
     "Metric": {"Namespace": "AWS/ApplicationELB", "MetricName": "TargetResponseTime",
       "Dimensions": [{"Name": "LoadBalancer", "Value": "app/<lb-name>/<lb-id>"}, {"Name": "TargetGroup", "Value": "targetgroup/<tg-name>/<tg-id>"}]}}} ]
@@ -140,9 +141,10 @@ jq --argjson levels "$LEVELS" '.MetricDataResults[] | .Id as $id
      p95: .v[(((.v | length) * 0.95) | floor)], max: (.v | max)}' "$RUN/m-recur-14d-cw.json"
 ```
 <!-- doc: https://docs.aws.amazon.com/cli/latest/reference/cloudwatch/get-metric-data.html -->
+<!-- doc: https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/using-metric-math.html -->
 <!-- doc: https://jqlang.org/manual/ -->
 
-`LEVELS` is a JSON object, for example `'{"main_err": 85, "main_p99": 3.7}'`. 14 days at `Period` 3600 is 336 points per `Id`; `returned` below that is a coverage gap, except for a metric reported only when non-zero, where each missing hour is a zero (count them as such before reading the median).
+`LEVELS` is a JSON object, for example `'{"main_err": 85, "main_p99": 3.7}'`. 14 days at `Period` 3600 is 336 points per `Id`. For a filled `Id`, `returned` below 336 means the raw metric itself has no data for part of the range; a filled `Id` that comes back empty had no datapoint at all in 14 days, which is either a counter that never fired (baseline zero) or a wrong dimension, so check the identifier before reading it as zero. For an unfilled `Id` (latency, saturation), `returned` below 336 is the number of hours with traffic, and the statistics cover those hours only.
 
 **Alarm state history, both directions.** Pull every transition, into and out of `ALARM`, for 30 days. One line per transition gives the occurrence count, the time of day of each, and the share of time spent in `ALARM`. The CLI paginates automatically. Hundreds of transitions mean the alarm flaps: classify as chronic, and say so.
 
