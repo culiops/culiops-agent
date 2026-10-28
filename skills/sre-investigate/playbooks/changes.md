@@ -62,7 +62,7 @@ aws ecs describe-tasks --profile <profile> --region <region> --cluster <cluster>
 
 Read the reasons as evidence of mechanism: a container reason mentioning `OutOfMemoryError`, exit code 137 (killed, often memory), a `SpotInterruption` stop code, or a reason naming failed load balancer health checks. ECS keeps stopped tasks in API results for about an hour, so this read belongs in the first wave. For an older incident, use Auto Scaling activities, CloudTrail and the logs playbook instead.
 
-**Ruling a deploy in or out.** Compare error rate and latency per task definition revision (logs or metrics split by task or version) across the switch. If the old revision's tasks were failing in the same way before they were replaced, the deploy is not the cause. If only the new revision fails, read the image diff under [App code at the deployed ref](#app-code-at-the-deployed-ref).
+**Ruling a deploy in or out.** Compare error rate and latency per task definition revision across the switch (recipes in [Old against new](#old-against-new)). If the old revision's tasks were failing in the same way before they were replaced, the deploy is not the cause. If only the new revision fails, read the image diff under [App code at the deployed ref](#app-code-at-the-deployed-ref).
 
 ## Deploys (Kubernetes and Helm)
 
@@ -124,6 +124,49 @@ The `UPDATED`, `STATUS`, `CHART`, `APP VERSION` and `DESCRIPTION` columns date e
 
 Kubernetes events are kept for one hour by default (the API server's `--event-ttl`), so read them in the first wave.
 <!-- doc: https://kubernetes.io/docs/reference/command-line-tools-reference/kube-apiserver/ -->
+
+## Old against new
+
+The falsification of any deploy or rollout candidate: failures and latency split by revision over the incident window, with counts. The same failure on the old revision before it was replaced clears the deploy; failures only on the new revision keep it in. Quote the counts per revision (failing and total) in the ledger and the report.
+
+**ECS, by task definition revision.** Map each task to its revision, then count per task from its log stream. With the `awslogs` driver the stream name is `<prefix>/<container>/<task-id>`. Stopped tasks stay listable for about an hour only, so run the mapping in the first wave.
+
+```bash
+for st in RUNNING STOPPED; do
+  arns=$(aws ecs list-tasks --profile <profile> --region <region> --cluster <cluster> \
+    --service-name <service> --desired-status "$st" --max-items 100 --query 'taskArns' --output text)
+  [ -n "$arns" ] && [ "$arns" != "None" ] && \
+  aws ecs describe-tasks --profile <profile> --region <region> --cluster <cluster> --tasks $arns \
+    --query 'tasks[].[taskArn, taskDefinitionArn, startedAt, stoppedAt]' --output text
+done > "$RUN/c-task-revisions.tsv"
+```
+
+Two Logs Insights query strings, totals and failures per stream (each through the start/poll/stop loop of the logs playbook, after its estimate):
+
+```text
+stats count(*) as lines by @logStream
+filter @message like /ERROR|Exception|Timeout/ | stats count(*) as failures by @logStream
+```
+
+Join on the task ID (the last segment of the task ARN and of the stream name) and sum per revision. When the app logs its image tag or version as a field, group by that field instead.
+<!-- doc: https://docs.aws.amazon.com/AmazonECS/latest/developerguide/using_awslogs.html -->
+<!-- doc: https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/CWL_QuerySyntax-Stats.html -->
+<!-- doc: https://docs.aws.amazon.com/cli/latest/reference/ecs/describe-tasks.html -->
+
+**Kubernetes, by ReplicaSet (pod-template-hash).** With kube-state-metrics, attach each pod's owning ReplicaSet to the application's per-pod series:
+
+```bash
+curl -sG "$PROM/api/v1/query_range" -H "Authorization: Bearer $GRAFANA_SERVICE_ACCOUNT_TOKEN" \
+  --data-urlencode 'query=sum by (owner_name) (sum by (namespace, pod) (rate(http_requests_total{namespace="<namespace>", code=~"5.."}[5m])) * on (namespace, pod) group_left(owner_name) max by (namespace, pod, owner_name) (kube_pod_owner{namespace="<namespace>", owner_kind="ReplicaSet"}))' \
+  --data-urlencode "start=$START_S" --data-urlencode "end=$END_S" --data-urlencode "step=60" > "$RUN/c-split-rs.json"
+```
+
+Run it again with the total request count (no `code` filter) for the rate. Pod names of a Deployment carry the pod-template-hash (`<deployment>-<hash>-<suffix>`), so Loki counts can be split the same way: `sum by (pod) (count_over_time({namespace="<namespace>", app="<app>"} |~ "(?i)(error|exception|timeout)" [5m]))`, grouped by the hash segment of each pod name. `kubectl get pods -l <selector> -L pod-template-hash` maps the pods that still exist; it is current state only.
+<!-- doc: https://kubernetes.io/docs/concepts/workloads/controllers/deployment/#pod-template-hash-label -->
+<!-- doc: https://github.com/kubernetes/kube-state-metrics/blob/main/docs/metrics/workload/pod-metrics.md -->
+<!-- doc: https://prometheus.io/docs/prometheus/latest/querying/operators/#many-to-one-and-one-to-many-vector-matches -->
+
+**No per-revision signal.** The old tasks or pods were gone before their logs were kept, metrics carry no pod or task label, or the rollout replaced everything at once. Record it as a gap with what is missing. The deploy's label is then at most `Likely`, and only when its diff touches the failing path and the timing fits; otherwise it is `Assumed`. It is never `Confirmed` and never `Ruled out` without the split.
 
 ## Schedules
 

@@ -4,13 +4,13 @@ The report is the reader-facing result of one run. It lives at `<output root>/ru
 
 How to fill it in:
 
-- Times are shown in UTC and in the reader's local zone, taken from `environment.md`. If no zone is set there, ask; do not guess. Use two columns, or `HH:MM UTC (HH:MM local)`.
+- Local time appears beside UTC (UTC first) for the incident window, the onset and every Timeline row, in the zone from `environment.md` or the one the user gave; everywhere else UTC alone is fine. If no zone is known, ask; do not guess. Use two columns, or `HH:MM UTC (HH:MM local)`.
 - Labels are `Confirmed`, `Likely`, `Assumed` and `Ruled out`. A cause is never labelled more strongly than its weakest causal link, and the TL;DR names that link.
 - Fast mode writes the TL;DR first (also printed inline), then Impact, Causal chain, Gaps, To confirm, Follow-ups and Cost. Deep mode fills every section.
 - The run changed nothing it investigated. Wherever a mutation would be needed, describe it in prose. Never paste a runnable command that changes state into `## To confirm, a human would…` or `## Follow-ups`. Only `## Gaps` may carry a command, and only a read-only one or a re-auth step the user runs themselves (see there). `## To confirm, a human would…` and `## Follow-ups` are prose only.
 - Delete the guidance lines when you copy the file; keep the headings exactly as written.
 
-Run: <run directory name> · Mode: <Fast | Deep> · Window: <incident window in UTC> (<same window in local zone>)
+Run: <run directory name> · Mode: <Fast | Deep> · Window: <incident window in UTC> (<same window in local zone>) · Onset: <UTC> (<local>)
 Access: <profile or context>: <write-check result in the check's own words, copied from the ledger's Access table: "write-capable: <action>, <action> allowed", "read-only confirmed (simulation): none of the 10 broad write actions is allowed", "no write verbs in <namespace>" or "write capability unknown (gap)">, one entry per profile and context
 
 ## TL;DR
@@ -44,9 +44,9 @@ A recurring pattern names its count in the follow-ups. A chronic one adds an ale
 
 ## Timeline
 
-| Time (local) | Time (UTC) | Event | Evidence |
+| Time (UTC) | Time (local) | Event | Evidence |
 |---|---|---|---|
-| <local> | <UTC> | <change, signal, alarm or mitigation> | <query ID and deeplink for a human> |
+| <UTC> | <local> | <change, signal, alarm or mitigation> | <query ID and deeplink for a human> |
 
 ## Causal chain
 
