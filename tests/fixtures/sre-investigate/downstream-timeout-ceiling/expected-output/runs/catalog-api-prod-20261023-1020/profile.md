@@ -72,6 +72,6 @@ Last verified: 2026-10-23 · Built by: helper (cheapest tier) with the main sess
 
 ## Stale identifiers
 
-| Identifier | Last run with no data | Note |
+| Identifier | Last empty run | Note |
 |---|---|---|
 | none | not applicable | The p90 query and the 14-day pulls returned empty matrices, but the selector was verified by other queries in the same wave, so no identifier is marked stale. |

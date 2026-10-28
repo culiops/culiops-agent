@@ -69,6 +69,6 @@ Working copy for this run. The stored profile (`profiles/orders-api-prod.md`) do
 
 ## Stale identifiers
 
-| Identifier | Last run with no data | Note |
+| Identifier | Last empty run | Note |
 |---|---|---|
 | none | n/a | `orders-db` returned empty replies, but it is unverified and the empty reply is not specific to the name (other empty replies in the same run), so it is not moved here |

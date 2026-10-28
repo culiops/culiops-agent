@@ -1,6 +1,6 @@
 # Profile: payments-worker prod
 
-Last verified: 2026-10-24 · Built by: helper TASK: PROFILE (cheapest tier, simulated inline), extended by the main session in waves 1-2 · Status: partly unverified
+Last verified: 2026-10-24 · Built by: helper (cheapest tier, simulated inline) then updated by the main session after waves 1 and 2 · Status: partly unverified
 
 ## Identity
 
@@ -8,67 +8,65 @@ Last verified: 2026-10-24 · Built by: helper TASK: PROFILE (cheapest tier, simu
 |---|---|
 | Service | payments-worker |
 | Environment | prod |
-| Account or profile / Region | `prod-ops` (111122223333) / us-east-1 |
-| Cluster, context and namespace | cluster `prod`, context `arn:aws:eks:us-east-1:111122223333:cluster/prod`, namespace `payments` |
-| IaC repo and paths | `example-org/payments-deploy`, local clone `~/src/payments-deploy`; Helm chart `charts/payments-worker/`, values `charts/payments-worker/values-prod.yaml`, template `charts/payments-worker/templates/deployment.yaml` |
-| Core flows served | payment capture and refunds processed by payments-worker (critical) |
+| Account or profile / Region | prod-ops / us-east-1 (account 111122223333) |
+| Cluster, context and namespace | EKS cluster `prod` (verified 2026-10-24), context `arn:aws:eks:us-east-1:111122223333:cluster/prod`, namespace `payments` |
+| IaC repo and paths | example-org/payments-deploy, local clone `~/src/payments-deploy`; chart `charts/payments-worker/` (`templates/deployment.yaml`, `values-prod.yaml`); Helm release `payments-worker`, chart payments-worker-2.3.1, app 5.2.0, revision 31 (verified 2026-10-24) |
+| Core flows served | payment capture and refunds processed by payments-worker (core, from environment.md) |
 | SLO or error-budget source | none |
 
 ## Sibling set
 
 | Dimension | Member | How to tell it apart |
 |---|---|---|
-| replicas (3) | pods `payments-worker-6d4f8a2b7c-3mfk8`, `-q7c2z`, `-vn5tr`, on three different nodes | pod name suffix; label `app.kubernetes.io/name=payments-worker` |
+| replicas (3) | payments-worker-6d4f8a2b7c-3mfk8, -q7c2z, -vn5tr (verified 2026-10-24) | pod name suffix; all carry app.kubernetes.io/name=payments-worker |
 
 ## Client identity (for WAF triangulation)
 
 | Field | Value |
 |---|---|
-| Session cookie name | none |
+| Session cookie name | none (queue worker, no HTTP path) |
 | Client-ID header name | none |
 
 ## Identifiers per source
 
 | Source | Identifier | Verified |
 |---|---|---|
-| Application log label or log group | no log backend listed in `environment.md`; logs via `kubectl logs <pod> --previous` | (verified 2026-10-24, W2-Q2..Q4) |
-| Sidecar or proxy logs | none | n/a |
-| APM or trace service name | none | n/a |
-| Prometheus job and labels | none | n/a |
-| Business or flow counters | none | n/a |
-| Compute | Deployment `payments-worker`; Helm release `payments-worker` (chart payments-worker-2.3.1, app 5.2.0); ConfigMap `payments-worker-config` (keys PAYMENTS_CURRENCY_DEFAULT, PAYMENTS_QUEUE_URL, PAYMENTS_WORKER_CONCURRENCY, LEDGER_BASE_URL); container `payments-worker`; Secret reference `payments-ledger-auth` (key name `password`, read as env LEDGER_API_TOKEN; Secret never read); no Service, Ingress or HPA returned | (verified 2026-10-24, PB-Q1, PB-Q3, PB-Q5, W2-Q1) |
-| Load balancing | none returned | (verified 2026-10-24, PB-Q2: empty reply) |
-| Data stores | none known | (unverified) |
-| Queues and streams | SQS `payments-jobs` (consumed by this worker via env PAYMENTS_QUEUE_URL), `payments-jobs-dlq`; CloudWatch dimension `QueueName` = same names | (verified 2026-10-24, PB-Q4, W1-Q6, W1-Q10) |
-| Functions | none | n/a |
-| Log datasource | none | n/a |
-| Error tracker project | none | n/a |
-| Code | `example-org/payments-deploy` (deploy repo only); the worker's own application repo is not named in `environment.md`; default branch unknown. Image tag is the app version (`5.2.0`), not a commit SHA, so a tag cannot be tied to a ref. | (unverified) |
-| Tickets and wiki | none | n/a |
+| Application log label or log group | none listed in environment.md; `kubectl logs` on the pods (returned lines with `--previous`) | (verified 2026-10-24) for kubectl logs; no aggregator |
+| Sidecar or proxy logs | none | - |
+| APM or trace service name | none listed | - |
+| Prometheus job and labels | none listed | - |
+| Business or flow counters | none listed | - |
+| Compute | namespace `payments`; Deployment `payments-worker` (selector app.kubernetes.io/instance=payments-worker, app.kubernetes.io/name=payments-worker; strategy Recreate); ConfigMaps `payments-worker-config` (keys by name: LEDGER_BASE_URL, PAYMENTS_CURRENCY_DEFAULT, PAYMENTS_QUEUE_URL, PAYMENTS_WORKER_CONCURRENCY) and `kube-root-ca.crt`; Secret `payments-ledger-auth` (named by the pod spec, never read); no Service, Ingress or HPA | (verified 2026-10-24) except the Secret, named only |
+| Load balancing | none (queue worker) | - |
+| Data stores | none listed | - |
+| Queues and streams | `payments-jobs`, `payments-jobs-dlq` (us-east-1, account 111122223333); the DLQ pairing of the two is not confirmed | queues (verified 2026-10-24); pairing (unverified) |
+| Functions | none | - |
+| Log datasource | none | - |
+| Error tracker project | none | - |
+| Code | example-org/payments-deploy, default branch (unverified); image `111122223333.dkr.ecr.us-east-1.amazonaws.com/payments-worker:5.2.0`; application source repo not listed. Image tag to ref rule: unknown | (unverified) |
+| Tickets and wiki | none listed | - |
 
 ## Dependencies
 
-| Direction | Dependency | How | Identifier | Status page or contact |
+| Direction | Dependency | How (protocol, queue, shared store) | Identifier | Status page or contact (third parties) |
 |---|---|---|---|---|
-| upstream (feeds) | SQS queue `payments-jobs` | worker consumes jobs | `payments-jobs` | n/a (AWS) |
-| downstream | ledger API | HTTP; endpoint named by env LEDGER_API_BASE_URL (the worker requires it at startup), token via env LEDGER_API_TOKEN from a Secret | env var names only | internal service; owner not recorded |
-| downstream | dead-letter queue | after failed receives | `payments-jobs-dlq` | n/a |
+| upstream | SQS queue payments-jobs | consumes jobs | payments-jobs (verified 2026-10-24) | not a third party |
+| downstream | Ledger API | HTTP; endpoint from a config key (LEDGER_BASE_URL since revision 31, LEDGER_API_BASE_URL before; app 5.2.0 requires the old name), credential from Secret `payments-ledger-auth` | config key names above (verified 2026-10-24); no call to the API seen | owner unknown; PR #377 mentions a "shared ledger client" |
 
 ## Dashboards
 
 | Name | UID or URL | Useful panels |
 |---|---|---|
-| none known | | |
+| none listed | - | - |
 
 ## Baseline notes
 
-- Normal load: `payments-jobs` backlog 10-30 messages between 10:30 and 10:50 UTC on 2026-10-24 (W1-Q6). Longer baselines were not returned (W1-Q7..Q9).
-- Known periodic jobs: none found (no CronJobs in namespace `payments`, W2-Q7).
+- Normal load and latency: payments-jobs depth 10 to 30 at 10:30-10:50 UTC on 2026-10-24 (one 20-minute sample, 5-minute maxima); no seven-day baseline.
+- Known periodic jobs and their usual effect: none found (no CronJobs, no scheduled EventBridge rules or Scheduler schedules).
 - Known benign noise: none.
-- Rollout history: Helm revision 30 on 2026-10-13 15:40 UTC ran 11 days; revision 31 on 2026-10-24 10:52 UTC.
 
 ## Stale identifiers
 
-| Identifier | Last run with no data | Note |
+| Identifier | Last empty run | Note |
 |---|---|---|
-| none | | |
+| none | - | - |

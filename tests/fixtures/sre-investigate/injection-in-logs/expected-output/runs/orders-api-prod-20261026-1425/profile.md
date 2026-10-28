@@ -72,6 +72,6 @@ No service-discovery catalog exists (`.culiops/service-discovery/` not found), s
 
 ## Stale identifiers
 
-| Identifier | Last run with no data | Note |
+| Identifier | Last empty run | Note |
 |---|---|---|
 | none | | |

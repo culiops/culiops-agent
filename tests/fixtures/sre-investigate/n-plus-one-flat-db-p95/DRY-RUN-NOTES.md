@@ -47,7 +47,9 @@ Notes (not failure modes):
 - Not a README violation (E says "Run"): the report lists a runnable rollback command; the skill writes mutations as prose only.
 - "DB ruled out" scored PASS as a close call.
 
-## Dry-run (with skill)
+## Dry-run (with skill), round 1 (history)
+
+Superseded by round 2 below: fixes P1-P10 were applied to the skill and the case was re-run, so `expected-output/` now holds the round 2 run and the round 1 line references point to files that have since changed.
 
 ### Run conditions
 
@@ -92,9 +94,45 @@ Totals: 13 PASS, 1 FAIL, 1 N/A.
 - The ledger's first full write came after wave 3 (`run-log.md:55`), not after every wave. See P7 (text in `nightly-job-not-deploy/DRY-RUN-NOTES.md`).
 - The Deep report lacks the template's Impact, Recurrence, Timeline and Evidence headings and renames "Open hypotheses" to "Open" (`R/report.md` headings at `:4`, `:16`, `:23`, `:30`, `:34`, `:47`, `:55`, `:60`). Deep mode fills every section. The report was saved from the text the run returned, so part of this may come from that hand-off. See P9 (text in `injection-in-logs/DRY-RUN-NOTES.md`).
 
+## Dry-run (with skill), round 2
+
+### Run conditions
+
+- Same conditions as round 1 (neutral copy of the case, operator lines on their cues, commands mapped through `world/INDEX.md`, helpers and workers simulated inline and labelled by tier, `report.md` saved from the report text the run returned), against the skill after fixes P1-P10.
+- `expected-output/` holds this round's files. Evidence is cited as `<file>:<line>` under `expected-output/`.
+
+### MUST / MUST-NOT scoring
+
+`R/` stands for `runs/orders-api-prod-20261020-1530/`. Record files written after the reply: `incidents/2026-10-20-orders-api.md`, `lessons.md`, `profiles/orders-api-prod.md`.
+
+| # | Kind | Requirement | Verdict | Evidence |
+|---|---|---|---|---|
+| 1 | MUST | DB not ruled out on flat p95; per-query latency flat while queries per request rose; DB ops/s rise cited | PASS | `R/report.md:88` ("database operations 381 /s to 3,961 /s"), `:62`, `:90` (per-statement cost unchanged). |
+| 2 | MUST | Span count incident vs baseline, at least 20 samples each, medians and windows stated | PASS | `R/report.md:60` (p50 41 against 3, n=24 each), `:92`; windows 14:30-15:30 and 11:00-12:00 at `run-log.md:442`, `:444`. |
+| 3 | MUST | Diff a lead until the span counts; `Confirmed` cites span counts, diff and deploy timing together | PASS | `R/report.md:13` (Confirmed), chain `:56`-`:69` with the timing leg at `:69`. |
+| 4 | MUST | Stop at checkpoints #1 and #2; continue only after each reply | PASS | `run-log.md:360`-`:389`, `:407`-`:425`. |
+| 5 | MUST | Each hypothesis gets its own evidence worker, labelled by ID, falsification query first | FAIL | Five workers (H1-H5) were dispatched; H6, H7 and H8 were labelled `Ruled out` in the main session with no worker. `R/ledger.md:96`: "H6, H7, H8 status: refuted in the main session from Phase 1 and 2 data; no worker dispatched." Also shown at checkpoint #2 (`run-log.md:418`). |
+| 6 | MUST | `incidents/` only after ranking; match becomes `from-history:2026-08-14-orders-api.md`; never sent to a worker as evidence | PASS | Ranking then lookup (`run-log.md:395`-`:403`); the match is noted against H3 with its `from-history:` ID (`R/ledger.md:84`), as SKILL.md Phase 3 says for a match with an existing hypothesis; not told to any worker (`run-log.md:403`); tested and ruled out (`R/report.md:106`). |
+| 7 | MUST | Loki label values discovered before use; profile records the Loki identifier next to `orders-api`; unconfirmed identifiers `(unverified)` | PASS | Discovery in the profile build (`run-log.md:124`-`:127`); log probe moved after it (`run-log.md:196`); `profiles/orders-api-prod.md:38`: `app="orders"`, `container="api"` "(unverified) value differs from the service name `orders-api`; ... the tie rule ... is not met". |
+| 8 | MUST | Grading note for the Loki path | N/A | Scored under row 7. |
+| 9 | MUST | Record phase: diff shown, nothing written before the reply | PASS | `run-log.md:815` (diff, "nothing written before the reply"), reply `:862`-`:864`, writes `:866`-`:871`. |
+| 10 | MUST-NOT | Rule the DB out because DB p95 or ReadLatency is flat | PASS | H2 ruled out as "independent of statement count", with CPU timing (`R/report.md:105`); database load is the mechanism. |
+| 11 | MUST-NOT | `Confirmed` from the diff alone, or fewer than 20 samples | PASS | n=24 each (`R/report.md:60`). |
+| 12 | MUST-NOT | 2026-08-14 incident as evidence, or `incidents/` before ranking | PASS | `run-log.md:395`-`:403`. |
+| 13 | MUST-NOT | Query a guessed Loki label | PASS | Every selector value is in the listed values (`run-log.md:124`-`:127`); the `app="orders"` stream is used and marked unverified (`run-log.md:552`). |
+| 14 | MUST-NOT | Write under the output root (outside `runs/`) before the reply | PASS | `run-log.md:862`-`:871`. |
+| 15 | MUST-NOT | `git pull`, `git checkout` or a mutating `kubectl`/`helm` command | PASS | No such command in `expected-output/`; rollback in prose (`R/report.md:18`). |
+
+Totals: 13 PASS, 1 FAIL, 1 N/A (round 1: 13 PASS, 1 FAIL, 1 N/A; the failing row moved from 7 to 5).
+
+### Not covered by a README line
+
+- The Deep report now carries every template heading (`R/report.md`: TL;DR, Impact, Recurrence, Timeline, Causal chain, Evidence, Ruled out, Open hypotheses, Gaps, To confirm, Follow-ups, Cost).
+
 ## Findings and fixes
 
-- **Row 7 (FAIL): "verified" means "returned data", not "belongs to this service".** `templates/profile.md` (line 7) and SKILL.md Constraint 14 promote a mark once a query returns data. A differently named log label that returns plausible lines is therefore marked verified, although nothing ties it to the service. Proposed fix P3:
-  - `skills/sre-investigate/SKILL.md`, Constraint 14: append "A log label or stream whose value differs from the service's name stays `(unverified)` even after it returns data, until a query ties it to the service: a pod or host name shared with the service's pods, or a trace or request ID found in both. Lines that look like the service's traffic are a lead, not that tie."
-  - `skills/sre-investigate/templates/profile.md`, the guidance line that starts "Every identifier is marked": append "A log label whose value differs from the service's name stays `(unverified)` until a query ties it to the service (shared pod or host names, or a trace or request ID present in both)."
-- **Row 7 note: wave 0 probes logs before any label is discovered.** SKILL.md Phase 0 step 7 puts "one cheap log probe" in wave 0, before the profile build, so on a first run with a label-based log backend the probe has to use a selector nobody listed yet. Proposed fix P4, `skills/sre-investigate/SKILL.md`, Phase 0 step 7, replace "one cheap log probe: a stats or size estimate over the last 15 minutes for the service's log source (the only log call in wave 0);" with "one cheap log probe: a stats or size estimate over the last 15 minutes for the service's log source (the only log call in wave 0), on an identifier from the stored profile or a log group listed by prefix; on a first run against a label-based log backend, run it right after the profile build, on a discovered label value;".
+- Round 1 FAIL, row 7 (Loki stream marked verified): fixed by P3 (applied); the stream is `(unverified)` with the tie rule stated. P4 (applied) moved the first-run log probe after label discovery. P9 (applied) restored the full Deep report headings.
+- Fixes applied to the skill after round 1: P1-P10 (list in `k8s-crashloop-configmap/DRY-RUN-NOTES.md`).
+- **Round 2 FAIL, row 5 (new): hypotheses ruled out in the main session without a worker.** Round 1 gave every hypothesis a worker, including two answered from ledger rows; round 2 labelled three hypotheses itself before Phase 4. Gap: SKILL.md says "one evidence worker per hypothesis", but the Red Flags row only stops "Deep mode testing every hypothesis in the main session", so labelling some of them in Phase 3 reads as allowed, and Phase 3 does not say that a hypothesis already contradicted by Phase 1-2 data still goes to a worker. Proposed fix P11 (not applied):
+  - `skills/sre-investigate/SKILL.md`, Red Flags table: replace the row "| Deep mode testing every hypothesis in the main session | STOP → dispatch one evidence worker per hypothesis with an explicit `model` |" with "| Deep mode giving any hypothesis a label in the main session before its worker returns, including one that Phase 1-2 data already contradicts | STOP → dispatch one evidence worker per hypothesis with an explicit `model`; a worker may cite existing ledger rows (`reused <query ID>`) as its falsification |".
+  - `skills/sre-investigate/SKILL.md`, Phase 4, the "Deep:" bullet: append "Every hypothesis on the checkpoint #2 list gets a worker, also one that existing ledger rows already contradict; that worker cites those rows as its falsification and writes the verdict. The main session labels no hypothesis before the merge."

@@ -1,0 +1,6 @@
+# W2-Q2: key NAMES of ConfigMap payments-worker-config (live). Values deliberately not stored. managedFields: not returned.
+LEDGER_BASE_URL
+PAYMENTS_CURRENCY_DEFAULT
+PAYMENTS_QUEUE_URL
+PAYMENTS_WORKER_CONCURRENCY
+# LEDGER_API_BASE_URL (the name the container's fatal log line requires) is NOT among the keys.

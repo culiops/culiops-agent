@@ -70,6 +70,6 @@ Last verified: 2026-10-25 · Built by: helper PROFILE (cheapest tier), merged by
 
 ## Stale identifiers
 
-| Identifier | Last run with no data | Note |
+| Identifier | Last empty run | Note |
 |---|---|---|
 | none | — | — |

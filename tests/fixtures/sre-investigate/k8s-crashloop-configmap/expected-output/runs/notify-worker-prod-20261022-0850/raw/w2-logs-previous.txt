@@ -1,3 +1,5 @@
+# kubectl logs --previous --tail=20, three pods (W2-Q2). The three outputs were identical in the world; shown once.
+# pods: notify-worker-5c8d7b9f4c-8wq2d, notify-worker-5c8d7b9f4c-jt6kz, notify-worker-5c8d7b9f4c-x4p9n
 {"level":"info","ts":"2026-10-22T08:47:56.102Z","msg":"notify-worker 3.8.1 starting","pid":1}
 {"level":"info","ts":"2026-10-22T08:47:56.118Z","msg":"loading configuration from environment"}
 {"level":"fatal","ts":"2026-10-22T08:47:56.121Z","msg":"config: required environment variable NOTIFY_SMTP_RELAY_HOST is not set","caller":"config/load.go:58"}

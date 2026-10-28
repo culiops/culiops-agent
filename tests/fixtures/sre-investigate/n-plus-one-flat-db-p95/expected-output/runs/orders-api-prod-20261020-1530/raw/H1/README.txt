@@ -1,0 +1,1 @@
+Extracts of the H1 structural trace searches (one row per trace): incident 14:30-15:30 UTC (W4-Q1) and baseline 11:00-12:00 UTC (W4-Q2). The two fetched traces are summarised in the ledger rows W4-Q3 and W4-Q4.
