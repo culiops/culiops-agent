@@ -81,13 +81,14 @@ kubectl --context <context> -n <namespace> get events --sort-by=.lastTimestamp \
 kubectl --context <context> -n <namespace> get events --sort-by=.lastTimestamp \
   --field-selector involvedObject.kind=ReplicaSet
 kubectl --context <context> -n <namespace> get events --sort-by=.lastTimestamp \
-  --field-selector involvedObject.kind=Pod,type=Warning
+  --field-selector involvedObject.kind=Pod,type=Warning -o json \
+| jq -r '.items[] | [(.firstTimestamp // .eventTime), .lastTimestamp, (.count // .series.count // 1), .reason, .involvedObject.name, (.message // "" | .[:300])] | @tsv'
 ```
 <!-- doc: https://kubernetes.io/docs/reference/kubectl/generated/kubectl_rollout/kubectl_rollout_history/ -->
 <!-- doc: https://kubernetes.io/docs/reference/kubectl/generated/kubectl_get/ -->
 <!-- doc: https://kubernetes.io/docs/reference/kubectl/jsonpath/ -->
 
-Deployment events are mostly `ScalingReplicaSet`. The reasons live one level down: on the ReplicaSet (`FailedCreate`, for example a quota) and on its Pods (`FailedScheduling`, `Unhealthy`, `BackOff`, `Evicted`, `Killing`). Keep the rows whose object name starts with the ReplicaSet's name; restart counts and last termination reasons per pod are in the metrics playbook's container-status recipe. Events written through the `events.k8s.io` API can have an empty `lastTimestamp` and carry `eventTime` instead, so they sort first; read both columns before ordering them.
+Deployment events are mostly `ScalingReplicaSet`. The reasons live one level down: on the ReplicaSet (`FailedCreate`, for example a quota) and on its Pods (`FailedScheduling`, `Unhealthy`, `BackOff`, `Evicted`, `Killing`). Keep the rows whose object name starts with the ReplicaSet's name; restart counts and last termination reasons per pod are in the metrics playbook's container-status recipe. Events written through the `events.k8s.io` API can have an empty `lastTimestamp` and carry `eventTime` instead, so they sort first; read both columns before ordering them. The default table shows only the age of the last occurrence. A timing leg needs the first one, so print `firstTimestamp` (or `eventTime`, for events that have no `firstTimestamp`); both are RFC 3339 in UTC.
 <!-- doc: https://kubernetes.io/docs/reference/kubernetes-api/cluster-resources/event-v1/ -->
 
 A ReplicaSet's `creationTimestamp` is when that revision started rolling out. A new revision exists only when the Pod template changed; scaling never creates one. The Deployment keeps ten old ReplicaSets by default (`revisionHistoryLimit`), so older revisions may be gone.

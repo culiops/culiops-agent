@@ -4,7 +4,7 @@ A profile records how one service is named in each backend, so later runs do not
 
 Rules:
 
-- Every identifier is marked `(verified <date>)` after a query returned data for it, or `(unverified)` when it came from a guess, a doc or memory. Never promote a mark without a query.
+- Every identifier is marked `(verified <date>)` after a query returned data for it, or `(unverified)` when it came from a guess, a doc or memory. Never promote a mark without a query. A log label whose value differs from the service's name stays `(unverified)` until a query ties it to the service (shared pod or host names, or a trace or request ID present in both).
 - Identifiers are names, labels, ARNs, UIDs and paths. No tokens, passwords, cookie values or header values. Token variables are named in `environment.md`.
 - When logs, metrics and traces use different names for the same service, record each one separately.
 - Delete the guidance lines when you copy the file.
@@ -83,6 +83,6 @@ A third party in the path means the impact block says who to ask and through whi
 
 Identifiers that returned no data on a later run. They stay here until corrected or removed.
 
-| Identifier | Last run with no data | Note |
+| Identifier | Last empty run | Note |
 |---|---|---|
 | <identifier> | <run directory name> | <what was tried, what replaced it> |

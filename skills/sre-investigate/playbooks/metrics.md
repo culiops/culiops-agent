@@ -106,16 +106,17 @@ curl -sG "$PROM/api/v1/query_range" -H "Authorization: Bearer $GRAFANA_SERVICE_A
 ```
 <!-- doc: https://prometheus.io/docs/prometheus/latest/querying/functions/ -->
 
-**Baseline statistics.** Take the median, p95 and maximum over the 14 days of hourly points, leaving out the incident itself and every hour that was already at incident level (`$LEVEL`). The maximum is what "≥ 2× the 14-day max" is measured against.
+**Baseline statistics.** Take the median and p95 over the 14 days of hourly points, leaving out the incident itself and every hour that was already at incident level (`$LEVEL`, the incident's peak hourly value). Take the maximum over every hour before the incident, earlier spikes included: it is what "≥ 2× the 14-day max" is measured against, and leaving earlier spikes out would make a repeat look `sudden`.
 
 ```bash
 jq --argjson level "$LEVEL" --argjson inc "$START_S" '
   [.data.result[] | {s: (.metric.service // "all"),
+     all: [.values[] | select(.[0] < $inc) | (.[1] | tonumber)],
      v: [.values[] | select((.[0] < $inc) and ((.[1] | tonumber) < $level)) | (.[1] | tonumber)] | sort}]
   | map({series: .s, hours: (.v | length),
          median: (.v[((.v | length) / 2 | floor)]),
          p95: (.v[(((.v | length) * 0.95) | floor)]),
-         max: (.v | max)})' "$RUN/m-recur-14d.json"
+         max: (.all | max)})' "$RUN/m-recur-14d.json"
 ```
 <!-- doc: https://jqlang.org/manual/ -->
 
@@ -135,10 +136,10 @@ aws cloudwatch get-metric-data --profile <profile> --region <region> \
   --metric-data-queries "file://$RUN/q-recur-3600.json" \
   --start-time "$((START_S - 14*86400))" --end-time "$START_S" --output json > "$RUN/m-recur-14d-cw.json"
 jq --argjson levels "$LEVELS" '.MetricDataResults[] | .Id as $id
-  | {id: $id, status: .StatusCode, returned: (.Values | length),
+  | {id: $id, status: .StatusCode, returned: (.Values | length), all: .Values,
      v: ([.Values[] | select(. < ($levels[$id] // infinite))] | sort)}
   | {id, status, returned, hours: (.v | length), median: .v[((.v | length) / 2 | floor)],
-     p95: .v[(((.v | length) * 0.95) | floor)], max: (.v | max)}' "$RUN/m-recur-14d-cw.json"
+     p95: .v[(((.v | length) * 0.95) | floor)], max: (.all | max)}' "$RUN/m-recur-14d-cw.json"
 ```
 <!-- doc: https://docs.aws.amazon.com/cli/latest/reference/cloudwatch/get-metric-data.html -->
 <!-- doc: https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/using-metric-math.html -->

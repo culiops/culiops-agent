@@ -6,11 +6,12 @@ How to fill it in:
 
 - Times are shown in UTC and in the reader's local zone, taken from `environment.md`. If no zone is set there, ask; do not guess. Use two columns, or `HH:MM UTC (HH:MM local)`.
 - Labels are `Confirmed`, `Likely`, `Assumed` and `Ruled out`. A cause is never labelled more strongly than its weakest causal link, and the TL;DR names that link.
-- Fast mode writes the TL;DR first (also printed inline), then Impact, Causal chain, Gaps, To confirm and Cost. Deep mode fills every section.
+- Fast mode writes the TL;DR first (also printed inline), then Impact, Causal chain, Gaps, To confirm, Follow-ups and Cost. Deep mode fills every section.
 - The run changed nothing it investigated. Wherever a mutation would be needed, describe it in prose. Never paste a runnable command that changes state into `## To confirm, a human would…` or `## Follow-ups`. Only `## Gaps` may carry a command, and only a read-only one or a re-auth step the user runs themselves (see there). `## To confirm, a human would…` and `## Follow-ups` are prose only.
 - Delete the guidance lines when you copy the file; keep the headings exactly as written.
 
 Run: <run directory name> · Mode: <Fast | Deep> · Window: <incident window in UTC> (<same window in local zone>)
+Access: <profile or context>: <write-check result in the check's own words, for example "write-capable: s3:PutObject, ecs:UpdateService allowed", "read-only confirmed (simulation): none of the 10 broad write actions is allowed" or "write capability unknown (gap)">, one entry per profile and context
 
 ## TL;DR
 
