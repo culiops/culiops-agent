@@ -56,6 +56,8 @@ Source order: the SLO or error-budget burn named in `environment.md`, then load-
 | Baseline (previous) | <UTC, same length, immediately before> | <UTC> |
 | Baseline (−7d) | <UTC, incident window shifted back seven days> | <UTC> |
 
+Re-anchored: <no, or: from <old incident window> to <new incident window> at <UTC>, because <query ID> showed the true onset; previous, −7d and the recurrence pull moved with it>
+
 ## Recurrence
 
 Classify before blaming a change. Classes: `scheduled`, `chronic`, `recurring`, `sudden`, `unclassified`. Shapes seen in the signal: `step`, `ramp`, `periodic`, `ceiling`, `volume`.
