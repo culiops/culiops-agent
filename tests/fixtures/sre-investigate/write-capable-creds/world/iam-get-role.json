@@ -1,0 +1,10 @@
+{
+    "Role": {
+        "Path": "/",
+        "RoleName": "PlatformOperator",
+        "RoleId": "AROAEXAMPLEPLATFORM01",
+        "Arn": "arn:aws:iam::111122223333:role/PlatformOperator",
+        "CreateDate": "2025-06-11T13:20:05+00:00",
+        "MaxSessionDuration": 14400
+    }
+}

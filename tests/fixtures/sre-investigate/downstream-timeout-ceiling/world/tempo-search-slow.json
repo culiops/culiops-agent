@@ -1,0 +1,211 @@
+{
+  "traces": [
+    {
+      "traceID": "7f12392f6c6db147d23ef26a8a6cb548",
+      "rootServiceName": "catalog-api",
+      "rootTraceName": "GET /products/{id}",
+      "startTimeUnixNano": "1792749727000000000",
+      "durationMs": 5019,
+      "spanSets": [
+        {
+          "spans": [
+            {
+              "spanID": "030c553c4b82e8c5",
+              "name": "GET",
+              "startTimeUnixNano": "1792749727002100000",
+              "durationNanos": "5000844571",
+              "attributes": [
+                {
+                  "key": "server.address",
+                  "value": {
+                    "stringValue": "api.pricing.example.com"
+                  }
+                },
+                {
+                  "key": "status",
+                  "value": {
+                    "stringValue": "error"
+                  }
+                },
+                {
+                  "key": "error.type",
+                  "value": {
+                    "stringValue": "context deadline exceeded"
+                  }
+                }
+              ]
+            }
+          ],
+          "matched": 1
+        }
+      ]
+    },
+    {
+      "traceID": "a9d2158c65719bbd0e69aac2253f5d34",
+      "rootServiceName": "catalog-api",
+      "rootTraceName": "GET /products/{id}",
+      "startTimeUnixNano": "1792749912000000000",
+      "durationMs": 5026,
+      "spanSets": [
+        {
+          "spans": [
+            {
+              "spanID": "46d9a6ff794a90ec",
+              "name": "GET",
+              "startTimeUnixNano": "1792749912002100000",
+              "durationNanos": "5000336490",
+              "attributes": [
+                {
+                  "key": "server.address",
+                  "value": {
+                    "stringValue": "api.pricing.example.com"
+                  }
+                },
+                {
+                  "key": "status",
+                  "value": {
+                    "stringValue": "error"
+                  }
+                },
+                {
+                  "key": "error.type",
+                  "value": {
+                    "stringValue": "context deadline exceeded"
+                  }
+                }
+              ]
+            }
+          ],
+          "matched": 1
+        }
+      ]
+    },
+    {
+      "traceID": "80ebfc73a94a8d6c6dc34eb21dbf6d87",
+      "rootServiceName": "catalog-api",
+      "rootTraceName": "GET /products/{id}",
+      "startTimeUnixNano": "1792750121000000000",
+      "durationMs": 5011,
+      "spanSets": [
+        {
+          "spans": [
+            {
+              "spanID": "9725d3266cb87e7d",
+              "name": "GET",
+              "startTimeUnixNano": "1792750121002100000",
+              "durationNanos": "5000496351",
+              "attributes": [
+                {
+                  "key": "server.address",
+                  "value": {
+                    "stringValue": "api.pricing.example.com"
+                  }
+                },
+                {
+                  "key": "status",
+                  "value": {
+                    "stringValue": "error"
+                  }
+                },
+                {
+                  "key": "error.type",
+                  "value": {
+                    "stringValue": "context deadline exceeded"
+                  }
+                }
+              ]
+            }
+          ],
+          "matched": 1
+        }
+      ]
+    },
+    {
+      "traceID": "e718a195d77b399951b3d7038bb2802c",
+      "rootServiceName": "catalog-api",
+      "rootTraceName": "GET /products/{id}",
+      "startTimeUnixNano": "1792750288000000000",
+      "durationMs": 5033,
+      "spanSets": [
+        {
+          "spans": [
+            {
+              "spanID": "b0aaf77f36da7abb",
+              "name": "GET",
+              "startTimeUnixNano": "1792750288002100000",
+              "durationNanos": "5000452826",
+              "attributes": [
+                {
+                  "key": "server.address",
+                  "value": {
+                    "stringValue": "api.pricing.example.com"
+                  }
+                },
+                {
+                  "key": "status",
+                  "value": {
+                    "stringValue": "error"
+                  }
+                },
+                {
+                  "key": "error.type",
+                  "value": {
+                    "stringValue": "context deadline exceeded"
+                  }
+                }
+              ]
+            }
+          ],
+          "matched": 1
+        }
+      ]
+    },
+    {
+      "traceID": "e8cf36150ce209ebd4c1e9d67f928fa8",
+      "rootServiceName": "catalog-api",
+      "rootTraceName": "GET /products/{id}",
+      "startTimeUnixNano": "1792750498000000000",
+      "durationMs": 5035,
+      "spanSets": [
+        {
+          "spans": [
+            {
+              "spanID": "950c41621955615f",
+              "name": "GET",
+              "startTimeUnixNano": "1792750498002100000",
+              "durationNanos": "5000614681",
+              "attributes": [
+                {
+                  "key": "server.address",
+                  "value": {
+                    "stringValue": "api.pricing.example.com"
+                  }
+                },
+                {
+                  "key": "status",
+                  "value": {
+                    "stringValue": "error"
+                  }
+                },
+                {
+                  "key": "error.type",
+                  "value": {
+                    "stringValue": "context deadline exceeded"
+                  }
+                }
+              ]
+            }
+          ],
+          "matched": 1
+        }
+      ]
+    }
+  ],
+  "metrics": {
+    "inspectedTraces": 48211,
+    "inspectedBytes": "9821114880",
+    "totalBlocks": 11,
+    "completedJobs": 32,
+    "totalJobs": 32
+  }
+}

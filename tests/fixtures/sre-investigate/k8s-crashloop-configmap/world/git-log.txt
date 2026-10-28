@@ -1,0 +1,11 @@
+commit 3f9a1c2e7b8d4f60a1b2c3d4e5f60718293a4b5c
+Author: platform-dev <platform-dev@example.com>
+Date:   Thu Oct 22 08:03:41 2026 +0000
+
+    notify-worker: align config key names with the shared SMTP chart (#214)
+
+commit 9e8d7c6b5a4f3e2d1c0b9a8f7e6d5c4b3a2f1e0d
+Author: platform-dev <platform-dev@example.com>
+Date:   Wed Oct 7 09:51:09 2026 +0000
+
+    notify-worker: raise concurrency to 8 (#201)

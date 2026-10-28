@@ -1,0 +1,13 @@
+Resources                                       Non-Resource URLs   Resource Names   Verbs
+selfsubjectreviews.authentication.k8s.io        []                  []               [create]
+selfsubjectaccessreviews.authorization.k8s.io   []                  []               [create]
+selfsubjectrulesreviews.authorization.k8s.io    []                  []               [create]
+*.*                                             []                  []               [get list watch]
+                                                [/api/*]            []               [get]
+                                                [/api]              []               [get]
+                                                [/apis/*]           []               [get]
+                                                [/apis]             []               [get]
+                                                [/healthz]          []               [get]
+                                                [/livez]            []               [get]
+                                                [/readyz]           []               [get]
+                                                [/version]          []               [get]

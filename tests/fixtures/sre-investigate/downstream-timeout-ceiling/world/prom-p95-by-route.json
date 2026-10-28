@@ -1,0 +1,58 @@
+{
+  "status": "success",
+  "data": {
+    "resultType": "vector",
+    "result": [
+      {
+        "metric": {
+          "service": "catalog-api",
+          "route": "/products/{id}"
+        },
+        "value": [
+          1792750800,
+          "4.968"
+        ]
+      },
+      {
+        "metric": {
+          "service": "catalog-api",
+          "route": "/search"
+        },
+        "value": [
+          1792750800,
+          "0.381"
+        ]
+      },
+      {
+        "metric": {
+          "service": "catalog-api",
+          "route": "/products/{id}/reviews"
+        },
+        "value": [
+          1792750800,
+          "0.214"
+        ]
+      },
+      {
+        "metric": {
+          "service": "catalog-api",
+          "route": "/categories"
+        },
+        "value": [
+          1792750800,
+          "0.083"
+        ]
+      },
+      {
+        "metric": {
+          "service": "catalog-api",
+          "route": "/healthz"
+        },
+        "value": [
+          1792750800,
+          "0.004"
+        ]
+      }
+    ]
+  }
+}

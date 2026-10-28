@@ -1,0 +1,26 @@
+{
+    "Rules": [
+        {
+            "Name": "orders-reconcile-nightly",
+            "Arn": "arn:aws:events:us-east-1:111122223333:rule/orders-reconcile-nightly",
+            "State": "ENABLED",
+            "Description": "Nightly ledger reconciliation of the orders table",
+            "ScheduleExpression": "cron(0 2 * * ? *)",
+            "EventBusName": "default"
+        },
+        {
+            "Name": "catalog-sitemap-weekly",
+            "Arn": "arn:aws:events:us-east-1:111122223333:rule/catalog-sitemap-weekly",
+            "State": "ENABLED",
+            "ScheduleExpression": "cron(30 3 ? * SUN *)",
+            "EventBusName": "default"
+        },
+        {
+            "Name": "orders-api-ecs-task-state",
+            "Arn": "arn:aws:events:us-east-1:111122223333:rule/orders-api-ecs-task-state",
+            "State": "ENABLED",
+            "EventPattern": "{\"source\":[\"aws.ecs\"],\"detail-type\":[\"ECS Task State Change\"]}",
+            "EventBusName": "default"
+        }
+    ]
+}

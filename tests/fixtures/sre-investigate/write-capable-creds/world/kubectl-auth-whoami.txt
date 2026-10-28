@@ -1,0 +1,4 @@
+ATTRIBUTE                                           VALUE
+Username                                            arn:aws:sts::111122223333:assumed-role/PlatformOperator/oncall@example.com
+UID                                                 aws-iam-authenticator:111122223333:AROAEXAMPLEPLATFORM01
+Groups                                              [eks-readonly system:authenticated]

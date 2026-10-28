@@ -1,0 +1,68 @@
+{
+  "url": "https://api.github.com/repos/example-org/orders-api/compare/v2.14.0...v2.15.0",
+  "status": "ahead",
+  "ahead_by": 3,
+  "behind_by": 0,
+  "total_commits": 3,
+  "commits": [
+    {
+      "sha": "3f9d6a1000000000000000000000000000000000",
+      "commit": {
+        "author": {
+          "name": "orders-team",
+          "email": "orders-team@example.com",
+          "date": "2026-10-16T09:00:00Z"
+        },
+        "message": "deps: bump structlog to 25.4.0 (#2203)"
+      }
+    },
+    {
+      "sha": "7be20d4000000000000000000000000000000000",
+      "commit": {
+        "author": {
+          "name": "orders-team",
+          "email": "orders-team@example.com",
+          "date": "2026-10-19T09:00:00Z"
+        },
+        "message": "orders: return shipment ETA on order detail (#2208)"
+      }
+    },
+    {
+      "sha": "a4c1e9b000000000000000000000000000000000",
+      "commit": {
+        "author": {
+          "name": "orders-team",
+          "email": "orders-team@example.com",
+          "date": "2026-10-19T09:00:00Z"
+        },
+        "message": "orders: load items per order in list handler (#2211)"
+      }
+    }
+  ],
+  "files": [
+    {
+      "filename": "orders_api/handlers/list_orders.py",
+      "status": "modified",
+      "additions": 4,
+      "deletions": 1,
+      "changes": 5,
+      "patch": "@@ -14,12 +14,15 @@ def list_orders(request, repo: OrdersRepository):\n     customer_id = request.auth.customer_id\n     limit = min(int(request.query.get(\"limit\", 50)), 50)\n \n-    orders = repo.list_orders_with_items(customer_id, limit=limit)\n+    orders = repo.list_orders(customer_id, limit=limit)\n+    # items are loaded separately so the list view can show per-item status\n+    for order in orders:\n+        order.items = repo.list_items(order.id)\n \n     return {\n         \"orders\": [serialize_order(o, include_items=True) for o in orders],\n         \"next\": orders[-1].id if len(orders) == limit else None,\n     }"
+    },
+    {
+      "filename": "orders_api/handlers/order_detail.py",
+      "status": "modified",
+      "additions": 1,
+      "deletions": 0,
+      "changes": 1,
+      "patch": "@@ -22,6 +22,7 @@ def order_detail(request, repo: OrdersRepository, order_id: str):\n     return {\n         \"order\": serialize_order(order, include_items=True),\n+        \"shipment_eta\": order.shipment_eta.isoformat() if order.shipment_eta else None,\n     }"
+    },
+    {
+      "filename": "pyproject.toml",
+      "status": "modified",
+      "additions": 1,
+      "deletions": 1,
+      "changes": 2,
+      "patch": "@@ -11,7 +11,7 @@ dependencies = [\n     \"psycopg[binary]==3.2.10\",\n-    \"structlog==25.3.0\",\n+    \"structlog==25.4.0\",\n     \"uvicorn==0.37.0\",\n ]"
+    }
+  ]
+}

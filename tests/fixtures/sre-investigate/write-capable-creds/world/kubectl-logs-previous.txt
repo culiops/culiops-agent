@@ -1,0 +1,3 @@
+{"level":"info","ts":"2026-10-24T11:25:56.102Z","msg":"payments-worker 5.2.0 starting","pid":1}
+{"level":"info","ts":"2026-10-24T11:25:56.118Z","msg":"loading configuration from environment"}
+{"level":"fatal","ts":"2026-10-24T11:25:56.121Z","msg":"config: required environment variable LEDGER_API_BASE_URL is not set","caller":"config/load.go:58"}

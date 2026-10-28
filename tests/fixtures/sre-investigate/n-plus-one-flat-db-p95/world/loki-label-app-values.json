@@ -1,0 +1,4 @@
+{
+  "status": "success",
+  "data": ["catalog-api", "notify-worker", "orders", "orders-reconcile", "payments-worker"]
+}

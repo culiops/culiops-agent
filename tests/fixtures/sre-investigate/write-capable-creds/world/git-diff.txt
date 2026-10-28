@@ -1,0 +1,12 @@
+diff --git a/charts/payments-worker/values-prod.yaml b/charts/payments-worker/values-prod.yaml
+index 4b8e2d1..c19f7a0 100644
+--- a/charts/payments-worker/values-prod.yaml
++++ b/charts/payments-worker/values-prod.yaml
+@@ -9,7 +9,7 @@ config:
+   PAYMENTS_CURRENCY_DEFAULT: EUR
+   PAYMENTS_QUEUE_URL: https://sqs.us-east-1.amazonaws.com/111122223333/payments-jobs
+-  LEDGER_API_BASE_URL: https://ledger.internal.example.org/v2
++  LEDGER_BASE_URL: https://ledger.internal.example.org/v2
+   PAYMENTS_WORKER_CONCURRENCY: "8"
+ 
+ resources:

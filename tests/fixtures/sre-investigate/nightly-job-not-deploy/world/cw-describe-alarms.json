@@ -1,0 +1,39 @@
+{
+    "MetricAlarms": [
+        {
+            "AlarmName": "orders-api-5xx-high",
+            "AlarmArn": "arn:aws:cloudwatch:us-east-1:111122223333:alarm:orders-api-5xx-high",
+            "AlarmDescription": "orders-api target 5xx above 25/min",
+            "ActionsEnabled": true,
+            "AlarmActions": [
+                "arn:aws:sns:us-east-1:111122223333:oncall-page"
+            ],
+            "OKActions": [
+                "arn:aws:sns:us-east-1:111122223333:oncall-page"
+            ],
+            "StateValue": "OK",
+            "StateReason": "Threshold Crossed: 2 out of the last 3 datapoints [21.0 (21/10/26 02:11:00), 23.0 (21/10/26 02:10:00)] were not greater than the threshold (25.0) (minimum 2 datapoints for ALARM -> OK transition).",
+            "StateUpdatedTimestamp": "2026-10-21T11:12:00.377000+09:00",
+            "MetricName": "HTTPCode_Target_5XX_Count",
+            "Namespace": "AWS/ApplicationELB",
+            "Statistic": "Sum",
+            "Dimensions": [
+                {
+                    "Name": "TargetGroup",
+                    "Value": "targetgroup/orders-api/943f017f100becff"
+                },
+                {
+                    "Name": "LoadBalancer",
+                    "Value": "app/prod-public/50dc6c495c0c9188"
+                }
+            ],
+            "Period": 60,
+            "EvaluationPeriods": 3,
+            "DatapointsToAlarm": 2,
+            "Threshold": 25.0,
+            "ComparisonOperator": "GreaterThanThreshold",
+            "TreatMissingData": "notBreaching"
+        }
+    ],
+    "CompositeAlarms": []
+}

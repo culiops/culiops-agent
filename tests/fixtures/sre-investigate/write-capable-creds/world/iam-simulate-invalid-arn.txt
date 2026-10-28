@@ -1,0 +1,2 @@
+
+An error occurred (InvalidInput) when calling the SimulatePrincipalPolicy operation: Invalid Entity Arn: arn:aws:sts::111122223333:assumed-role/PlatformOperator/oncall@example.com does not clearly define entity type and name.

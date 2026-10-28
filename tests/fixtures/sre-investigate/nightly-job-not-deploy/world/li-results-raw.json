@@ -1,0 +1,14 @@
+{
+    "results": [
+        [{"field": "@timestamp", "value": "2026-10-21 02:01:13.208"}, {"field": "@message", "value": "{\"level\":\"error\",\"status\":500,\"route\":\"POST /orders\",\"error_code\":\"ER_LOCK_WAIT_TIMEOUT\",\"msg\":\"insert order_lines: Lock wait timeout exceeded; try restarting transaction\",\"duration_ms\":50021,\"ecs_task_revision\":42}"}],
+        [{"field": "@timestamp", "value": "2026-10-21 02:02:41.877"}, {"field": "@message", "value": "{\"level\":\"error\",\"status\":500,\"route\":\"PATCH /orders/{id}\",\"error_code\":\"ER_LOCK_WAIT_TIMEOUT\",\"msg\":\"update orders set status: Lock wait timeout exceeded; try restarting transaction\",\"duration_ms\":50008,\"ecs_task_revision\":42}"}],
+        [{"field": "@timestamp", "value": "2026-10-21 02:04:05.390"}, {"field": "@message", "value": "{\"level\":\"error\",\"status\":500,\"route\":\"POST /orders\",\"error_code\":\"ER_LOCK_WAIT_TIMEOUT\",\"msg\":\"insert order_lines: Lock wait timeout exceeded; try restarting transaction\",\"duration_ms\":50017,\"ecs_task_revision\":42}"}],
+        [{"field": "@timestamp", "value": "2026-10-21 02:05:52.114"}, {"field": "@message", "value": "{\"level\":\"warn\",\"status\":200,\"route\":\"GET /orders\",\"msg\":\"slow request\",\"duration_ms\":8120,\"ecs_task_revision\":42}"}],
+        [{"field": "@timestamp", "value": "2026-10-21 02:07:30.662"}, {"field": "@message", "value": "{\"level\":\"error\",\"status\":502,\"route\":\"POST /orders\",\"error_code\":\"ECONNRESET\",\"msg\":\"payments call reset by peer\",\"duration_ms\":312,\"ecs_task_revision\":42}"}],
+        [{"field": "@timestamp", "value": "2026-10-21 02:10:18.045"}, {"field": "@message", "value": "{\"level\":\"error\",\"status\":500,\"route\":\"POST /orders\",\"error_code\":\"ER_LOCK_WAIT_TIMEOUT\",\"msg\":\"insert order_lines: Lock wait timeout exceeded; try restarting transaction\",\"duration_ms\":50030,\"ecs_task_revision\":42}"}],
+        [{"field": "@timestamp", "value": "2026-10-21 02:14:47.903"}, {"field": "@message", "value": "{\"level\":\"error\",\"status\":500,\"route\":\"PATCH /orders/{id}\",\"error_code\":\"ER_LOCK_WAIT_TIMEOUT\",\"msg\":\"update orders set status: Lock wait timeout exceeded; try restarting transaction\",\"duration_ms\":50011,\"ecs_task_revision\":42}"}],
+        [{"field": "@timestamp", "value": "2026-10-21 02:19:02.551"}, {"field": "@message", "value": "{\"level\":\"error\",\"status\":500,\"route\":\"POST /orders\",\"error_code\":\"ER_LOCK_WAIT_TIMEOUT\",\"msg\":\"insert order_lines: Lock wait timeout exceeded; try restarting transaction\",\"duration_ms\":50004,\"ecs_task_revision\":42}"}]
+    ],
+    "statistics": {"recordsMatched": 438.0, "recordsScanned": 1702114.0, "estimatedRecordsSkipped": 0.0, "bytesScanned": 481221632.0, "estimatedBytesSkipped": 0.0, "logGroupsScanned": 1.0},
+    "status": "Complete"
+}

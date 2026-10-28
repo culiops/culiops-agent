@@ -1,0 +1,22 @@
+{
+    "logGroups": [
+        {
+            "logGroupName": "/ecs/orders-api",
+            "creationTime": 1730709679220,
+            "retentionInDays": 30,
+            "metricFilterCount": 0,
+            "arn": "arn:aws:logs:us-east-1:111122223333:log-group:/ecs/orders-api:*",
+            "storedBytes": 64424509440,
+            "logGroupClass": "STANDARD"
+        },
+        {
+            "logGroupName": "/ecs/orders-reconcile",
+            "creationTime": 1759197611004,
+            "retentionInDays": 30,
+            "metricFilterCount": 0,
+            "arn": "arn:aws:logs:us-east-1:111122223333:log-group:/ecs/orders-reconcile:*",
+            "storedBytes": 1073741824,
+            "logGroupClass": "STANDARD"
+        }
+    ]
+}

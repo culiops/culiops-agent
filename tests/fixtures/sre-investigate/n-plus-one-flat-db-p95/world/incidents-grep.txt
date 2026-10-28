@@ -1,0 +1,3 @@
+.culiops/sre-investigate/incidents/2026-08-14-orders-api.md:service: orders-api
+.culiops/sre-investigate/incidents/2026-08-14-orders-api.md:symptoms: [latency, p95, "GET /orders", "POST /orders"]
+.culiops/sre-investigate/incidents/2026-08-14-orders-api.md:deps: [orders-db]

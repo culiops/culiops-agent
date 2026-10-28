@@ -1,0 +1,5 @@
+{
+    "UserId": "AROAEXAMPLEPLATFORM01:oncall@example.com",
+    "Account": "111122223333",
+    "Arn": "arn:aws:sts::111122223333:assumed-role/PlatformOperator/oncall@example.com"
+}

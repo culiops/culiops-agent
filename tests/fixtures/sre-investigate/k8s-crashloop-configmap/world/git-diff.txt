@@ -1,0 +1,12 @@
+diff --git a/charts/notify-worker/values-prod.yaml b/charts/notify-worker/values-prod.yaml
+index 4b8e2d1..c19f7a0 100644
+--- a/charts/notify-worker/values-prod.yaml
++++ b/charts/notify-worker/values-prod.yaml
+@@ -9,7 +9,7 @@ config:
+   NOTIFY_FROM_ADDRESS: noreply@example.org
+   NOTIFY_QUEUE_URL: https://sqs.us-east-1.amazonaws.com/111122223333/notify-outbound
+-  NOTIFY_SMTP_RELAY_HOST: relay-01.mail.example.org:2525
++  SMTP_RELAY_HOST: relay-01.mail.example.org:2525
+   NOTIFY_WORKER_CONCURRENCY: "8"
+ 
+ resources:

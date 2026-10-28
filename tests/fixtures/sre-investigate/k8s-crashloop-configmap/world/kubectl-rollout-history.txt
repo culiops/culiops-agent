@@ -1,0 +1,4 @@
+deployment.apps/notify-worker
+REVISION  CHANGE-CAUSE
+6         <none>
+7         <none>

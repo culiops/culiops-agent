@@ -1,0 +1,37 @@
+diff --git a/orders_api/handlers/list_orders.py b/orders_api/handlers/list_orders.py
+index 6d1e2a4..b83f0c7 100644
+--- a/orders_api/handlers/list_orders.py
++++ b/orders_api/handlers/list_orders.py
+@@ -14,12 +14,15 @@ def list_orders(request, repo: OrdersRepository):
+     customer_id = request.auth.customer_id
+     limit = min(int(request.query.get("limit", 50)), 50)
+ 
+-    orders = repo.list_orders_with_items(customer_id, limit=limit)
++    orders = repo.list_orders(customer_id, limit=limit)
++    # items are loaded separately so the list view can show per-item status
++    for order in orders:
++        order.items = repo.list_items(order.id)
+ 
+     return {
+         "orders": [serialize_order(o, include_items=True) for o in orders],
+         "next": orders[-1].id if len(orders) == limit else None,
+     }
+diff --git a/orders_api/handlers/order_detail.py b/orders_api/handlers/order_detail.py
+index 0c4b1d9..e27a5f3 100644
+--- a/orders_api/handlers/order_detail.py
++++ b/orders_api/handlers/order_detail.py
+@@ -22,6 +22,7 @@ def order_detail(request, repo: OrdersRepository, order_id: str):
+     return {
+         "order": serialize_order(order, include_items=True),
++        "shipment_eta": order.shipment_eta.isoformat() if order.shipment_eta else None,
+     }
+diff --git a/pyproject.toml b/pyproject.toml
+index 91aa0e2..4f7c3b8 100644
+--- a/pyproject.toml
++++ b/pyproject.toml
+@@ -11,7 +11,7 @@ dependencies = [
+     "psycopg[binary]==3.2.10",
+-    "structlog==25.3.0",
++    "structlog==25.4.0",
+     "uvicorn==0.37.0",
+ ]

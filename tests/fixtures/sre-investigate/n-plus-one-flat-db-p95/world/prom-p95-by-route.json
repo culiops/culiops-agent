@@ -1,0 +1,63 @@
+{
+  "status": "success",
+  "data": {
+    "resultType": "vector",
+    "result": [
+      {
+        "metric": {
+          "service": "orders-api",
+          "method": "GET",
+          "route": "/orders"
+        },
+        "value": [
+          1792510200,
+          "0.712"
+        ]
+      },
+      {
+        "metric": {
+          "service": "orders-api",
+          "method": "GET",
+          "route": "/orders/{id}"
+        },
+        "value": [
+          1792510200,
+          "0.064"
+        ]
+      },
+      {
+        "metric": {
+          "service": "orders-api",
+          "method": "POST",
+          "route": "/orders"
+        },
+        "value": [
+          1792510200,
+          "0.142"
+        ]
+      },
+      {
+        "metric": {
+          "service": "orders-api",
+          "method": "PATCH",
+          "route": "/orders/{id}"
+        },
+        "value": [
+          1792510200,
+          "0.088"
+        ]
+      },
+      {
+        "metric": {
+          "service": "orders-api",
+          "method": "GET",
+          "route": "/healthz"
+        },
+        "value": [
+          1792510200,
+          "0.003"
+        ]
+      }
+    ]
+  }
+}

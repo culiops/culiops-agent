@@ -1,0 +1,75 @@
+{
+    "EvaluationResults": [
+        {
+            "EvalActionName": "s3:PutObject",
+            "EvalResourceName": "*",
+            "EvalDecision": "implicitDeny",
+            "MatchedStatements": [],
+            "MissingContextValues": []
+        },
+        {
+            "EvalActionName": "s3:DeleteObject",
+            "EvalResourceName": "*",
+            "EvalDecision": "implicitDeny",
+            "MatchedStatements": [],
+            "MissingContextValues": []
+        },
+        {
+            "EvalActionName": "ec2:TerminateInstances",
+            "EvalResourceName": "*",
+            "EvalDecision": "implicitDeny",
+            "MatchedStatements": [],
+            "MissingContextValues": []
+        },
+        {
+            "EvalActionName": "ec2:ModifyInstanceAttribute",
+            "EvalResourceName": "*",
+            "EvalDecision": "implicitDeny",
+            "MatchedStatements": [],
+            "MissingContextValues": []
+        },
+        {
+            "EvalActionName": "ecs:UpdateService",
+            "EvalResourceName": "*",
+            "EvalDecision": "implicitDeny",
+            "MatchedStatements": [],
+            "MissingContextValues": []
+        },
+        {
+            "EvalActionName": "ecs:StopTask",
+            "EvalResourceName": "*",
+            "EvalDecision": "implicitDeny",
+            "MatchedStatements": [],
+            "MissingContextValues": []
+        },
+        {
+            "EvalActionName": "iam:PutRolePolicy",
+            "EvalResourceName": "*",
+            "EvalDecision": "implicitDeny",
+            "MatchedStatements": [],
+            "MissingContextValues": []
+        },
+        {
+            "EvalActionName": "iam:AttachRolePolicy",
+            "EvalResourceName": "*",
+            "EvalDecision": "implicitDeny",
+            "MatchedStatements": [],
+            "MissingContextValues": []
+        },
+        {
+            "EvalActionName": "rds:ModifyDBInstance",
+            "EvalResourceName": "*",
+            "EvalDecision": "implicitDeny",
+            "MatchedStatements": [],
+            "MissingContextValues": []
+        },
+        {
+            "EvalActionName": "lambda:UpdateFunctionCode",
+            "EvalResourceName": "*",
+            "EvalDecision": "implicitDeny",
+            "MatchedStatements": [],
+            "MissingContextValues": []
+        }
+    ],
+    "IsTruncated": false
+}

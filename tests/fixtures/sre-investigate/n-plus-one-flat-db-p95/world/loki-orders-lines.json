@@ -1,0 +1,55 @@
+{
+  "status": "success",
+  "data": {
+    "resultType": "streams",
+    "result": [
+      {
+        "stream": {
+          "app": "orders",
+          "namespace": "orders",
+          "container": "api"
+        },
+        "values": [
+          [
+            "1792509488256000000",
+            "level=info msg=\"request completed\" method=GET path=/orders status=200 duration_ms=380 page_size=50"
+          ],
+          [
+            "1792509508894000000",
+            "level=info msg=\"request completed\" method=GET path=/orders status=200 duration_ms=311 page_size=50"
+          ],
+          [
+            "1792509511537000000",
+            "level=info msg=\"request completed\" method=GET path=/orders status=200 duration_ms=286 page_size=50"
+          ],
+          [
+            "1792509535704000000",
+            "level=info msg=\"request completed\" method=GET path=/orders status=200 duration_ms=751 page_size=50"
+          ],
+          [
+            "1792509542312000000",
+            "level=info msg=\"request completed\" method=GET path=/orders status=200 duration_ms=474 page_size=50"
+          ],
+          [
+            "1792509564759000000",
+            "level=info msg=\"request completed\" method=GET path=/orders status=200 duration_ms=703 page_size=50"
+          ],
+          [
+            "1792509586244000000",
+            "level=info msg=\"request completed\" method=GET path=/orders status=200 duration_ms=576 page_size=50"
+          ],
+          [
+            "1792509589482000000",
+            "level=info msg=\"request completed\" method=GET path=/orders status=200 duration_ms=484 page_size=50"
+          ]
+        ]
+      }
+    ],
+    "stats": {
+      "summary": {
+        "totalBytesProcessed": 48211904,
+        "execTime": 0.41
+      }
+    }
+  }
+}

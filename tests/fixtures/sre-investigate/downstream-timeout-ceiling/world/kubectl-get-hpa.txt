@@ -1,0 +1,2 @@
+NAME          REFERENCE                TARGETS   MINPODS   MAXPODS   REPLICAS   AGE
+catalog-api   Deployment/catalog-api   58/40     4         12        6          211d

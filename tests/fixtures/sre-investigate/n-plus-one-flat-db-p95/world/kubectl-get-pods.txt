@@ -1,0 +1,4 @@
+NAME                          READY   STATUS    RESTARTS   AGE
+orders-api-7c9b6d8f5d-4kq2m   1/1     Running   0          145m
+orders-api-7c9b6d8f5d-9vx7t   1/1     Running   0          144m
+orders-api-7c9b6d8f5d-tz5wp   1/1     Running   0          144m

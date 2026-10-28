@@ -1,0 +1,335 @@
+{
+  "series": [
+    {
+      "labels": [
+        {
+          "key": "span.server.address",
+          "value": {
+            "stringValue": "api.pricing.example.com"
+          }
+        }
+      ],
+      "samples": [
+        {
+          "timestampMs": "1792141200000",
+          "value": 0.232
+        },
+        {
+          "timestampMs": "1792141500000",
+          "value": 0.2027
+        },
+        {
+          "timestampMs": "1792141800000",
+          "value": 0.1931
+        },
+        {
+          "timestampMs": "1792142100000",
+          "value": 0.2152
+        },
+        {
+          "timestampMs": "1792142400000",
+          "value": 0.2221
+        },
+        {
+          "timestampMs": "1792142700000",
+          "value": 0.2034
+        },
+        {
+          "timestampMs": "1792143000000",
+          "value": 0.2203
+        },
+        {
+          "timestampMs": "1792143300000",
+          "value": 0.2178
+        },
+        {
+          "timestampMs": "1792143600000",
+          "value": 0.1925
+        },
+        {
+          "timestampMs": "1792143900000",
+          "value": 0.2335
+        },
+        {
+          "timestampMs": "1792144200000",
+          "value": 0.2239
+        },
+        {
+          "timestampMs": "1792144500000",
+          "value": 0.2237
+        },
+        {
+          "timestampMs": "1792144800000",
+          "value": 0.2077
+        },
+        {
+          "timestampMs": "1792145100000",
+          "value": 0.2085
+        },
+        {
+          "timestampMs": "1792145400000",
+          "value": 0.1914
+        },
+        {
+          "timestampMs": "1792145700000",
+          "value": 0.2311
+        },
+        {
+          "timestampMs": "1792146000000",
+          "value": 0.2178
+        }
+      ],
+      "promLabels": "{span.server.address=\"api.pricing.example.com\"}"
+    },
+    {
+      "labels": [
+        {
+          "key": "span.server.address",
+          "value": {
+            "stringValue": "reviews-api.catalog.svc.cluster.local"
+          }
+        }
+      ],
+      "samples": [
+        {
+          "timestampMs": "1792141200000",
+          "value": 0.0523
+        },
+        {
+          "timestampMs": "1792141500000",
+          "value": 0.0561
+        },
+        {
+          "timestampMs": "1792141800000",
+          "value": 0.0554
+        },
+        {
+          "timestampMs": "1792142100000",
+          "value": 0.0608
+        },
+        {
+          "timestampMs": "1792142400000",
+          "value": 0.0532
+        },
+        {
+          "timestampMs": "1792142700000",
+          "value": 0.0614
+        },
+        {
+          "timestampMs": "1792143000000",
+          "value": 0.0531
+        },
+        {
+          "timestampMs": "1792143300000",
+          "value": 0.0642
+        },
+        {
+          "timestampMs": "1792143600000",
+          "value": 0.0633
+        },
+        {
+          "timestampMs": "1792143900000",
+          "value": 0.0557
+        },
+        {
+          "timestampMs": "1792144200000",
+          "value": 0.0543
+        },
+        {
+          "timestampMs": "1792144500000",
+          "value": 0.0539
+        },
+        {
+          "timestampMs": "1792144800000",
+          "value": 0.0595
+        },
+        {
+          "timestampMs": "1792145100000",
+          "value": 0.0544
+        },
+        {
+          "timestampMs": "1792145400000",
+          "value": 0.0511
+        },
+        {
+          "timestampMs": "1792145700000",
+          "value": 0.0549
+        },
+        {
+          "timestampMs": "1792146000000",
+          "value": 0.0643
+        }
+      ],
+      "promLabels": "{span.server.address=\"reviews-api.catalog.svc.cluster.local\"}"
+    },
+    {
+      "labels": [
+        {
+          "key": "span.server.address",
+          "value": {
+            "stringValue": "catalog-db.internal.example.com"
+          }
+        }
+      ],
+      "samples": [
+        {
+          "timestampMs": "1792141200000",
+          "value": 0.0041
+        },
+        {
+          "timestampMs": "1792141500000",
+          "value": 0.0041
+        },
+        {
+          "timestampMs": "1792141800000",
+          "value": 0.0046
+        },
+        {
+          "timestampMs": "1792142100000",
+          "value": 0.004
+        },
+        {
+          "timestampMs": "1792142400000",
+          "value": 0.0037
+        },
+        {
+          "timestampMs": "1792142700000",
+          "value": 0.004
+        },
+        {
+          "timestampMs": "1792143000000",
+          "value": 0.0041
+        },
+        {
+          "timestampMs": "1792143300000",
+          "value": 0.0038
+        },
+        {
+          "timestampMs": "1792143600000",
+          "value": 0.0036
+        },
+        {
+          "timestampMs": "1792143900000",
+          "value": 0.0038
+        },
+        {
+          "timestampMs": "1792144200000",
+          "value": 0.004
+        },
+        {
+          "timestampMs": "1792144500000",
+          "value": 0.0044
+        },
+        {
+          "timestampMs": "1792144800000",
+          "value": 0.0046
+        },
+        {
+          "timestampMs": "1792145100000",
+          "value": 0.0046
+        },
+        {
+          "timestampMs": "1792145400000",
+          "value": 0.0043
+        },
+        {
+          "timestampMs": "1792145700000",
+          "value": 0.004
+        },
+        {
+          "timestampMs": "1792146000000",
+          "value": 0.0044
+        }
+      ],
+      "promLabels": "{span.server.address=\"catalog-db.internal.example.com\"}"
+    },
+    {
+      "labels": [
+        {
+          "key": "span.server.address",
+          "value": {
+            "stringValue": "catalog-cache.internal.example.com"
+          }
+        }
+      ],
+      "samples": [
+        {
+          "timestampMs": "1792141200000",
+          "value": 0.0011
+        },
+        {
+          "timestampMs": "1792141500000",
+          "value": 0.001
+        },
+        {
+          "timestampMs": "1792141800000",
+          "value": 0.0008
+        },
+        {
+          "timestampMs": "1792142100000",
+          "value": 0.0009
+        },
+        {
+          "timestampMs": "1792142400000",
+          "value": 0.0009
+        },
+        {
+          "timestampMs": "1792142700000",
+          "value": 0.0009
+        },
+        {
+          "timestampMs": "1792143000000",
+          "value": 0.0008
+        },
+        {
+          "timestampMs": "1792143300000",
+          "value": 0.0008
+        },
+        {
+          "timestampMs": "1792143600000",
+          "value": 0.0011
+        },
+        {
+          "timestampMs": "1792143900000",
+          "value": 0.0011
+        },
+        {
+          "timestampMs": "1792144200000",
+          "value": 0.001
+        },
+        {
+          "timestampMs": "1792144500000",
+          "value": 0.0008
+        },
+        {
+          "timestampMs": "1792144800000",
+          "value": 0.0008
+        },
+        {
+          "timestampMs": "1792145100000",
+          "value": 0.0008
+        },
+        {
+          "timestampMs": "1792145400000",
+          "value": 0.0009
+        },
+        {
+          "timestampMs": "1792145700000",
+          "value": 0.0008
+        },
+        {
+          "timestampMs": "1792146000000",
+          "value": 0.0008
+        }
+      ],
+      "promLabels": "{span.server.address=\"catalog-cache.internal.example.com\"}"
+    }
+  ],
+  "metrics": {
+    "inspectedBytes": "18734211072",
+    "totalJobs": 64,
+    "completedJobs": 64,
+    "totalBlocks": 22,
+    "completedBlocks": 22
+  }
+}

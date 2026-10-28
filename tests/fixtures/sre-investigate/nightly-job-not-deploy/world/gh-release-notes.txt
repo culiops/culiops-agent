@@ -1,0 +1,12 @@
+title:	orders-api 2026.10.21-1
+tag:	2026.10.21-1
+draft:	false
+prerelease:	false
+author:	release-bot
+created:	2026-10-21T01:18:02Z
+url:	https://github.com/example-org/orders-api/releases/tag/2026.10.21-1
+--
+## Changes
+- Order confirmation email: add estimated delivery date (#1182)
+- Bump http client library to 3.4.1 (#1185)
+- Admin: paginate order search results (#1187)

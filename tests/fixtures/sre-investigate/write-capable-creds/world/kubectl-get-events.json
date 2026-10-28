@@ -1,0 +1,182 @@
+{
+  "apiVersion": "v1",
+  "kind": "List",
+  "items": [
+    {
+      "apiVersion": "v1",
+      "kind": "Event",
+      "metadata": {
+        "name": "payments-worker.17f2a0c1",
+        "namespace": "payments"
+      },
+      "type": "Normal",
+      "reason": "ScalingReplicaSet",
+      "involvedObject": {
+        "kind": "Deployment",
+        "name": "payments-worker",
+        "namespace": "payments"
+      },
+      "message": "Scaled down replica set payments-worker-84c1e9d3f5 to 0 from 3",
+      "firstTimestamp": "2026-10-24T10:52:21Z",
+      "lastTimestamp": "2026-10-24T10:52:21Z",
+      "count": 1,
+      "source": {
+        "component": "deployment-controller"
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Event",
+      "metadata": {
+        "name": "payments-worker-84c1e9d3f5-2hm4v.17f2a0c3",
+        "namespace": "payments"
+      },
+      "type": "Normal",
+      "reason": "Killing",
+      "involvedObject": {
+        "kind": "Pod",
+        "name": "payments-worker-84c1e9d3f5-2hm4v",
+        "namespace": "payments"
+      },
+      "message": "Stopping container payments-worker",
+      "firstTimestamp": "2026-10-24T10:52:21Z",
+      "lastTimestamp": "2026-10-24T10:52:21Z",
+      "count": 1,
+      "source": {
+        "component": "kubelet"
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Event",
+      "metadata": {
+        "name": "payments-worker.17f2a0d9",
+        "namespace": "payments"
+      },
+      "type": "Normal",
+      "reason": "ScalingReplicaSet",
+      "involvedObject": {
+        "kind": "Deployment",
+        "name": "payments-worker",
+        "namespace": "payments"
+      },
+      "message": "Scaled up replica set payments-worker-6d4f8a2b7c to 3",
+      "firstTimestamp": "2026-10-24T10:52:33Z",
+      "lastTimestamp": "2026-10-24T10:52:33Z",
+      "count": 1,
+      "source": {
+        "component": "deployment-controller"
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Event",
+      "metadata": {
+        "name": "payments-worker-6d4f8a2b7c-8wq2d.17f2a0e0",
+        "namespace": "payments"
+      },
+      "type": "Normal",
+      "reason": "Scheduled",
+      "involvedObject": {
+        "kind": "Pod",
+        "name": "payments-worker-6d4f8a2b7c-8wq2d",
+        "namespace": "payments"
+      },
+      "message": "Successfully assigned payments/payments-worker-6d4f8a2b7c-8wq2d to ip-192-0-2-52.ec2.internal",
+      "firstTimestamp": "2026-10-24T10:52:33Z",
+      "lastTimestamp": "2026-10-24T10:52:33Z",
+      "count": 1,
+      "source": {
+        "component": "kubelet"
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Event",
+      "metadata": {
+        "name": "payments-worker-6d4f8a2b7c-8wq2d.17f2a0f4",
+        "namespace": "payments"
+      },
+      "type": "Normal",
+      "reason": "Started",
+      "involvedObject": {
+        "kind": "Pod",
+        "name": "payments-worker-6d4f8a2b7c-8wq2d",
+        "namespace": "payments"
+      },
+      "message": "Started container payments-worker",
+      "firstTimestamp": "2026-10-24T10:52:36Z",
+      "lastTimestamp": "2026-10-24T11:25:56Z",
+      "count": 12,
+      "source": {
+        "component": "kubelet"
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Event",
+      "metadata": {
+        "name": "payments-worker-6d4f8a2b7c-8wq2d.17f2a102",
+        "namespace": "payments"
+      },
+      "type": "Warning",
+      "reason": "BackOff",
+      "involvedObject": {
+        "kind": "Pod",
+        "name": "payments-worker-6d4f8a2b7c-8wq2d",
+        "namespace": "payments"
+      },
+      "message": "Back-off restarting failed container payments-worker in pod payments-worker-6d4f8a2b7c-8wq2d_payments(3f0e5a7c-1b2d-4e8f-9a0b-1c2d3e4f5a6b)",
+      "firstTimestamp": "2026-10-24T10:53:02Z",
+      "lastTimestamp": "2026-10-24T11:27:20Z",
+      "count": 151,
+      "source": {
+        "component": "kubelet"
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Event",
+      "metadata": {
+        "name": "payments-worker-6d4f8a2b7c-jt6kz.17f2a104",
+        "namespace": "payments"
+      },
+      "type": "Warning",
+      "reason": "BackOff",
+      "involvedObject": {
+        "kind": "Pod",
+        "name": "payments-worker-6d4f8a2b7c-jt6kz",
+        "namespace": "payments"
+      },
+      "message": "Back-off restarting failed container payments-worker in pod payments-worker-6d4f8a2b7c-jt6kz_payments(8a41b2c3-d4e5-4f60-8172-93a4b5c6d7e8)",
+      "firstTimestamp": "2026-10-24T10:53:03Z",
+      "lastTimestamp": "2026-10-24T11:27:38Z",
+      "count": 149,
+      "source": {
+        "component": "kubelet"
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Event",
+      "metadata": {
+        "name": "payments-worker-6d4f8a2b7c-x4p9n.17f2a107",
+        "namespace": "payments"
+      },
+      "type": "Warning",
+      "reason": "BackOff",
+      "involvedObject": {
+        "kind": "Pod",
+        "name": "payments-worker-6d4f8a2b7c-x4p9n",
+        "namespace": "payments"
+      },
+      "message": "Back-off restarting failed container payments-worker in pod payments-worker-6d4f8a2b7c-x4p9n_payments(c7d2e3f4-a5b6-4c7d-8e9f-0a1b2c3d4e5f)",
+      "firstTimestamp": "2026-10-24T10:53:05Z",
+      "lastTimestamp": "2026-10-24T11:27:51Z",
+      "count": 150,
+      "source": {
+        "component": "kubelet"
+      }
+    }
+  ]
+}

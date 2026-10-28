@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: payments-worker-config
+  namespace: payments
+  labels:
+    app.kubernetes.io/instance: payments-worker
+    app.kubernetes.io/managed-by: Helm
+  annotations:
+    meta.helm.sh/release-name: payments-worker
+    meta.helm.sh/release-namespace: payments
+data:
+  PAYMENTS_CURRENCY_DEFAULT: EUR
+  PAYMENTS_QUEUE_URL: https://sqs.us-east-1.amazonaws.com/111122223333/payments-jobs
+  PAYMENTS_WORKER_CONCURRENCY: "8"
+  LEDGER_BASE_URL: https://ledger.internal.example.org/v2

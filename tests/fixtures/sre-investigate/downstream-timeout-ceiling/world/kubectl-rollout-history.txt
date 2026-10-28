@@ -1,0 +1,4 @@
+deployment.apps/catalog-api
+REVISION  CHANGE-CAUSE
+17        helm upgrade catalog-api (chart catalog-api-2.6.0, image 1.31.1)
+18        helm upgrade catalog-api (chart catalog-api-2.6.1, image 1.31.2)

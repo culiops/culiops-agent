@@ -1,0 +1,8 @@
+LAST SEEN   TYPE     REASON              OBJECT                                     MESSAGE
+48m         Normal   SuccessfulRescale   horizontalpodautoscaler/catalog-api        New size: 6; reason: pods metric http_requests_in_flight above target
+48m         Normal   ScalingReplicaSet   deployment/catalog-api                     Scaled up replica set catalog-api-6b9d7c5f48 to 6 from 4
+48m         Normal   Scheduled           pod/catalog-api-6b9d7c5f48-kx9vn           Successfully assigned catalog/catalog-api-6b9d7c5f48-kx9vn to ip-192-0-2-87.ec2.internal
+48m         Normal   Pulled              pod/catalog-api-6b9d7c5f48-kx9vn           Container image "111122223333.dkr.ecr.us-east-1.amazonaws.com/catalog-api:1.31.2" already present on machine
+48m         Normal   Started             pod/catalog-api-6b9d7c5f48-kx9vn           Started container catalog-api
+47m         Normal   Scheduled           pod/catalog-api-6b9d7c5f48-p6wfj           Successfully assigned catalog/catalog-api-6b9d7c5f48-p6wfj to ip-192-0-2-21.ec2.internal
+47m         Normal   Started             pod/catalog-api-6b9d7c5f48-p6wfj           Started container catalog-api
