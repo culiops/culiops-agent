@@ -31,7 +31,7 @@ What Phase 0 found, before any evidence query. Names and results only: no tokens
 
 | Profile or context | Identity (principal and role) | Write-check | Notes |
 |---|---|---|---|
-| <profile or kube context from `environment.md`> | <account and role, or the Kubernetes user> | <the check's own words, as the report's `Access:` line quotes them: "write-capable: <action>, <action> allowed", "read-only confirmed (simulation): none of the 10 broad write actions is allowed", "no write verbs in <namespace>" or "write capability unknown (gap)"> | <session state, token variables present or missing by name, Culibox note if shown> |
+| <profile or kube context from `environment.md`> | <account and role, or the Kubernetes user> | <the check's own words, as the report's `Access:` line quotes them: "write-capable: <action>, <action> allowed", "write-capable: <verb> on <resource>, <verb> on <resource>" (Kubernetes), "read-only confirmed (simulation): none of the 10 broad write actions is allowed", "no write verbs in <namespace>" or "write capability unknown (gap)"> | <session state, token variables present or missing by name, Culibox note if shown> |
 
 A write-capable result also records that the boxed warning was shown. An unknown result is a row in Gaps as well.
 
@@ -88,7 +88,7 @@ Keep changes, signals and mitigations in one list, ordered by time. Mark rows th
 Below the table, one line per hypothesis for what the table has no column for:
 
 - `<ID>` status: <open | testing | supported | refuted> · evidence: <query IDs> · note: <why the model tier, any reused earlier verdict>
-- Each history match is its own entry with the ID `from-history:<file>`, even when it overlaps another hypothesis (its note cross-references that ID). It starts with no label, stays a lead until a query of this run supports it, and gets its own evidence worker in Deep mode.
+- Each history match is its own entry with the ID `from-history:<file>.md` (the incident file's name exactly, extension included), even when it overlaps another hypothesis (its note cross-references that ID). It starts with no label, stays a lead until a query of this run supports it, and gets its own evidence worker in Deep mode.
 - In Deep mode the Label column stays empty until the hypothesis's worker verdict is merged.
 
 ## Code repos
