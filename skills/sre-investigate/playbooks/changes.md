@@ -127,16 +127,16 @@ Kubernetes events are kept for one hour by default (the API server's `--event-tt
 
 ## Old against new
 
-The falsification of any deploy or rollout candidate: failures and latency split by revision over the incident window, with counts. The same failure on the old revision before it was replaced clears the deploy; failures only on the new revision keep it in. Quote the counts per revision (failing and total) in the ledger and the report.
+The falsification of any deploy or rollout candidate: the new revision in the incident window against the old revision's last window before replacement, including earlier occurrences of the same failure while only the old revision ran. The old revision failing the same way at a comparable rate clears the deploy; so does an onset earlier than the rollout's start, or the same failure recurring before the new revision existed. Failures only on the new revision keep it in. Quote the result per revision (failing and total counts, or pods showing the mechanism out of pods) in the ledger and the report.
 
 **ECS, by task definition revision.** Map each task to its revision, then count per task from its log stream. With the `awslogs` driver the stream name is `<prefix>/<container>/<task-id>`. Stopped tasks stay listable for about an hour only, so run the mapping in the first wave.
 
 ```bash
 for st in RUNNING STOPPED; do
-  arns=$(aws ecs list-tasks --profile <profile> --region <region> --cluster <cluster> \
+  arns=$(TZ=UTC aws ecs list-tasks --profile <profile> --region <region> --cluster <cluster> \
     --service-name <service> --desired-status "$st" --max-items 100 --query 'taskArns' --output text)
   [ -n "$arns" ] && [ "$arns" != "None" ] && \
-  aws ecs describe-tasks --profile <profile> --region <region> --cluster <cluster> --tasks $arns \
+  TZ=UTC aws ecs describe-tasks --profile <profile> --region <region> --cluster <cluster> --tasks $arns \
     --query 'tasks[].[taskArn, taskDefinitionArn, startedAt, stoppedAt]' --output text
 done > "$RUN/c-task-revisions.tsv"
 ```
@@ -157,16 +157,18 @@ Join on the task ID (the last segment of the task ARN and of the stream name) an
 
 ```bash
 curl -sG "$PROM/api/v1/query_range" -H "Authorization: Bearer $GRAFANA_SERVICE_ACCOUNT_TOKEN" \
-  --data-urlencode 'query=sum by (owner_name) (sum by (namespace, pod) (rate(http_requests_total{namespace="<namespace>", code=~"5.."}[5m])) * on (namespace, pod) group_left(owner_name) max by (namespace, pod, owner_name) (kube_pod_owner{namespace="<namespace>", owner_kind="ReplicaSet"}))' \
+  --data-urlencode 'query=sum by (owner_name) (sum by (namespace, pod) (rate(<request counter>{namespace="<namespace>", code=~"5.."}[5m])) * on (namespace, pod) group_left(owner_name) max by (namespace, pod, owner_name) (kube_pod_owner{namespace="<namespace>", owner_kind="ReplicaSet"}))' \
   --data-urlencode "start=$START_S" --data-urlencode "end=$END_S" --data-urlencode "step=60" > "$RUN/c-split-rs.json"
 ```
 
 Run it again with the total request count (no `code` filter) for the rate. Pod names of a Deployment carry the pod-template-hash (`<deployment>-<hash>-<suffix>`), so Loki counts can be split the same way: `sum by (pod) (count_over_time({namespace="<namespace>", app="<app>"} |~ "(?i)(error|exception|timeout)" [5m]))`, grouped by the hash segment of each pod name. `kubectl get pods -l <selector> -L pod-template-hash` maps the pods that still exist; it is current state only.
+
+**Per-pod evidence counts as a split.** When a rollout replaced every pod (for example the `Recreate` strategy, or a crash loop that stopped the rollout), the split can come from kubectl and events: per pod-template-hash, how many new pods are restarting or in `CrashLoopBackOff`, with the mechanism in their own `kubectl logs --previous` or events; against the old ReplicaSet's state before scale-down (its ready replicas and events, the rollout history, the absence of `BackOff` or restarts for old-hash pods in the retained events, or kube-state-metrics restart history). "Every new pod shows the mechanism directly, and the old revision was serving before the rollout" is a split, quoted as counts of pods.
 <!-- doc: https://kubernetes.io/docs/concepts/workloads/controllers/deployment/#pod-template-hash-label -->
 <!-- doc: https://github.com/kubernetes/kube-state-metrics/blob/main/docs/metrics/workload/pod-metrics.md -->
 <!-- doc: https://prometheus.io/docs/prometheus/latest/querying/operators/#many-to-one-and-one-to-many-vector-matches -->
 
-**No per-revision signal.** The old tasks or pods were gone before their logs were kept, metrics carry no pod or task label, or the rollout replaced everything at once. Record it as a gap with what is missing. The deploy's label is then at most `Likely`, and only when its diff touches the failing path and the timing fits; otherwise it is `Assumed`. It is never `Confirmed` and never `Ruled out` without the split.
+**No per-revision signal.** Neither per-revision counts nor per-pod mechanism evidence exist (the old tasks or pods were gone before their logs or events were kept, metrics carry no pod or task label), and no onset or recurrence evidence speaks against the deploy. Record it as a gap with what is missing. The deploy's label is then at most `Likely`, and only when its diff touches the failing path and the timing fits; otherwise it is `Assumed`.
 
 ## Schedules
 
