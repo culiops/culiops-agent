@@ -77,7 +77,7 @@ Classify before blaming a change. Classes: `scheduled`, `chronic`, `recurring`, 
 |---|---|---|---|
 | <UTC> | <a change, a metric moving, an alarm, a mitigation> | <backend or tool> | <deeplink for a human, or query ID> |
 
-Keep changes, signals and mitigations in one list, ordered by time. Mark rows that come from the reporter and not from a query as such.
+Keep changes, signals and mitigations in one list, ordered by time. Mark rows that come from the reporter and not from a query as such. Evidence workers read this section, so it never holds past incidents, `from-history:` content or `failure-mode` lessons.
 
 ## Hypotheses
 
