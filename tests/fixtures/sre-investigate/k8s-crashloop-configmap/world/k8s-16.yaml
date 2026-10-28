@@ -8,10 +8,7 @@ items:
     namespace: notify
   data:
     ca.crt: |
-      -----BEGIN CERTIFICATE-----
-      MIIC/jCCAeagAwIBAgIBADANBgkqhkiG9w0BAQsFADAVMRMwEQYDVQQDEwprdWJl
-      (cluster CA certificate, public)
-      -----END CERTIFICATE-----
+      <certificate omitted>
 - apiVersion: v1
   kind: ConfigMap
   metadata:
