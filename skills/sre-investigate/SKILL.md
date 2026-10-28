@@ -170,7 +170,7 @@ Read a backend's playbook before its first query in the session. Each playbook g
 
 When `<output root>/profiles/<service>-<env>.md` does not exist, dispatch a helper with `TASK: PROFILE` ([agents/helper.md](agents/helper.md#task-profile)), passing the identifier lessons. While it runs, start the change-correlation queries that need no identifiers (IaC history, cluster and service listings).
 
-Write the returned profile to the run's `profile.md`, keeping every `(unverified)` mark. Show it to the user and continue without waiting: corrections are applied as they arrive, and in Deep mode the profile is shown again at checkpoint #1 for confirmation. A name that returns nothing on a later query moves to the run profile's Stale identifiers table. The stored profile under `profiles/` changes only in Phase 6, after the user replies.
+Write the returned profile to the run's `profile.md`, keeping every `(unverified)` mark, and re-apply Constraint 14's tie rule to the helper's `verified` marks before writing. Show it to the user and continue without waiting: corrections are applied as they arrive, and in Deep mode the profile is shown again at checkpoint #1 for confirmation. A name that returns nothing on a later query moves to the run profile's Stale identifiers table. The stored profile under `profiles/` changes only in Phase 6, after the user replies.
 
 ### Phase 1 — Scope, impact and severity
 

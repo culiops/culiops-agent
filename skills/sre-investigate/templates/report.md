@@ -11,7 +11,7 @@ How to fill it in:
 - Delete the guidance lines when you copy the file; keep the headings exactly as written.
 
 Run: <run directory name> · Mode: <Fast | Deep> · Window: <incident window in UTC> (<same window in local zone>)
-Access: <profile or context>: <write-check result in the check's own words, for example "write-capable: s3:PutObject, ecs:UpdateService allowed", "read-only confirmed (simulation): none of the 10 broad write actions is allowed" or "write capability unknown (gap)">, one entry per profile and context
+Access: <profile or context>: <write-check result in the check's own words, copied from the ledger's Access table: "write-capable: <action>, <action> allowed", "read-only confirmed (simulation): none of the 10 broad write actions is allowed", "no write verbs in <namespace>" or "write capability unknown (gap)">, one entry per profile and context
 
 ## TL;DR
 

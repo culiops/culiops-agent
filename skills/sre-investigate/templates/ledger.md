@@ -31,7 +31,7 @@ What Phase 0 found, before any evidence query. Names and results only: no tokens
 
 | Profile or context | Identity (principal and role) | Write-check | Notes |
 |---|---|---|---|
-| <profile or kube context from `environment.md`> | <account and role, or the Kubernetes user> | <no write allowed, write allowed: <actions>, or unknown (simulation denied)> | <session state, token variables present or missing by name, Culibox note if shown> |
+| <profile or kube context from `environment.md`> | <account and role, or the Kubernetes user> | <the check's own words, as the report's `Access:` line quotes them: "write-capable: <action>, <action> allowed", "read-only confirmed (simulation): none of the 10 broad write actions is allowed", "no write verbs in <namespace>" or "write capability unknown (gap)"> | <session state, token variables present or missing by name, Culibox note if shown> |
 
 A write-capable result also records that the boxed warning was shown. An unknown result is a row in Gaps as well.
 
