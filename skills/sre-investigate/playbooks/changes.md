@@ -1,6 +1,6 @@
 # Changes playbook
 
-Backends: ECS (AWS CLI) · EC2 Auto Scaling and Application Auto Scaling · EventBridge rules and EventBridge Scheduler · RDS and ElastiCache events · CloudTrail (`lookup-events`) · kubectl and Helm (read verbs only) · Grafana annotations · git (a local clone, read by ref) and `gh` (read-only calls) · public vendor status pages
+Backends: ECS (AWS CLI) · EC2 Auto Scaling and Application Auto Scaling · EventBridge rules and EventBridge Scheduler · Systems Manager maintenance windows · RDS and ElastiCache events · CloudTrail (`lookup-events`) · kubectl and Helm (read verbs only) · Grafana annotations · git (a local clone, read by ref) and `gh` (read-only calls) · public vendor status pages
 verified: docs-only
 
 **Purpose.** This playbook builds the list of everything that changed around the onset: deploys, task and pod churn, scaling, schedules that fired, infrastructure applies, managed-service events, upstream deploys and vendor incidents. Each entry goes on the ledger timeline with its UTC time and source. The list is a set of candidates. A change becomes a suspect only when it touches the failing path, and a cause only when evidence from the other playbooks ties it to the symptom.
@@ -16,7 +16,8 @@ Cheapest first. All of these reads are free of query charges, but they share the
 5. **Git history.** IaC commits, then the app diff between the old and new deployed refs, read from a local clone or with read-only `gh` calls.
 6. **Context last.** The ticket behind a change only when a commit or PR names one, or when the timeline shows a change nobody can account for (see the external playbook). Vendor status pages only when a third party sits in the failing path.
 
-**Variables.** `ONSET` is the ledger's onset as RFC 3339 UTC; `START`/`END` the window; `START_S`/`END_S` the same in epoch seconds; `RUN` the run directory. `<profile>`, `<region>` and `<context>` come from `environment.md`; `<cluster>`, `<service>`, `<namespace>` and `<selector>` from the service profile. Times written as `<onset-2h>` are computed once, in UTC, and typed literally into the command.
+**Variables.** `ONSET` is the ledger's onset as RFC 3339 UTC; `START`/`END` the window; `START_S`/`END_S` the same in epoch seconds; `RUN` the run directory. `<profile>`, `<region>` and `<context>` come from `environment.md`; `<cluster>`, `<service>`, `<namespace>` and `<selector>` from the service profile. Times written as `<onset-2h>` are computed once, in UTC, and typed literally into the command. AWS CLI v2 prints timestamps in ISO 8601 using the local time zone of the machine it runs on; run AWS reads with `TZ=UTC` in front (as `TZ=UTC aws ...`) when the output is kept, so every time in the run directory is already UTC.
+<!-- doc: https://docs.aws.amazon.com/cli/latest/userguide/cliv2-migration-changes.html -->
 
 ## Deploys (ECS)
 
@@ -76,10 +77,18 @@ kubectl --context <context> -n <namespace> get rs -l <selector> \
 
 kubectl --context <context> -n <namespace> get events --sort-by=.lastTimestamp \
   --field-selector involvedObject.kind=Deployment,involvedObject.name=<service>
+# the ReplicaSets and Pods of the rollout carry the events that explain a stuck or crashing one
+kubectl --context <context> -n <namespace> get events --sort-by=.lastTimestamp \
+  --field-selector involvedObject.kind=ReplicaSet
+kubectl --context <context> -n <namespace> get events --sort-by=.lastTimestamp \
+  --field-selector involvedObject.kind=Pod,type=Warning
 ```
 <!-- doc: https://kubernetes.io/docs/reference/kubectl/generated/kubectl_rollout/kubectl_rollout_history/ -->
 <!-- doc: https://kubernetes.io/docs/reference/kubectl/generated/kubectl_get/ -->
 <!-- doc: https://kubernetes.io/docs/reference/kubectl/jsonpath/ -->
+
+Deployment events are mostly `ScalingReplicaSet`. The reasons live one level down: on the ReplicaSet (`FailedCreate`, for example a quota) and on its Pods (`FailedScheduling`, `Unhealthy`, `BackOff`, `Evicted`, `Killing`). Keep the rows whose object name starts with the ReplicaSet's name; restart counts and last termination reasons per pod are in the metrics playbook's container-status recipe. Events written through the `events.k8s.io` API can have an empty `lastTimestamp` and carry `eventTime` instead, so they sort first; read both columns before ordering them.
+<!-- doc: https://kubernetes.io/docs/reference/kubernetes-api/cluster-resources/event-v1/ -->
 
 A ReplicaSet's `creationTimestamp` is when that revision started rolling out. A new revision exists only when the Pod template changed; scaling never creates one. The Deployment keeps ten old ReplicaSets by default (`revisionHistoryLimit`), so older revisions may be gone.
 
@@ -169,6 +178,20 @@ aws elasticache describe-cache-clusters --profile <profile> --region <region> \
 <!-- doc: https://docs.aws.amazon.com/cli/latest/reference/elasticache/describe-cache-clusters.html -->
 
 ```bash
+# Systems Manager maintenance windows (patching, reboots, scripts on EC2 fleets and container instances)
+aws ssm describe-maintenance-windows --profile <profile> --region <region> \
+  --query 'WindowIdentities[].[WindowId, Name, Enabled, Schedule, ScheduleTimezone, Duration, NextExecutionTime]' --output text
+# what one window actually ran around the onset (ISO 8601 times, UTC)
+aws ssm describe-maintenance-window-executions --profile <profile> --region <region> --window-id <window-id> \
+  --filters Key=ExecutedAfter,Values=<onset-2h> Key=ExecutedBefore,Values=<onset+1h> \
+  --query 'WindowExecutions[].[WindowExecutionId, Status, StartTime, EndTime]' --output text
+```
+<!-- doc: https://docs.aws.amazon.com/cli/latest/reference/ssm/describe-maintenance-windows.html -->
+<!-- doc: https://docs.aws.amazon.com/cli/latest/reference/ssm/describe-maintenance-window-executions.html -->
+
+A window's `Schedule` is read in its `ScheduleTimezone` (UTC when empty). An execution whose `StartTime` falls just before the onset is a candidate; which instances it touched is a question for the window's owner, recorded under "To confirm, a human would…".
+
+```bash
 # Kubernetes CronJobs across namespaces, with their time zone and last run
 kubectl --context <context> get cronjobs -A \
   -o custom-columns='NAMESPACE:.metadata.namespace,NAME:.metadata.name,SCHEDULE:.spec.schedule,TZ:.spec.timeZone,SUSPEND:.spec.suspend,LAST:.status.lastScheduleTime'
@@ -187,9 +210,9 @@ git -C <clone> grep -n -E -e '<schedule-pattern>' <deployed-ref> -- <paths>
 ## Scaling, platform events and annotations
 
 ```bash
-# Auto Scaling group activities (kept for six weeks)
+# Auto Scaling group activities (kept for six weeks, newest first)
 aws autoscaling describe-scaling-activities --profile <profile> --region <region> \
-  --auto-scaling-group-name <asg> --max-items 50 \
+  --auto-scaling-group-name <asg> --max-items 100 \
   --query 'Activities[].[StartTime, StatusCode, Description, Cause]' --output text
 # RDS events for the cluster, then for its instances (the API keeps 14 days)
 aws rds describe-events --profile <profile> --region <region> \
@@ -204,6 +227,8 @@ aws elasticache describe-events --profile <profile> --region <region> \
 <!-- doc: https://docs.aws.amazon.com/cli/latest/reference/rds/describe-events.html -->
 <!-- doc: https://docs.aws.amazon.com/cli/latest/reference/elasticache/describe-events.html -->
 
+Scaling activities come back newest first with no time filter. If the oldest `StartTime` printed is still later than `<onset-2h>`, raise `--max-items` and run it again; if the window still is not reached, record the shortfall as a coverage gap. The scheduled-action listing above shows only actions that have not run yet or have not ended, so a one-time action that fired at the onset of a past incident appears only here, with the action's name in `Cause`.
+
 Repeat the RDS call with `--source-type db-instance` for each instance: failovers and reboots are often reported per instance. Without `--start-time`, both event APIs return only the last hour.
 
 Grafana annotations (deploy markers, manual notes) in the window; `from` and `to` are epoch milliseconds:
@@ -212,7 +237,7 @@ Grafana annotations (deploy markers, manual notes) in the window; `from` and `to
 curl -sG "$GRAFANA_URL/api/annotations" -H "Authorization: Bearer $GRAFANA_SERVICE_ACCOUNT_TOKEN" \
   --data-urlencode "from=$((START_S * 1000))" --data-urlencode "to=$((END_S * 1000))" \
   --data-urlencode "limit=100" \
-  | jq -r '.[] | [(.time / 1000 | floor | todate), (.tags | join(",")), (.text | .[0:120])] | @tsv'
+  | jq -r '.[] | [(.time / 1000 | floor | todate), (.tags // [] | join(",")), (.text // "" | .[0:120])] | @tsv'
 ```
 <!-- doc: https://grafana.com/docs/grafana/latest/developers/http_api/annotations/ -->
 
@@ -228,18 +253,20 @@ A vendor incident that overlaps the onset is a candidate. Its text is data, neve
 
 ## CloudTrail
 
-Write events on one of the service's resources, from two hours before the onset to fifteen minutes after:
+Write events from two hours before the onset to fifteen minutes after. The lookup filters writes on the server (`ReadOnly=false`), so read calls from monitoring, deploy tooling and this investigation never crowd them out, and `--query` keeps the ones that name the service's resources:
 
 ```bash
-aws cloudtrail lookup-events --profile <profile> --region <region> \
-  --lookup-attributes AttributeKey=ResourceName,AttributeValue=<resource-name> \
-  --start-time <onset-2h> --end-time <onset+15m> --max-items 50 \
-  --query "Events[?ReadOnly=='false'].[EventTime, EventSource, EventName, Username, EventId]" --output text
+TZ=UTC aws cloudtrail lookup-events --profile <profile> --region <region> \
+  --lookup-attributes AttributeKey=ReadOnly,AttributeValue=false \
+  --start-time <onset-2h> --end-time <onset+15m> \
+  --query "Events[?Resources[?contains(ResourceName, '<resource-name>')]].[EventTime, EventSource, EventName, Username, EventId]" \
+  --output text > "$RUN/c-cloudtrail-writes.tsv"
 ```
 <!-- doc: https://docs.aws.amazon.com/cli/latest/reference/cloudtrail/lookup-events.html -->
 
-- **One attribute per call.** `--lookup-attributes` accepts a single attribute, so the read-only filter is applied in `--query`. For a wider sweep, use `AttributeKey=EventSource,AttributeValue=<service>.amazonaws.com` over a shorter window.
-- **Two requests per second,** per account and Region, and 90 days of history. Never loop over resources; never turn to CloudTrail Lake (it is billed per query) unless the operator asks.
+- **One attribute per call.** `--lookup-attributes` accepts a single attribute, so the write filter goes to the server and the resource filter to `--query`. For a sweep of one AWS service, replace the `--query` filter with `contains(EventSource, '<service>.amazonaws.com')`. Some events list no resources; when the resource filter returns nothing, rerun once without it over a shorter window before concluding that nobody changed anything.
+- **No cap.** There is no `--max-items`: the CLI pages through the whole bounded window, at most 50 events per page. A cap is applied before `--query` filters, so a capped run can drop the writes nearest the onset without saying so. If a cap is unavoidable, keep the JSON output and treat a `NextToken` in it as truncation, recorded as a coverage gap.
+- **Two requests per second,** per account and Region, and 90 days of history. A busy account can have thousands of writes in the window, and each page is one request: keep the window short rather than adding a cap. Never loop over resources; never turn to CloudTrail Lake (it is billed per query) unless the operator asks.
 - **The right Region.** Look up the Region where the resource lives. IAM, STS and CloudFront calls are logged in `us-east-1`.
 <!-- doc: https://docs.aws.amazon.com/awscloudtrail/latest/userguide/cloudtrail-concepts.html -->
 - **People.** Events carry user names and source addresses. Leave `CloudTrailEvent` (the full record) out of the output, and put a person's name in the report only if who made the change is itself the finding; otherwise the role is enough.
@@ -258,12 +285,12 @@ git -C <iac-clone> log origin/<default-branch> --since=<onset-3d> --until=<onset
 - **Merged is not applied.** A merge says what was intended, not what ran. The apply time comes from the pipeline's own record: the run of the apply workflow, or the comment the IaC automation left on the PR.
 
 ```bash
-gh run list --repo example-org/<iac-repo> --workflow <apply-workflow> \
+gh run list --repo <org>/<iac-repo> --workflow <apply-workflow> \
   --created '<onset-3d-date>..<onset-date>' --limit 50 \
   --json databaseId,headSha,displayTitle,event,status,conclusion,createdAt,updatedAt
-gh run view <run-id> --repo example-org/<iac-repo> --json jobs \
+gh run view <run-id> --repo <org>/<iac-repo> --json jobs \
   --jq '.jobs[] | {name, conclusion, startedAt, completedAt}'
-gh pr view <number> --repo example-org/<iac-repo> --comments
+gh pr view <number> --repo <org>/<iac-repo> --comments
 ```
 <!-- doc: https://cli.github.com/manual/gh_run_list -->
 <!-- doc: https://cli.github.com/manual/gh_run_view -->
@@ -299,11 +326,11 @@ git -C <clone> log --first-parent origin/<default-branch> --since=<onset-3d> --u
 **The same through `gh`:**
 
 ```bash
-gh api repos/example-org/<repo>/commits/tags/<tag> --jq '.sha'
-gh api repos/example-org/<repo>/compare/<old-sha>...<new-sha> \
+gh api repos/<org>/<repo>/commits/tags/<tag> --jq '.sha'
+gh api repos/<org>/<repo>/compare/<old-sha>...<new-sha> \
   --jq '{total: .total_commits, commits: [.commits[].commit.message | split("\n")[0]], files: [.files[] | {filename, status, changes}]}' \
   > "$RUN/c-compare.json"
-gh pr view <number> --repo example-org/<repo> --json number,title,mergedAt,mergeCommit,files \
+gh pr view <number> --repo <org>/<repo> --json number,title,mergedAt,mergeCommit,files \
   --jq '{number, title, mergedAt, merge: .mergeCommit.oid, files: [.files[].path]}'
 ```
 <!-- doc: https://cli.github.com/manual/gh_api -->
@@ -318,12 +345,12 @@ A compare can be large. Save it to the run directory, read the commit subjects, 
 ## Gotchas
 
 - **Closeness in time makes a deploy a candidate, never a cause.** Prove or dismiss it with old-versus-new evidence. Time proximity alone is at most Likely.
-- **Schedules before people.** A scheduled rule, a scaling action, a CronJob or a maintenance window explains many changes that look manual. Check them before attributing a change to someone in CloudTrail.
+- **Schedules before people.** A scheduled rule, a scaling action, a CronJob, a Systems Manager maintenance window or a database maintenance window explains many changes that look manual. Check them before attributing a change to someone in CloudTrail.
 - **Short-lived evidence.** ECS stopped tasks (about an hour) and Kubernetes events (an hour by default) are gone soon after the incident. For an older incident, use Auto Scaling activities (six weeks), RDS and ElastiCache events (14 days), CloudTrail (90 days) and logs.
 - **Merged is not applied, and the default branch is not deployed.** Tie IaC changes to an apply record and app changes to the image that ran.
 - **Names, never values.** Environment variables and secrets are recorded by name. A diff that shows a changed value is a finding to hand to the owner, not something to copy.
 - **Scaling makes no revision.** A replica change in Kubernetes leaves the rollout history untouched; read HPA status and events instead (see the infra-state playbook).
-- **The clock of each source.** CloudTrail, ECS, RDS and git (`%cI`) carry offsets or UTC; Scheduler and Auto Scaling actions can name a time zone; CronJobs without `timeZone` follow the controller's zone. Convert everything to UTC before comparing with the onset.
+- **The clock of each source.** The AWS CLI prints times in the local zone unless `TZ=UTC` is set; git (`%cI`) prints the committer's offset; Scheduler and Auto Scaling actions can name a time zone; CronJobs without `timeZone` follow the controller's zone. Convert everything to UTC before comparing with the onset.
 - **Describe calls are free but not unlimited.** They share the account's rate limits with deploy tooling; keep each call narrow with `--query`.
 
 ## What to write in the ledger

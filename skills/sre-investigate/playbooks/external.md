@@ -14,7 +14,7 @@ Error trackers are covered in the errors playbook; GitHub (commits, PRs, workflo
 3. **Searches,** narrow (service name, time bound, small page size).
 4. **Database health queries,** last and only when a hypothesis needs live database state the metrics cannot give. Every query is real load on a production database.
 
-**Access.** Use the route named under `tickets:` in `environment.md`: a read-only MCP server, or the REST API with a token held in an environment variable. Names only: the examples use `$JIRA_USER_EMAIL` and `$JIRA_API_TOKEN` as stand-ins for the names in `environment.md`, checked with `${VAR:+x}` as in the access file. Ask for read scopes only. A 401 or 403 is a missing read scope, recorded as a gap; never ask for a broader token or borrow someone else's.
+**Access.** Use the route named under `tickets:` in `environment.md`: a read-only MCP server, or the REST API with a token held in an environment variable. Names only: the examples write `${<TICKETS_USER_ENV>}` and `${<TICKETS_TOKEN_ENV>}`; type the variable names from `environment.md` in their place, after checking them with `${VAR:+x}` as in the access file. Ask for read scopes only. A 401 or 403 is a missing read scope, recorded as a gap; never ask for a broader token or borrow someone else's.
 
 ## Tickets and wiki
 
@@ -22,7 +22,7 @@ One ticket, with the fields that matter. API v2 returns the description and comm
 
 ```bash
 JIRA=https://<site>.atlassian.net
-curl -sS -u "$JIRA_USER_EMAIL:$JIRA_API_TOKEN" -G "$JIRA/rest/api/2/issue/<KEY>" \
+curl -sS -u "${<TICKETS_USER_ENV>}:${<TICKETS_TOKEN_ENV>}" -G "$JIRA/rest/api/2/issue/<KEY>" \
   --data-urlencode 'fields=summary,status,resolution,resolutiondate,created,updated,labels,components,description' \
   > "$RUN/x-ticket-<KEY>.json"
 jq '{key, summary: .fields.summary, status: .fields.status.name, resolved: .fields.resolutiondate, created: .fields.created, updated: .fields.updated}' "$RUN/x-ticket-<KEY>.json"
@@ -33,7 +33,7 @@ jq '{key, summary: .fields.summary, status: .fields.status.name, resolved: .fiel
 The ticket's history: status changes and field edits, with their times. The changelog is returned oldest first, 100 entries per page by default; to read the most recent entries of a long history, read `total` from the first page and request `startAt` near the end.
 
 ```bash
-curl -sS -u "$JIRA_USER_EMAIL:$JIRA_API_TOKEN" \
+curl -sS -u "${<TICKETS_USER_ENV>}:${<TICKETS_TOKEN_ENV>}" \
   "$JIRA/rest/api/2/issue/<KEY>/changelog?startAt=0&maxResults=100" \
   | jq -r '.values[] | .created as $t | .items[] | [$t, .field, (.fromString // ""), (.toString // "")] | @tsv'
 ```
@@ -42,7 +42,7 @@ curl -sS -u "$JIRA_USER_EMAIL:$JIRA_API_TOKEN" \
 Tickets that mention the service and changed since a date. The search endpoint returns only issue IDs unless `fields` is passed, and it requires a bounded query (a restriction, not just an order). Add a project filter when the organisation keeps operational changes in one project.
 
 ```bash
-curl -sS -u "$JIRA_USER_EMAIL:$JIRA_API_TOKEN" -G "$JIRA/rest/api/2/search/jql" \
+curl -sS -u "${<TICKETS_USER_ENV>}:${<TICKETS_TOKEN_ENV>}" -G "$JIRA/rest/api/2/search/jql" \
   --data-urlencode 'jql=text ~ "<service>" AND updated >= "<onset-in-account-zone>" ORDER BY updated DESC' \
   --data-urlencode 'fields=key,summary,status,updated' --data-urlencode 'maxResults=20' \
   | jq -r '.issues[] | [.key, .fields.status.name, .fields.updated, .fields.summary] | @tsv'
@@ -56,14 +56,15 @@ Wiki: find runbooks, postmortems and incident notes for the service, then read o
 
 ```bash
 CONF=https://<site>.atlassian.net
-curl -sS -u "$JIRA_USER_EMAIL:$JIRA_API_TOKEN" -G "$CONF/wiki/rest/api/content/search" \
+curl -sS -u "${<TICKETS_USER_ENV>}:${<TICKETS_TOKEN_ENV>}" -G "$CONF/wiki/rest/api/content/search" \
   --data-urlencode 'cql=type = page AND text ~ "<service>" AND (title ~ "runbook" OR title ~ "postmortem" OR title ~ "incident")' \
   --data-urlencode 'limit=10' | jq -r '.results[] | [.id, .title] | @tsv'
-curl -sS -u "$JIRA_USER_EMAIL:$JIRA_API_TOKEN" "$CONF/wiki/api/v2/pages/<page-id>?body-format=storage" \
+curl -sS -u "${<TICKETS_USER_ENV>}:${<TICKETS_TOKEN_ENV>}" "$CONF/wiki/api/v2/pages/<page-id>?body-format=storage" \
   > "$RUN/x-page-<page-id>.json"
 jq '{title, version: .version.number, lastEdited: .version.createdAt}' "$RUN/x-page-<page-id>.json"
 ```
 <!-- doc: https://developer.atlassian.com/cloud/confluence/advanced-searching-using-cql/ -->
+<!-- doc: https://developer.atlassian.com/cloud/confluence/swagger.v3.json -->
 <!-- doc: https://dac-static.atlassian.com/cloud/confluence/openapi-v2.v3.json -->
 
 Narrow by space (`space = <KEY>`) when the result list is long. With an MCP server instead of the API, ask it for the same fields and the same search; the rules below do not change.
@@ -90,9 +91,13 @@ SET default_transaction_read_only = on;
 SELECT current_user,
        has_schema_privilege('public', 'CREATE') AS can_create_in_public,
        has_database_privilege(current_database(), 'CREATE') AS can_create_schemas;
+SELECT count(*) AS table_write_grants
+FROM information_schema.role_table_grants
+WHERE grantee = current_user AND privilege_type IN ('INSERT', 'UPDATE', 'DELETE', 'TRUNCATE');
 ```
 <!-- doc: https://www.postgresql.org/docs/current/runtime-config-client.html -->
 <!-- doc: https://www.postgresql.org/docs/current/functions-info.html -->
+<!-- doc: https://www.postgresql.org/docs/current/infoschema-role-table-grants.html -->
 
 ```sql
 -- MySQL
@@ -104,7 +109,8 @@ SHOW GRANTS;
 <!-- doc: https://dev.mysql.com/doc/refman/8.4/en/commit.html -->
 <!-- doc: https://dev.mysql.com/doc/refman/8.4/en/show-grants.html -->
 
-If the user can create objects or holds write grants, tell the operator plainly that the session could change data, suggest a read-only user, and continue only with the read-only transaction in place. `max_execution_time` applies to `SELECT` only; the read-only transaction covers the rest.
+The PostgreSQL grant count covers grants to the user's own role; privileges inherited through other roles or granted to `PUBLIC` are not counted, so a zero is not proof of read-only. If the user can create objects or holds write grants, tell the operator plainly that the session could change data, suggest a read-only user, and continue only with the read-only transaction in place. `max_execution_time` applies to `SELECT` only; the read-only transaction covers the rest. Keep that transaction short: under the default isolation level its first read fixes a snapshot, and InnoDB has to keep older row versions for as long as the transaction stays open. End it with `ROLLBACK` as soon as the queries are done.
+<!-- doc: https://dev.mysql.com/doc/refman/8.4/en/innodb-consistent-read.html -->
 
 **PostgreSQL health.** Active sessions, oldest transaction first, then lock waits with their blockers:
 
@@ -145,10 +151,11 @@ ORDER BY trx_started ASC
 LIMIT 20;
 ```
 <!-- doc: https://dev.mysql.com/doc/refman/8.4/en/performance-schema-processlist-table.html -->
+<!-- doc: https://dev.mysql.com/doc/relnotes/mysql/8.0/en/news-8-0-22.html -->
 <!-- doc: https://dev.mysql.com/doc/refman/8.4/en/show-status.html -->
 <!-- doc: https://dev.mysql.com/doc/refman/8.4/en/information-schema-innodb-trx-table.html -->
 
-`Threads_connected` near `max_connections` (see the infra-state playbook) points at connection exhaustion; `Threads_running` far above the CPU count points at contention. Both views need the `PROCESS` privilege to show other users' sessions; without it the result is only the session's own, which is a gap, not a quiet database.
+`Threads_connected` near `max_connections` (see the infra-state playbook) points at connection exhaustion; `Threads_running` far above the CPU count points at contention. `performance_schema.processlist` exists from MySQL 8.0.22; on older servers (5.7, and engines built on it) query `information_schema.PROCESSLIST` with the same columns and filter instead. Both views need the `PROCESS` privilege to show other users' sessions; without it the result is only the session's own, which is a gap, not a quiet database.
 
 **Looking up data.** Only with a key filter and a `LIMIT`, or as a `COUNT(*)` with a `WHERE`. If the filter is not an indexed lookup, run `EXPLAIN` first and stop if the plan is a full scan of a large table.
 

@@ -146,7 +146,9 @@ For Kubernetes, read the manifests, Kustomize overlays or Helm values files at t
 What this playbook does not run, because each one goes beyond reading: `terraform plan` or `refresh` (they read the state, can take its lock, and need the workspace's credentials), `terraform state pull` or `show` (state is stored in plain text, secrets included), `kubectl diff` (it computes what an apply would do against the live cluster), `helm get values`.
 <!-- doc: https://developer.hashicorp.com/terraform/language/manage-sensitive-data -->
 <!-- doc: https://developer.hashicorp.com/terraform/language/state/locking -->
-<!-- doc: https://kubernetes.io/docs/reference/kubectl/generated/kubectl_diff/ --> When the comparison needs one of them, put it in the report's "To confirm, a human would…" list as a sentence, for example "run a Terraform plan on the service's workspace and compare the target group's health check path with the live value".
+<!-- doc: https://kubernetes.io/docs/reference/kubectl/generated/kubectl_diff/ -->
+
+When the comparison needs one of them, put it in the report's "To confirm, a human would…" list as a sentence, for example "run a Terraform plan on the service's workspace and compare the target group's health check path with the live value".
 
 ## Gotchas
 

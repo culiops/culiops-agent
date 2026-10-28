@@ -7,16 +7,17 @@ verified: docs-only
 
 ## Datadog
 
-Queries go to the site's API host (`https://api.<site>`, for example `api.datadoghq.com` or `api.datadoghq.eu`) with an API key and an application key, or a bearer access token, from env vars. Metric queries are `GET /api/v1/query?from=<START_S>&to=<END_S>&query=<query>`; the logs aggregate call is a `POST` that only reads.
+Queries go to the site's API host (`https://api.<site>`, for example `api.datadoghq.com` or `api.datadoghq.eu`). Reads need the API key in the `DD-API-KEY` header and an application key in `DD-APPLICATION-KEY` (or a bearer access token), both from env vars: `curl -sG "https://api.<site>/api/v1/query" -H "DD-API-KEY: ${<DD_API_KEY_ENV>}" -H "DD-APPLICATION-KEY: ${<DD_APP_KEY_ENV>}" --data-urlencode "from=$START_S" --data-urlencode "to=$END_S" --data-urlencode 'query=<query>'`. The logs aggregate call is a `POST` that only reads.
 
 | Signal | Where | Equivalent query | Gotcha |
 |---|---|---|---|
-| Rate and errors per endpoint | APM trace metrics `trace.<span_name>.hits` and `.errors` (counts) | `sum:trace.<span_name>.errors{service:<service>,env:<env>} by {http.status_code}.as_count()` | Trace metrics are computed from all traffic before ingestion sampling, except with OpenTelemetry SDK or app-side sampling, where they are sampled too. |
+| Rate and errors per endpoint | APM trace metrics `trace.<span_name>.hits` and `.errors` (counts) | `sum:trace.<span_name>.errors{service:<service>,env:<env>} by {resource_name,http.status_code}.as_count()` | Trace metrics are computed from all traffic before ingestion sampling, except with OpenTelemetry SDK or app-side sampling, where they are sampled too. |
 | Latency percentiles | Distribution metric `trace.<span_name>` | `p95:trace.<span_name>{service:<service>,env:<env>}` | Use the distribution; `trace.<span_name>.duration` is a legacy gauge. Never average percentiles across tags. |
 | Log counts and patterns | Logs aggregate API, `POST /api/v2/logs/analytics/aggregate` | body: `filter.query` `service:<service> status:error`, `filter.from`/`to` in epoch ms, `compute` `count`, `group_by` a facet with a `limit` | Indexed logs only; the product of `group_by` limits may not exceed 10,000. |
 | Deploys | The `version` tag (unified service tagging) on trace metrics, traces and logs | `sum:trace.<span_name>.hits{service:<service>,env:<env>} by {version}.as_count()` | A version that is not tagged is invisible here; fall back to the changes playbook. |
 
 <!-- doc: https://docs.datadoghq.com/api/latest/metrics/query-timeseries-points.md -->
+<!-- doc: https://docs.datadoghq.com/logs/guide/access-your-log-data-programmatically/ -->
 <!-- doc: https://docs.datadoghq.com/tracing/metrics/metrics_namespace/ -->
 <!-- doc: https://docs.datadoghq.com/api/latest/logs/aggregate-events.md -->
 <!-- doc: https://docs.datadoghq.com/tracing/services/deployment_tracking/ -->

@@ -78,35 +78,59 @@ done
 
 Turn each output into a table with the metrics playbook's "GetMetricData to a table" recipe. Every query counts against `budgets.<mode>.cloudwatch_metric_requests`; request only the rules a hypothesis needs, plus `ALL`.
 
-**Rung 2: a sample.** The sample is piped straight into `jq`, and only the fields below are kept: no raw response, with its headers and cookies, is ever written to disk or shown.
+**Rung 2: a sample.** One call per rule, kept in the run directory in redacted form. The response contains every request header, cookies and authorization included, so it never reaches the disk or the terminal as returned: one `jq` pass drops every header value except `User-Agent`, cuts query strings off the path, and pulls out the value of the client-key cookie that the service profile names, which the shell loop replaces with a 12-character hash. That first pass does no formatting, so it cannot fail on the shape of a timestamp; everything else reads the kept file, and a failed view never costs the sample. `TZ=UTC` makes the CLI print times in UTC (by default it uses the machine's local zone).
 
 ```bash
-aws wafv2 get-sampled-requests --profile <profile> --region <region> \
+TZ=UTC aws wafv2 get-sampled-requests --profile <profile> --region <region> \
   --web-acl-arn <acl-arn> --rule-metric-name <rule-metric> --scope <REGIONAL|CLOUDFRONT> \
   --time-window StartTime=<start-utc>,EndTime=<end-utc> --max-items 500 --output json \
-  | jq '{window: (.TimeWindow | map_values(floor | todate)), population: .PopulationSize,
-         requests: [.SampledRequests[] | {t: (.Timestamp | floor | todate), action: .Action,
-           rule: .RuleNameWithinRuleGroup, weight: .Weight, ip: .Request.ClientIP,
-           country: .Request.Country, method: .Request.Method,
-           path: (.Request.URI | split("?")[0]),
-           ua: ([.Request.Headers[] | select(.Name | ascii_downcase == "user-agent") | .Value][0]),
-           headerNames: [.Request.Headers[].Name], labels: [.Labels[]?.Name]}]}' \
-  > "$RUN/w-sample-<rule>.json"
+  | jq -r --arg ck '<cookie-name>' '
+      "-\t" + ({meta: {window: .TimeWindow, population: .PopulationSize, rows: (.SampledRequests // [] | length)}} | tojson),
+      (.SampledRequests[]?
+        | ((([.Request.Headers[]? | select(.Name | ascii_downcase == "cookie") | .Value][0] // "")
+            | capture("(^|;\\s*)" + $ck + "=(?<v>[^;]*)") | .v) // "-") as $key
+        | .Request.Headers = [.Request.Headers[]? | if (.Name | ascii_downcase) == "user-agent" then . else {Name} end]
+        | .Request.URI = ((.Request.URI // "") | split("?")[0])
+        | del(.RequestHeadersInserted)
+        | $key + "\t" + tojson)' \
+  | while IFS=$'\t' read -r key rec; do
+      if [ "$key" = "-" ]; then h=-; else h=$(printf '%s' "$key" | sha256sum | cut -c1-12); fi
+      printf '%s\t%s\n' "$h" "$rec"
+    done > "$RUN/w-sample-<rule>.tsv"
 ```
 <!-- doc: https://docs.aws.amazon.com/cli/latest/reference/wafv2/get-sampled-requests.html -->
+<!-- doc: https://docs.aws.amazon.com/cli/latest/userguide/cliv2-migration-changes.html -->
+<!-- doc: https://jqlang.org/manual/ -->
+
+Each line of the kept file is a key hash (`-` when the request had no client key) and one request as JSON; the first line holds the window and population. When the service identifies clients by a header instead of a cookie, select that header's name in the first `select` and drop the `capture`.
+
+The window WAF actually sampled, the population and the row count, then one row per request:
+
+```bash
+F="$RUN/w-sample-<rule>.tsv"
+cut -f2- "$F" | jq -c 'select(.meta) | .meta'
+jq -rR 'split("\t") as $c | ($c[1:] | join("\t") | fromjson) | select(.meta | not)
+  | [(.Timestamp | if type == "number" then floor | todate else . end), .Action,
+     (.RuleNameWithinRuleGroup // "-"), .Weight, .Request.ClientIP, .Request.Country,
+     .Request.Method, .Request.URI, $c[0], ([.Request.Headers[]? | .Name] | join(",")),
+     ([.Request.Headers[]? | select(.Name | ascii_downcase == "user-agent") | .Value][0] // "-")] | @tsv' \
+  "$F" > "$RUN/w-rows-<rule>.tsv"
+```
+<!-- doc: https://jqlang.org/manual/ -->
+
+The row columns are: time, action, rule, weight, IP, country, method, path, key hash, header names in order, user agent.
 
 - `window` is the window WAF actually sampled. On a busy ACL it is shorter than the one requested, because the sample is drawn from the first 5,000 requests. Quote the returned window, never the requested one.
 - `population` is the number of requests the sample was drawn from; `weight` says how many requests one sampled row stands for.
 - Use `--rule-metric-name Default_Action` to sample requests that no rule terminated, which is the only way to see allowed traffic when the logging filter drops it.
 
-Concentration by client address, weighted:
+Concentration by client address, weighted, from the same rows:
 
 ```bash
-jq -r '.requests[] | [.ip, .weight] | @tsv' "$RUN/w-sample-<rule>.json" \
-  | awk -F'\t' '{w[$1] += $2; t += $2} END {for (i in w) printf "%d\t%.1f%%\t%s\n", w[i], 100 * w[i] / t, i}' \
-  | sort -rn | head -10
+awk -F'\t' '{w[$5] += $4; t += $4} END {for (i in w) printf "%d\t%.1f%%\t%s\n", w[i], 100 * w[i] / t, i}' \
+  "$RUN/w-rows-<rule>.tsv" | sort -rn | head -10
 ```
-<!-- doc: https://jqlang.org/manual/ -->
+<!-- doc: https://pubs.opengroup.org/onlinepubs/9799919799/utilities/awk.html -->
 
 ## Identity triangulation
 
@@ -116,28 +140,24 @@ A client is never "one user" on the strength of an IP address. Combine what the 
 - **a hashed client key:** the value of the session cookie or client-ID header that the service profile names, hashed in the pipe and cut to 12 characters;
 - **header shape:** the ordered list of header names (`headerNames`), which differs between browsers, mobile clients, SDKs and scripts;
 - **TLS fingerprint (JA3/JA4):** WAF computes it and writes it to the logs only; sampled requests do not carry it. In this version it is a gap.
-<!-- doc: https://docs.aws.amazon.com/sdk-for-kotlin/api/latest/wafv2/aws.sdk.kotlin.services.wafv2.model/-field-to-match/-builder/ja4-fingerprint.html -->
+<!-- doc: https://docs.aws.amazon.com/waf/latest/APIReference/API_HTTPRequest.html -->
+<!-- doc: https://docs.aws.amazon.com/waf/latest/developerguide/logging-fields.html -->
 
-The client key is extracted and hashed without the value ever being printed or stored:
+The key hash comes from the kept sample above, so the identity view describes the same rows as the concentration view. Distinct client keys per IP and distinct IPs per key:
 
 ```bash
-aws wafv2 get-sampled-requests --profile <profile> --region <region> \
-  --web-acl-arn <acl-arn> --rule-metric-name <rule-metric> --scope <REGIONAL|CLOUDFRONT> \
-  --time-window StartTime=<start-utc>,EndTime=<end-utc> --max-items 500 --output json \
-  | jq -r '.SampledRequests[] | [.Request.ClientIP,
-      ((([.Request.Headers[] | select(.Name | ascii_downcase == "cookie") | .Value][0] // "")
-        | capture("(^|;\\s*)<cookie-name>=(?<v>[^;]*)") | .v) // "-"), .Weight] | @tsv' \
-  | while IFS=$'\t' read -r ip key w; do
-      if [ "$key" != "-" ]; then h=$(printf '%s' "$key" | sha256sum | cut -c1-12); else h=none; fi
-      printf '%s\t%s\t%s\n' "$ip" "$h" "$w"
-    done > "$RUN/w-identity-<rule>.tsv"
+awk -F'\t' '$9 != "-" {seen[$5 FS $9] = 1}
+  END {for (p in seen) {split(p, a, FS); keys[a[1]]++; ips[a[2]]++}
+       for (i in keys) printf "ip\t%s\t%d keys\n", i, keys[i]
+       for (h in ips) printf "key\t%s\t%d ips\n", h, ips[h]}' "$RUN/w-rows-<rule>.tsv" | sort -k3,3nr | head -20
 ```
-<!-- doc: https://jqlang.org/manual/ -->
+<!-- doc: https://pubs.opengroup.org/onlinepubs/9799919799/utilities/awk.html -->
 
-For a client-ID header instead of a cookie, select that header's name and drop the `capture`. Then count distinct hashes per IP and distinct IPs per hash (weighted, as above), and read the result against this table:
+Read the result, with the header shapes and user agents from the same rows, against this table:
 
 | What the sample shows | Likely reading | What to check next |
 |---|---|---|
+| One IP, one client key (or none), one header shape, at a high rate | A single client: a scraper, a misbehaving integration, or one user's runaway script | That client's paths and rate against −7 days; whether the rule that blocks it is the one that moved |
 | One IP carries a large share of requests, with many distinct client keys and ordinary header shapes behind it | Shared egress: carrier-grade NAT, a corporate proxy, a VPN exit | Spread of countries and user agents behind it; whether a rate-based rule keyed on IP is what blocks them |
 | One client key across many IPs | One client rotating addresses, or one account being abused | That key's request rate and paths; whether the IPs share a country or network |
 | Many IPs with the same user agent, the same sparse header-name list and the same path pattern, few or no client keys | A bot fleet | Rate-based and bot-control rule metrics; TLS fingerprints from the logs (gap in this version) |
@@ -150,6 +170,7 @@ For a client-ID header instead of a cookie, select that header's name and drop t
 - **WAF status is not origin status.** A blocked request never reached the origin; an allowed request's real status is only in the CDN or load balancer logs.
 - **No datapoint means zero.** All `AWS/WAFV2` metrics are reported only when non-zero, so a gap in a WAF series is zero, unlike most metrics. Check the dimension values first anyway: a misspelt rule metric name also returns nothing.
 - **CloudFront scope.** The ACL, its metrics and its samples are all read in `us-east-1`, and the metrics have no `Region` dimension.
+- **CLI time zone.** AWS CLI v2 prints timestamps as ISO 8601 strings in the machine's local zone, not as epoch numbers. Prefix kept reads with `TZ=UTC`, and never assume a timestamp field is a number.
 - **Count rules inside rule groups.** A Count action inside a rule group emits metrics with `Rule`, `RuleGroup` and `Region` dimensions, not `WebACL`; rule groups owned by another account show their per-rule metrics only to the owner unless the action is overridden in your ACL.
 - **A sample is not a count.** Quote totals from CloudWatch. Quote sample-derived numbers as "in a sample of N out of `population` requests, between `<window start>` and `<window end>` UTC", and say when a weight was applied.
 - **Three hours.** Samples older than three hours cannot be requested. For an older incident, rung 1 is all this version can read; the rest is a gap with its "To confirm" sentence.
