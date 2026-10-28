@@ -17,20 +17,20 @@ Cheapest first. Each rung narrows the next one.
 4. **Raw lines.** Narrowed to onset ±10 min, with a distinctive string, oldest first, at most 100 lines.
 5. **Bulk pull to a file** when more than 100 lines are needed or the counting is easier locally (see [Bulk pull and pattern counts](#bulk-pull-and-pattern-counts)). Start it in the background and keep querying other backends meanwhile.
 
-**Default window caps.** Neutral starting values; the org replaces them in `environment.md` (Budgets or Notes). A wider window asks first.
+**Window caps.** Read from `budgets.windows` in `environment.md`; the values below are the template's neutral defaults. A wider window asks first.
 
-| Query type | Default cap |
-|---|---|
-| Stats / estimate | 48h |
-| Patterns | 2h |
-| Metric query (counts per minute) | 12h |
-| Raw lines | 30 min |
+| Query type | `budgets.windows` key | Default cap |
+|---|---|---|
+| Stats / estimate | `log_stats` | 48h |
+| Patterns | `log_patterns` | 2h |
+| Metric query (counts per minute) | `log_metric` | 12h |
+| Raw lines | `log_raw` | 30 min |
 
 **One heavy log query in flight.** Never two in the same wave, on any backend. A shared log cluster serves everyone's queries; one wide query can starve the queriers for minutes, and two make it worse.
 
 **Backoff.** A log backend that answers slowly (more than about 10 s) or errors is under stress. Never answer that with more retries. Cut the window in half, or give the query up, and log the gap in the ledger.
 
-**Budget.** Every bytes-scanned figure (estimated before, actual after) counts against `budgets.<mode>.log_gb_scanned`. A single query estimated above `per_query_soft_limit_gb` is narrowed or confirmed before it runs.
+**Budget.** Every bytes-scanned figure (estimated before, actual after) counts against `budgets.<mode>.log_gb_scanned`. One rule decides when to stop and ask, in both modes: an Insights estimate still above `insights_ask_threshold_gb` after narrowing, a query that would pass the run's `budgets.<mode>` totals, or a window wider than its `budgets.windows` cap. `per_query_soft_limit_gb` is not a prompt: a query estimated above it is narrowed first (shorter window, one stream, fewer log groups) and then runs as narrowed unless one of those three conditions applies.
 
 **Variables.** Recipes use the ledger's fixed window: `START_S`/`END_S` (epoch seconds), `ONSET_S` (onset, epoch seconds), `ONSET_MINUS_10`/`ONSET_PLUS_10` (onset ∓10 min, RFC 3339 UTC), and `RUN` (the run directory). `$GRAFANA_SERVICE_ACCOUNT_TOKEN` stands in for the `token_env` named in `environment.md`.
 
@@ -40,7 +40,7 @@ Logs Insights is billed per GB scanned, so it always runs under the estimate rul
 
 **1. Find the log groups.** Never guess a log group name from the service name. List by prefix; `--log-group-name-pattern` would also find them, but its output omits `storedBytes` and `retentionInDays`, which the estimate needs.
 
-**2. Estimate the scan.** `bytes ≈ storedBytes × window ÷ retention`, where retention is the shorter of `retentionInDays` and the group's age (a group with no retention keeps everything, so its age is the divisor). It assumes an even ingest rate, so treat it as an order of magnitude and compare it afterwards with the `bytesScanned` the query reports.
+**2. Estimate the scan.** `bytes ≈ storedBytes × window ÷ retention`, where retention is the shorter of `retentionInDays` and the group's age (a group with no retention keeps everything, so its age is the divisor). It assumes an even ingest rate, and `storedBytes` may not be the same measure as the bytes Insights bills as scanned, so the estimate can be low as well as noisy. Treat it as an order of magnitude, and record the ratio of the reported `bytesScanned` to the estimate after every query.
 
 ```bash
 aws logs describe-log-groups --profile <profile> --region <region> \
@@ -58,7 +58,7 @@ aws logs describe-log-groups --profile <profile> --region <region> \
 <!-- doc: https://docs.aws.amazon.com/cli/latest/reference/logs/describe-log-groups.html -->
 <!-- doc: https://jqlang.org/manual/ -->
 
-**3. Ask above the threshold, even in Fast mode.** If the estimate for one query is above `insights_ask_threshold_gb` in `environment.md`, show the query, the log groups, the window and the estimate, and wait for a yes. This holds in Fast mode too, where read-only waves otherwise run without waiting. A no is recorded as a gap, with the narrower query that would fit.
+**3. Ask above the threshold, even in Fast mode.** Narrow first if the estimate is above `per_query_soft_limit_gb`. If it is still above `insights_ask_threshold_gb` in `environment.md`, show the query, the log groups, the window and the estimate, and wait for a yes. This holds in Fast mode too, where read-only waves otherwise run without waiting. A no is recorded as a gap, with the narrower query that would fit.
 
 **4. Run, poll, stop.** Narrowest window, fewest log groups, `filter` as the first command. Poll `get-query-results`; if the query is still running after about 2 minutes, stop it and narrow. Run the poll loop as a background job. One Insights query at a time.
 
@@ -174,7 +174,7 @@ kubectl logs -n <namespace> <pod> -c <container> --previous --timestamps > "$RUN
 # every pod of a workload since onset minus 10 minutes (RFC 3339)
 kubectl logs -n <namespace> -l <selector> --all-containers --prefix --timestamps \
   --since-time="$ONSET_MINUS_10" --max-log-requests=10 > "$RUN/k-<workload>-since.log"
-# a short relative window when no exact onset is known yet
+# a short relative window when no exact onset is known yet (reads ONE pod of the deployment; use the -l form above for all of them)
 kubectl logs -n <namespace> deployment/<deployment> --since=30m --timestamps | tail -n 200
 ```
 <!-- doc: https://kubernetes.io/docs/reference/kubectl/generated/kubectl_logs/ -->
@@ -224,7 +224,7 @@ Check the field name in the first record (`head -1`) before trusting the count; 
 - **Identifiers differ across backends.** The log group, the Loki label value and the metrics label for one service rarely match (`/ecs/checkout`, `app="checkout-api"`, `service="checkout-api-prod"`). Discover log group names and label values; never build one from another. Mark an identifier `(unverified)` in the profile until a discovery call has returned it, and treat an empty result against an unverified identifier as "wrong identifier", not "no errors".
 - **Line filters reduce returned lines, not bytes read.** In both Loki and Logs Insights, the selector (or log groups) and the window set the cost. A tighter `|=` or `filter` makes the answer smaller, not the bill.
 - **Timestamps are ingest-side.** A log line's timestamp can sit a second or two away from the event and from other backends. Allow ±1–2 s when lining lines up with traces, metrics or another log source.
-- **The Insights estimate is approximate.** It assumes even ingest across the retention period. A group that ingests in bursts can scan far more than the estimate over a burst window; compare the estimate with the reported `bytesScanned` and note large misses in the ledger.
+- **The Insights estimate is approximate.** It assumes even ingest across the retention period. A group that ingests in bursts can scan far more than the estimate over a burst window; and if `storedBytes` counts compressed data, every estimate runs low. Record `bytesScanned ÷ estimate` in the ledger for each query, so the run (and the org's next tuning of `insights_ask_threshold_gb`) works from measured ratios.
 - **Never point Insights at a whole account.** `SOURCE logGroups()` without a prefix, or a long list of log groups, scans everything. Name the groups.
 - **Log classes differ.** `pattern` is not available on Infrequent Access log groups, and the Delivery class does not support Insights at all. Fall back to the metric-query rung with `parse`.
 - **Loki `entries` is not a line count.** Use `count_over_time` for any number you quote.
@@ -237,7 +237,7 @@ One row per query:
 
 - query ID, backend, log groups or selector, and the exact query string;
 - window in UTC, and which rung of the ladder it was;
-- the estimate before and the actual bytes scanned after (Insights `bytesScanned`, Loki stats bytes), against the budget;
+- the estimate before and the actual bytes scanned after (Insights `bytesScanned`, Loki stats bytes), their ratio, and the total against the budget;
 - for an Insights query above `insights_ask_threshold_gb`: the question asked and the answer;
 - whether it completed, was stopped at about 2 minutes, or backed off, and the gap it left;
 - the result in one line, with its confidence label; quoted lines cut to 300 characters, with secrets removed;

@@ -15,7 +15,7 @@ Cheapest first.
 
 **Never bulk-export events.** Listing every event of an issue is slow, rate-limited and adds nothing an aggregate cannot show. Respect the API's rate limits: every response carries `X-Sentry-Rate-Limit-Remaining` and `X-Sentry-Rate-Limit-Reset`; when the remaining count runs low, stop and record a gap rather than retrying.
 
-**Variables.** `START`/`END` are the ledger's window as RFC 3339 UTC, `START_S`/`END_S` the same in epoch seconds, `RUN` the run directory. `SENTRY_URL` and `<org>` come from the Sentry row of `datasources` in `environment.md`; `TEMPO` and `$GRAFANA_SERVICE_ACCOUNT_TOKEN` are as in the traces playbook. Self-hosted or per-environment Sentry instances have different base URLs, organisations and issue IDs: pick the instance that matches the incident's environment, and never carry an issue ID from one instance to another.
+**Variables.** `START`/`END` are the ledger's window as RFC 3339 UTC, `START_S`/`END_S` the same in epoch seconds, `RUN` the run directory. `SENTRY_URL` and `<org>` come from the Sentry row of `datasources` in `environment.md`; `$SENTRY_AUTH_TOKEN` stands in for that row's `token_env` (a read-only token; its value is never printed). `TEMPO` and `$GRAFANA_SERVICE_ACCOUNT_TOKEN` are as in the traces playbook. Self-hosted or per-environment Sentry instances have different base URLs, organisations and issue IDs: pick the instance that matches the incident's environment, and never carry an issue ID from one instance to another.
 
 ## Aggregates first
 
@@ -39,12 +39,12 @@ jq -r '.[] | [.id, .shortId, .count, .lifetime.count, .userCount, .firstSeen, .l
 - Name the project. `project=-1` asks for every project the token can access; for an org-wide view use it explicitly rather than relying on the default, and record which projects the answer covered.
 - Compare `count` with `lifetime.count`. When they differ, `count` is limited to the window; when they are equal for an old issue, treat `count` as lifetime and use the hourly stats below for the window.
 
-Run the same call for the baseline window (the same window 7 days earlier) into `sentry-issues-baseline.json`, then join the two on `shortId`:
+Run the same call for the baseline window (the same window 7 days earlier) with `limit=100` (the maximum) into `sentry-issues-baseline.json`, then join the two on `shortId`. An issue missing from the baseline list was only not among its top 100; before calling it new, check its `firstSeen` (and `lifetime.count`) against the baseline window:
 
 ```bash
 jq -rn --slurpfile inc "$RUN/sentry-issues-incident.json" --slurpfile base "$RUN/sentry-issues-baseline.json" '
   ($base[0] | map({key: .shortId, value: .count}) | from_entries) as $b
-  | $inc[0][] | [.shortId, .count, ($b[.shortId] // "absent"), .firstSeen, (.title | .[0:100])] | @tsv'
+  | $inc[0][] | [.shortId, .count, ($b[.shortId] // "not-in-baseline-top"), .firstSeen, (.title | .[0:100])] | @tsv'
 ```
 <!-- doc: https://jqlang.org/manual/ -->
 
@@ -104,7 +104,7 @@ For each issue in the incident aggregate, place `firstSeen` against the onset fr
 
 | `firstSeen` | Count against baseline | Reading |
 |---|---|---|
-| Within minutes after onset | Absent in baseline | New failure mode. A strong candidate; check which release its events carry. |
+| Within minutes after onset | No events in baseline (confirmed by `firstSeen`, not only by the top list) | New failure mode. A strong candidate; check which release its events carry. |
 | Before onset | Steps up at the onset hour | Existing failure made worse: a dependency, load or a change amplified it. Candidate. |
 | Before onset | Same rate as baseline | Background noise. Not evidence for anything in this incident. |
 | Long before onset, marked regressed | Steps up at onset | A fix that stopped holding, often with a release. Candidate. |

@@ -16,7 +16,7 @@ Cheapest first.
 
 **Always filter on time range and service name.** Never search without a service, and never with a leading wildcard.
 
-**Default caps.** Neutral starting values; the org replaces them in `environment.md` (Budgets or Notes): aggregations over at most 24h, a timeline step of at least 1 min (5 min past 6h), grouping on at most 20 values, raw trace samples from at most a 1h window. X-Ray bills traces retrieved and scanned, so its windows stay at the incident plus one baseline.
+**Caps.** Windows come from `budgets.windows` in `environment.md`: `trace_aggregation` (default 24h) and `trace_samples` (default 1h). Also keep the timeline step at 1 min or more (5 min past 6h) and group on at most 20 values. X-Ray bills traces retrieved and scanned, so its windows stay at the incident plus one baseline.
 
 **Variables.** `START_S`/`END_S` are the ledger's window in epoch seconds, `RUN` the run directory. `TEMPO` is the Tempo base URL or `$GRAFANA_URL/api/datasources/proxy/uid/<datasource-uid>`; `PROM` likewise for Prometheus. `$GRAFANA_SERVICE_ACCOUNT_TOKEN` stands in for the `token_env` named in `environment.md`. A Grafana MCP server takes the same TraceQL strings.
 
@@ -35,11 +35,11 @@ Note that this endpoint ignores an invalid `q` filter and returns the unfiltered
 
 p95 and failures per endpoint for the service, then a one-minute timeline of the worst ones.
 
-Span metrics (cheapest):
+Span metrics (cheapest). `span_kind` takes the values `SPAN_KIND_SERVER`, `SPAN_KIND_CLIENT`, `SPAN_KIND_INTERNAL`, `SPAN_KIND_PRODUCER` and `SPAN_KIND_CONSUMER`; filter on the server kind so outgoing calls are not ranked as endpoints:
 
 ```bash
 curl -sG "$PROM/api/v1/query" -H "Authorization: Bearer $GRAFANA_SERVICE_ACCOUNT_TOKEN" \
-  --data-urlencode 'query=topk(10, histogram_quantile(0.95, sum by (le, span_name) (rate(traces_spanmetrics_latency_bucket{service="checkout-api"}[30m]))))' \
+  --data-urlencode 'query=topk(10, histogram_quantile(0.95, sum by (le, span_name) (rate(traces_spanmetrics_latency_bucket{service="checkout-api", span_kind="SPAN_KIND_SERVER"}[30m]))))' \
   --data-urlencode "time=$END_S"
 ```
 <!-- doc: https://grafana.com/docs/tempo/latest/metrics-from-traces/span-metrics/span-metrics-metrics-generator/ -->
@@ -57,7 +57,15 @@ done
 <!-- doc: https://grafana.com/docs/tempo/latest/traceql/metrics-queries/functions/ -->
 <!-- doc: https://grafana.com/docs/tempo/latest/api_docs/ -->
 
-X-Ray, grouped locally from trace summaries (the service name in `service("...")` is the X-Ray segment name, discovered the same way: check it, never assume it):
+X-Ray: first list the service names X-Ray knows in the window (the name in `service("...")` is the segment name, often not the metrics or log identifier):
+
+```bash
+aws xray get-service-graph --profile <profile> --region <region> \
+  --start-time "$START_S" --end-time "$END_S" --query 'Services[].[Name,Type]' --output text
+```
+<!-- doc: https://docs.aws.amazon.com/cli/latest/reference/xray/get-service-graph.html -->
+
+Then group the trace summaries locally:
 
 ```bash
 aws xray get-trace-summaries --profile <profile> --region <region> \
@@ -93,7 +101,7 @@ curl -sG "$TEMPO/api/metrics/query_range" -H "Authorization: Bearer $GRAFANA_SER
 ```
 <!-- doc: https://grafana.com/docs/tempo/latest/traceql/metrics-queries/functions/ -->
 
-Run the same query with `| rate() by (span:name)` beside it: a dependency whose p95 is flat but whose call rate jumped is a volume or fan-out problem, not a slow dependency. Group by `span.db.system` or by the peer attribute your instrumentation sets when span names are too fine-grained; discover the attribute with the tag-values endpoint first.
+With span metrics instead, use the same p95 query as for endpoints with `span_kind="SPAN_KIND_CLIENT"` and `by (le, span_name)`. Run the TraceQL query with `| rate() by (span:name)` beside it: a dependency whose p95 is flat but whose call rate jumped is a volume or fan-out problem, not a slow dependency. Group by `span.db.system` or by the peer attribute your instrumentation sets when span names are too fine-grained; discover the attribute with the tag-values endpoint first.
 
 X-Ray, the services that X-Ray itself names as the response-time root cause of slow traces:
 
@@ -126,7 +134,7 @@ curl -sG "$PROM/api/v1/query" -H "Authorization: Bearer $GRAFANA_SERVICE_ACCOUNT
 
 This ratio is service-wide, so it only points at the endpoint when that endpoint dominates the dependency calls. Confirm per request with samples.
 
-Tempo samples: up to 30 traces of the endpoint per window, each fetched by ID, counting spans that carry `db.system`:
+Tempo samples: up to 30 traces of the endpoint per window, each fetched by ID, counting spans that carry a `db.system` attribute (older semantic conventions) or `db.system.name` (newer ones); if your instrumentation marks database spans differently, discover the attribute with the tag-values endpoint first:
 
 ```bash
 for w in "incident $START_S $END_S" "baseline $((START_S - 604800)) $((END_S - 604800))"; do
@@ -139,7 +147,7 @@ for w in "incident $START_S $END_S" "baseline $((START_S - 604800)) $((END_S - 6
     curl -sG "$TEMPO/api/v2/traces/$id" -H "Authorization: Bearer $GRAFANA_SERVICE_ACCOUNT_TOKEN" \
       --data-urlencode "start=$(( ws - 3600 ))" --data-urlencode "end=$(( we + 3600 ))" \
     | jq -c --arg w "$win" --arg id "$id" \
-        '{w: $w, id: $id, db: ([.. | objects | select((has("spanId") or has("spanID")) and any(.attributes[]?; .key == "db.system"))] | length)}'
+        '{w: $w, id: $id, db: ([.. | objects | select((has("spanId") or has("spanID")) and any(.attributes[]?; .key | startswith("db.system")))] | length)}'
   done < "$RUN/tr-ids-$win.txt"
 done | tee "$RUN/tr-db-spans.jsonl" \
 | jq -s 'group_by(.w) | map((map(.db) | sort) as $v
@@ -162,7 +170,8 @@ aws xray get-trace-summaries --profile <profile> --region <region> \
 xargs -n 5 aws xray batch-get-traces --profile <profile> --region <region> --output json --trace-ids \
   < "$RUN/xr-ids-incident.txt" \
 | jq -s '[.[].Traces[] | {id: .Id, sql: ([.Segments[].Document | fromjson | .. | objects | select(has("sql"))] | length)}]
-         | (map(.sql) | sort) as $v | {traces: ($v | length), p50: $v[(($v | length) / 2 | floor)], max: ($v | max)}'
+         | (map(.sql) | sort) as $v | {traces: ($v | length), p50: $v[(($v | length) / 2 | floor)],
+           p95: $v[((($v | length) * 0.95) | floor)], max: ($v | max)}'
 ```
 <!-- doc: https://docs.aws.amazon.com/cli/latest/reference/xray/batch-get-traces.html -->
 <!-- doc: https://docs.aws.amazon.com/xray/latest/api/API_BatchGetTraces.html -->
@@ -176,7 +185,7 @@ After the aggregates, pull a few failing requests to read: at most 20, narrow wi
 
 ```bash
 curl -sG "$TEMPO/api/search" -H "Authorization: Bearer $GRAFANA_SERVICE_ACCOUNT_TOKEN" \
-  --data-urlencode 'q={ resource.service.name = "checkout-api" && (span:status = error || span:duration > 2s) }' \
+  --data-urlencode 'q={ resource.service.name = "checkout-api" && (span:status = error || span:duration > 1500ms) }' \
   --data-urlencode "start=$START_S" --data-urlencode "end=$END_S" --data-urlencode "limit=20" \
 | jq -r '.traces[] | [.traceID, .rootTraceName, .durationMs] | @tsv'
 ```

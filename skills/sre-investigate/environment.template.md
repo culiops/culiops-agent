@@ -113,7 +113,7 @@ Neutral default scale. Replace it with your organisation's scale; the skill only
 
 ## Budgets
 
-How much one run may spend on queries. These are neutral starting values, and your organisation should tune them. The skill asks before going past a budget.
+How much one run may spend on queries, and how wide a single query may reach. These are neutral starting values, and your organisation should tune them.
 
 ```yaml
 budgets:
@@ -125,12 +125,26 @@ budgets:
     queries: 60
     log_gb_scanned: 10
     cloudwatch_metric_requests: 500
-  per_query_soft_limit_gb: 1     # a single log query estimated above this is narrowed or confirmed first
+  per_query_soft_limit_gb: 1     # a log query estimated above this is narrowed first (shorter window, one stream); never a prompt on its own
+  windows:                       # widest window per query type; a wider one asks first
+    log_stats: 48h               # Loki index stats, Logs Insights estimate
+    log_patterns: 2h
+    log_metric: 12h              # counts per minute from logs
+    log_raw: 30m                 # raw lines
+    trace_aggregation: 24h       # TraceQL metrics, grouped trace summaries
+    trace_samples: 1h            # window for raw trace samples
+    prom_quantile_range: 12h     # histogram_quantile over raw buckets (recording rules are exempt)
 
 insights_ask_threshold_gb: 2     # a CloudWatch Logs Insights query estimated above this always asks, in both modes
 ```
 
-`insights_ask_threshold_gb` applies even in Fast mode, where read-only waves otherwise run without waiting.
+When the skill asks, in either mode:
+
+- a Logs Insights query is still estimated above `insights_ask_threshold_gb` after narrowing (this applies even in Fast mode, where read-only waves otherwise run without waiting);
+- a query would take the run past its `budgets.<mode>` totals;
+- a query needs a window wider than its `budgets.windows` cap.
+
+`per_query_soft_limit_gb` never prompts by itself: a log query estimated above it is narrowed first, and runs as narrowed if none of the three conditions above applies. Keep `insights_ask_threshold_gb` at or above the soft limit, so narrowing always comes before asking.
 
 ## Notes
 

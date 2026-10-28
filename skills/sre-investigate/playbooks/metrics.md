@@ -12,7 +12,7 @@ Cheapest first. Stop at the rung that answers the question.
 1. **Queries someone already trusts.** A dashboard panel or an SLO recording rule named in `environment.md` (`slo:`) is re-run with the ledger's fixed window, never with the dashboard's relative range.
 2. **Discovery.** Confirm the metric names, label values and CloudWatch dimension values before the first real query (see [Discover identifiers first](#discover-identifiers-first)). A query against a guessed identifier returns nothing, and nothing looks like health.
 3. **Batched CloudWatch reads.** One `get-metric-data` call carries the related metrics of one question (around ten). GetMetricData is billed per metric requested, also when Grafana makes the call, so request only metrics a hypothesis needs and add them to `budgets.<mode>.cloudwatch_metric_requests`.
-4. **Prometheus range queries.** Aggregate with `by (...)` on every high-cardinality metric. Quantiles over long windows come from recording rules; computing `histogram_quantile` over many hours of a large histogram is the expensive query to avoid. Neutral default: no raw `histogram_quantile` range longer than 12h; the org can change this in `environment.md` (Budgets or Notes).
+4. **Prometheus range queries.** Aggregate with `by (...)` on every high-cardinality metric. Quantiles over long windows come from recording rules; computing `histogram_quantile` over many hours of a large histogram is the expensive query to avoid. The widest raw `histogram_quantile` range is `budgets.windows.prom_quantile_range` in `environment.md` (neutral default 12h); a wider one asks first.
 5. **kubectl.** Current state only. It shows what is true now, not what was true at onset, so it confirms or locates; it never dates.
 
 Every recipe below uses the ledger's fixed window: `START`/`END` as RFC 3339 UTC (`2026-01-15T07:40:00Z`), `START_S`/`END_S` as epoch seconds, and `RUN` as the run directory. `PROM` is either the Prometheus base URL or `$GRAFANA_URL/api/datasources/proxy/uid/<datasource-uid>`. The token variable is the `token_env` from `environment.md`; `$GRAFANA_SERVICE_ACCOUNT_TOKEN` stands in for it here. A Grafana MCP server takes the same PromQL strings; only the transport differs.
@@ -96,7 +96,7 @@ Run in the first metric wave, never as a wave of its own and never against a log
 | Latency | `Maximum` or `p99` | a recording rule for the quantile, wrapped in `max_over_time(rule[1h])` |
 | Saturation (CPU, connections, queue age) | `Maximum` | `max_over_time(x[1h])` |
 
-Whole-hour expressions only. `rate(x[5m])` evaluated at a one-hour step samples one five-minute slice per hour and misses every spike that falls between slices. With no recording rule for the latency quantile, the fallback is a subquery such as `max_over_time((histogram_quantile(0.95, sum by (le) (rate(x_bucket[5m]))))[1h:5m])` over the 14 days, but only for a small histogram and within the cap above; otherwise record the latency recurrence as a gap and use the error or saturation signal.
+Whole-hour expressions only. `rate(x[5m])` evaluated at a one-hour step samples one five-minute slice per hour and misses every spike that falls between slices. With no recording rule for the latency quantile, the fallback is a subquery such as `max_over_time((histogram_quantile(0.95, sum by (le) (rate(x_bucket[5m]))))[1h:5m])` over the 14 days, but only for a small histogram and within `prom_quantile_range`; otherwise record the latency recurrence as a gap and use the error or saturation signal.
 
 ```bash
 curl -sG "$PROM/api/v1/query_range" -H "Authorization: Bearer $GRAFANA_SERVICE_ACCOUNT_TOKEN" \
@@ -119,11 +119,34 @@ jq --argjson level "$LEVEL" --argjson inc "$START_S" '
 ```
 <!-- doc: https://jqlang.org/manual/ -->
 
-For CloudWatch, the same numbers come from the hourly `Values` array of the table in [GetMetricData to a table (jq)](#getmetricdata-to-a-table-jq).
+CloudWatch: one query file with `Period` 3600 and the statistic from the table above, one entry per signal and per sibling (`Id`s such as `main_err`, `canary_err`; an `Id` starts with a lowercase letter). The pull ends at the incident start, so no incident hour needs filtering out; `$LEVELS` maps each `Id` to its incident level.
+
+```bash
+cat > "$RUN/q-recur-3600.json" <<'EOF'
+[ {"Id": "main_err", "MetricStat": {"Period": 3600, "Stat": "Sum",
+    "Metric": {"Namespace": "AWS/ApplicationELB", "MetricName": "HTTPCode_Target_5XX_Count",
+      "Dimensions": [{"Name": "LoadBalancer", "Value": "app/<lb-name>/<lb-id>"}, {"Name": "TargetGroup", "Value": "targetgroup/<tg-name>/<tg-id>"}]}}},
+  {"Id": "main_p99", "MetricStat": {"Period": 3600, "Stat": "p99",
+    "Metric": {"Namespace": "AWS/ApplicationELB", "MetricName": "TargetResponseTime",
+      "Dimensions": [{"Name": "LoadBalancer", "Value": "app/<lb-name>/<lb-id>"}, {"Name": "TargetGroup", "Value": "targetgroup/<tg-name>/<tg-id>"}]}}} ]
+EOF
+aws cloudwatch get-metric-data --profile <profile> --region <region> \
+  --metric-data-queries "file://$RUN/q-recur-3600.json" \
+  --start-time "$((START_S - 14*86400))" --end-time "$START_S" --output json > "$RUN/m-recur-14d-cw.json"
+jq --argjson levels "$LEVELS" '.MetricDataResults[] | .Id as $id
+  | {id: $id, status: .StatusCode, returned: (.Values | length),
+     v: ([.Values[] | select(. < ($levels[$id] // infinite))] | sort)}
+  | {id, status, returned, hours: (.v | length), median: .v[((.v | length) / 2 | floor)],
+     p95: .v[(((.v | length) * 0.95) | floor)], max: (.v | max)}' "$RUN/m-recur-14d-cw.json"
+```
+<!-- doc: https://docs.aws.amazon.com/cli/latest/reference/cloudwatch/get-metric-data.html -->
+<!-- doc: https://jqlang.org/manual/ -->
+
+`LEVELS` is a JSON object, for example `'{"main_err": 85, "main_p99": 3.7}'`. 14 days at `Period` 3600 is 336 points per `Id`; `returned` below that is a coverage gap, except for a metric reported only when non-zero, where each missing hour is a zero (count them as such before reading the median).
 
 **Alarm state history, both directions.** Pull every transition, into and out of `ALARM`, for 30 days. One line per transition gives the occurrence count, the time of day of each, and the share of time spent in `ALARM`. The CLI paginates automatically. Hundreds of transitions mean the alarm flaps: classify as chronic, and say so.
 
-**Timestamps come back in local time.** The CLI may print alarm-history timestamps with the operator machine's UTC offset (`2026-10-21T05:42:10.512000+05:30`). Convert every one to UTC before bucketing by hour; a local-time bucket shifts the "same time every day" pattern by the offset and can fake or hide a schedule. `fromdateiso8601` in jq accepts only the `Z` form, so the recipe parses the offset itself:
+**Timestamps come back in local time.** The CLI may print alarm-history timestamps with the operator machine's UTC offset (`2026-03-04T18:07:31.250000+05:30`). Convert every one to UTC before bucketing by hour; a local-time bucket shifts the "same time every day" pattern by the offset and can fake or hide a schedule. `fromdateiso8601` in jq accepts only the `Z` form, so the recipe parses the offset itself:
 
 ```bash
 aws cloudwatch describe-alarm-history --profile <profile> --region <region> \
@@ -161,7 +184,7 @@ curl -sG "$PROM/api/v1/query_range" -H "Authorization: Bearer $GRAFANA_SERVICE_A
 ```
 <!-- doc: https://prometheus.io/docs/prometheus/latest/configuration/alerting_rules/ -->
 
-Grafana-managed alerts that record state history as annotations are read with the annotations API (epoch milliseconds; at most 100 items per call, so narrow the window and record coverage):
+Grafana-managed alerts that record state history as annotations are read with the annotations API (epoch milliseconds; the default `limit` is 100, so set it explicitly and record how many items came back):
 
 ```bash
 curl -sG "$GRAFANA_URL/api/annotations" -H "Authorization: Bearer $GRAFANA_SERVICE_ACCOUNT_TOKEN" \
@@ -178,12 +201,12 @@ If state history is kept in Loki instead, query it through the logs playbook's c
 
 ## Availability cross-check
 
-**SLO burn first, if `environment.md` names an SLO.** Burn rate is the window's error ratio divided by the error budget (`1 − target`). Compute it per sibling over a short and a long window (5m and 1h): both high means the burn is current and sustained; only the short one means a spike. The first sibling to cross gives the onset, and the set of siblings above 1 gives the blast radius. Build the ratio from summed counts over the window, never from averaged rates, and allow for the exporter's lag at the window's end.
+**SLO burn first, if `environment.md` names an SLO.** Burn rate is the window's error ratio divided by the error budget (`1 − target`). Compute it per sibling over a short and a long window (5m and 1h): `<slo_objective>` is the SLO's target as a fraction (0.999), read from the SLO definition that `slo:` in `environment.md` points to. Both windows high means the burn is current and sustained; only the short one means a spike. The first sibling to cross gives the onset, and the set of siblings above 1 gives the blast radius. Build the ratio from summed counts over the window, never from averaged rates, and allow for the exporter's lag at the window's end.
 
 ```bash
 for r in 5m 1h; do
   curl -sG "$PROM/api/v1/query_range" -H "Authorization: Bearer $GRAFANA_SERVICE_ACCOUNT_TOKEN" \
-    --data-urlencode "query=(sum by (sibling) (increase(<bad_counter>{service=\"<service>\"}[$r])) / sum by (sibling) (increase(<total_counter>{service=\"<service>\"}[$r]))) / (1 - <slo_target>)" \
+    --data-urlencode "query=(sum by (sibling) (increase(<bad_counter>{service=\"<service>\"}[$r])) / sum by (sibling) (increase(<total_counter>{service=\"<service>\"}[$r]))) / (1 - <slo_objective>)" \
     --data-urlencode "start=$START" --data-urlencode "end=$END" --data-urlencode "step=$step" > "$RUN/m-burn-$r.json"
 done
 ```
@@ -220,9 +243,9 @@ On AWS, one query file answers all three rows. Metric math treats missing values
 <!-- doc: https://docs.aws.amazon.com/elasticloadbalancing/latest/application/load-balancer-cloudwatch-metrics.html -->
 <!-- doc: https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/using-metric-math.html -->
 
-`UnHealthyHostCount` with `Minimum` is non-zero only when every LB node sees the target as unhealthy. Add `TargetConnectionErrorCount` (Sum) when the third row is the candidate.
+`UnHealthyHostCount` with `Minimum` is non-zero only when every LB node counts at least one unhealthy target (not necessarily the same one). Add `TargetConnectionErrorCount` (Sum) when the third row is the candidate.
 
-On Kubernetes, the ingress controller or service mesh plays the load balancer. For ingress-nginx the counter is `nginx_ingress_controller_requests`; its label set varies by version and configuration, so confirm the label names with `/api/v1/series` before using them:
+On Kubernetes, the ingress controller or service mesh plays the load balancer. For ingress-nginx the counter is `nginx_ingress_controller_requests` and the latency histogram `nginx_ingress_controller_request_duration_seconds`. The label set varies by version and configuration, so confirm the label names with `/api/v1/series` before using them; when the scrape job has `honor_labels: false`, the controller's own `namespace` label arrives renamed to `exported_namespace`. The 5xx ratio:
 
 ```bash
 curl -sG "$PROM/api/v1/query_range" -H "Authorization: Bearer $GRAFANA_SERVICE_ACCOUNT_TOKEN" \
@@ -230,6 +253,19 @@ curl -sG "$PROM/api/v1/query_range" -H "Authorization: Bearer $GRAFANA_SERVICE_A
   --data-urlencode "start=$START" --data-urlencode "end=$END" --data-urlencode "step=$step"
 ```
 <!-- doc: https://kubernetes.github.io/ingress-nginx/user-guide/monitoring/ -->
+<!-- doc: https://prometheus.io/docs/prometheus/latest/configuration/configuration/ -->
+
+Rate and latency complete the RED view; run them beside the ratio:
+
+```bash
+for q in 'sum(rate(nginx_ingress_controller_requests{namespace="<namespace>", ingress="<ingress>"}[5m]))' \
+         'histogram_quantile(0.95, sum by (le) (rate(nginx_ingress_controller_request_duration_seconds_bucket{namespace="<namespace>", ingress="<ingress>"}[5m])))'; do
+  curl -sG "$PROM/api/v1/query_range" -H "Authorization: Bearer $GRAFANA_SERVICE_ACCOUNT_TOKEN" \
+    --data-urlencode "query=$q" --data-urlencode "start=$START" --data-urlencode "end=$END" --data-urlencode "step=$step"
+done
+```
+<!-- doc: https://kubernetes.github.io/ingress-nginx/user-guide/monitoring/ -->
+<!-- doc: https://prometheus.io/docs/prometheus/latest/querying/functions/ -->
 
 "Requests never reached the application" on Kubernetes means no ready endpoints behind the Service. Current state only:
 
@@ -270,7 +306,7 @@ Discovery when the flow has no counter named yet: the `count by (__name__)` quer
 
 Endpoint → dependency → host. On Kubernetes, the host step is the pod, then the node. Each rung narrows the next query; skip none.
 
-**1. Which endpoint.** Top endpoints by failures, and separately top endpoints by errors. Run them as two queries: adding the two vectors drops every endpoint that appears in only one of them.
+**1. Which endpoint.** Top endpoints by 5xx responses, and separately top endpoints by the application's error counter (which also counts failures returned with a non-5xx status). Run them as two queries: adding the two vectors drops every endpoint that appears in only one of them.
 
 ```bash
 curl -sG "$PROM/api/v1/query" -H "Authorization: Bearer $GRAFANA_SERVICE_ACCOUNT_TOKEN" \
@@ -294,7 +330,7 @@ Kubernetes signals for the pod and node rung, all through Prometheus (kube-state
 | Restarts in the window | `sum by (pod) (increase(kube_pod_container_status_restarts_total{namespace="<namespace>"}[30m]))` |
 | Last termination was OOMKilled | `max by (pod, container) (kube_pod_container_status_last_terminated_reason{namespace="<namespace>", reason="OOMKilled"})` |
 | CPU throttling share | `sum by (pod) (rate(container_cpu_cfs_throttled_periods_total{namespace="<namespace>"}[5m])) / sum by (pod) (rate(container_cpu_cfs_periods_total{namespace="<namespace>"}[5m]))` |
-| Memory against limit | `max by (pod, container) (container_memory_working_set_bytes{namespace="<namespace>", container!=""}) / max by (pod, container) (container_spec_memory_limit_bytes{namespace="<namespace>", container!=""})` |
+| Memory against limit | `max by (pod, container) (container_memory_working_set_bytes{namespace="<namespace>", container!=""}) / (max by (pod, container) (container_spec_memory_limit_bytes{namespace="<namespace>", container!=""}) > 0)` (containers without a limit drop out instead of dividing by zero) |
 | Pods stuck Pending | `sum by (pod) (kube_pod_status_phase{namespace="<namespace>", phase="Pending"})` |
 | HPA pinned at max | `kube_horizontalpodautoscaler_status_current_replicas{namespace="<namespace>"} >= on (namespace, horizontalpodautoscaler) kube_horizontalpodautoscaler_spec_max_replicas` |
 
@@ -352,13 +388,14 @@ jq -r '
     ($ts[] as $t | [($t | strftime($fmt))] + [$cols[] | (.pts[$t | tostring] // "NaN" | tostring)] | @tsv)
 ' "$RUN/m-golden-incident.json" | column -t
 jq -e '.NextToken // empty' "$RUN/m-golden-incident.json" > /dev/null && echo "warning: output truncated (NextToken present)" >&2
+jq -r '.MetricDataResults[] | select(.StatusCode != "Complete") | "\(.Id) \(.StatusCode) \([.Messages[]?.Value] | join("; "))"' "$RUN/m-golden-incident.json" >&2
 ```
 <!-- doc: https://jqlang.org/manual/ -->
 <!-- doc: https://docs.aws.amazon.com/cli/latest/reference/cloudwatch/get-metric-data.html -->
 
 - Timestamps are printed in UTC whatever offset the CLI used. The date is added (`MM-DD`) only when the range crosses midnight UTC.
 - `NaN` marks a timestamp where that query has no datapoint. Whether that means zero depends on the metric's reporting criteria (see Gotchas).
-- A `NextToken` in the output means the result was cut; re-run without `--max-items` or narrow the query.
+- A `NextToken` in the output means the result was cut; re-run without `--max-items` or narrow the query. A `StatusCode` other than `Complete` (`PartialData`, `Forbidden`, `InternalError`) means that column is incomplete or missing; record it as a gap, with its message.
 
 ## Gotchas
 
