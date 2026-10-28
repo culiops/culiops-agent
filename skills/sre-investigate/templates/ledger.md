@@ -137,9 +137,9 @@ Write "none seen" when there is nothing to record.
 
 | Item | Value |
 |---|---|
-| Lessons loaded | <lesson lines from `lessons.md` used as hints, with the sources they cover> |
+| Lessons loaded | <`process`, `identifier` and `noise` lesson lines from `lessons.md` used as hints, with the sources they cover; never `failure-mode` lines> |
 | Re-verified this run | <lessons flagged `re-verify` that were checked, and the outcome> |
-| History lookup | <the grep over `incidents/` front matter, run after the ranked hypotheses existed, and each match> |
+| History lookup | <the grep command over `incidents/` front matter (run after the ranked hypotheses existed), each matched file name, and which fields matched (service, deps or symptom words). Never a past incident's `cause`, `cause_category` or `label` value, and never `failure-mode` lesson text; those stay in the files.> |
 
 ## Lesson candidates
 

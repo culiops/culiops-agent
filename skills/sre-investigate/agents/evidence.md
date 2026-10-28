@@ -28,7 +28,7 @@ Files to read first:
 - the environment file: <output root>/environment.md
 - the playbooks you need under <skill directory>/playbooks/
 - the run's profile: <run directory>/profile.md (read only; not the stored profile)
-- ledger: <run directory>/ledger.md (read only). Read its "Query log" table before any query. Never repeat a query that is already logged; reuse its result.
+- ledger: <run directory>/ledger.md (read only). Read only its "Windows (UTC)", "Query log" and "Gaps" sections and your own row of the Hypotheses table; skip every other section, Memory and Lesson candidates included. Read the Query log before any query. Never repeat a query that is already logged; reuse its result.
 
 WINDOWS (UTC):
 - incident: <from> to <to>
