@@ -1,6 +1,6 @@
 # Profile: <service> <env>
 
-A profile records how one service is named in each backend, so later runs do not rediscover or guess. It lives at `<output root>/profiles/<service>-<env>.md`. A helper discovers identifiers; the main session writes the file; the user confirms it (in Fast mode it is shown, the run continues, and the user corrects it in parallel).
+A profile records how one service is named in each backend, so later runs do not rediscover or guess. It lives at `<output root>/profiles/<service>-<env>.md`. During a run, the working copy is the run directory's `profile.md`; this stored file changes only in the record phase. A helper discovers identifiers; the main session writes the file; the user confirms it (in Fast mode it is shown, the run continues, and the user corrects it in parallel).
 
 Rules:
 

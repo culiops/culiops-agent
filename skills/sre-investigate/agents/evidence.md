@@ -6,7 +6,7 @@ The main session sends this prompt to one worker per hypothesis in Deep mode. A 
 
 - Pass `model` explicitly on every dispatch. The default tier handles most hypotheses; start on the stronger tier when three or more signals have to be correlated, an ordering or race is suspected, or the evidence is expected to conflict. Note the choice in the ledger's Model column.
 - Send all workers in one message and split the remaining budget evenly between them.
-- When an earlier run is reused and already shows the mechanism, start on the default tier and test only what is new; a hypothesis whose reused verdict stands is not re-dispatched unless you name the gap it leaves.
+- When this run's own earlier Fast pass (same run directory and ledger) already shows the mechanism, start the worker on the default tier and have it test only what that pass left open. The worker is still dispatched. Rows reused from another run (`reused <run>/<query ID>`) count as evidence only for the window they overlap, and never carry that run's labels over.
 - Escalate at most once per hypothesis, and only a verdict from the default tier: when it is `inconclusive`, or claims `Confirmed` without any query that itself exhibits the mechanism inside the incident's time and scope. Re-dispatch on the stronger tier with the previous verdict and its full query table in the `PREVIOUS VERDICT` field. A stronger-tier verdict without direct proof is recorded as `Likely`; an inconclusive one stays open with its gaps.
 - Send at most ten `process` and `identifier` lessons, only for the sources the worker will use. Never send `failure-mode` lessons or past incidents.
 - Fill the skill directory with the base directory announced when the skill loaded.
