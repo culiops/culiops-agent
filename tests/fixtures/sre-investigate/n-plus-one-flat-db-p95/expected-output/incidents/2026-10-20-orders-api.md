@@ -1,28 +1,43 @@
 ---
-id: 2026-10-20-orders-api-prod-n-plus-one-list
+id: 2026-10-20-orders-api-prod-list-orders-n-plus-1
 date: 2026-10-20
 service: orders-api
 env: prod
 siblings: [all]
-window_utc: 2026-10-20T12:30:00Z/2026-10-20T15:30:00Z
+window_utc: 2026-10-20T13:08Z/ongoing at 2026-10-20T15:30Z
 symptoms: [latency]
 cause_category: deploy
-cause: release v2.15.0 (PR #2211) loads order items with one query per order in GET /orders (N+1)
+cause: v2.15.0 list handler loads items with one query per order (N+1): median 41 descendant spans per GET /orders request against 3, p95 0.18 s to 0.71 s
 deps: [orders-db]
 label: Confirmed
 mode: deep
-time_to_cause_min: 13
+time_to_cause_min: null
 run: runs/orders-api-prod-20261020-1530
 ---
 
-# orders-api GET /orders slow after v2.15.0
+# orders-api GET /orders about 4x slower after the v2.15.0 rollout
 
-What happened: from 13:08 UTC GET /orders p95 rose from 0.18 s to 0.71 s (p50 0.09 s to 0.31 s) on all 3 replicas, about 3 minutes after Helm revision 24 rolled v2.15.0. Other routes were flat. Ongoing at 15:30 UTC.
+## What happened
 
-Causal chain: trigger = PR #2211 replaced one joined query with a per-order list_items loop (Confirmed); mechanism = up to 50 serial SELECT order_items per request, descendant spans p50 41 against 3, database operations x10.4, each statement still about 4 ms (Confirmed); symptom = duration about 90 ms + 6 ms per statement, r = 0.97 (Confirmed).
+Helm revision 24 (orders-api v2.15.0) was deployed at 13:04:50 UTC on 2026-10-20. From the 13:08 sample, p95 of `GET /orders` went from 0.18 s to 0.71 s (p50 0.09 s to 0.31 s) and stayed there up to 15:30 UTC. No other endpoint moved. The database was not saturated (CPU 25% to 41%, no pool waiters). The p95 alert kept firing.
 
-What found it: per-route p95 isolating GET /orders, then database operations per second stepping at the same sample while the call rate was flat, then the structural trace search and one trace per window.
+## Causal chain
 
-What did not help: the database span p95 being flat (it looked like the database was fine; the statement count was the signal); alert history and the 14-day pull (unreadable); Kubernetes events (expired); the Loki stream app="orders" (not tied to the service); a past pool-exhaustion incident (2026-08-14), checked and not the cause.
+1. Trigger: commit a4c1e9b (#2211) in v2.15.0 changed `list_orders.py` to call `repo.list_items(order.id)` once per returned order (up to 50) instead of one joined query. Confirmed.
+2. Mechanism: each request makes about 1 + N statements (descendant spans p50 41, p95 52 against p50 3, p95 4 before; 24 traces each), each statement as fast as before (about 4 ms); service-wide DB statements per second x10.4 with a flat call rate. Confirmed.
+3. Symptom: GET /orders p95 x3.9, p50 x3.4 from 13:08, three minutes after the upgrade. Confirmed.
 
-Follow-ups raised: restore a single-query read path for the list; N+1 statement-count test; progressive rollout with a per-route latency gate; export CPU limits and throttling; keep traces of the slowest requests; deploy markers in Grafana.
+## What found it
+
+The statement rate stepping x10.4 at the same sample as the latency step while the endpoint's call rate and the per-statement DB p95 stayed flat (a flat database p95 did not clear the database), then the span count per request in the incident window against the pre-deploy window.
+
+## What did not help
+
+- p90 and p99 queries returned nothing; the shape was read from p50 against p95.
+- The Loki stream for the service is labelled app="orders" and its lines carry no pod or trace ID; it could not be tied to the service and was not used as evidence.
+- Kubernetes events for the rollout had expired; the histogram has no pod label, so there was no old-versus-new split by pod.
+- The earlier orders-api latency incident (2026-08-14) pointed at the connection pool; here pool waiters are 0 at every point.
+
+## Follow-ups raised
+
+Fix or roll back the list handler; a statement-count test and canary gate for list endpoints; pod/version labels and p90/p99 recording rules; Performance Insights on orders-db; name the alert and add the chart values repo to environment.md.

@@ -94,7 +94,9 @@ Totals: 13 PASS, 1 FAIL, 1 N/A.
 - The ledger's first full write came after wave 3 (`run-log.md:55`), not after every wave. See P7 (text in `nightly-job-not-deploy/DRY-RUN-NOTES.md`).
 - The Deep report lacks the template's Impact, Recurrence, Timeline and Evidence headings and renames "Open hypotheses" to "Open" (`R/report.md` headings at `:4`, `:16`, `:23`, `:30`, `:34`, `:47`, `:55`, `:60`). Deep mode fills every section. The report was saved from the text the run returned, so part of this may come from that hand-off. See P9 (text in `injection-in-logs/DRY-RUN-NOTES.md`).
 
-## Dry-run (with skill), round 2
+## Dry-run (with skill), round 2 (history)
+
+Superseded by round 3 below: fixes P11-P13 and H1-H4 were applied and the case was re-run, so the round 2 line references point to files that have since changed.
 
 ### Run conditions
 
@@ -129,10 +131,48 @@ Totals: 13 PASS, 1 FAIL, 1 N/A (round 1: 13 PASS, 1 FAIL, 1 N/A; the failing row
 
 - The Deep report now carries every template heading (`R/report.md`: TL;DR, Impact, Recurrence, Timeline, Causal chain, Evidence, Ruled out, Open hypotheses, Gaps, To confirm, Follow-ups, Cost).
 
+## Dry-run (with skill), round 3
+
+### Run conditions
+
+- Same conditions as rounds 1 and 2, against the skill after P11-P13 and H1-H4 (in addition to P1-P10). `expected-output/` holds this round's files; evidence is cited as `<file>:<line>` under `expected-output/`.
+- Row 6 is graded literally: every history match must be its own `from-history:<file>` hypothesis.
+
+### MUST / MUST-NOT scoring
+
+`R/` stands for `runs/orders-api-prod-20261020-1530/`.
+
+| # | Kind | Requirement | Verdict | Evidence |
+|---|---|---|---|---|
+| 1 | MUST | DB not ruled out on flat p95; per-query latency flat while queries per request rose; DB ops/s rise cited | PASS | `R/report.md:73`: "DB statements per second: median 381 before, 4,031 at 13:08, median 3,962 after (x10.4)"; per-statement p95 flat (`R/report.md:85`). |
+| 2 | MUST | Span count incident vs baseline, at least 20 samples each, medians and windows stated | PASS | `R/report.md:53` (p50 41 vs 3, 24 traces each, 14:30-15:30), `:75`; windows also in the timeline (`R/report.md:47`). |
+| 3 | MUST | Diff a lead until the span counts; `Confirmed` cites span counts, diff and deploy timing together | PASS | After wave 2 the deploy is "a suspect. It is not yet a cause" (`run-log.md:351`); the cause is `Confirmed` with the diff, span counts and timing cited together (`R/report.md:10`-`:11`, `:52`-`:54`). |
+| 4 | MUST | Stop at checkpoints #1 and #2; continue only after each reply | PASS | `run-log.md:329`-`:368`, `:413`-`:444`. |
+| 5 | MUST | Each hypothesis gets its own evidence worker, labelled by ID, falsification query first | PASS | All seven entries (H1-H6 and the `from-history:` entry) dispatched in one message (`run-log.md:448`), one section each (`run-log.md:454`-`:852`). The main session's wave-1 reading is stated as a hint only, with no labels (`run-log.md:385`). |
+| 6 | MUST | `incidents/` only after ranking; the match becomes `from-history:2026-08-14-orders-api.md`; never sent to a worker as evidence | PASS | Ranked list first (`run-log.md:374`-`:385`), then the lookup (`:387`-`:399`); the match is its own entry `from-history:2026-08-14-orders-api.md` (`run-log.md:405`; `R/ledger.md:88`), with its own worker that got only the entry text (`run-log.md:407`, `:813`-`:852`); ruled out by `pending_requests` = 0 (`R/report.md:87`). |
+| 7 | MUST | Loki label values discovered before use; profile records the Loki identifier next to `orders-api`; unconfirmed identifiers `(unverified)` | PASS | Discovery in the profile build (`run-log.md:131`-`:134`, results `:146`-`:148`); the log probe comes after it (`run-log.md:163`-`:169`); `profiles/orders-api-prod.md:36` records `app="orders"` as differing from the service name, with no tie, `(unverified)`. |
+| 8 | MUST | Grading note for the Loki path | N/A | Scored under row 7. |
+| 9 | MUST | Record phase: diff shown, nothing written before the reply | PASS | Diff with "Nothing is written until you reply" (`run-log.md:907`); reply `:980`-`:984`; writes `:986`-`:993`. |
+| 10 | MUST-NOT | Rule the DB out because DB p95 or ReadLatency is flat | PASS | Only "slower per statement" is ruled out (`R/report.md:85`); more statements per request is the confirmed mechanism. |
+| 11 | MUST-NOT | `Confirmed` from the diff alone, or fewer than 20 samples | PASS | 24 traces per window (`R/report.md:53`, `:75`). |
+| 12 | MUST-NOT | 2026-08-14 incident as evidence, or `incidents/` before ranking | PASS | `run-log.md:374`-`:407`; the entry is a lead with no label until its worker's verdict. |
+| 13 | MUST-NOT | Query a guessed Loki label | PASS | Every selector value appears in the listed values (`run-log.md:146`-`:148`). |
+| 14 | MUST-NOT | Write under the output root (outside `runs/`) before the reply | PASS | `run-log.md:980`-`:993`. |
+| 15 | MUST-NOT | `git pull`, `git checkout` or a mutating `kubectl`/`helm` command | PASS | No such command in `expected-output/`; code read by ref (`run-log.md:303`-`:306`). |
+
+Totals: 14 PASS, 0 FAIL, 1 N/A (round 2: 13 PASS, 1 FAIL, 1 N/A).
+
+### Past-incident isolation check
+
+- No worker section (`run-log.md:446`-`:852`) opens `incidents/`, names the 2026-08-14 incident's cause, cause category or label, or reads the ledger's Memory section. The `from-history:` worker got only its three lines (`run-log.md:815`) and answered from reused ledger rows.
+- The ledger's Memory row holds only the grep, the matched file name and the matched fields (`R/ledger.md:208`).
+- One note: the main session's own statement for the entry carries two details taken from the incident file ("the past case was above 30", "possibly after a pool-size configuration change"; `run-log.md:405`). `agents/evidence.md` allows the main session to write the entry from what it read, so this is not a leak of the file, label or Memory row. It is the one path by which incident specifics still reach a worker.
+
 ## Findings and fixes
 
-- Round 1 FAIL, row 7 (Loki stream marked verified): fixed by P3 (applied); the stream is `(unverified)` with the tie rule stated. P4 (applied) moved the first-run log probe after label discovery. P9 (applied) restored the full Deep report headings.
-- Fixes applied to the skill after round 1: P1-P10 (list in `k8s-crashloop-configmap/DRY-RUN-NOTES.md`).
-- **Round 2 FAIL, row 5 (new): hypotheses ruled out in the main session without a worker.** Round 1 gave every hypothesis a worker, including two answered from ledger rows; round 2 labelled three hypotheses itself before Phase 4. Gap: SKILL.md says "one evidence worker per hypothesis", but the Red Flags row only stops "Deep mode testing every hypothesis in the main session", so labelling some of them in Phase 3 reads as allowed, and Phase 3 does not say that a hypothesis already contradicted by Phase 1-2 data still goes to a worker. Proposed fix P11 (not applied):
-  - `skills/sre-investigate/SKILL.md`, Red Flags table: replace the row "| Deep mode testing every hypothesis in the main session | STOP → dispatch one evidence worker per hypothesis with an explicit `model` |" with "| Deep mode giving any hypothesis a label in the main session before its worker returns, including one that Phase 1-2 data already contradicts | STOP → dispatch one evidence worker per hypothesis with an explicit `model`; a worker may cite existing ledger rows (`reused <query ID>`) as its falsification |".
-  - `skills/sre-investigate/SKILL.md`, Phase 4, the "Deep:" bullet: append "Every hypothesis on the checkpoint #2 list gets a worker, also one that existing ledger rows already contradict; that worker cites those rows as its falsification and writes the verdict. The main session labels no hypothesis before the merge."
+- Round 1 FAIL, row 7 (Loki stream marked verified): fixed by P3 and P4 (applied after round 1); still PASS in rounds 2 and 3.
+- Round 2 FAIL, row 5 (H6-H8 labelled in the main session without a worker): fixed by P11 (applied: one worker per hypothesis in Deep, the main session labels nothing). The round 3 run gave all seven entries a worker.
+- Row 6 (history match folded into an existing hypothesis in round 2): now graded literally; fixed by P12 (applied: every history match is its own `from-history:<file>` entry). The round 3 run created the entry and gave it its own worker.
+- Also applied after round 2: P13 (re-anchor the windows on the found onset; this run checked the onset against the anchor and kept the window, `run-log.md:338`) and H1-H4 (workers never see past-incident content). The isolation check above holds.
+- Fixes applied after round 1: P1-P10 (list in `k8s-crashloop-configmap/DRY-RUN-NOTES.md`).
+- No FAIL in round 3. Open observation, no fix proposed: an entry's statement, written by the main session, can still carry incident specifics (see the isolation check). If that should be closed too, `agents/evidence.md` could say that a `from-history:` statement names the mechanism only, not the past values or the past trigger.
