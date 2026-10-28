@@ -27,7 +27,7 @@ Last verified: <date> · Built by: <helper or main session> · Status: <confirme
 
 The parallel deployments of this service that a run compares before digging into one of them: regions, shards, tenants, availability zones or replicas.
 
-| Dimension | Member | How to tell it apart (alarm-name prefix, label value, load balancer suffix, job name) |
+| Dimension | Member | How to tell it apart (a name prefix or suffix, a label value, a job name) |
 |---|---|---|
 | <regions, shards, tenants, AZs or replicas> | <name> | <identifier> |
 

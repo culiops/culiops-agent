@@ -15,7 +15,7 @@ Cheapest first.
 
 **Never bulk-export events.** Listing every event of an issue is slow, rate-limited and adds nothing an aggregate cannot show. Respect the API's rate limits: every response carries `X-Sentry-Rate-Limit-Remaining` and `X-Sentry-Rate-Limit-Reset`; when the remaining count runs low, stop and record a gap rather than retrying.
 
-**Variables.** `START`/`END` are the ledger's window as RFC 3339 UTC, `START_S`/`END_S` the same in epoch seconds, `RUN` the run directory. `SENTRY_URL` and `<org>` come from the Sentry row of `datasources` in `environment.md`; `$SENTRY_AUTH_TOKEN` stands in for that row's `token_env` (a read-only token; its value is never printed). `TEMPO` and `$GRAFANA_SERVICE_ACCOUNT_TOKEN` are as in the traces playbook. Self-hosted or per-environment Sentry instances have different base URLs, organisations and issue IDs: pick the instance that matches the incident's environment, and never carry an issue ID from one instance to another.
+**Variables.** `START`/`END` are the ledger's window as RFC 3339 UTC, `START_S`/`END_S` the same in epoch seconds, `RUN` the run directory. `SENTRY_URL` and `<org>` come from the Sentry row of `datasources` in `environment.md`; `$SENTRY_AUTH_TOKEN` stands in for that row's `token_env` (a read-only token; its value is never printed). `TEMPO` and `$GRAFANA_SERVICE_ACCOUNT_TOKEN` are as in the traces playbook. When the organisation runs more than one Sentry instance or organisation, pick the one that matches the incident's environment, and never carry an issue ID from one to another.
 
 ## Aggregates first
 

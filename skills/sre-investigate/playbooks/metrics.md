@@ -220,7 +220,7 @@ The application's own 5xx ratio and the load balancer's view of the same traffic
 | App 5xx / errors | LB target 5xx | Reading |
 |---|---|---|
 | High | High, same shape | Agreement: the 5xx claim can be labelled Confirmed. |
-| High errors, low 5xx | Clean | Failures that never become 5xx (exceptions handled, `outcome=failure`, bad payloads). An application failure, not agreement. |
+| High errors, low 5xx | Clean | Failures that never become 5xx (exceptions handled, a failure-outcome label, bad payloads). An application failure, not agreement. |
 | Clean | LB-generated 5xx high (`HTTPCode_ELB_5XX_Count`), or unhealthy targets | The load balancer itself, or requests that never reached the application: no healthy targets, connection errors, timeouts at the LB. |
 
 On AWS, one query file answers all three rows. Metric math treats missing values as 0, and `HTTPCode_ELB_5XX_Count` is only reported when non-zero, so a gap in it means none:
@@ -280,7 +280,7 @@ kubectl get endpointslices -n <namespace> -l kubernetes.io/service-name=<service
 
 Rules for reading the comparison:
 
-- Compare latency as p95 values. Two SLOs' attainment percentages are not comparable: a request-based SLO and a period-based SLO over the same traffic can disagree, and a strict-threshold sibling can be green in one and red in the other.
+- Compare latency as p95 values, not SLO attainment percentages; two SLOs over the same traffic can be defined differently and disagree.
 - An SLO usually covers one entry path. Check that it covers every ingress path the traffic uses before letting it size the impact.
 - APM or span-derived request counts usually run a little below load-balancer counts. Compare ratios between the two, never totals.
 
@@ -292,7 +292,7 @@ If `environment.md` lists `core_flows` with a counter, compare that counter for 
 - **Timeline.** `increase(x[5m])` at `step=300` gives the shape.
 - **Split by the counter's key dimensions** (method, channel, client version, region) when the drop is partial. One value carrying the whole drop names the failing dependency or release.
 - **A business drop with healthy HTTP signals** points at application logic, a payment or other third-party dependency, or a client release, not at capacity.
-- **Check the pipeline before the drop.** A counter carried by one exporter, agent or UDP path goes flat when that path breaks. Confirm the exporter is up and its own error counters are flat before reading "zero" as an outage.
+- **Check the pipeline before the drop.** A counter carried by one exporter, agent or push pipeline goes flat when that path breaks. Confirm the exporter is up and its own error counters are flat before reading "zero" as an outage.
 
 ```bash
 for q in 'sum by (method) (increase(<flow_counter>{service="<service>"}[30m]))' \
@@ -318,7 +318,7 @@ curl -sG "$PROM/api/v1/query" -H "Authorization: Bearer $GRAFANA_SERVICE_ACCOUNT
 ```
 <!-- doc: https://prometheus.io/docs/prometheus/latest/querying/operators/ -->
 
-For latency, rank by the worst p95 in the window, `topk(10, max_over_time(<p95 recording rule>{service="<service>"}[30m]))`. Never add or average p95 values across endpoints or pods; a percentile of a sum is not a sum of percentiles. A top-N list can miss an endpoint, so once one is suspected, query it by name. For a latency alarm, also pull p50 and p90 of the alerting sibling beside its p95: p95 and p99 flat at one value while p50 is unchanged is a ceiling, usually a downstream timeout, not general slowness.
+For latency, rank by the worst p95 in the window, `topk(10, max_over_time(<p95 recording rule>{service="<service>"}[30m]))`. Never add or average p95 values across endpoints or pods; a percentile of a sum is not a sum of percentiles. A top-N list, or any per-endpoint metric built from a top-N aggregation, can miss an endpoint (service-level totals stay exact), so once one is suspected, query it by name. For a latency alarm, also pull p50 and p90 of the alerting sibling beside its p95: p95 and p99 flat at one value while p50 is unchanged is a ceiling, usually a downstream timeout, not general slowness.
 
 **2. Is it volume or speed.** Pull the suspect endpoint's own call rate per sibling, incident against baseline. Calls up with per-call latency flat means more work arrived (find the caller); calls flat with latency up means the calls got slower. Matching steps on every sibling at once usually mean one caller fanning out.
 
@@ -413,11 +413,10 @@ jq -r '.MetricDataResults[] | select(.StatusCode != "Complete") | "\(.Id) \(.Sta
 - **Derived metrics lag their source.** An exporter or recording rule describes events a minute or two before its timestamp. Shift before lining it up with load-balancer data, logs or deploy times.
 - **Units differ.** Latency may be seconds in one backend, milliseconds or microseconds in another, and alert thresholds in a third unit. Read the unit before comparing.
 - **Know what an error metric counts.** Some exclude 4xx; some "error" totals include slow requests. Neither is an error rate until you have checked.
-- **Top-N derived metrics miss the tail.** A per-endpoint metric built from a top-N aggregation drops rare endpoints; service-level totals stay exact.
 - **Matching `__name__` by regex inside a range function** (`rate({__name__=~"a|b"}[5m])`) drops the name, which can leave duplicate label sets and fail the query. Query each metric by name.
 - **`or` and arithmetic drop series.** Binary operators keep only matching label sets; `or` adds right-hand series only where no left-hand series has the same labels.
 - **High-cardinality selectors need `by (...)`.** An unaggregated selector over a per-pod or per-path metric can return thousands of series.
-- **Never fetch an exporter's endpoint directly** when its scrape itself runs expensive queries. Read the scraped series from Prometheus.
+- **Read exporter data from Prometheus,** never from the exporter's own endpoint; some exporters run real queries on each scrape.
 
 ## What to write in the ledger
 

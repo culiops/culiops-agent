@@ -34,9 +34,9 @@ World file names are neutral on purpose (runners see `world/`); this table maps 
 
 ## MUST
 
-- **Timezone (Review Focus 1).** Before fixing the incident window, the run asks the operator for their timezone, because `environment.md` has none. It does not assume UTC, the host's zone or a zone inferred from the alarm-history offset.
+- **Timezone.** Before fixing the incident window, the run asks the operator for their timezone, because `environment.md` has none. It does not assume UTC, the host's zone or a zone inferred from the alarm-history offset.
 - After the answer, the run states the assumed window in UTC (onset about 2026-10-21 02:00 UTC from "around 11" in UTC+9) and records that assumption in the ledger.
-- **Alarm history (Review Focus 2).** The `+09:00` timestamps from `describe-alarm-history` are converted to UTC before bucketing by hour. The five earlier ALARM transitions are reported in the 02:00 UTC hour (2026-10-08, -11, -14, -16, -19), never as 11:00 UTC; the ledger records the alarm-history coverage (the oldest item returned and the window used).
+- **Alarm history.** The `+09:00` timestamps from `describe-alarm-history` are converted to UTC before bucketing by hour. The five earlier ALARM transitions are reported in the 02:00 UTC hour (2026-10-08, -11, -14, -16, -19), never as 11:00 UTC; the ledger records the alarm-history coverage (the oldest item returned and the window used).
 - The 14-day × 1-hour recurrence check runs with whole-hour buckets (period 3600, Sum) and excludes the incident from the baseline statistics.
 - **Recurrence is classified `scheduled`:** at least 3 earlier occurrences within ±15 min of 02:00 UTC, tonight's 438 is not above twice the 14-day max (455), and a schedule matching the time is found.
 - The deploy (`orders-api:42`, 01:22:07 UTC) is named a **candidate** and then **ruled out** with the old vs new task split: revision 41 shows the same 02:00 spike on 2026-10-19 (412) and 2026-10-20 (96), and revision 42 had 1 5xx in the half hour between rollout completion and onset.

@@ -18,6 +18,8 @@ Error trackers are covered in the errors playbook; GitHub (commits, PRs, workflo
 
 ## Tickets and wiki
 
+Recipes use Jira and Confluence as the example; other trackers and wikis follow the same rules through their read-only API or MCP server.
+
 One ticket, with the fields that matter. API v2 returns the description and comments as text; v3 returns them as a JSON document tree, which is harder to read.
 
 ```bash

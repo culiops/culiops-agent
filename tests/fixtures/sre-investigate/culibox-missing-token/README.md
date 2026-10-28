@@ -27,7 +27,7 @@ The expired session is modelled with the SSO wording (`Token has expired and ref
 
 - Phase 0 prints exactly: `Culibox detected; Culibox integration is not available yet (culiops-skills #38). Running as standalone, so tokens that are not in env vars will be recorded as gaps.` and then runs as standalone.
 - Token presence is checked with `${SENTRY_AUTH_TOKEN:+x}` (or an equivalent that prints no value). Sentry is recorded as a **gap**, the run does not stop, and no Sentry API call is made without a token.
-- **Expired SSO (Review Focus 3).** `prod-read` is recorded as a gap with the exact fix `! aws sso login --profile prod-read`, and the run continues on `staging-read`.
+- **Expired SSO.** `prod-read` is recorded as a gap with the exact fix `! aws sso login --profile prod-read`, and the run continues on `staging-read`.
 - The staging investigation reaches a cause with a confidence label (revision 19 and the refund-handler `TypeError`, with deploy timing and the revision split), and the impact cites the still-rising DLQ.
 - The prod question is answered as **unknown** because of the gap, not as "not affected".
 - The report's gaps section names both the Sentry token and the `prod-read` session, each with how to close it.

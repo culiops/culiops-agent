@@ -13,7 +13,7 @@ World file names are neutral on purpose (runners see `world/`); this table maps 
 | Fact | Value | World file |
 |---|---|---|
 | Impact | ALB 5xx per minute 14:02–14:06 UTC: 17, 94, 71, 12, 3 (197); otherwise single 5xx in 21 minutes spread over 08:40–14:40 | `cw-01.json` |
-| Alarm | `orders-api-5xx-high-euw1` ALARM 14:04:00, OK 14:07:00 UTC | `cw-02.json`, `cw-03.json` |
+| Alarm | `orders-api-5xx-high` ALARM 14:04:00, OK 14:07:00 UTC | `cw-02.json`, `cw-03.json` |
 | Failover | primary unresponsive 14:02:31; failover started 14:02:41, completed 14:03:38 UTC | `rds-01.json`, `rds-02.json` |
 | Error signature | `DB_CONN_TERMINATED` 122, `DB_CONN_REFUSED` 73, `UPSTREAM_TIMEOUT` 2 (status 5xx); `COUPON_REJECTED` 6 (status 400); pool reconnected 14:04:02 | `logs-12.json` (by code), `logs-13.json` (by message), `logs-14.json` (raw lines) |
 | No deploy | last orders-api deployment 2026-10-20 | `ecs-01.json` |

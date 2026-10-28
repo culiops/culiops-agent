@@ -107,7 +107,7 @@ Neutral default scale. Replace it with your organisation's scale; the skill only
 | Level | Meaning |
 |---|---|
 | SEV1 | A customer-facing core flow is down, or more than 5% of requests are failing. |
-| SEV2 | Significant partial degradation: one feature or one parallel deployment affected, with a workaround or partial service. |
+| SEV2 | Significant partial degradation: one feature, region or tenant affected, with a workaround or partial service. |
 | SEV3 | Minor or internal impact, or a non-critical service. |
 | SEV4 | Non-production only, or no impact on customers. |
 

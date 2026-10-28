@@ -203,7 +203,7 @@ logcli query --timezone=UTC --from="$ONSET_MINUS_10" --to="$ONSET_PLUS_10" \
 ```
 <!-- doc: https://grafana.com/docs/loki/latest/query/logcli/getting-started/ -->
 
-`2>/dev/null` hides harmless platform warnings that some `logcli` builds print on macOS; drop it when a pull returns nothing, to see the real error.
+`2>/dev/null` hides harmless warnings that some `logcli` builds print on stderr; drop it when a pull returns nothing, to see the real error.
 
 CloudWatch: the same start/poll/stop loop with `--limit 5000` on `start-query` and the raw-lines query string, then flatten the results to one line per event: `jq -r '.results[] | map({(.field): .value}) | add | .["@message"]'`.
 

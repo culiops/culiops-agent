@@ -31,7 +31,7 @@ Identifier lessons (hints only, up to ten): <lines, or "none">
 
 Run the discovery checklist in one wave, using the playbooks for the backends listed in environment.md:
 - log label values or log groups matching the service name (Loki labels, CloudWatch log groups, Kubernetes labels)
-- the exact trace or APM service name: try the exact and capitalised forms, limit 5, last hour; wildcards may return nothing. Never guess a name
+- the exact trace or APM service name: try the exact form and the case variants seen in other backends, limit 5, last hour; wildcards may return nothing. Never guess a name
 - Prometheus job and label values for the service
 - dashboards whose title contains the service name
 - AWS: ECS clusters and services, target groups whose name contains the service, RDS clusters with a name filter. Kubernetes: deployments, services, ingresses and HPAs in the namespaces listed in environment.md
