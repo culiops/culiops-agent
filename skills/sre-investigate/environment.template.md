@@ -62,7 +62,7 @@ datasources:
     token_env: <ENV_VAR_NAME>
 ```
 
-Prefer viewer-only tokens, and read-only mode for any MCP server you run alongside (check the server's documentation for the exact flag).
+Prefer viewer-only tokens.
 
 ## Code and tickets
 

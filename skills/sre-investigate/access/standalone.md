@@ -1,6 +1,6 @@
 # Access and credentials (standalone)
 
-Phase 0 reads this file before any backend is queried. It covers six things in order: which mode the run is in, who the run is authenticated as, whether those credentials could change anything, how each backend gets its token, and how a failing backend is recorded.
+Phase 0 reads this file before any backend is queried. It has six sections, in order: which mode the run is in, who the run is authenticated as, whether AWS credentials could change anything, the same question for Kubernetes, how each backend gets its token, and how a failing backend is recorded. The ledger and report it mentions are defined in SKILL.md (the ledger is `ledger.md` in the run directory); a person checking access by hand needs only the commands under Mode detection, Identity and the two write-check sections.
 
 Everything here is read-only. The only commands that touch IAM are simulations and describe/get/list calls. No write API is ever called to find out whether a write would work.
 
@@ -8,9 +8,7 @@ Everything here is read-only. The only commands that touch IAM are simulations a
 
 `environment.md` holds the per-organisation facts this file refers to: profiles, contexts, datasources, token variable names, budgets. It is copied once per repo from [`../environment.template.md`](../environment.template.md) into the output root and filled in by the operator. Never write the filled-in file back into the skill directory.
 
-- **Output root.** With `CULIOPS_HOME` unset or empty it is `.culiops/sre-investigate/` at the repo root. With it set, the root is `$CULIOPS_HOME/<workspace>/sre-investigate/`, where `<workspace>` is the path of `git remote get-url origin` after the host, without `.git` (`git@github.com:example-org/checkout.git` gives `example-org/checkout`). With no `origin`, use the repo root's directory name; outside a git repo, the current directory's name.
-- **Never committed.** Say so when the file is first created: the output root is local, and under `CULIOPS_HOME` it is outside the repo.
-- **No root, no run.** If the root cannot be written, stop and ask. Never fall back to writing elsewhere in the repo.
+- **Location.** `<output root>/environment.md`. The output root and its rules (the `CULIOPS_HOME` override, creation, never committed) are set in SKILL.md and match change-comms constraint 19; this file does not restate them.
 - **Missing file.** If `environment.md` does not exist yet, offer to copy the template and stop until the operator has filled it in. A run with no timezone, profiles or datasources is a run of guesses.
 
 ## Mode detection
@@ -34,7 +32,7 @@ Standalone means every credential comes from the operator's own shell: AWS profi
 
 ## Identity
 
-Establish who the run is before it queries anything. One call per profile or context the run will use, all in the same first wave.
+Establish who the run is before it queries anything. One call per profile or context the run will use, all in the first wave of commands (a wave is a batch of read-only commands shown together and run together; SKILL.md defines it).
 
 **AWS, per profile listed in `environment.md`:**
 
@@ -65,7 +63,7 @@ kubectl config current-context
 
 <!-- doc: https://kubernetes.io/docs/reference/kubectl/generated/kubectl_auth/kubectl_auth_whoami/ -->
 
-`kubectl auth whoami` is marked experimental in the kubectl reference and is absent from older clients and clusters. If it fails with an unknown-command or not-found error, fall back to `kubectl config current-context` and record the user as unverified. Any other failure (unauthorised, unreachable cluster, expired exec credential) makes that context a gap.
+`kubectl auth whoami` is marked experimental in the kubectl reference and is absent from older clients and clusters. If it fails with an unknown-command or not-found error, record the user as unverified. `kubectl config current-context` names the current context only, so use it as the fallback just when `<context>` is the current one; for any other context, record only that the context exists. Any other failure (unauthorised, unreachable cluster, expired exec credential) makes that context a gap.
 
 Record every identity in the ledger as profile or context, account or cluster, and the principal's role name. Never record the session name part of an assumed-role ARN; it can carry a person's identifier.
 
@@ -147,10 +145,10 @@ There are three outcomes. Use the wording below, then continue to the next profi
 
 Name only the allowed actions. Never include the role ARN or the session name in the box.
 
-**No action allowed: read-only confirmed, with its limit.**
+**No action allowed: "read-only confirmed", with its limit.**
 
 ```text
-Write check, <profile>: none of the 10 broad write actions is allowed (simulation). This is not a full proof; resource-scoped writes are not covered.
+Write check, <profile>: read-only confirmed (simulation): none of the 10 broad write actions is allowed. This is not a full proof; resource-scoped writes are not covered.
 ```
 
 **The simulation, or the role lookup it needs, is denied: informational notice, never the warning.**
@@ -165,7 +163,7 @@ Record the same sentence as a gap in the ledger, then apply the fallback order.
 
 Stop at the first step that yields an answer. Each step is read-only, and none replaces the notice above: the gap stays in the ledger and the answer is added next to it.
 
-1. **List the attached policies**, using the role name from the caller ARN:
+1. **List the attached policies.** For an assumed role, use the role name from the caller ARN. For an IAM user principal, use `aws iam list-attached-user-policies --user-name <name>` (and `list-groups-for-user` for group policies) in the same way, or skip to step 2.
 
    ```bash
    aws iam list-attached-role-policies --profile <profile> --role-name "$role" --query 'AttachedPolicies[].PolicyName' --output text
@@ -189,11 +187,15 @@ kubectl auth can-i --list --context <context> --namespace <namespace>
 
 <!-- doc: https://kubernetes.io/docs/reference/kubectl/generated/kubectl_auth/kubectl_auth_can-i/ -->
 
-The output is a table with the columns `Resources`, `Non-Resource URLs`, `Resource Names` and `Verbs`. Read the `Verbs` column row by row.
+The output is a table with the columns `Resources`, `Non-Resource URLs`, `Resource Names` and `Verbs`. Verbs print in square brackets (for example `[get list watch]`), and resources print group-qualified where the group is not the core one (for example `deployments.apps`). Read the `Verbs` column row by row.
 
 - **Write-capable:** any row whose verbs include `create`, `update`, `patch`, `delete`, `deletecollection` or the wildcard `*`, on any resource. Name the resources and verbs in the warning.
-- **Not counted:** the access-review APIs that every authenticated user gets by default, so that a person can ask what they may do (`selfsubjectaccessreviews`, `selfsubjectrulesreviews`, `selfsubjectreviews`). A `create` there changes nothing in the cluster. Every other `create` counts.
+- **Not counted (exclusion list):** a row whose verbs are exactly `[create]` and whose resource is one of the access-review APIs that every authenticated user gets by default so that a person can ask what they may do: `selfsubjectaccessreviews`, `selfsubjectrulesreviews`, `selfsubjectreviews`. Match the resource name regardless of its API group suffix (`selfsubjectaccessreviews.authorization.k8s.io` and `selfsubjectreviews.authentication.k8s.io` both match). Any other `create`, and any row on these resources with additional verbs, counts as write-capable. A `create` on these three changes nothing in the cluster.
+
+  <!-- doc: https://kubernetes.io/docs/reference/access-authn-authz/rbac/ -->
+  <!-- verify: docs-only. The RBAC page says only that system:basic-user gives read-only access to basic information about oneself; it does not list the resources. Verify the list on the first real cluster with `kubectl get clusterrole system:basic-user -o yaml`. -->
 - **Cluster-scoped rows** that show up in the namespaced list count the same way.
+- **Possibly incomplete list.** With webhook authorizers, kubectl may print a notice that the rule list could be incomplete. Treat the result as "no write verbs seen; list may be incomplete", not as a confirmation.
 
 When any write-capable row exists, print the same boxed warning, with the context and namespace in place of the profile and account, and the resources and verbs in place of the actions. Suggest a read-only binding (the built-in `view` ClusterRole, bound where the investigation needs it) or Culibox when it is available. Then continue.
 
@@ -210,21 +212,26 @@ When any write-capable row exists, print the same boxed warning, with the contex
 +------------------------------------------------------------------+
 ```
 
-With no write-capable row, record "no write verbs in <namespace>" in the ledger. If `can-i --list` fails, or the cluster does not answer, record "write capability unknown (gap)" using the informational notice shape above. The listing reflects RBAC as the API server evaluates it for this identity; it says nothing about admission rules.
+With no write-capable row, record "no write verbs in <namespace>" in the ledger. If `can-i --list` fails, or the cluster does not answer, print this informational notice and record it as a gap (it is not the warning):
+
+```text
+Write capability unknown (gap), <context>/<namespace>: kubectl auth can-i --list failed, so write access could not be checked. This is not a finding that the identity can write.
+```
+
+ The listing reflects RBAC as the API server evaluates it for this identity; it says nothing about admission rules.
 
 ## Tokens
 
 Backends that authenticate with a token (Grafana, Prometheus, Loki, Tempo, Sentry, and any mapped vendor) are listed in the `datasources[]` table of `environment.md`. Each row names an environment variable, never a value.
 
-Check presence for each listed `token_env`, without printing anything but a yes or no:
+Check presence of each listed `token_env` with `${VAR:+x}`, which expands to the single character `x` when the variable is set and non-empty, and to nothing otherwise. Write one line per variable name taken from `environment.md`, with the name typed literally:
 
 ```bash
-for v in <ENV_VAR_ONE> <ENV_VAR_TWO>; do
-  [ -n "$(printenv "$v")" ] && echo "$v: set" || echo "$v: missing"
-done
+[ -n "${<ENV_VAR_ONE>:+x}" ] && echo "<ENV_VAR_ONE>: set" || echo "<ENV_VAR_ONE>: unset"
+[ -n "${<ENV_VAR_TWO>:+x}" ] && echo "<ENV_VAR_TWO>: set" || echo "<ENV_VAR_TWO>: unset"
 ```
 
-The shorter form, `${VAR:+x}`, is the same test inside a command: `[ -n "${EXAMPLE_LOKI_TOKEN:+x}" ]`. Use whichever fits the command; both test presence and neither can print the value.
+Each line prints the name and `set` or `unset`, nothing else. Do not turn this into a loop with indirect expansion or `printenv`, and do not run it in a shell with tracing on (`set -x`, `bash -x`): the form is safe because the shell only ever sees `x`, and tracing a different form could print the value.
 
 Rules that do not bend:
 
