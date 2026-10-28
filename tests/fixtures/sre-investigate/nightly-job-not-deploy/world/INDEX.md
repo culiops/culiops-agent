@@ -1,40 +1,62 @@
-# World index — nightly-job-not-deploy
+# World index
 
-The first matching row wins; `*` matches any text. A command that matches no row returns `_default.txt` (`{}` for a JSON API, no lines for a text command): no data, never an error. Profile `prod-read` is the only AWS profile; region `us-east-1` is implied when omitted.
+## Matching rules
+
+1. A pattern names the command words and the arguments that pick the row. Any other flags and arguments may come anywhere, in any order; `…` marks where they usually sit, and `*` inside a value matches any text.
+2. `--profile`, `--region`, `--output`, `--query`, `--no-cli-pager`, `--color`, and kubectl's `-o`/`--sort-by`/`--field-selector` do not change which row matches, unless the row says so. A profile may be given as `--profile p`, `--profile=p` or `AWS_PROFILE=p`. Where a row needs an output format (`-o json`), it says so.
+3. kubectl: the namespace may be given as `-n ns` or `--namespace ns`, before or after the verb. Resource kinds match their short, singular and plural names (`po`/`pod`/`pods`, `rs`/`replicaset`/`replicasets`, `deploy`/`deployment`).
+4. Time windows: a row whose Notes give a covered window matches any request whose window overlaps it. Return only the points or rows inside the requested window (and sum them when the request asks for a coarser period or no time bin). A request whose window overlaps no row's window gets the default for its kind.
+5. Query text (PromQL, LogQL, TraceQL, Logs Insights): a query matches when it asks for the same metric or fields with the same selectors, whatever the spelling (`0.5` = `0.50`, label order, whitespace, `sum by (le) (…)` = `sum(…) by (le)`), whether it is sent with `curl`, a CLI or an MCP tool.
+6. The first matching row wins.
+7. Defaults: an unmatched JSON API call returns `_default.txt` (`{}`); an unmatched text command (`kubectl`, `helm`, `git`, `grep`, `command -v`, `echo`) returns `_empty.txt` (no output, exit status 0 unless a row says otherwise). `cat` or `ls` of a path that no row names prints `No such file or directory` with exit status 1.
+
+## Rows
 
 | Command pattern | File | Notes |
 |---|---|---|
-| `cat .culiops/sre-investigate/environment.md` | `environment.md` | Per-org facts. It has no timezone entry. |
-| `ls * .culiops/sre-investigate*` | `_default.txt` | Only `environment.md` exists; no `profiles/`, `lessons.md` or `incidents/` yet. |
-| `command -v agentbox-env` | `_default.txt` | No output, exit status 1 (not installed). |
-| `aws sts get-caller-identity --profile prod-read*` | `sts-prod-read.json` | SSO read-only assumed role. |
-| `aws iam get-role --profile prod-read * AWSReservedSSO_ReadOnly_0a1b2c3d4e5f6a7b*` | `iam-get-role.json` | Resolves the role ARN (with its path). |
-| `aws iam simulate-principal-policy --profile prod-read *` | `iam-simulate-readonly.json` | Every write action evaluates to `implicitDeny`. |
-| `aws cloudwatch describe-alarms --profile prod-read *orders-api*` | `cw-describe-alarms.json` | Alarm definition and current state. |
-| `aws cloudwatch describe-alarm-history --profile prod-read *orders-api-5xx-high*` | `alarm-history.json` | 30 days of state changes. Timestamps are rendered with a `+09:00` offset. |
-| `aws cloudwatch get-metric-data --profile prod-read * --start-time 2026-10-07*` | `cw-5xx-14d-1h.json` | Any ALB 5xx query for orders-api over the 14 days before now, period 3600. Hours with zero 5xx have no datapoint. |
-| `aws cloudwatch get-metric-data --profile prod-read * --start-time 2026-10-21*` | `cw-5xx-incident-1m.json` | ALB 5xx, period 60, 2026-10-21 01:00–02:40 UTC. |
-| `aws cloudwatch get-metric-data --profile prod-read * --start-time 2026-10-20*` | `cw-5xx-prev-day-1m.json` | Same query one day earlier. |
-| `aws cloudwatch get-metric-data --profile prod-read * --start-time 2026-10-14*` | `cw-5xx-minus7d-1m.json` | Same query seven days earlier. |
-| `aws ecs describe-services --profile prod-read * orders-api*` | `ecs-describe-services.json` | Deployments and service events. |
-| `aws ecs describe-task-definition --profile prod-read * orders-api:41*` | `ecs-taskdef-41.json` | Previous revision. |
-| `aws ecs describe-task-definition --profile prod-read * orders-api:42*` | `ecs-taskdef-42.json` | Current revision. |
-| `gh release view * --repo example-org/orders-api*` | `gh-release-notes.txt` | Release notes of the deployed image tag. |
-| `aws events list-rules --profile prod-read*` | `events-list-rules.json` | EventBridge rules on the default bus. |
-| `aws events describe-rule --profile prod-read * orders-reconcile-nightly*` | `events-describe-rule-reconcile.json` | |
-| `aws events list-targets-by-rule --profile prod-read * orders-reconcile-nightly*` | `events-targets-reconcile.json` | |
-| `aws scheduler list-schedules --profile prod-read*` | `scheduler-list-schedules.json` | No EventBridge Scheduler schedules. |
-| `aws ecs list-tasks --profile prod-read * events-rule/orders-reconcile-nightly*` | `ecs-list-tasks-reconcile.json` | Recently stopped task started by the rule. |
-| `aws ecs list-tasks --profile prod-read * --family orders-reconcile*` | `ecs-list-tasks-reconcile.json` | |
-| `aws ecs describe-tasks --profile prod-read * 7e4b1c90d2a84f61b3c5a6d7e8f90123*` | `ecs-describe-tasks-reconcile.json` | Start and stop times of tonight's run. |
-| `aws cloudtrail lookup-events --profile prod-read *` | `cloudtrail-lookup-ecs.json` | ECS write events 2026-10-21 00:00–02:40 UTC. |
-| `aws logs describe-log-groups --profile prod-read*` | `logs-describe-log-groups.json` | `storedBytes` and `retentionInDays` for the scan estimate. |
-| `aws logs start-query --profile prod-read * /ecs/orders-api * ecs_task_revision*` | `li-start-revision-split.json` | Any 5xx count grouped by task revision. |
-| `aws logs start-query --profile prod-read * /ecs/orders-api * error_code*` | `li-start-error-codes.json` | Any 5xx count grouped by error code (and route). |
-| `aws logs start-query --profile prod-read * /ecs/orders-reconcile*` | `li-start-reconcile.json` | Any query on the reconcile job's log group. |
-| `aws logs start-query --profile prod-read * /ecs/orders-api*` | `li-start-raw.json` | Any other orders-api query (raw lines around onset). |
-| `aws logs get-query-results --profile prod-read * 8d1f2c4e-5a7b-4c3d-9e1f-0a2b3c4d5e6f*` | `li-results-revision-split.json` | 5xx per hour per task revision, 2026-10-19 00:00 → now. |
-| `aws logs get-query-results --profile prod-read * 2b7e9a10-3c4d-4e5f-8a9b-0c1d2e3f4a5b*` | `li-results-error-codes.json` | Incident window 02:00–02:40 UTC. |
-| `aws logs get-query-results --profile prod-read * c3d4e5f6-0718-4293-a4b5-c6d7e8f90a1b*` | `li-results-raw.json` | 8 sample lines, 02:01–02:19 UTC. |
-| `aws logs get-query-results --profile prod-read * f0e1d2c3-b4a5-4968-8776-655443322110*` | `li-results-reconcile.json` | Reconcile job lines, tonight's run. |
-| `aws logs stop-query *` | `_default.txt` | |
+| `cat .culiops/sre-investigate/environment.md` | `environment.md` | |
+| `ls` … `.culiops/sre-investigate` | `ls-01.txt` | |
+| `command -v agentbox-env` | `_empty.txt` | Exit status 1. |
+| `aws sts get-caller-identity` | `sts-01.json` | |
+| `aws iam get-role` … `AWSReservedSSO_ReadOnly_0a1b2c3d4e5f6a7b` | `iam-01.json` | |
+| `aws iam simulate-principal-policy` … | `iam-02.json` | Evaluation results. |
+| `aws cloudwatch describe-alarms` … | `cw-01.json` | Any name, prefix or state filter that includes this alarm; no filter returns the same. |
+| `aws cloudwatch describe-alarm-history` … | `cw-02.json` | All history items the API returns for the account's alarms. |
+| `aws cloudwatch list-metrics` … `AWS/ApplicationELB` | `cw-05.json` | |
+| `aws cloudwatch get-metric-data` or `get-metric-statistics` … `HTTPCode_Target_5XX_Count`, period 3600 or more | `cw-03.json` | Sum, period 3600. Covers 2026-10-07 00:00 – 2026-10-21 02:40 UTC. `get-metric-statistics` returns the same numbers in its own shape. |
+| `aws cloudwatch get-metric-data` or `get-metric-statistics` … `HTTPCode_Target_5XX_Count`, period under 3600 | `cw-04.json` | Sum, period 60. Covers 2026-10-07 00:00 – 2026-10-21 02:40 UTC. |
+| `aws ecs list-clusters` | `ecs-11.json` | |
+| `aws ecs list-services` … `prod` | `ecs-09.json` | |
+| `aws ecs describe-services` … `orders-api` | `ecs-01.json` | |
+| `aws ecs list-task-definition-families` | `ecs-10.json` | |
+| `aws ecs list-task-definitions` … | `ecs-12.json` | Any family filter: return the matching ARNs. |
+| `aws ecs describe-task-definition` … `orders-api:41` | `ecs-02.json` | |
+| `aws ecs describe-task-definition` … `orders-api:42` (or `orders-api` with no revision) | `ecs-03.json` | |
+| `aws ecs describe-task-definition` … `orders-reconcile:7` (or `orders-reconcile`) | `ecs-13.json` | |
+| `aws ecs list-tasks` … `--desired-status STOPPED` … `--service-name orders-api` | `ecs-08.json` | |
+| `aws ecs list-tasks` … `--desired-status STOPPED` | `ecs-05.json` | Any other filter (cluster, family, started-by) that includes this task. |
+| `aws ecs list-tasks` … `--family orders-reconcile` or `--started-by *` | `ecs-08.json` | Running tasks only (the default desired status). |
+| `aws ecs list-tasks` … | `ecs-04.json` | Running tasks. |
+| `aws ecs describe-tasks` … `7e4b1c90d2a84f61b3c5a6d7e8f90123` | `ecs-06.json` | |
+| `aws ecs describe-tasks` … (any of the task IDs in `ecs-04.json`) | `ecs-07.json` | Return the tasks requested. |
+| `aws events list-rules` | `events-01.json` | |
+| `aws events describe-rule` … `orders-reconcile-nightly` | `events-02.json` | |
+| `aws events list-targets-by-rule` … `orders-reconcile-nightly` | `events-03.json` | |
+| `aws events list-targets-by-rule` … `catalog-sitemap-weekly` | `events-04.json` | |
+| `aws events list-targets-by-rule` … `orders-api-ecs-task-state` | `events-05.json` | |
+| `aws scheduler list-schedules` | `scheduler-01.json` | |
+| `aws cloudtrail lookup-events` … | `cloudtrail-01.json` | ECS management events. Covers 2026-10-07 00:00 – 2026-10-21 02:40 UTC. Return only events matching the lookup attributes; an attribute no event matches returns `{"Events": []}`. |
+| `gh release list` … `example-org/orders-api` | `gh-02.txt` | |
+| `gh release view` … `example-org/orders-api` | `gh-01.txt` | Latest release, or tag `2026.10.21-1`. |
+| `aws logs describe-log-groups` … | `logs-01.json` | |
+| `aws logs start-query` … `/ecs/orders-api`, `stats count(*)` grouped by `ecs_task_revision` (with or without a time bin) | `logs-02.json` | |
+| `aws logs start-query` … `/ecs/orders-api`, `stats count(*)` grouped by `error_code` (with or without a time bin) | `logs-03.json` | |
+| `aws logs start-query` … `/ecs/orders-api`, no `stats` (fields, filter, sort, limit) | `logs-04.json` | |
+| `aws logs start-query` … `/ecs/orders-reconcile` | `logs-05.json` | |
+| `aws logs start-query` … | `logs-06.json` | Any other query. |
+| `aws logs get-query-results` … `8d1f2c4e-5a7b-4c3d-9e1f-0a2b3c4d5e6f` | `logs-12.json` | Hourly rows by revision. Covers 2026-10-07 00:00 – 2026-10-21 02:40 UTC. Statistics describe the whole covered window. |
+| `aws logs get-query-results` … `2b7e9a10-3c4d-4e5f-8a9b-0c1d2e3f4a5b` | `logs-13.json` | Rows per UTC day and error code. Covers 2026-10-07 00:00 – 2026-10-21 02:40 UTC. Statistics describe the whole covered window. |
+| `aws logs get-query-results` … `c3d4e5f6-0718-4293-a4b5-c6d7e8f90a1b` | `logs-14.json` | Lines with status 500 and above. Covers 2026-10-19 01:50–02:30 and 2026-10-21 01:00–02:40 UTC; other windows return no rows. |
+| `aws logs get-query-results` … `f0e1d2c3-b4a5-4968-8776-655443322110` | `logs-15.json` | Covers 2026-10-19 00:00 – 2026-10-21 02:40 UTC. |
+| `aws logs get-query-results` … `6e5d4c3b-2a19-4807-b6f5-e4d3c2b1a090` | `logs-16.json` | |
+| `aws logs stop-query` … | `_default.txt` | |

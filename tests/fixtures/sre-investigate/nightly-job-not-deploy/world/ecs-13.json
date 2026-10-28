@@ -1,0 +1,58 @@
+{
+    "taskDefinition": {
+        "taskDefinitionArn": "arn:aws:ecs:us-east-1:111122223333:task-definition/orders-reconcile:7",
+        "family": "orders-reconcile",
+        "revision": 7,
+        "containerDefinitions": [
+            {
+                "name": "reconcile",
+                "image": "111122223333.dkr.ecr.us-east-1.amazonaws.com/orders-reconcile:2026.09.30-1",
+                "essential": true,
+                "command": [
+                    "python",
+                    "-m",
+                    "reconcile",
+                    "--window",
+                    "previous_day"
+                ],
+                "environment": [
+                    {
+                        "name": "DB_HOST",
+                        "value": "orders-db.cluster-c0abcdexample.us-east-1.rds.amazonaws.com"
+                    },
+                    {
+                        "name": "RECON_BATCH_SIZE",
+                        "value": "5000"
+                    },
+                    {
+                        "name": "RECON_LOCK_MODE",
+                        "value": "for_update"
+                    }
+                ],
+                "secrets": [
+                    {
+                        "name": "DB_PASSWORD",
+                        "valueFrom": "arn:aws:secretsmanager:us-east-1:111122223333:secret:prod/orders-reconcile/db-GhIjKl"
+                    }
+                ],
+                "logConfiguration": {
+                    "logDriver": "awslogs",
+                    "options": {
+                        "awslogs-group": "/ecs/orders-reconcile",
+                        "awslogs-region": "us-east-1",
+                        "awslogs-stream-prefix": "reconcile"
+                    }
+                }
+            }
+        ],
+        "networkMode": "awsvpc",
+        "requiresCompatibilities": [
+            "FARGATE"
+        ],
+        "cpu": "2048",
+        "memory": "4096",
+        "status": "ACTIVE",
+        "registeredAt": "2026-09-30T10:02:17.090000+00:00"
+    },
+    "tags": []
+}

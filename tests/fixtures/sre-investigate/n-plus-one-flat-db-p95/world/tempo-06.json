@@ -1,0 +1,16 @@
+{
+  "scopes": [
+    {
+      "name": "resource",
+      "tags": ["k8s.namespace.name", "k8s.pod.name", "service.name", "service.version"]
+    },
+    {
+      "name": "span",
+      "tags": ["db.statement", "db.system", "http.request.method", "http.response.status_code", "http.route", "server.address"]
+    },
+    {
+      "name": "intrinsic",
+      "tags": ["duration", "kind", "name", "status", "statusMessage"]
+    }
+  ]
+}

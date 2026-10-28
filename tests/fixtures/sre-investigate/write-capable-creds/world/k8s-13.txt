@@ -1,0 +1,3 @@
+NAME               DATA   AGE
+kube-root-ca.crt   1      164d
+payments-worker-config   4      164d

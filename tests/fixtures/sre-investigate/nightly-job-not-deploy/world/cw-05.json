@@ -1,0 +1,88 @@
+{
+    "Metrics": [
+        {
+            "Namespace": "AWS/ApplicationELB",
+            "MetricName": "HTTPCode_Target_5XX_Count",
+            "Dimensions": [
+                {
+                    "Name": "TargetGroup",
+                    "Value": "targetgroup/orders-api/943f017f100becff"
+                },
+                {
+                    "Name": "LoadBalancer",
+                    "Value": "app/prod-public/50dc6c495c0c9188"
+                }
+            ]
+        },
+        {
+            "Namespace": "AWS/ApplicationELB",
+            "MetricName": "HTTPCode_Target_4XX_Count",
+            "Dimensions": [
+                {
+                    "Name": "TargetGroup",
+                    "Value": "targetgroup/orders-api/943f017f100becff"
+                },
+                {
+                    "Name": "LoadBalancer",
+                    "Value": "app/prod-public/50dc6c495c0c9188"
+                }
+            ]
+        },
+        {
+            "Namespace": "AWS/ApplicationELB",
+            "MetricName": "RequestCount",
+            "Dimensions": [
+                {
+                    "Name": "TargetGroup",
+                    "Value": "targetgroup/orders-api/943f017f100becff"
+                },
+                {
+                    "Name": "LoadBalancer",
+                    "Value": "app/prod-public/50dc6c495c0c9188"
+                }
+            ]
+        },
+        {
+            "Namespace": "AWS/ApplicationELB",
+            "MetricName": "TargetResponseTime",
+            "Dimensions": [
+                {
+                    "Name": "TargetGroup",
+                    "Value": "targetgroup/orders-api/943f017f100becff"
+                },
+                {
+                    "Name": "LoadBalancer",
+                    "Value": "app/prod-public/50dc6c495c0c9188"
+                }
+            ]
+        },
+        {
+            "Namespace": "AWS/ApplicationELB",
+            "MetricName": "HealthyHostCount",
+            "Dimensions": [
+                {
+                    "Name": "TargetGroup",
+                    "Value": "targetgroup/orders-api/943f017f100becff"
+                },
+                {
+                    "Name": "LoadBalancer",
+                    "Value": "app/prod-public/50dc6c495c0c9188"
+                }
+            ]
+        },
+        {
+            "Namespace": "AWS/ApplicationELB",
+            "MetricName": "UnHealthyHostCount",
+            "Dimensions": [
+                {
+                    "Name": "TargetGroup",
+                    "Value": "targetgroup/orders-api/943f017f100becff"
+                },
+                {
+                    "Name": "LoadBalancer",
+                    "Value": "app/prod-public/50dc6c495c0c9188"
+                }
+            ]
+        }
+    ]
+}

@@ -1,0 +1,32 @@
+Name:               notify-worker
+Namespace:          notify
+CreationTimestamp:  Wed, 25 Mar 2026 09:12:40 +0000
+Labels:             app.kubernetes.io/instance=notify-worker
+                    app.kubernetes.io/managed-by=Helm
+                    app.kubernetes.io/name=notify-worker
+Annotations:        deployment.kubernetes.io/revision: 7
+                    meta.helm.sh/release-name: notify-worker
+                    meta.helm.sh/release-namespace: notify
+Selector:           app.kubernetes.io/instance=notify-worker,app.kubernetes.io/name=notify-worker
+Replicas:           3 desired | 3 updated | 3 total | 0 available | 3 unavailable
+StrategyType:       Recreate
+MinReadySeconds:    0
+Pod Template:
+  Labels:           app.kubernetes.io/instance=notify-worker
+                    app.kubernetes.io/name=notify-worker
+  Service Account:  notify-worker
+  Containers:
+   notify-worker:
+    Image:      111122223333.dkr.ecr.us-east-1.amazonaws.com/notify-worker:3.8.1
+    Port:       <none>
+    Host Port:  <none>
+    Environment Variables from:
+      notify-worker-config  ConfigMap  Optional: false
+Conditions:
+  Type           Status  Reason
+  ----           ------  ------
+  Progressing    True    NewReplicaSetAvailable
+  Available      False   MinimumReplicasUnavailable
+OldReplicaSets:  notify-worker-7f6b8c5d2e (0/0 replicas created)
+NewReplicaSet:   notify-worker-5c8d7b9f4c (3/3 replicas created)
+Events:          <none>

@@ -1,0 +1,40 @@
+{
+  "series": [
+    {
+      "labels": [
+        {"key": "span.db.system", "value": {"stringValue": "postgresql"}}
+      ],
+      "samples": [
+        {"timestampMs": "1792490400000", "value": 0.0039},
+        {"timestampMs": "1792491300000", "value": 0.00419},
+        {"timestampMs": "1792492200000", "value": 0.00419},
+        {"timestampMs": "1792493100000", "value": 0.00392},
+        {"timestampMs": "1792494000000", "value": 0.00399},
+        {"timestampMs": "1792494900000", "value": 0.00433},
+        {"timestampMs": "1792495800000", "value": 0.00411},
+        {"timestampMs": "1792496700000", "value": 0.00426},
+        {"timestampMs": "1792497600000", "value": 0.00436},
+        {"timestampMs": "1792498500000", "value": 0.00394},
+        {"timestampMs": "1792499400000", "value": 0.00428},
+        {"timestampMs": "1792500300000", "value": 0.00395},
+        {"timestampMs": "1792501200000", "value": 0.00423},
+        {"timestampMs": "1792502100000", "value": 0.00407},
+        {"timestampMs": "1792503000000", "value": 0.00422},
+        {"timestampMs": "1792503900000", "value": 0.00417},
+        {"timestampMs": "1792504800000", "value": 0.00419},
+        {"timestampMs": "1792505700000", "value": 0.004},
+        {"timestampMs": "1792506600000", "value": 0.00422},
+        {"timestampMs": "1792507500000", "value": 0.0039},
+        {"timestampMs": "1792508400000", "value": 0.00399},
+        {"timestampMs": "1792509300000", "value": 0.0039},
+        {"timestampMs": "1792510200000", "value": 0.00399}
+      ],
+      "promLabels": "{span.db.system=\"postgresql\"}"
+    }
+  ],
+  "metrics": {
+    "inspectedBytes": "6633910272",
+    "totalJobs": 40,
+    "completedJobs": 40
+  }
+}

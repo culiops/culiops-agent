@@ -10,20 +10,22 @@ Two traps sit on top. Logs live in Loki under `app="orders"`, while metrics and 
 
 ## What's modelled
 
+World file names are neutral on purpose (runners see `world/`); this table maps them.
+
 | Fact | Value | World file |
 |---|---|---|
-| Deploy | Helm rev 24 at 13:04:50 UTC, `v2.14.0` → `v2.15.0`; new ReplicaSet age 145 min | `helm-history.txt`, `kubectl-rollout-history.txt`, `kubectl-get-rs.txt` |
-| Route latency | `GET /orders` p95 0.16–0.20 s before about 13:06:30, 0.66–0.76 s after; p50 0.08–0.10 → 0.28–0.34 s | `prom-orders-p95-range.json`, `prom-orders-p50-range.json` |
-| Per-route p95, 15:30 vs 12:30 | `GET /orders` 0.712 vs 0.181 s; other routes unchanged | `prom-p95-by-route.json`, `prom-p95-by-route-baseline.json` |
-| Traffic | `GET /orders` 52–61 req/s, flat | `prom-rps.json` |
-| DB latency | DB client-span p95 3.9–4.4 ms all day (flat); RDS ReadLatency 0.52–0.68 ms (flat) | `tempo-db-span-p95.json`, `cw-rds-orders-db.json` |
-| DB load | DB ops/s 361–402 before, 3,820–4,090 after; RDS CPU 21–27 % → 37–44 %; connections 40–44 → 43–48 | `prom-db-op-rate.json`, `cw-rds-orders-db.json` |
-| Connection pool | used 14–19 → 17–24 of the pool; `pending_requests` 0 throughout | `prom-db-pool.json` |
-| Span count per transaction | incident (14:30–15:30 UTC): 24 traces, client spans median 41 (range 9–52); baseline (11:00–12:00 UTC): 24 traces, median 3 (range 2–4) | `tempo-spancount-incident.json`, `tempo-spancount-baseline.json` |
-| Code change | `list_orders_with_items` (one joined query) replaced by `list_orders` plus `list_items(order.id)` per order; two unrelated changes in the same release | `git-diff.txt`, `gh-compare.json`, `git-log.txt`, `repo/` |
-| Identifiers | Prometheus `service="orders-api"`, Tempo `resource.service.name="orders-api"`, Loki `app` values `catalog-api`, `notify-worker`, `orders`, `orders-reconcile`, `payments-worker`; `{app="orders-api"}` returns no streams | `loki-label-app-values.json`, `loki-empty.json`, `loki-orders-lines.json` |
-| History | `incidents/2026-08-14-orders-api.md` (pool exhaustion, `pending_requests` above 30) and an unrelated catalog-api incident; no `profiles/`, no `lessons.md` | `incidents/`, `incidents-grep.txt` |
-| Credentials | `prod-read` read-only; kubectl read verbs only; Grafana token set; no `agentbox-env` | `iam-simulate-readonly.json`, `kubectl-can-i-list.txt`, `env-token-present.txt` |
+| Deploy | Helm rev 24 at 13:04:50 UTC, `v2.14.0` → `v2.15.0`; new ReplicaSet age 145 min | `helm-01.txt`, `k8s-07.txt`, `k8s-06.txt` |
+| Route latency | `GET /orders` p95 0.16–0.20 s before about 13:06:30, 0.66–0.76 s after; p50 0.08–0.10 → 0.28–0.34 s; same window a week earlier flat at the pre-deploy values | `prom-01.json`, `prom-02.json`, `prom-11.json`, `prom-12.json` |
+| Per-route p95, 15:30 vs 12:30 (and −7d) | `GET /orders` 0.712 vs 0.181 s; other routes unchanged | `prom-03.json`, `prom-04.json`, `prom-14.json` |
+| Traffic | `GET /orders` 52–61 req/s, flat | `prom-07.json` |
+| DB latency | DB client-span p95 3.9–4.4 ms all day (flat); RDS ReadLatency 0.52–0.68 ms (flat) | `tempo-01.json`, `cw-01.json` |
+| DB load | DB ops/s 361–402 before, 3,820–4,090 after (355–404 a week earlier); RDS CPU 21–27 % → 37–44 %; connections 40–44 → 43–48 | `prom-05.json`, `prom-13.json`, `cw-01.json` |
+| Connection pool | used 14–19 → 17–24; `pending_requests` 0 throughout | `prom-06.json` |
+| Span count per transaction | structural search: incident (14:30–15:30 UTC) 24 traces, `matched` median 41 (range 9–52); baseline (11:00–12:00 UTC) 24 traces, median 3 (range 2–4). Plain searches return the same traces with `matched` 1. One full trace per window: 14 and 2 client spans (the per-item `SELECT order_items` spans are visible in the first) | `tempo-02.json`, `tempo-03.json`, `tempo-04.json`, `tempo-05.json`, `tempo-09.json`, `tempo-10.json` |
+| Code change | `list_orders_with_items` (one joined query) replaced by `list_orders` plus `list_items(order.id)` per order; two unrelated changes in the same release | `git-02.txt`, `gh-01.json`, `git-01.txt`, `repo/` |
+| Identifiers | Prometheus `service="orders-api"`, Tempo `resource.service.name="orders-api"`; Loki labels `app`, `container`, `namespace`, `stream`, with `app` values `catalog-api`, `notify-worker`, `orders`, `orders-reconcile`, `payments-worker`; `{app="orders-api"}` returns no streams; `{namespace="orders"}` returns the `orders` and `orders-reconcile` streams; no stream label ties `app="orders"` to `orders-api` | `loki-01.json`–`loki-07.json` |
+| History | `incidents/2026-08-14-orders-api.md` (pool exhaustion, `pending_requests` above 30) and an unrelated catalog-api incident; no `profiles/`, no `lessons.md` | `incidents/`, `ls-01.txt`, `ls-02.txt` |
+| Credentials | read-only AWS role; kubectl read verbs only; Grafana token set; `agentbox-env` absent | `iam-02.json`, `k8s-03.txt`, `env-01.txt` |
 
 ## MUST
 

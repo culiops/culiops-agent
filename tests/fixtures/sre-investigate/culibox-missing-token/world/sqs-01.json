@@ -1,0 +1,6 @@
+{
+    "QueueUrls": [
+        "https://sqs.eu-west-1.amazonaws.com/444455556666/payments-worker-jobs",
+        "https://sqs.eu-west-1.amazonaws.com/444455556666/payments-worker-dlq"
+    ]
+}

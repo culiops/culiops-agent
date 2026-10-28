@@ -1,4 +1,0 @@
-NAME                             READY   STATUS             RESTARTS        AGE
-payments-worker-6d4f8a2b7c-8wq2d   0/1     CrashLoopBackOff   11 (2m4s ago)   35m
-payments-worker-6d4f8a2b7c-jt6kz   0/1     CrashLoopBackOff   11 (98s ago)    35m
-payments-worker-6d4f8a2b7c-x4p9n   0/1     CrashLoopBackOff   11 (2m31s ago)  35m

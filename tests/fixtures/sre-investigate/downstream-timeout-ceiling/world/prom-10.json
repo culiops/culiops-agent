@@ -1,0 +1,13 @@
+{
+  "status": "success",
+  "data": {
+    "resultType": "vector",
+    "result": [
+      {"metric": {"service": "catalog-api", "route": "/products/{id}"}, "value": [1792750800, "0.441"]},
+      {"metric": {"service": "catalog-api", "route": "/search"}, "value": [1792750800, "0.372"]},
+      {"metric": {"service": "catalog-api", "route": "/products/{id}/reviews"}, "value": [1792750800, "0.207"]},
+      {"metric": {"service": "catalog-api", "route": "/categories"}, "value": [1792750800, "0.079"]},
+      {"metric": {"service": "catalog-api", "route": "/healthz"}, "value": [1792750800, "0.004"]}
+    ]
+  }
+}

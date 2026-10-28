@@ -29,7 +29,7 @@ Timezone: America/Sao_Paulo (UTC-3, no daylight saving). Reports use UTC with th
 
 ## Budgets
 
-- Logs Insights: ask before any single query whose estimated scan exceeds **1 GB** (container logs here are verbose).
+- Logs Insights: ask before any single query whose estimated scan exceeds **0.5 GB** (container logs here are verbose).
 
 ## Severity scale
 

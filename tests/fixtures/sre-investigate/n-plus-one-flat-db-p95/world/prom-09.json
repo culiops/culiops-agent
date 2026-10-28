@@ -1,0 +1,4 @@
+{
+  "status": "success",
+  "data": ["db_client_connections_pending_requests", "db_client_connections_usage", "db_client_operation_duration_seconds_bucket", "db_client_operation_duration_seconds_count", "db_client_operation_duration_seconds_sum", "container_cpu_usage_seconds_total", "http_server_request_duration_seconds_bucket", "http_server_request_duration_seconds_count", "http_server_request_duration_seconds_sum", "kube_deployment_status_replicas", "up"]
+}

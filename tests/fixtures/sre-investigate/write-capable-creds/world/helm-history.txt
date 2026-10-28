@@ -1,3 +1,0 @@
-REVISION	UPDATED                 	STATUS    	CHART              	APP VERSION	DESCRIPTION
-30      	Wed Oct  7 10:02:18 2026	superseded	payments-worker-2.3.1	5.2.0      	Upgrade complete
-31      	Sat Oct 24 10:52:20 2026	deployed  	payments-worker-2.3.1	5.2.0      	Upgrade complete

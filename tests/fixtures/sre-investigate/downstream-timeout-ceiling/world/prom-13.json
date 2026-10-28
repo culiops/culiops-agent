@@ -1,0 +1,17 @@
+{
+  "status": "success",
+  "data": [
+    "go_goroutines",
+    "http_client_request_duration_seconds_bucket",
+    "http_client_request_duration_seconds_count",
+    "http_client_request_duration_seconds_sum",
+    "http_server_request_duration_seconds_bucket",
+    "http_server_request_duration_seconds_count",
+    "http_server_request_duration_seconds_sum",
+    "http_server_requests_in_flight",
+    "kube_deployment_status_replicas",
+    "kube_pod_container_status_restarts_total",
+    "process_cpu_seconds_total",
+    "up"
+  ]
+}
