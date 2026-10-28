@@ -78,7 +78,7 @@ done
 
 Turn each output into a table with the metrics playbook's "GetMetricData to a table" recipe. Every query counts against `budgets.<mode>.cloudwatch_metric_requests`; request only the rules a hypothesis needs, plus `ALL`.
 
-**Rung 2: a sample.** One call per rule, kept in the run directory in redacted form. The response contains every request header, cookies and authorization included, so it never reaches the disk or the terminal as returned: one `jq` pass drops every header value except `User-Agent`, cuts query strings off the path, and pulls out the value of the client-key cookie that the service profile names, which the shell loop replaces with a 12-character hash. That first pass does no formatting, so it cannot fail on the shape of a timestamp; everything else reads the kept file, and a failed view never costs the sample. `TZ=UTC` makes the CLI print times in UTC (by default it uses the machine's local zone).
+**Rung 2: a sample.** One call per rule, kept in the run directory in redacted form. The response contains every request header, cookies and authorization included, so it never reaches the disk or the terminal as returned: one `jq` pass drops every header value except `User-Agent`, cuts query strings off the path, and pulls out the value of the client-key cookie that the service profile names, base64-encoded so that no tab or line break in it can split the line; the shell loop replaces it with a 12-character hash of that encoding. That first pass does no formatting, so it cannot fail on the shape of a timestamp; everything else reads the kept file, and a failed view never costs the sample. `TZ=UTC` makes the CLI print times in UTC (by default it uses the machine's local zone).
 
 ```bash
 TZ=UTC aws wafv2 get-sampled-requests --profile <profile> --region <region> \
@@ -88,7 +88,7 @@ TZ=UTC aws wafv2 get-sampled-requests --profile <profile> --region <region> \
       "-\t" + ({meta: {window: .TimeWindow, population: .PopulationSize, rows: (.SampledRequests // [] | length)}} | tojson),
       (.SampledRequests[]?
         | ((([.Request.Headers[]? | select(.Name | ascii_downcase == "cookie") | .Value][0] // "")
-            | capture("(^|;\\s*)" + $ck + "=(?<v>[^;]*)") | .v) // "-") as $key
+            | capture("(^|;\\s*)" + $ck + "=(?<v>[^;]*)") | .v | select(length > 0) | @base64) // "-") as $key
         | .Request.Headers = [.Request.Headers[]? | if (.Name | ascii_downcase) == "user-agent" then . else {Name} end]
         | .Request.URI = ((.Request.URI // "") | split("?")[0])
         | del(.RequestHeadersInserted)
@@ -138,7 +138,7 @@ A client is never "one user" on the strength of an IP address. Combine what the 
 
 - **IP and country,** from the sample;
 - **a hashed client key:** the value of the session cookie or client-ID header that the service profile names, hashed in the pipe and cut to 12 characters;
-- **header shape:** the ordered list of header names (`headerNames`), which differs between browsers, mobile clients, SDKs and scripts;
+- **header shape:** the ordered list of header names (column 10 of the rows file), which differs between browsers, mobile clients, SDKs and scripts;
 - **TLS fingerprint (JA3/JA4):** WAF computes it and writes it to the logs only; sampled requests do not carry it. In this version it is a gap.
 <!-- doc: https://docs.aws.amazon.com/waf/latest/APIReference/API_HTTPRequest.html -->
 <!-- doc: https://docs.aws.amazon.com/waf/latest/developerguide/logging-fields.html -->
@@ -174,7 +174,7 @@ Read the result, with the header shapes and user agents from the same rows, agai
 - **Count rules inside rule groups.** A Count action inside a rule group emits metrics with `Rule`, `RuleGroup` and `Region` dimensions, not `WebACL`; rule groups owned by another account show their per-rule metrics only to the owner unless the action is overridden in your ACL.
 - **A sample is not a count.** Quote totals from CloudWatch. Quote sample-derived numbers as "in a sample of N out of `population` requests, between `<window start>` and `<window end>` UTC", and say when a weight was applied.
 - **Three hours.** Samples older than three hours cannot be requested. For an older incident, rung 1 is all this version can read; the rest is a gap with its "To confirm" sentence.
-- **Headers and cookies.** Sampled requests contain every request header, including cookies and authorization headers. Never store or quote a cookie value or an authorization header value: refer to them by header or cookie name, or by the short hash when identity matters. Never quote a full query string or a referer. Quote an IP, a user agent or a hash only when it is the finding; otherwise refer to the client by hash.
+- **Headers and cookies.** Sampled requests contain every request header, including cookies and authorization headers. Never store or quote a cookie value or an authorization header value: refer to them by header or cookie name, or by the short hash when identity matters. Never quote a full query string or a referer. The kept sample drops query strings but keeps the path, so a token embedded in a path segment (a reset or download link) is stored; quote such a path with that segment replaced by `<token>`. Quote an IP, a user agent or a hash only when it is the finding; otherwise refer to the client by hash.
 - **ACL with no rules.** An ACL associated with an Application Load Balancer but holding no rules or other active configuration publishes no metrics and no samples for it.
 
 ## What to write in the ledger

@@ -259,7 +259,7 @@ Write events from two hours before the onset to fifteen minutes after. The looku
 TZ=UTC aws cloudtrail lookup-events --profile <profile> --region <region> \
   --lookup-attributes AttributeKey=ReadOnly,AttributeValue=false \
   --start-time <onset-2h> --end-time <onset+15m> \
-  --query "Events[?Resources[?contains(ResourceName, '<resource-name>')]].[EventTime, EventSource, EventName, Username, EventId]" \
+  --query "Events[?Resources[?contains(ResourceName || '', '<resource-name>')]].[EventTime, EventSource, EventName, Username, EventId]" \
   --output text > "$RUN/c-cloudtrail-writes.tsv"
 ```
 <!-- doc: https://docs.aws.amazon.com/cli/latest/reference/cloudtrail/lookup-events.html -->
