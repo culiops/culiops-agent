@@ -14,6 +14,8 @@ Profile exception to rule 2: every `aws` command run with profile `prod-read` (a
 
 ## Rows
 
+`<…>` in a pattern is a parameter: the value comes from an earlier output, and the row's table (below the main table) gives the file for each value.
+
 | Command pattern | File | Notes |
 |---|---|---|
 | `aws` … profile `prod-read` | `aws-err-01.txt` | Exit status 255. |
@@ -29,7 +31,7 @@ Profile exception to rule 2: every `aws` command run with profile `prod-read` (a
 | `aws ecs list-services` … `staging` | `ecs-03.json` | |
 | `aws ecs describe-services` … `payments-worker` | `ecs-01.json` | |
 | `aws sqs list-queues` … | `sqs-01.json` | |
-| `aws cloudwatch get-metric-data` (or `get-metric-statistics`) … `AWS/SQS` … `ApproximateNumberOfMessagesVisible` … `payments-worker-dlq` | `cw-01.json` | Period 300. Covers 2026-10-25 05:30–07:10 UTC. |
+| `aws cloudwatch get-metric-data` (or `get-metric-statistics`) … `AWS/SQS` … `ApproximateNumberOfMessagesVisible` … `<queue name from sqs-01.json>` | table P1 | Period 300. Covers 2026-10-25 05:30–07:10 UTC. |
 | `aws logs describe-log-groups` … | `logs-01.json` | |
 | `aws logs start-query` … `/ecs/payments-worker`, `stats` grouped by any of `task_def_revision`, `error`, `@message`, window overlapping 03:00–07:15 UTC | `logs-02.json` | |
 | `aws logs start-query` … `/ecs/payments-worker`, no `stats`, window overlapping 03:00–07:15 UTC | `logs-04.json` | |
@@ -39,3 +41,10 @@ Profile exception to rule 2: every `aws` command run with profile `prod-read` (a
 | `aws logs get-query-results` … `7f8e9d0c-1b2a-4394-8576-a4b3c2d1e0f9` | `logs-13.json` | |
 | `gh api repos/example-org/payments-worker/compare/*`, `gh release view` … or `gh pr list` … `example-org/payments-worker` | `gh-01.txt` | |
 | `curl` … `sentry.io/api/0/` … or `sentry-cli` … | `sentry-01.json` | HTTP 401 / exit status 1. |
+
+**P1 — SQS queue**
+
+| Queue | File |
+|---|---|
+| `payments-worker-dlq` | `cw-01.json` |
+| `payments-worker-jobs` | `cw-02.json` |

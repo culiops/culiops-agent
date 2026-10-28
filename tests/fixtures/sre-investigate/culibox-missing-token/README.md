@@ -18,7 +18,7 @@ World file names are neutral on purpose (runners see `world/`); this table maps 
 | Staging access | `staging-read` works and is read-only | `sts-01.json`, `iam-02.json` |
 | Deploy | staging `payments-worker:19` created 06:24:10, completed 06:28:52 UTC; release v4.12.0 adds partial refunds | `ecs-01.json`, `gh-01.txt` |
 | Errors | rev 19: 738 × `TypeError: refund_amount() missing 1 required positional argument: 'currency'` (each failing message is received 3 times before it reaches the DLQ), first at 06:24:51 UTC; rev 18: 2 unrelated throttling retries | `logs-12.json`, `logs-14.json` |
-| Impact | DLQ 0 until 06:20, 24 at 06:25, still rising by 24 per 5 minutes: 240 at 07:10 | `cw-01.json` |
+| Impact | DLQ 0 until 06:20, 24 at 06:25, still rising by 24 per 5 minutes: 240 at 07:10; main queue depth 0–9 (failing messages leave it for the DLQ) | `cw-01.json`, `cw-02.json` |
 | Logs scan estimate | 3,758,096,384 bytes over 14 days: about 0.27 GB per day; threshold 5 GB | `logs-01.json`, `environment.md` |
 
 The expired session is modelled with the SSO wording (`Token has expired and refresh failed`), which is what an `aws sso login` profile prints. Long-lived or assumed-role credentials fail differently (`An error occurred (ExpiredToken) when calling the ... operation: The security token included in the request is expired`). The skill's gap detection should treat both as "expired credentials"; only the SSO form is exercised here.

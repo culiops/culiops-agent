@@ -12,6 +12,8 @@
 
 ## Rows
 
+`<…>` in a pattern is a parameter: the value comes from an earlier output, and the row's table (below the main table) gives the file for each value.
+
 | Command pattern | File | Notes |
 |---|---|---|
 | `cat .culiops/sre-investigate/environment.md` | `environment.md` | |
@@ -33,12 +35,35 @@
 | `kubectl get deploy` … `notify` | `k8s-12.txt` | |
 | `kubectl rollout history` … `notify-worker` | `k8s-10.txt` | |
 | `kubectl get rs` … `notify` | `k8s-11.txt` | |
-| `kubectl get configmap` … `notify-worker-config` (or `get configmap -n notify` with `-o yaml`/`-o json`) | `k8s-09.yaml` | JSON requests get the same content as JSON. |
+| `kubectl get configmap` … `<name from k8s-13.txt or k8s-07.txt>` | table P1 | `-o json` gets the same content as JSON. |
+| `kubectl get configmap` … `notify` … `-o yaml` (or `-o json`), no name | `k8s-16.yaml` | |
 | `kubectl get configmap` … `notify` | `k8s-13.txt` | |
 | `helm list` … | `helm-03.txt` | |
 | `helm history notify-worker` … | `helm-01.txt` | |
 | `helm get values notify-worker` … | `helm-02.yaml` | |
 | `git -C ~/src/notify-deploy log` … | `git-01.txt` | Any range or path filter that includes these commits. |
-| `git -C ~/src/notify-deploy diff` … or `git -C ~/src/notify-deploy show 3f9a1c2` … | `git-02.txt` | |
+| `git -C ~/src/notify-deploy show` … `<commit from git-01.txt>` (or `diff <commit>^ <commit>`) | table P2 | |
+| `git -C ~/src/notify-deploy diff` … (a range covering both commits) | `git-03.txt` then `git-02.txt` | Concatenate, oldest first; path filters keep the matching file sections. |
 | `aws sqs list-queues` … | `sqs-01.json` | |
-| `aws cloudwatch get-metric-data` (or `get-metric-statistics`) … `AWS/SQS` … `ApproximateNumberOfMessagesVisible` … `notify-outbound` | `cw-01.json` | Period 300. Covers 2026-10-22 07:50–08:45 UTC. |
+| `aws cloudwatch get-metric-data` (or `get-metric-statistics`) … `AWS/SQS` … `ApproximateNumberOfMessagesVisible` … `<queue name from sqs-01.json>` | table P3 | Period 300. Covers 2026-10-22 07:50–08:45 UTC. |
+
+**P1 — ConfigMap by name**
+
+| Name | File |
+|---|---|
+| `kube-root-ca.crt` | `k8s-15.yaml` |
+| `notify-worker-config` | `k8s-09.yaml` |
+
+**P2 — commit**
+
+| Commit | File |
+|---|---|
+| `3f9a1c2` | `git-02.txt` |
+| `9e8d7c6` | `git-03.txt` |
+
+**P3 — SQS queue**
+
+| Queue | File |
+|---|---|
+| `notify-outbound` | `cw-01.json` |
+| `notify-outbound-dlq` | `cw-02.json` |

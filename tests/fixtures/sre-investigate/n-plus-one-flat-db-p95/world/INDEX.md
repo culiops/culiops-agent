@@ -14,6 +14,8 @@ Prometheus, Loki and Tempo calls go through the Grafana datasource proxy or a Gr
 
 ## Rows
 
+`<…>` in a pattern is a parameter: the value comes from an earlier output, and the row's table (below the main table) gives the file for each value.
+
 | Command pattern | File | Notes |
 |---|---|---|
 | `cat .culiops/sre-investigate/environment.md` | `environment.md` | |
@@ -56,16 +58,13 @@ Prometheus, Loki and Tempo calls go through the Grafana datasource proxy or a Gr
 | TraceQL search for orders-api `GET /orders` spans, no structural operator, window overlapping 14:30–15:30 UTC | `tempo-04.json` | 24 traces. |
 | same, window overlapping 11:00–12:00 UTC | `tempo-05.json` | 24 traces. |
 | TraceQL search anything else, or another window | `tempo-07.json` | |
-| `GET …/api/traces/e3ea7a3906419b466a28541306cc5ee1` (or `/api/v2/traces/…`) | `tempo-09.json` | |
-| `GET …/api/traces/65345f5f8176033524bc88af3bd43f6f` (or `/api/v2/traces/…`) | `tempo-10.json` | |
-| `GET …/api/traces/<other id>` | `_default.txt` | Not retained in this world. |
+| `GET …/api/traces/<trace ID from a search result>` (or `/api/v2/traces/…`) | table P1 | |
 | `GET …/loki/api/v1/labels` | `loki-01.json` | |
 | `GET …/loki/api/v1/label/app/values` | `loki-02.json` | Also `logcli labels app`. |
 | `GET …/loki/api/v1/label/namespace/values` | `loki-03.json` | |
 | `GET …/loki/api/v1/label/container/values` | `loki-04.json` | |
-| LogQL whose selector is exactly `app="orders"` (any further labels or line filters) | `loki-05.json` | 15:18–15:24 UTC lines. |
-| LogQL `namespace="orders"`, or an `app=~` regex that matches `orders` and `orders-reconcile` | `loki-06.json` | Two streams. |
-| LogQL anything else (including selectors on values not in the label lists) | `loki-07.json` | |
+| LogQL `{<label>="<value>"}` (any further matchers or line filters) for a label from `loki-01.json` and a value from that label's values file | table P2 | A regex matcher (`=~`) selects every listed value it matches (union of their streams); several matchers keep only the streams that satisfy all of them. |
+| LogQL anything else (including values not in the label-values files) | `loki-07.json` | |
 | `aws rds describe-db-instances` … | `rds-01.json` | |
 | `aws cloudwatch get-metric-data` … `AWS/RDS` … `orders-db` | `cw-01.json` | CPUUtilization, ReadLatency, DatabaseConnections; period 300; 10:00–15:30 UTC. Other RDS metrics: no data. |
 | `git -C ~/src/orders-api tag` … | `git-03.txt` | |
@@ -73,3 +72,27 @@ Prometheus, Loki and Tempo calls go through the Grafana datasource proxy or a Gr
 | `git -C ~/src/orders-api diff v2.14.0 v2.15.0` … (or `v2.14.0..v2.15.0`) | `git-02.txt` | Path filters return the matching file sections. |
 | `git -C ~/src/orders-api show v2.15.0:<path>` | `../repo/<path>` | For the paths under `repo/`. |
 | `gh api repos/example-org/orders-api/compare/v2.14.0...v2.15.0` … | `gh-01.json` | |
+
+**P1 — trace by ID**
+
+| Trace ID | File |
+|---|---|
+| `e3ea7a3906419b466a28541306cc5ee1` | `tempo-09.json` |
+| `65345f5f8176033524bc88af3bd43f6f` | `tempo-10.json` |
+| any other ID from a search result | `_default.txt` (not retained) |
+
+**P2 — LogQL stream selectors**
+
+| Label | Value | File |
+|---|---|---|
+| `app` | `catalog-api` | `loki-08.json` |
+| `app` | `notify-worker` | `loki-09.json` |
+| `app` | `orders` | `loki-05.json` |
+| `app` | `orders-reconcile` | `loki-10.json` |
+| `app` | `payments-worker` | `loki-11.json` |
+| `namespace` | `catalog` | `loki-08.json` |
+| `namespace` | `notify` | `loki-09.json` |
+| `namespace` | `orders` | `loki-06.json` |
+| `namespace` | `payments` | `loki-11.json` |
+| `container` | `api` | `loki-12.json` |
+| `container` | `worker` | `loki-13.json` |

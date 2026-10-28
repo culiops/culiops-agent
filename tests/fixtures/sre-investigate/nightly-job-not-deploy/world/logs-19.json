@@ -1,0 +1,10 @@
+{
+  "results": [
+    [{"field": "error_code", "value": "ER_LOCK_WAIT_TIMEOUT"}, {"field": "count(*)", "value": "3273"}],
+    [{"field": "error_code", "value": "ECONNRESET"}, {"field": "count(*)", "value": "289"}],
+    [{"field": "error_code", "value": "UPSTREAM_TIMEOUT"}, {"field": "count(*)", "value": "244"}],
+    [{"field": "error_code", "value": "VALIDATION_PANIC"}, {"field": "count(*)", "value": "124"}]
+  ],
+  "statistics": {"recordsMatched": 3930.0, "recordsScanned": 100771840.0, "estimatedRecordsSkipped": 0.0, "bytesScanned": 30204018688.0, "estimatedBytesSkipped": 0.0, "logGroupsScanned": 1.0},
+  "status": "Complete"
+}

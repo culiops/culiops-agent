@@ -1,0 +1,8 @@
+{
+    "Name": "orders-api-ecs-task-state",
+    "Arn": "arn:aws:events:us-east-1:111122223333:rule/orders-api-ecs-task-state",
+    "EventPattern": "{\"source\":[\"aws.ecs\"],\"detail-type\":[\"ECS Task State Change\"]}",
+    "State": "ENABLED",
+    "EventBusName": "default",
+    "CreatedBy": "111122223333"
+}

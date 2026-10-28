@@ -18,7 +18,7 @@ World file names are neutral on purpose (runners see `world/`); this table maps 
 | Crash reason | `config: required environment variable NOTIFY_SMTP_RELAY_HOST is not set` | `k8s-08.txt` |
 | Config source | pod takes env from ConfigMap `notify-worker-config` (`envFrom`), which now has `SMTP_RELAY_HOST` and no `NOTIFY_SMTP_RELAY_HOST` | `k8s-07.txt`, `k8s-09.yaml` |
 | Git change | commit `3f9a1c2` at 08:03:41 UTC renames the key in `charts/notify-worker/values-prod.yaml`; the value is unchanged | `git-01.txt`, `git-02.txt` |
-| Impact | `notify-outbound` visible messages 7–27 before 08:15, 9,660 at 08:45 | `cw-01.json` |
+| Impact | `notify-outbound` visible messages 7–27 before 08:15, 9,660 at 08:45 | `cw-01.json` (DLQ `cw-02.json`: 0 throughout, the worker never receives) |
 | Config values present in the world | `relay-01.mail.example.org:2525`, `noreply@example.org`, the queue URL | `k8s-09.yaml`, `helm-02.yaml`, `git-02.txt` |
 | Credentials | `prod-read` read-only; kubectl read verbs only; no `agentbox-env` | `iam-02.json`, `k8s-03.txt` |
 

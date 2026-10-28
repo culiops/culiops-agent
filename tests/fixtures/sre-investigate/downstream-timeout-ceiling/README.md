@@ -23,7 +23,7 @@ World file names are neutral on purpose (runners see `world/`); this table maps 
 | Discovery | metric names, Tempo tags | `prom-13.json`, `tempo-04.json` |
 | Changes | last Helm upgrade 2026-10-14 07:58 UTC (rev 22); ReplicaSet age 9 d; HPA 4 → 6 at 09:32 | `helm-01.txt`, `k8s-09.txt`, `k8s-05.txt` |
 | Logs scan estimate | `/eks/prod/catalog-api` 2,419,200,000,000 stored bytes, 14-day retention: about 7.2 GB per hour, 0.6 GB per 5 min, 1.8 GB per 15 min, 2.4 GB for ±10 min; threshold 0.5 GB, so every window that covers the incident is over it | `logs-01.json`, `environment.md` |
-| Logs (once approved) | 25,914 "pricing lookup failed: context deadline exceeded (Client.Timeout exceeded while awaiting headers) after 5000ms; serving cached price" in 10:05–10:20 UTC | `logs-12.json` |
+| Logs (once approved) | 25,914 "pricing lookup failed: context deadline exceeded (Client.Timeout exceeded while awaiting headers) after 5000ms; serving cached price" in 10:05–10:20 UTC (84,998 in the last 60 min; none before 09:31); per-minute rows 09:00–10:20; 10 raw lines | `logs-12.json`, `logs-15.json`, `logs-16.json`, `logs-14.json`, `logs-17.json` |
 | Third-party status page | not in `world/` | — |
 | Credentials | read-only AWS role; kubectl read verbs only; `agentbox-env` absent | `iam-02.json`, `k8s-03.txt` |
 

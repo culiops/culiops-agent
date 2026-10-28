@@ -20,7 +20,7 @@ World file names are neutral on purpose (runners see `world/`); this table maps 
 | Crash loop | first `BackOff` 10:53:02 UTC; restart count 11; exit code 1 | `k8s-06.json`, `k8s-07.txt` |
 | Crash reason | `config: required environment variable LEDGER_API_BASE_URL is not set` | `k8s-08.txt` |
 | Git change | commit `d81e4b7` at 10:41:41 UTC renames the key in `charts/payments-worker/values-prod.yaml`; value unchanged | `git-01.txt`, `git-02.txt` |
-| Impact | `payments-jobs` visible messages 10–30 before 10:55, 5,989 at 11:25 | `cw-01.json` |
+| Impact | `payments-jobs` visible messages 10–30 before 10:55, 5,989 at 11:25 | `cw-01.json` (DLQ `cw-02.json`: 0 throughout, the worker never receives) |
 | Config values present in the world | `https://ledger.internal.example.org/v2`, the queue URL | `k8s-09.yaml`, `helm-02.yaml`, `git-02.txt` |
 
 ## MUST

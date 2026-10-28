@@ -27,6 +27,8 @@ World file names are neutral on purpose (runners see `world/`); this table maps 
 | Error signature | 02:00 hour tonight: `ER_LOCK_WAIT_TIMEOUT` 431 of 438; the same code dominates every prior night (e.g. 409 on 10-19, 95 on 10-20) | `logs-13.json` (per day), `logs-14.json` (raw lines, 10-19 and 10-21) |
 | Logs scan estimate | `/ecs/orders-api` 64,424,509,440 stored bytes, 30-day retention (about 2.1 GB per day, about 30 GB for 14 days); threshold 10 GB | `logs-01.json`, `environment.md` |
 | Credentials | read-only (`implicitDeny` on every simulated write); `agentbox-env` absent | `iam-02.json`, `INDEX.md` |
+| Pre-aggregated companions | daily 5xx sums (e.g. 461 on 10-08, 442 on 10-21 to 02:40); 14-day totals by revision (40: 1,945, 41: 1,546, 42: 439) and by error code (`ER_LOCK_WAIT_TIMEOUT` 3,273); daily rows by revision | `cw-06.json`, `logs-17.json`, `logs-19.json`, `logs-18.json` |
+| Decoys behind the same lookups | other rules, task definitions (`orders-api:40`, `orders-migrate:3`, `orders-reconcile:6`) | `events-04.json`–`events-07.json`, `ecs-14.json`–`ecs-16.json` |
 
 `environment.md` has no timezone. The operator gives it only when asked (`operator-script.md`, line 2): Asia/Tokyo, UTC+9.
 

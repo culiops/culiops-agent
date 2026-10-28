@@ -1,0 +1,23 @@
+{
+  "results": [
+    [{"field": "bin(1d)", "value": "2026-10-07 00:00:00.000"}, {"field": "ecs_task_revision", "value": "40"}, {"field": "count(*)", "value": "123"}],
+    [{"field": "bin(1d)", "value": "2026-10-08 00:00:00.000"}, {"field": "ecs_task_revision", "value": "40"}, {"field": "count(*)", "value": "461"}],
+    [{"field": "bin(1d)", "value": "2026-10-09 00:00:00.000"}, {"field": "ecs_task_revision", "value": "40"}, {"field": "count(*)", "value": "106"}],
+    [{"field": "bin(1d)", "value": "2026-10-10 00:00:00.000"}, {"field": "ecs_task_revision", "value": "40"}, {"field": "count(*)", "value": "163"}],
+    [{"field": "bin(1d)", "value": "2026-10-11 00:00:00.000"}, {"field": "ecs_task_revision", "value": "40"}, {"field": "count(*)", "value": "430"}],
+    [{"field": "bin(1d)", "value": "2026-10-12 00:00:00.000"}, {"field": "ecs_task_revision", "value": "40"}, {"field": "count(*)", "value": "118"}],
+    [{"field": "bin(1d)", "value": "2026-10-13 00:00:00.000"}, {"field": "ecs_task_revision", "value": "40"}, {"field": "count(*)", "value": "82"}],
+    [{"field": "bin(1d)", "value": "2026-10-14 00:00:00.000"}, {"field": "ecs_task_revision", "value": "40"}, {"field": "count(*)", "value": "462"}],
+    [{"field": "bin(1d)", "value": "2026-10-14 00:00:00.000"}, {"field": "ecs_task_revision", "value": "41"}, {"field": "count(*)", "value": "31"}],
+    [{"field": "bin(1d)", "value": "2026-10-15 00:00:00.000"}, {"field": "ecs_task_revision", "value": "41"}, {"field": "count(*)", "value": "201"}],
+    [{"field": "bin(1d)", "value": "2026-10-16 00:00:00.000"}, {"field": "ecs_task_revision", "value": "41"}, {"field": "count(*)", "value": "443"}],
+    [{"field": "bin(1d)", "value": "2026-10-17 00:00:00.000"}, {"field": "ecs_task_revision", "value": "41"}, {"field": "count(*)", "value": "117"}],
+    [{"field": "bin(1d)", "value": "2026-10-18 00:00:00.000"}, {"field": "ecs_task_revision", "value": "41"}, {"field": "count(*)", "value": "152"}],
+    [{"field": "bin(1d)", "value": "2026-10-19 00:00:00.000"}, {"field": "ecs_task_revision", "value": "41"}, {"field": "count(*)", "value": "462"}],
+    [{"field": "bin(1d)", "value": "2026-10-20 00:00:00.000"}, {"field": "ecs_task_revision", "value": "41"}, {"field": "count(*)", "value": "137"}],
+    [{"field": "bin(1d)", "value": "2026-10-21 00:00:00.000"}, {"field": "ecs_task_revision", "value": "41"}, {"field": "count(*)", "value": "3"}],
+    [{"field": "bin(1d)", "value": "2026-10-21 00:00:00.000"}, {"field": "ecs_task_revision", "value": "42"}, {"field": "count(*)", "value": "439"}]
+  ],
+  "statistics": {"recordsMatched": 3930.0, "recordsScanned": 100771840.0, "estimatedRecordsSkipped": 0.0, "bytesScanned": 30204018688.0, "estimatedBytesSkipped": 0.0, "logGroupsScanned": 1.0},
+  "status": "Complete"
+}

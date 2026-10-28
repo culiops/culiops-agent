@@ -12,6 +12,8 @@
 
 ## Rows
 
+`<…>` in a pattern is a parameter: the value comes from an earlier output, and the row's table (below the main table) gives the file for each value.
+
 | Command pattern | File | Notes |
 |---|---|---|
 | `cat .culiops/sre-investigate/environment.md` | `environment.md` | |
@@ -34,12 +36,35 @@
 | `kubectl get deploy` … `payments` | `k8s-12.txt` | |
 | `kubectl rollout history` … `payments-worker` | `k8s-10.txt` | |
 | `kubectl get rs` … `payments` | `k8s-11.txt` | |
-| `kubectl get configmap` … `payments-worker-config` (or `get configmap -n payments` with `-o yaml`/`-o json`) | `k8s-09.yaml` | JSON requests get the same content as JSON. |
+| `kubectl get configmap` … `<name from k8s-13.txt or k8s-07.txt>` | table P1 | `-o json` gets the same content as JSON. |
+| `kubectl get configmap` … `payments` … `-o yaml` (or `-o json`), no name | `k8s-16.yaml` | |
 | `kubectl get configmap` … `payments` | `k8s-13.txt` | |
 | `helm list` … | `helm-03.txt` | |
 | `helm history payments-worker` … | `helm-01.txt` | |
 | `helm get values payments-worker` … | `helm-02.yaml` | |
 | `git -C ~/src/payments-deploy log` … | `git-01.txt` | Any range or path filter that includes these commits. |
-| `git -C ~/src/payments-deploy diff` … or `git -C ~/src/payments-deploy show d81e4b7` … | `git-02.txt` | |
+| `git -C ~/src/payments-deploy show` … `<commit from git-01.txt>` (or `diff <commit>^ <commit>`) | table P2 | |
+| `git -C ~/src/payments-deploy diff` … (a range covering both commits) | `git-03.txt` then `git-02.txt` | Concatenate, oldest first; path filters keep the matching file sections. |
 | `aws sqs list-queues` … | `sqs-01.json` | |
-| `aws cloudwatch get-metric-data` (or `get-metric-statistics`) … `AWS/SQS` … `ApproximateNumberOfMessagesVisible` … `payments-jobs` | `cw-01.json` | Period 300. Covers 2026-10-24 10:30–11:25 UTC. |
+| `aws cloudwatch get-metric-data` (or `get-metric-statistics`) … `AWS/SQS` … `ApproximateNumberOfMessagesVisible` … `<queue name from sqs-01.json>` | table P3 | Period 300. Covers 2026-10-24 10:30–11:25 UTC. |
+
+**P1 — ConfigMap by name**
+
+| Name | File |
+|---|---|
+| `kube-root-ca.crt` | `k8s-15.yaml` |
+| `payments-worker-config` | `k8s-09.yaml` |
+
+**P2 — commit**
+
+| Commit | File |
+|---|---|
+| `d81e4b7` | `git-02.txt` |
+| `27c4e91` | `git-03.txt` |
+
+**P3 — SQS queue**
+
+| Queue | File |
+|---|---|
+| `payments-jobs` | `cw-01.json` |
+| `payments-jobs-dlq` | `cw-02.json` |

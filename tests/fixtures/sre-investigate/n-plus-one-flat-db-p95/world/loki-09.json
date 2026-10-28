@@ -1,0 +1,27 @@
+{
+  "status": "success",
+  "data": {
+    "resultType": "streams",
+    "result": [
+      {
+        "stream": {
+          "app": "notify-worker",
+          "namespace": "notify",
+          "container": "worker",
+          "stream": "stdout"
+        },
+        "values": [
+          ["1792509480000000000", "level=info msg=\"sent\" template=order_confirmation"],
+          ["1792509521137000000", "level=info msg=\"sent\" template=password_reset"],
+          ["1792509562274000000", "level=info msg=\"queue poll\" received=4"]
+        ]
+      }
+    ],
+    "stats": {
+      "summary": {
+        "totalBytesProcessed": 1048576,
+        "execTime": 0.12
+      }
+    }
+  }
+}

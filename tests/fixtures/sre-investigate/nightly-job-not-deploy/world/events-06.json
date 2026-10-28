@@ -1,0 +1,8 @@
+{
+    "Name": "catalog-sitemap-weekly",
+    "Arn": "arn:aws:events:us-east-1:111122223333:rule/catalog-sitemap-weekly",
+    "ScheduleExpression": "cron(30 3 ? * SUN *)",
+    "State": "ENABLED",
+    "EventBusName": "default",
+    "CreatedBy": "111122223333"
+}

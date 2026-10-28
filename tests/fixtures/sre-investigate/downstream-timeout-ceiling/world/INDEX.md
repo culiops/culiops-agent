@@ -14,6 +14,8 @@ Prometheus range files cover 2026-10-23 04:20–10:20 UTC (or the same clock tim
 
 ## Rows
 
+`<…>` in a pattern is a parameter: the value comes from an earlier output, and the row's table (below the main table) gives the file for each value.
+
 | Command pattern | File | Notes |
 |---|---|---|
 | `cat .culiops/sre-investigate/environment.md` | `environment.md` | |
@@ -54,8 +56,28 @@ Prometheus range files cover 2026-10-23 04:20–10:20 UTC (or the same clock tim
 | TraceQL search over catalog-api spans, window overlapping 10:00–10:20 UTC, with a `duration >` filter of 1 s or more, or `status = error` | `tempo-03.json` | 5 traces. |
 | TraceQL search anything else | `tempo-05.json` | |
 | `aws logs describe-log-groups` … | `logs-01.json` | |
-| `aws logs start-query` … `/eks/prod/catalog-api`, window overlapping 10:05–10:20 UTC | `logs-02.json` | Any query (counts by message or raw lines). |
-| `aws logs start-query` … | `logs-03.json` | Any other query or window. |
-| `aws logs get-query-results` … `5e6f7a8b-9c0d-4e1f-a2b3-c4d5e6f7a8b9` | `logs-12.json` | Message counts. Covers 10:05–10:20 UTC; for another window, counts scale with the minutes after 09:31 inside it (about 1,730 timeout lines per minute, none before 09:31). |
-| `aws logs get-query-results` … `0b1c2d3e-4f50-4617-8283-94a5b6c7d8e9` | `logs-13.json` | |
+| `aws logs start-query` … `<log group from logs-01.json>` … `<query>` | table P1 | |
+| `aws logs get-query-results` … `<queryId>` | table P2 | |
 | `aws logs stop-query` … | `_default.txt` | |
+
+**P1 — `start-query`**
+
+| Log group | Query | Window | File (queryId) |
+|---|---|---|---|
+| `/eks/prod/catalog-api` | `stats count(*)` by message, no time bin | 10:05–10:20 UTC (last 15 min) | `logs-02.json` |
+| `/eks/prod/catalog-api` | `stats count(*)` by message, no time bin | 09:50–10:20 UTC (last 30 min) | `logs-05.json` |
+| `/eks/prod/catalog-api` | `stats count(*)` by message, no time bin | 09:20–10:20 UTC (last 60 min) | `logs-04.json` |
+| `/eks/prod/catalog-api` | `stats count(*)` by message, with a time bin; or no bin and any other window overlapping 09:00–10:20 UTC | — | `logs-06.json` |
+| `/eks/prod/catalog-api` | no `stats` (fields, filter, sort, limit) | overlapping 10:05–10:20 UTC | `logs-07.json` |
+| any | anything else | — | `logs-03.json` |
+
+**P2 — `get-query-results`**
+
+| queryId | File | Shape |
+|---|---|---|
+| `5e6f7a8b-9c0d-4e1f-a2b3-c4d5e6f7a8b9` | `logs-12.json` | Totals per message, 10:05–10:20 UTC. |
+| `d5e6f7a8-192a-4b3c-8d4e-5f6a7b8c9d0e` | `logs-16.json` | Totals per message, 09:50–10:20 UTC. |
+| `c4d5e6f7-0819-4a2b-9c3d-4e5f6a7b8c9d` | `logs-15.json` | Totals per message, 09:20–10:20 UTC. |
+| `e6f7a8b9-2a3b-4c4d-9e5f-6a7b8c9d0e1f` | `logs-14.json` | Rows per minute and message, 09:00–10:20 UTC. For a query without a time bin, sum the rows inside its window. |
+| `f7a8b9c0-3b4c-4d5e-8f60-7a8b9c0d1e2f` | `logs-17.json` | Up to 10 lines, 10:05–10:20 UTC. |
+| `0b1c2d3e-4f50-4617-8283-94a5b6c7d8e9` | `logs-13.json` | |
