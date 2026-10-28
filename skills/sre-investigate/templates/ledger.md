@@ -86,7 +86,8 @@ Keep changes, signals and mitigations in one list, ordered by time. Mark rows th
 Below the table, one line per hypothesis for what the table has no column for:
 
 - `<ID>` status: <open | testing | supported | refuted> · evidence: <query IDs> · note: <why the model tier, any reused earlier verdict>
-- Hypotheses seeded from memory use the ID `from-history:<file>` and stay leads until a query of this run supports them.
+- Each history match is its own entry with the ID `from-history:<file>`, even when it overlaps another hypothesis (its note cross-references that ID). It starts with no label, stays a lead until a query of this run supports it, and gets its own evidence worker in Deep mode.
+- In Deep mode the Label column stays empty until the hypothesis's worker verdict is merged.
 
 ## Code repos
 

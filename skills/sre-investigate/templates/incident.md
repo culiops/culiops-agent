@@ -74,5 +74,5 @@ Choose exactly one.
 ## Lookup rules
 
 - Search only after the run's own ranked hypotheses exist, so history cannot set the agenda. `grep` the front matter of `incidents/` for the service, each entry of `deps`, and the symptom words.
-- A match becomes a hypothesis with ID `from-history:<file>`. It is a lead, never evidence, and a query of the current run has to support it.
+- A match becomes its own hypothesis with ID `from-history:<file>`, even when it overlaps another one. It is a lead, never evidence, and a query of the current run has to support it.
 - Past incidents are never passed to evidence workers.
