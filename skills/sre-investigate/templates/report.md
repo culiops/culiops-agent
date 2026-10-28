@@ -7,7 +7,7 @@ How to fill it in:
 - Times are shown in UTC and in the reader's local zone, taken from `environment.md`. If no zone is set there, ask; do not guess. Use two columns, or `HH:MM UTC (HH:MM local)`.
 - Labels are `Confirmed`, `Likely`, `Assumed` and `Ruled out`. A cause is never labelled more strongly than its weakest causal link, and the TL;DR names that link.
 - Fast mode writes the TL;DR first (also printed inline), then Impact, Causal chain, Gaps, To confirm and Cost. Deep mode fills every section.
-- The run changed nothing it investigated. Wherever a mutation would be needed, describe it in prose. Never paste a runnable command that changes state into `## To confirm, a human would…` or `## Follow-ups`. Read-only commands a human can run to look for themselves are fine.
+- The run changed nothing it investigated. Wherever a mutation would be needed, describe it in prose. Never paste a runnable command that changes state into `## To confirm, a human would…` or `## Follow-ups`. Only `## Gaps` may carry a command, and only a read-only one or a re-auth step the user runs themselves (see there). `## To confirm, a human would…` and `## Follow-ups` are prose only.
 - Delete the guidance lines when you copy the file; keep the headings exactly as written.
 
 Run: <run directory name> · Mode: <Fast | Deep> · Window: <incident window in UTC> (<same window in local zone>)
@@ -77,9 +77,9 @@ One entry per claim in the chain: what was observed, at what time and scope, the
 
 | Gap | Impact on claims | How a human could fill it |
 |---|---|---|
-| <source not read> | <which statements it weakens> | <exact read-only step, names of variables only> |
+| <source not read> | <which statements it weakens> | <a variable name, a person to ask, or a re-auth step the user runs themselves, written exactly as `! aws sso login --profile <p>` (a login is not a change to an investigated system)> |
 
-If gaps exist, end the printed summary with: open items need your input.
+The last column never holds a command that changes an investigated system. If gaps exist, end the printed summary with: open items need your input.
 
 ## To confirm, a human would…
 

@@ -1,6 +1,6 @@
 # Incident summary format
 
-One short summary per finished run, at `<output root>/incidents/<date>-<service>.md`. It is the memory a later run greps. It is not the report: link to the run directory and keep the body to a screen.
+One short summary per finished run, at `<output root>/incidents/<date>-<service>.md`. If that name is taken (another environment or a second incident the same day), append `-<env>`, then `-2`, `-3`. It is the memory a later run greps. It is not the report: link to the run directory and keep the body to a screen.
 
 Write one when the run named a cause at any label, or when the user asks. A run that found no cause, Fast mode especially, does not create one unless asked. It is written after the user approves the record-phase diff.
 
@@ -18,7 +18,7 @@ symptoms: [<terms from the symptom list>]
 cause_category: <one term from the cause list>
 cause: <one line>
 deps: [<services or third parties on the failing path>]
-label: <Confirmed|Likely|Assumed>
+label: <Confirmed|Likely|Assumed>                # unknown cause_category always takes Assumed
 mode: <fast|deep>
 time_to_cause_min: <minutes, or null>
 run: runs/<run directory name>
@@ -69,7 +69,7 @@ Choose exactly one.
 
 ## Label vocabulary
 
-`Confirmed`, `Likely` or `Assumed`, the label of the cause as in the report. `Ruled out` applies to hypotheses, not to an incident.
+`Confirmed`, `Likely` or `Assumed`, the label of the cause as in the report. When `cause_category` is `unknown`, the label is `Assumed`: the lead hypothesis, if any, goes in the body. `Ruled out` applies to hypotheses, not to an incident.
 
 ## Lookup rules
 
