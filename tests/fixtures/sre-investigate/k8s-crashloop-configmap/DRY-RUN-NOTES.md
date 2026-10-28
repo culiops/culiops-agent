@@ -8,6 +8,7 @@
 - Mode of the case: **Fast**. Commands are simulated: each command's output was read from `world/` via `world/INDEX.md` (unmatched commands fall back to `world/_default.txt`). Each run kept an investigation log of the commands, the mapped files, the key facts and a final report.
 - The operator was offline after the opening line. The run wrote `ASK:` lines and went on with stated assumptions. An `ASK:` counts as asking only when the run did not then use a guessed value as fact.
 - Contamination caveat: baseline runs may have had background notes loaded.
+- Vocabulary rule used for every case: a README line that names a confidence label (`Confirmed`, `Likely`) or a recurrence class (`scheduled`) is FAIL when the run does not use that term ("high confidence" does not count); lines that name a shape or step word (`ceiling`, `candidate`) are graded on substance, and the Basis says so.
 - Scored against this fixture's README MUST / MUST-NOT lines. The raw log is not copied into the repo; quotes below are short excerpts of it.
 
 
@@ -30,7 +31,7 @@ Totals: 4 PASS, 5 FAIL, 0 N/A.
 ### Failure modes
 
 - Skipped part of the wave (rollout history) "because the picture was already conclusive".
-- Copied a configuration value (relay host and port) into the investigation record.
-- Called the cause "high confidence" with no Confirmed label and no event/diff/timing triple (first back-off time and the 42-second gap never stated).
-- Offered a rollback as a runnable command (`helm rollback ...`) in the report.
+- Copied a configuration value into the investigation record.
+- Called the cause "high confidence" with no Confirmed label and without citing the event, diff and timing legs together.
+- Offered a rollback as a runnable command in the report.
 - No waves: commands run singly and abbreviated.
