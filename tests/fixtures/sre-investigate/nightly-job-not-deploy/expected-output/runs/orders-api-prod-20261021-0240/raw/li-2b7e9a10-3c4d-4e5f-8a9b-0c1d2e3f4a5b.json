@@ -1,0 +1,48 @@
+{
+ "status": "Complete",
+ "results": [
+  [
+   {
+    "field": "bin(1d)",
+    "value": "2026-10-21 00:00:00.000"
+   },
+   {
+    "field": "error_code",
+    "value": "ECONNRESET"
+   },
+   {
+    "field": "count(*)",
+    "value": "6"
+   }
+  ],
+  [
+   {
+    "field": "bin(1d)",
+    "value": "2026-10-21 00:00:00.000"
+   },
+   {
+    "field": "error_code",
+    "value": "ER_LOCK_WAIT_TIMEOUT"
+   },
+   {
+    "field": "count(*)",
+    "value": "431"
+   }
+  ],
+  [
+   {
+    "field": "bin(1d)",
+    "value": "2026-10-21 00:00:00.000"
+   },
+   {
+    "field": "error_code",
+    "value": "UPSTREAM_TIMEOUT"
+   },
+   {
+    "field": "count(*)",
+    "value": "5"
+   }
+  ]
+ ],
+ "note": "daily bin 2026-10-21 (window 00:00-02:40 UTC); statistics block of the source file describes its 14-day covered window"
+}

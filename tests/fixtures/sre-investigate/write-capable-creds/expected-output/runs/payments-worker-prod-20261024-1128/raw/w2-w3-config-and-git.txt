@@ -1,0 +1,18 @@
+# Raw pulls, wave 2 and 3 (ConfigMap, git). Configuration is recorded by KEY NAME only; values are not stored.
+
+## W2-Q5  kubectl get configmap payments-worker-config -n payments -o jsonpath=<managedFields>
+Reply was the whole ConfigMap object, with no managedFields block (so the write time of the object is not available).
+Labels/annotations: managed-by Helm, release payments-worker, namespace payments.
+data keys (4): PAYMENTS_CURRENCY_DEFAULT, PAYMENTS_QUEUE_URL, PAYMENTS_WORKER_CONCURRENCY, LEDGER_BASE_URL
+data key NOT present: LEDGER_API_BASE_URL
+
+## W2-Q6  git -C ~/src/payments-deploy log --date=iso-strict --format=... -- charts/payments-worker
+d81e4b7  Sat Oct 24 10:41:41 2026 +0000  platform-dev  payments-worker: rename ledger endpoint key to match the shared ledger client (#377)
+27c4e91  Tue Oct 13 15:22:47 2026 +0000  platform-dev  payments-worker: add a retry budget for ledger calls (#361)
+
+## W3-Q1  git -C ~/src/payments-deploy diff 27c4e91^ d81e4b7 -- charts/payments-worker   (values redacted)
+templates/deployment.yaml (27c4e91): adds container args "--ledger-retry-budget=3" after envFrom configMapRef.
+values-prod.yaml (d81e4b7), config block:
+-  LEDGER_API_BASE_URL: <value unchanged, not recorded>
++  LEDGER_BASE_URL: <same value, not recorded>
+(other keys PAYMENTS_CURRENCY_DEFAULT, PAYMENTS_QUEUE_URL, PAYMENTS_WORKER_CONCURRENCY unchanged)

@@ -1,0 +1,21 @@
+# Raw pulls, wave 2 (kubectl describe pod, previous-container logs). UTC. Variable and secret NAMES only.
+
+## W2-Q1  kubectl describe pod payments-worker-6d4f8a2b7c-3mfk8 -n payments   (abridged: identity-neutral lines kept)
+Node:             ip-198-51-100-31.ec2.internal
+Start Time:       Sat, 24 Oct 2026 10:52:33 +0000
+Annotations:      checksum/config: <present, hash omitted>
+Controlled By:    ReplicaSet/payments-worker-6d4f8a2b7c
+Image:            111122223333.dkr.ecr.us-east-1.amazonaws.com/payments-worker:5.2.0
+State:            Waiting (CrashLoopBackOff)
+Last State:       Terminated, Reason: Error, Exit Code: 1, Started: 11:25:56, Finished: 11:25:56
+Restart Count:    11
+Limits:           cpu 500m, memory 256Mi      Requests: cpu 100m, memory 128Mi
+Environment Variables from: ConfigMap payments-worker-config (Optional: false)
+Environment (names): LEDGER_API_TOKEN (from key 'password' of a Secret, Optional: false)
+Liveness / Readiness / Startup probe lines: none present
+Events: Started (x12 over 35m); BackOff (x151 over 34m)
+
+## W2-Q2, Q3, Q4  kubectl logs <pod> -n payments --previous --tail=40  (identical reply for 3mfk8, q7c2z, vn5tr)
+{"level":"info","ts":"2026-10-24T11:25:56.102Z","msg":"payments-worker 5.2.0 starting","pid":1}
+{"level":"info","ts":"2026-10-24T11:25:56.118Z","msg":"loading configuration from environment"}
+{"level":"fatal","ts":"2026-10-24T11:25:56.121Z","msg":"config: required environment variable LEDGER_API_BASE_URL is not set","caller":"config/load.go:58"}

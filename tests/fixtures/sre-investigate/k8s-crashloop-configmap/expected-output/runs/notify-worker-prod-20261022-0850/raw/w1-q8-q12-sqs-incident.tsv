@@ -1,0 +1,15 @@
+utc	notify-outbound ApproximateNumberOfMessagesVisible (max, 300s)	notify-outbound-dlq ApproximateNumberOfMessagesVisible (max, 300s)
+07:50	11	0
+07:55	13	0
+08:00	7	0
+08:05	27	0
+08:10	16	0
+08:15	120	0
+08:20	1710	0
+08:25	3300	0
+08:30	4890	0
+08:35	6480	0
+08:40	8070	0
+08:45	9660	0
+# window requested 06:50-08:50 UTC; datapoints returned only 07:50-08:45 (12 of 24 expected). No data for 06:50-07:45 (coverage gap, not zero).
+# W1-Q9 (04:50-06:50), W1-Q10 (2026-10-15 06:50-08:50), W1-Q11 and W1-Q13 (14d at 3600s) returned {} (no MetricDataResults).
