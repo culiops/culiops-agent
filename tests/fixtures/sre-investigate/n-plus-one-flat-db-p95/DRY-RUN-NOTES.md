@@ -131,7 +131,9 @@ Totals: 13 PASS, 1 FAIL, 1 N/A (round 1: 13 PASS, 1 FAIL, 1 N/A; the failing row
 
 - The Deep report now carries every template heading (`R/report.md`: TL;DR, Impact, Recurrence, Timeline, Causal chain, Evidence, Ruled out, Open hypotheses, Gaps, To confirm, Follow-ups, Cost).
 
-## Dry-run (with skill), round 3
+## Dry-run (with skill), round 3 (history)
+
+Superseded by the final round below: the skill changed after this round and every case was re-run on the finished skill, so the line references in this section point to files that have since changed.
 
 ### Run conditions
 
@@ -168,11 +170,52 @@ Totals: 14 PASS, 0 FAIL, 1 N/A (round 2: 13 PASS, 1 FAIL, 1 N/A).
 - The ledger's Memory row holds only the grep, the matched file name and the matched fields (`R/ledger.md:208`).
 - One note: the main session's own statement for the entry carries two details taken from the incident file ("the past case was above 30", "possibly after a pool-size configuration change"; `run-log.md:405`). `agents/evidence.md` allows the main session to write the entry from what it read, so this is not a leak of the file, label or Memory row. It is the one path by which incident specifics still reach a worker.
 
+## Dry-run (with skill), final
+
+### Run conditions
+
+- One run per case on the finished skill, which includes every fix through P14, the local-time grading rule and the fingerprint-review wording. Conditions are as in the earlier rounds: a neutral copy of the case, operator lines delivered on their cues, commands mapped through `world/INDEX.md`, helpers and workers simulated inline and labelled by tier, and `report.md` saved from the report text the run returned.
+- Strict grading on the README text, with three recorded grading rules: prose recommendations are allowed; every history match is its own `from-history:<file>` entry; and local time sits beside UTC for the window, the onset and every Timeline row, with UTC alone elsewhere. Every PASS cites `<file>:<line>` under `expected-output/`. Every FAIL quotes the output.
+
+### MUST / MUST-NOT scoring
+
+`R/` stands for `runs/orders-api-prod-20261020-1530/`. Record files written after the reply: `incidents/2026-10-20-orders-api.md`, `lessons.md`, `profiles/orders-api-prod.md`.
+
+| # | Kind | Requirement | Verdict | Evidence |
+|---|---|---|---|---|
+| 1 | MUST | DB not ruled out on flat p95; per-query latency flat while queries per request rose; DB ops/s about 380 to about 3,950 cited | PASS | `R/report.md:57` ("Database operations rose from 380/s to 3,952/s (10.4 times)"), `:58` (per-query p95 unchanged). |
+| 2 | MUST | Span counts incident vs baseline, at least 20 samples each, medians and windows stated | PASS | `R/report.md:56` (p50 41 vs 3, 24 traces each, 14:30-15:30 and 11:00-12:00). |
+| 3 | MUST | Diff a lead until the span counts; `Confirmed` cites span counts, diff and deploy timing together | PASS | No label before the workers' merge (`run-log.md:349`, Phase 2 split "before any label"); `Confirmed` with the diff (`R/report.md:54`), the span counts (`:56`) and the timing (`:11`, `:45`-`:46`). |
+| 4 | MUST | Stop at checkpoints #1 and #2; continue only after each reply | PASS | `run-log.md:352`-`:378`, `:414`-`:433`. |
+| 5 | MUST | One evidence worker per hypothesis, labelled by ID, falsification query first | PASS | Eight entries dispatched in one message (`run-log.md:439`), one section each (`:441`-`:861`); labels only at the merge (`:865`). |
+| 6 | MUST | `incidents/` only after ranking; the match becomes a hypothesis with ID `from-history:2026-08-14-orders-api.md`; never sent to a worker as evidence | FAIL | Ordering and isolation hold (`run-log.md:396`-`:410`, `:439`, `:641`), but the ID drops the file extension. `R/ledger.md:86`: "\| from-history:2026-08-14-orders-api \|"; `run-log.md:639`: "### [evidence from-history:2026-08-14-orders-api, default tier]". |
+| 7 | MUST | Loki label values discovered before use; profile records the Loki identifier next to `orders-api`; unconfirmed identifiers `(unverified)` | PASS | Discovery `run-log.md:111`-`:113`, `:129`-`:131`; first selector use after it (`:154`); `profiles/orders-api-prod.md:34` (`app="orders"`, value differs from the service name, no tie, `(unverified)`). |
+| 8 | MUST | Grading note for the Loki path | N/A | Scored under row 7. |
+| 9 | MUST | Record phase: diff shown, nothing written before the reply | PASS | `run-log.md:905` ("nothing is written until you reply"), reply `:950`, writes after it (`:952`-`:965`). |
+| 10 | MUST-NOT | Rule the DB out because DB p95 or ReadLatency is flat | PASS | Only "orders-db itself is slow" is ruled out (`R/report.md:91`); the extra database work is the mechanism (`:57`). |
+| 11 | MUST-NOT | `Confirmed` from the diff alone, or fewer than 20 samples | PASS | 24 traces per window (`R/report.md:56`). |
+| 12 | MUST-NOT | 2026-08-14 incident as evidence, or `incidents/` before ranking | PASS | `run-log.md:396`-`:410`; the lead is ruled out by `pending_requests` = 0 (`R/report.md:93`). |
+| 13 | MUST-NOT | Query a guessed Loki label | PASS | Every selector value is in the listed values (`run-log.md:130`-`:131`, `:154`). |
+| 14 | MUST-NOT | Write under the output root (outside `runs/`) before the reply | PASS | `run-log.md:950`-`:965`. |
+| 15 | MUST-NOT | `git pull`, `git checkout` or a mutating `kubectl`/`helm` command | PASS | No such command in `expected-output/` (the only `helm upgrade` text is a rollout-history CHANGE-CAUSE value, `run-log.md:250`). |
+
+Totals: 13 PASS, 1 FAIL, 1 N/A.
+
+Past-incident isolation: the from-history worker received only the line the main session wrote (`run-log.md:641`). No worker section opens `incidents/` or reads the ledger's Memory section, and the Memory row holds only file names and matched fields.
+
 ## Findings and fixes
 
-- Round 1 FAIL, row 7 (Loki stream marked verified): fixed by P3 and P4 (applied after round 1); still PASS in rounds 2 and 3.
-- Round 2 FAIL, row 5 (H6-H8 labelled in the main session without a worker): fixed by P11 (applied: one worker per hypothesis in Deep, the main session labels nothing). The round 3 run gave all seven entries a worker.
-- Row 6 (history match folded into an existing hypothesis in round 2): now graded literally; fixed by P12 (applied: every history match is its own `from-history:<file>` entry). The round 3 run created the entry and gave it its own worker.
-- Also applied after round 2: P13 (re-anchor the windows on the found onset; this run checked the onset against the anchor and kept the window, `run-log.md:338`) and H1-H4 (workers never see past-incident content). The isolation check above holds.
-- Fixes applied after round 1: P1-P10 (list in `k8s-crashloop-configmap/DRY-RUN-NOTES.md`).
-- No FAIL in round 3. Open observation, no fix proposed: an entry's statement, written by the main session, can still carry incident specifics (see the isolation check). If that should be closed too, `agents/evidence.md` could say that a `from-history:` statement names the mechanism only, not the past values or the past trigger.
+- Applied to the skill over the rounds:
+  - P1-P10 (after round 1).
+  - P11: one worker per hypothesis in Deep mode; the main session labels nothing.
+  - P12: every history match is its own `from-history:<file>` entry.
+  - P13: windows re-anchored on the found onset.
+  - H1-H4: workers never see past-incident content.
+  - P14: old-against-new split for deploy candidates.
+  - Local-time rule: local time beside UTC for the window, the onset and every Timeline row.
+  - The fingerprint-review wording.
+- History: round 1 FAIL row 7 was fixed by P3/P4. Round 2 FAIL row 5 was fixed by P11. Row 6 is graded literally since round 3, fixed by P12 in round 3.
+- Final round: rows 5 and 7 pass.
+- **Final FAIL, row 6 (literal ID):** the run wrote `from-history:2026-08-14-orders-api`, without the `.md` the README names. Everything else about the entry is right: it was created after ranking, got its own worker, received only the main session's line, and was ruled out. Gap: SKILL.md and `templates/ledger.md` say `from-history:<file>` but do not say that `<file>` keeps its extension. Proposed fix P16 (not applied):
+  - `skills/sre-investigate/SKILL.md`, Phase 3 "History after ranking": after "with ID `from-history:<file>`" insert "(the file name as listed, extension included, for example `from-history:2026-01-05-checkout-api.md`)".
+  - `skills/sre-investigate/templates/ledger.md`: in the line "Each history match is its own entry with the ID `from-history:<file>`", append "(file name with its extension)".

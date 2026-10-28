@@ -1,0 +1,14 @@
+{
+  "status": "success",
+  "data": {
+    "alerts": [
+      {
+        "labels": {"alertname": "CatalogApiLatencyHigh", "namespace": "catalog", "service": "catalog-api", "severity": "page"},
+        "annotations": {"summary": "catalog-api p95 latency above 2s for 10 minutes", "runbook_url": "https://wiki.example.com/runbooks/catalog-api-latency"},
+        "state": "firing",
+        "activeAt": "2026-10-23T09:32:00Z",
+        "value": "4.952e+00"
+      }
+    ]
+  }
+}

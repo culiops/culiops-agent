@@ -1,0 +1,16 @@
+{
+  "_note": "raw pull W0-Q6 (ecs describe-services, cluster prod, service orders-api); reused by wave 1 as the ECS deploy leg",
+  "services": [{
+    "serviceName": "orders-api", "status": "ACTIVE", "launchType": "FARGATE",
+    "desiredCount": 4, "runningCount": 4, "pendingCount": 0,
+    "taskDefinition": "arn:aws:ecs:eu-west-1:111122223333:task-definition/orders-api:57",
+    "deployments": [{
+      "id": "ecs-svc/6650218843170235517", "status": "PRIMARY",
+      "taskDefinition": "arn:aws:ecs:eu-west-1:111122223333:task-definition/orders-api:57",
+      "desiredCount": 4, "runningCount": 4, "failedTasks": 0,
+      "createdAt": "2026-10-20T09:12:44.501000+00:00", "updatedAt": "2026-10-20T09:19:03.228000+00:00",
+      "rolloutState": "COMPLETED"}],
+    "events": [{"createdAt": "2026-10-26T14:10:11.004000+00:00", "message": "(service orders-api) has reached a steady state."}]
+  }],
+  "failures": []
+}

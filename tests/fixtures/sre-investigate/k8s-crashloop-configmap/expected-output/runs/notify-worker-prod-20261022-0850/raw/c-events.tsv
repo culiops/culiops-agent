@@ -1,9 +1,0 @@
-first_utc	last_utc	count	reason	object	message
-2026-10-22T08:14:21Z	2026-10-22T08:14:21Z	1	ScalingReplicaSet	Deployment/notify-worker	Scaled down replica set notify-worker-7f6b8c5d2e to 0 from 3
-2026-10-22T08:14:21Z	2026-10-22T08:14:21Z	1	Killing	Pod/notify-worker-7f6b8c5d2e-2hm4v	Stopping container notify-worker
-2026-10-22T08:14:33Z	2026-10-22T08:14:33Z	1	ScalingReplicaSet	Deployment/notify-worker	Scaled up replica set notify-worker-5c8d7b9f4c to 3
-2026-10-22T08:14:33Z	2026-10-22T08:14:33Z	1	Scheduled	Pod/notify-worker-5c8d7b9f4c-8wq2d	Successfully assigned notify/notify-worker-5c8d7b9f4c-8wq2d to a node
-2026-10-22T08:14:36Z	2026-10-22T08:47:56Z	12	Started	Pod/notify-worker-5c8d7b9f4c-8wq2d	Started container notify-worker
-2026-10-22T08:15:02Z	2026-10-22T08:49:20Z	151	BackOff	Pod/notify-worker-5c8d7b9f4c-8wq2d	Back-off restarting failed container notify-worker
-2026-10-22T08:15:03Z	2026-10-22T08:49:38Z	149	BackOff	Pod/notify-worker-5c8d7b9f4c-jt6kz	Back-off restarting failed container notify-worker
-2026-10-22T08:15:05Z	2026-10-22T08:49:51Z	150	BackOff	Pod/notify-worker-5c8d7b9f4c-x4p9n	Back-off restarting failed container notify-worker

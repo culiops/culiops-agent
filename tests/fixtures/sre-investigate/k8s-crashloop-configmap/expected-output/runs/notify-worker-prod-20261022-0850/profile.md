@@ -1,6 +1,6 @@
 # Profile: notify-worker prod
 
-Last verified: 2026-10-22 · Built by: helper PROFILE (simulated inline, cheapest tier), updated by the main session after waves 2 and 3 · Status: partly unverified
+Last verified: 2026-10-22 · Built by: helper (TASK: PROFILE, cheapest tier), merged by main session · Status: partly unverified
 
 ## Identity
 
@@ -8,63 +8,62 @@ Last verified: 2026-10-22 · Built by: helper PROFILE (simulated inline, cheapes
 |---|---|
 | Service | notify-worker |
 | Environment | prod |
-| Account or profile / Region | `prod-read` (account 111122223333) / us-east-1 |
-| Cluster, context and namespace | cluster `prod`, context `arn:aws:eks:us-east-1:111122223333:cluster/prod`, namespace `notify` |
-| IaC repo and paths | example-org/notify-deploy, local clone `~/src/notify-deploy`, values file `charts/notify-worker/values-prod.yaml` (verified 2026-10-22: a git log and diff on the path returned it, W2-Q3, W3-Q1) |
-| Core flows served | transactional email (order confirmations, password resets); critical |
+| Account or profile / Region | prod-read / us-east-1 |
+| Cluster, context and namespace | cluster `prod`, context arn:aws:eks:us-east-1:111122223333:cluster/prod, namespace `notify` |
+| IaC repo and paths | example-org/notify-deploy (clone ~/src/notify-deploy), chart path charts/notify-worker, prod values file charts/notify-worker/values-prod.yaml |
+| Core flows served | transactional email (order confirmations, password resets): critical |
 | SLO or error-budget source | none |
 
 ## Sibling set
 
-| Dimension | Member | How to tell it apart |
+| Dimension | Member | How to tell it apart (a name prefix or suffix, a label value, a job name) |
 |---|---|---|
-| replicas | pods `notify-worker-5c8d7b9f4c-8wq2d`, `-jt6kz`, `-x4p9n` (current ReplicaSet `notify-worker-5c8d7b9f4c`; previous `notify-worker-7f6b8c5d2e`, 0 replicas) | labels `app.kubernetes.io/name=notify-worker`, `app.kubernetes.io/instance=notify-worker`; no regions, shards or tenants |
+| replicas | Deployment notify-worker, desired 3 | pod name `notify-worker-<pod-template-hash>-<suffix>`; label pod-template-hash |
 
 ## Client identity (for WAF triangulation)
 
 | Field | Value |
 |---|---|
-| Session cookie name | none (queue consumer, no HTTP entry) |
+| Session cookie name | none (queue worker, no HTTP front) |
 | Client-ID header name | none |
 
 ## Identifiers per source
 
 | Source | Identifier | Verified |
 |---|---|---|
-| Application log label or log group | `kubectl logs <pod> -n notify`, pods of Deployment `notify-worker`; no log aggregator listed | (verified 2026-10-22) via W2-Q2: the three lines returned for pods whose names share the Deployment's ReplicaSet and name the service version `notify-worker 3.8.1` |
-| Sidecar or proxy logs | none (single container `notify-worker` per pod) | (verified 2026-10-22) via W2-Q1 |
-| APM or trace service name | none (no trace backend in environment.md) | n/a |
-| Prometheus job and labels | none (no Prometheus in environment.md) | n/a |
-| Business or flow counters | none configured for the email flow | n/a |
-| Compute | namespace `notify`; Deployment `notify-worker` (strategy Recreate); Helm release `notify-worker`; ConfigMaps `notify-worker-config` (envFrom), `kube-root-ca.crt`; ServiceAccount `notify-worker` | (verified 2026-10-22) via W0-Q7, W0-Q8, W0-Q10, W2-Q1, W3-Q3 |
-| Load balancing | none (queue consumer) | n/a |
-| Data stores | none known | (unverified) |
-| Queues and streams | SQS `notify-outbound`, `notify-outbound-dlq` (CloudWatch dimension QueueName, same names) | (verified 2026-10-22) via W0-Q9, W1-Q6 |
-| Functions | none | n/a |
-| Log datasource | none; kubectl only | n/a |
-| Error tracker project | none | n/a |
-| Code | example-org/notify-worker via `gh` (read-only), default branch unknown, not read this run. Image `111122223333.dkr.ecr.us-east-1.amazonaws.com/notify-worker`, tag `3.8.1` equals the Helm app version; tag to ref rule not resolved | repo (unverified); image tag (verified 2026-10-22) via W2-Q1 |
-| Tickets and wiki | none | n/a |
+| Application log label or log group | no log backend; `kubectl logs` of pods of Deployment notify-worker, namespace notify, container `notify-worker` (pod names `notify-worker-<hash>-<suffix>`, tied to the service by the Deployment's selector) | (verified 2026-10-22, W2-Q2) |
+| Sidecar or proxy logs | none: one container per pod | (verified 2026-10-22, W2-Q1) |
+| APM or trace service name | none listed in environment.md | (unverified) |
+| Prometheus job and labels | none listed in environment.md | (unverified) |
+| Business or flow counters | none listed in environment.md | (unverified) |
+| Compute | namespace notify; Deployment notify-worker (selector app.kubernetes.io/name=notify-worker, app.kubernetes.io/instance=notify-worker; strategy Recreate); ReplicaSets by pod-template-hash; Helm release notify-worker; ConfigMaps notify-worker-config (4 keys), kube-root-ca.crt; Secret reference notify-smtp (key name `password`, object not read); ServiceAccount notify-worker | Deployment, ConfigMaps, Helm release (verified 2026-10-22, W0-Q5, W1-Q5, W1-Q6); Secret notify-smtp (unverified: referenced only, not read) |
+| Load balancing | none found (svc, ingress, hpa listing returned no output) | (unverified) |
+| Data stores | none seen | (unverified) |
+| Queues and streams | SQS notify-outbound, notify-outbound-dlq (us-east-1) | (verified 2026-10-22, W1-Q8 returned datapoints for both) |
+| Functions | none seen | (unverified) |
+| Log datasource | none | (unverified) |
+| Error tracker project | none | (unverified) |
+| Code | example-org/notify-deploy, chart path charts/notify-worker (git log returned commits, W0-Q7), default branch unknown; example-org/notify-worker via gh, not queried. Image tag 3.8.1 equals the Helm APP VERSION; tag-to-ref rule not tested. Helm records no commit: tie a release to a commit through the live ConfigMap keys. | notify-deploy path (verified 2026-10-22, W0-Q7); rest (unverified) |
+| Tickets and wiki | none listed | (unverified) |
 
 ## Dependencies
 
-| Direction | Dependency | How | Identifier | Status page or contact |
+| Direction | Dependency | How (protocol, queue, shared store) | Identifier | Status page or contact (third parties) |
 |---|---|---|---|---|
-| upstream (work source) | SQS queue | consumes | `notify-outbound` | n/a (AWS) |
-| downstream | SQS dead-letter queue | redrive target | `notify-outbound-dlq` | n/a |
-| downstream | SMTP relay | SMTP; the host is set through a ConfigMap key whose name changed in commit 3f9a1c2 (old key `NOTIFY_SMTP_RELAY_HOST`, new key `SMTP_RELAY_HOST`); host value not recorded | ConfigMap `notify-worker-config` | none recorded |
-| downstream | SMTP credentials | env var `SMTP_PASSWORD` from Secret `notify-smtp` key `password` (names only; Secret not read) | Secret `notify-smtp` | n/a |
+| downstream of the queue (consumer) | SQS notify-outbound and its DLQ | worker polls the queue | notify-outbound, notify-outbound-dlq | not a third party |
+| downstream | SMTP relay (outbound mail) | SMTP; host set by a ConfigMap key | key name only recorded | unknown whether third party; contact not in environment.md |
+| upstream | producers of notify-outbound | queue | unknown | unknown |
 
 ## Dashboards
 
 | Name | UID or URL | Useful panels |
 |---|---|---|
-| none known | | |
+| none | | |
 
 ## Baseline notes
 
-- Normal load and latency: queue `notify-outbound` visible depth 7-27 and dead-letter queue 0 between 07:50 and 08:10 UTC on 2026-10-22 (W1-Q6, a single 20-minute sample, not a 14-day baseline).
-- Known periodic jobs and their usual effect: none known (no CronJobs in the cluster listing, no scheduled EventBridge rules; W2-Q4).
+- Normal load and latency: not known. Queue notify-outbound held 7-27 visible messages and the DLQ 0 between 07:50 and 08:10 UTC on 2026-10-22 (W1-Q8, one window only).
+- Known periodic jobs and their usual effect: none known.
 - Known benign noise: none known.
 
 ## Stale identifiers

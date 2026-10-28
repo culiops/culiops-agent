@@ -1,6 +1,6 @@
 # Profile: orders-api prod
 
-Last verified: 2026-10-20 · Built by: helper (cheapest tier) in run orders-api-prod-20261020-1530, marks updated by the main session after Phase 4 · Status: partly unverified (Loki log label)
+Last verified: 2026-10-20 · Built by: helper (cheapest tier) with main-session corrections · Status: partly unverified
 
 ## Identity
 
@@ -8,69 +8,67 @@ Last verified: 2026-10-20 · Built by: helper (cheapest tier) in run orders-api-
 |---|---|
 | Service | orders-api |
 | Environment | prod |
-| Account or profile / Region | prod-read / us-east-1 (account 111122223333, matches environment.md) |
-| Cluster, context and namespace | EKS cluster `prod`, context `arn:aws:eks:us-east-1:111122223333:cluster/prod`, namespace `orders` |
-| IaC repo and paths | none configured in environment.md; Helm chart `orders-api-4.2.0` (name from helm history, repo unknown) |
-| Core flows served | order history (`GET /orders`), checkout (`POST /orders`), both listed in environment.md |
-| SLO or error-budget source | none |
+| Account or profile / Region | prod-read (account 111122223333) / us-east-1 |
+| Cluster, context and namespace | cluster `prod`, context `arn:aws:eks:us-east-1:111122223333:cluster/prod`, namespace `orders`; Deployment `orders-api`, Helm release `orders-api` (chart orders-api-4.2.0) |
+| IaC repo and paths | none configured in environment.md (chart values not visible; only the app repo is listed) |
+| Core flows served | order history `GET /orders` (core), checkout `POST /orders` (core) |
+| SLO or error-budget source | none named in environment.md |
 
 ## Sibling set
 
-| Dimension | Member | How to tell it apart (alarm-name prefix, label value, load balancer suffix, job name) |
+| Dimension | Member | How to tell it apart |
 |---|---|---|
-| replicas | orders-api-7c9b6d8f5d-4kq2m, -9vx7t, -tz5wp (verified 2026-10-20, W0-Q20) | pod name (CPU series carry `pod`); the HTTP latency histogram has NO `pod` label (W3-Q1) |
-
-No region, shard or tenant siblings: one cluster, one namespace.
+| replicas | orders-api-7c9b6d8f5d-4kq2m, orders-api-7c9b6d8f5d-9vx7t, orders-api-7c9b6d8f5d-tz5wp | pod name; single cluster, no regions, shards or tenants found (PB-Q9) |
 
 ## Client identity (for WAF triangulation)
 
 | Field | Value |
 |---|---|
-| Session cookie name | none known (not needed: no WAF symptom) |
+| Session cookie name | none known |
 | Client-ID header name | none known |
 
 ## Identifiers per source
 
 | Source | Identifier | Verified |
 |---|---|---|
-| Application log label or log group | Loki `{namespace="orders", container="api", app="orders"}`. The `app` value (`orders`) differs from the service name; the lines carry no pod name or trace ID, so no query ties the stream to orders-api (W3-Q9). Sibling stream `app="orders-reconcile"` (container `worker`) is a different workload. | (unverified) |
-| Sidecar or proxy logs | none found | (unverified) |
-| APM or trace service name | Tempo `resource.service.name = "orders-api"` (case-sensitive); DB spans carry `db.system=postgresql`; traces carry no `service.version` or pod attribute | (verified 2026-10-20) |
-| Prometheus job and labels | `service="orders-api"`, `route`, `method` on `http_server_request_duration_seconds_{bucket,count,sum}`; `service`, `db_system` on `db_client_operation_duration_seconds_*`; `service`, `pool="orders-db"`, `state` on `db_client_connections_*`; `namespace`, `pod` on `container_cpu_usage_seconds_total` | (verified 2026-10-20) |
-| Business or flow counters | none named in environment.md | (unverified) |
-| Compute | namespace `orders`, Deployment `orders-api` (helm release `orders-api`), current ReplicaSet `orders-api-7c9b6d8f5d`; no HPA or ingress listing returned (empty output, not read as "none") | (verified 2026-10-20) for Deployment and ReplicaSet |
-| Load balancing | not found | (unverified) |
-| Data stores | RDS PostgreSQL 16.6 `orders-db`, db.r6g.2xlarge, Multi-AZ, Performance Insights off | (verified 2026-10-20) |
-| Queues and streams | none found | (unverified) |
-| Functions | none found | (unverified) |
-| Log datasource | Grafana datasource UID `loki-prod` | (verified 2026-10-20) |
-| Error tracker project | none in environment.md | (unverified) |
-| Code | example-org/orders-api, default branch not read. Image tag to ref rule: image `v2.15.0` is git tag `v2.15.0` (tag list W2-Q7). Clone `~/src/orders-api` (path from environment.md). | (verified 2026-10-20) for the tag rule |
-| Tickets and wiki | none named | (unverified) |
+| Application log label or log group | Loki datasource `loki-prod`: `app="orders"`, `namespace="orders"`, `container="api"`; returned `GET /orders` access lines (PB-Q15) but the stream has no pod label and its value (`orders`) differs from the service name, so no tie to the orders-api pods | (unverified) |
+| Sidecar or proxy logs | none discovered | (unverified) |
+| APM or trace service name | Tempo `tempo-prod`: `orders-api` (exact); resource tags `k8s.namespace.name`, `k8s.pod.name`, `service.name`, `service.version` exist, but the two fetched traces carry only `service.name` and `k8s.namespace.name` | (verified 2026-10-20) by W1-Q17 and W2-Q8 (a bare `{resource.service.name="orders-api"}` search returned no traces, PB-Q17; see lesson candidates) |
+| Prometheus job and labels | datasource `prom-prod`: `service="orders-api"` on `http_server_request_duration_seconds_{bucket,count,sum}` (labels `method`, `route`; no status or code label) and `db_client_operation_duration_seconds_{bucket,count,sum}` (labels `service`, `db_system`); `db_client_connections_usage` and `db_client_connections_pending_requests` (labels `service`, `pool`, `state`); `container_cpu_usage_seconds_total` (labels `namespace`, `pod`). No `job` label seen. | (verified 2026-10-20) |
+| Business or flow counters | none discovered | (unverified) |
+| Compute | namespace `orders`, Deployment `orders-api`, ReplicaSets `orders-api-7c9b6d8f5d` (v2.15.0, 3 ready) and `orders-api-5f8d9c7b6a` (v2.14.0, 0 replicas); no HPA, Service or Ingress found (the listing printed nothing, PB-Q10: absence not proven) | (verified 2026-10-20) for the Deployment and ReplicaSets |
+| Load balancing | not discovered | (unverified) |
+| Data stores | RDS `orders-db` (PostgreSQL 16.6, db.r6g.2xlarge, Multi-AZ); pool name `orders-db` in the app's metrics | (verified 2026-10-20) |
+| Queues and streams | none discovered | (unverified) |
+| Functions | none | (unverified) |
+| Log datasource | Grafana `https://grafana.example.com`, datasource UIDs `prom-prod`, `loki-prod`, `tempo-prod` | (verified 2026-10-20) |
+| Error tracker project | none configured | (unverified) |
+| Code | `example-org/orders-api`; default branch unknown (the `gh` repo lookup printed `{}`); image tag to ref rule: image tag `vX.Y.Z` = git tag `vX.Y.Z` (tags v2.14.0 and v2.15.0 exist locally, PB-Q12; the rollout history names image v2.14.0 then v2.15.0, W1-Q3). Local clone `~/src/orders-api` (environment.md). | (verified 2026-10-20) for the tag rule |
+| Tickets and wiki | none configured | (unverified) |
 
 ## Dependencies
 
 | Direction | Dependency | How (protocol, queue, shared store) | Identifier | Status page or contact (third parties) |
 |---|---|---|---|---|
-| downstream | orders-db | PostgreSQL via pool `orders-db` | RDS `orders-db`; `db_system=postgresql` (verified 2026-10-20) | not third party |
-| downstream | auth-api | HTTP client span `GET auth-api /verify` in every fetched GET /orders trace | `auth-api.auth.svc.cluster.local` (seen in W3-Q6 and W3-Q7) | not third party; owner unknown |
+| downstream | orders-db | PostgreSQL over a psycopg connection pool | RDS `orders-db`; pool `orders-db` | not a third party |
+| downstream | auth-api | HTTP `GET /verify` client span on every request | `auth-api.auth.svc.cluster.local` (seen in traces W2-Q10, W2-Q11); no latency series (W3-Q7 returned nothing) | internal team, owner unknown |
+
+No third party found in the path. No service-discovery catalog exists (`.culiops/service-discovery` is absent, PB-Q14).
 
 ## Dashboards
 
 | Name | UID or URL | Useful panels |
 |---|---|---|
-| none found | Grafana dashboard search returned an empty object (W0-Q23) | n/a |
+| none found (Grafana search for "orders" printed `{}`, PB-Q8) | | |
 
 ## Baseline notes
 
-- Normal load and latency (2026-10-20 10:00-13:06 UTC and 10-13 same clock window): GET /orders about 56 req/s, p95 about 0.18 s, p50 about 0.09 s.
-- Normal DB activity: about 380 statements/s service-wide (`db_system=postgresql`), pool `used` 14-19, `pending_requests` 0, RDS CPU about 25%, connections about 42.
-- Known periodic jobs and their usual effect: `orders-reconcile` (Loki app, container `worker`) logs "outbox drained" about every 137 s (seen in the namespace stream); no CronJob, EventBridge rule or Scheduler schedule was returned (W2-Q1..Q3).
-- Known benign noise: none recorded.
+- Normal load and latency: `GET /orders` about 56 req/s; p50 about 0.09 s and p95 about 0.18 s (10:00 to 13:06 UTC on 2026-10-20 and the whole of 10:00 to 15:30 on 2026-10-13: W1-Q8..Q11). DB operations about 380/s service-wide (W1-Q15, W1-Q16). Pool `used` 14 to 19. RDS CPU about 24%.
+- Known periodic jobs and their usual effect: none found (no CronJobs, EventBridge rules or Scheduler schedules returned: W2-Q3..Q5; the `{}` replies do not prove absence).
+- Known benign noise: none known.
 
 ## Stale identifiers
 
 | Identifier | Last empty run | Note |
 |---|---|---|
-| Prometheus `ALERTS{alertstate="firing", namespace="orders"}` | orders-api-prod-20261020-1530 | returned an empty matrix; alert name unknown, selector unverified |
-| histogram_quantile 0.90 and 0.99 on `http_server_request_duration_seconds_bucket{service="orders-api", route="/orders"}` | orders-api-prod-20261020-1530 | empty while 0.50 and 0.95 returned data (W1-Q9, W1-Q10) |
+| none | | |

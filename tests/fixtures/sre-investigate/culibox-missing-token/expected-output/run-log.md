@@ -1,354 +1,357 @@
-# Investigation log: sre-investigate, case-f (payments-worker, staging)
+# Run log: payments-worker staging, run payments-worker-staging-20261025-0715
 
-Simulation notes: no command was executed. Each command was looked up in `world/INDEX.md` and only the mapped world file was read. `$RUN` below = `.culiops/sre-investigate/runs/payments-worker-staging-20261025-0715/raw`, written under `out/` as `out/runs/payments-worker-staging-20261025-0715/raw`.
+Simulation notes (apply to the whole log):
+- Commands are simulated through `world/INDEX.md`. Command outputs that were not mapped to a row returned `_default.txt` (`{}`, JSON API calls) or `_empty.txt` (empty, text commands).
+- `date -u` is not in INDEX and returned nothing, so no real clock exists. Assumption used everywhere: today = 2026-10-25, now = 07:15 UTC (the latest time the world data covers). Query-log "Start" cells therefore read `n/a (no clock)`.
+- Output root maps to `<case>/out/` (same relative layout `.culiops/sre-investigate/...`).
+- The operator's only line was line 1 (the opening request). No other operator line was ever triggered, and none was given.
 
-Operator lines received:
-- Line 1, at the start: "payments-worker jobs have been failing in staging since about 06:30 UTC. Is prod affected too? Fast mode."
-- Lines 2 and later: none exist in the script. No cue for any further operator line occurred. The operator never replied to the Phase 6 diff, so nothing was recorded.
+## Operator line received
 
-Files written (all under the simulated output root `out/`):
-- `run-log.md` (this file)
-- `runs/payments-worker-staging-20261025-0715/ledger.md`
-- `runs/payments-worker-staging-20261025-0715/profile.md`
-- `runs/payments-worker-staging-20261025-0715/raw/li-9a0b1c2d.json`, `raw/li-3a4b5c6d.json`, `raw/m-sqs-dlq.json`, `raw/m-sqs-jobs.json`
-- `runs/payments-worker-staging-20261025-0715/report.md` (report saved separately; the text is also at the end of this log, section "Report text")
-- Not written, by design: `environment.md` (exists already), `profiles/`, `lessons.md`, `incidents/` (Phase 6 needs the operator's reply, which never came).
+- Line 1 (opening request, received at the start): "payments-worker jobs have been failing in staging since about 06:30 UTC. Is prod affected too? Fast mode."
 
-Files read: SKILL.md, `access/standalone.md`, `environment.template.md`, `templates/{ledger,profile,report,lesson,incident}.md`, `agents/helper.md`, `playbooks/{metrics,logs,changes,errors,infra-state}.md` (the last two only in part), `operator-script.md`, `world/INDEX.md`, and these world files, each only after a command mapped to it: environment.md, ls-01.txt, cmd-01.txt, _empty.txt, _default.txt, sts-01.json, iam-01.json, iam-02.json, aws-err-01.txt, logs-01.json, ecs-02.json, ecs-03.json, ecs-01.json, sqs-01.json, cw-01.json, cw-02.json, logs-02.json, logs-12.json, logs-04.json, logs-14.json, gh-01.txt. Never opened (no command of mine mapped to them): sentry-01.json (Sentry token unset, so no Sentry call), logs-03.json, logs-13.json.
+## Phase 0 pre-wave: mode detection, output root, environment
 
----
-
-## Phase 0: access, mode and intake
-
-### Step 1, output root and environment
-
-Commands:
+Commands, in order (all local reads, not counted as queries):
 
 | # | Command | World file | Key facts |
 |---|---|---|---|
-| P1 | `echo "${CULIOPS_HOME:-}"` | `_empty.txt` (default for unmatched text) | empty: CULIOPS_HOME unset, so root = `.culiops/sre-investigate/` |
-| P2 | `git rev-parse --show-toplevel` | `_empty.txt` | no output; the case directory stands for the repo, root taken relative to it |
-| P3 | `git check-ignore -q .culiops/sre-investigate` | `_empty.txt` (exit 0) | exit 0: ignored by git |
-| P4 | `ls .culiops/sre-investigate` | `ls-01.txt` | only `environment.md`: no profiles/, lessons.md, incidents/ |
-| P5 | `cat .culiops/sre-investigate/environment.md` | `environment.md` | timezone America/Bogota (UTC-5); profiles prod-read (111122223333, ECS cluster prod) and staging-read (444455556666, cluster staging), eu-west-1; no Kubernetes; backends CloudWatch + Logs Insights and Sentry (SENTRY_AUTH_TOKEN); repo example-org/payments-worker via gh; Logs Insights ask above 5 GB; core flows payment capture and refunds; staging incidents SEV4 unless they block a release |
+| 1 | `command -v agentbox-env` | cmd-01.txt | `/usr/local/bin/agentbox-env`, exit 0, so the Culibox notice is printed verbatim and the run is standalone. `agentbox-env` itself was never called. |
+| 2 | `echo "CULIOPS_HOME=${CULIOPS_HOME:-}"` | _empty.txt | no output; CULIOPS_HOME unset or empty, so the output root is `.culiops/sre-investigate/` |
+| 3 | `git rev-parse --show-toplevel` | _empty.txt | no output; the current directory is taken as the repo root (assumption, recorded in the ledger) |
+| 4 | `git check-ignore -q .culiops/sre-investigate` | _empty.txt | no output, exit 0: the path is git-ignored |
+| 5 | `date -u +%Y%m%d-%H%M` | _empty.txt | no output; no clock. Run name uses the assumed 2026-10-25 07:15 UTC |
+| 6 | `ls -R .culiops/sre-investigate` | ls-01.txt | only `environment.md`: no `profiles/`, `lessons.md` or `incidents/`, so a profile build is needed, no lessons to load, "no history yet" |
+| 7 | `cat .culiops/sre-investigate/environment.md` | environment.md | timezone America/Bogota (UTC-5); prod account 111122223333 profile `prod-read` (SSO), staging account 444455556666 profile `staging-read` (SSO), region eu-west-1; ECS cluster `staging`/`prod`; backends CloudWatch + Logs Insights, Sentry (org example-org, project payments-worker, token env var `SENTRY_AUTH_TOKEN`); repo example-org/payments-worker via gh; Logs Insights ask threshold 5 GB; severity: default scale, core flows payment capture and refunds, staging incidents SEV4 unless they block a release. No kube contexts. No `budgets` block other than the 5 GB threshold, so the template's Fast defaults apply (20 queries, 2 GB logs, 100 CloudWatch metric requests; windows: stats 48h, patterns 2h, metric 12h, raw 30m). |
 
-### Step 2, mode detection
-
-| # | Command | World file | Key facts |
-|---|---|---|---|
-| P6 | `command -v agentbox-env` | `cmd-01.txt` (exit 0) | `/usr/local/bin/agentbox-env`: Culibox detected. `agentbox-env` itself was never called. |
-
-### Steps 3 and 5 to 6: mode, problem statement, window
-
-Mode: Fast (user said "Fast mode"; ongoing failure). Window: "06:30 UTC" has an explicit zone, rule 1, used as given; window 06:00 UTC to now, local 01:00 America/Bogota. Previous window 04:45 to 06:00; minus 7 days 2026-10-18 06:00 to 07:15. The service and environment (payments-worker, staging) were known from the request, so the run directory and ledger were created at this point. Because the clock output was empty later in wave 0, the directory name uses 20261025-0715 (the end of the data), see below.
-
-Message shown to the operator (first message):
+### Message shown to the operator (first message), verbatim
 
 ```text
-sre-investigate: payments-worker / staging
+sre-investigate · payments-worker, staging (prod as the sibling environment)
 
-Mode: Fast (live triage). You asked for Fast mode and the jobs are still failing, so this is an ongoing incident.
+Mode: Fast. You described an ongoing failure ("have been failing ... since about 06:30 UTC") and asked for Fast, so the main session queries in waves (at most three after wave 0) with no checkpoints.
 
-Output root: .culiops/sre-investigate/ at the repo root (CULIOPS_HOME is not set). Everything this run writes goes there. It is local and is never committed, and git ignores it here (git check-ignore succeeded).
+Output root: .culiops/sre-investigate/ at the repo root (CULIOPS_HOME is unset). Everything this run writes goes there; it is local and is never committed. `git check-ignore -q .culiops/sre-investigate` succeeded, so git already ignores it.
 
 Culibox detected; Culibox integration is not available yet (culiops-skills #38). Running as standalone, so tokens that are not in env vars will be recorded as gaps.
 
-Window: you gave 06:30 UTC, an explicit zone, so I use it as given: 06:00 UTC to now (01:00 to now in America/Bogota, UTC-5, from environment.md). Baselines: the equal-length stretch before it, and the same span 7 days back.
+Environment: .culiops/sre-investigate/environment.md found (timezone America/Bogota, UTC-5; profiles staging-read and prod-read; Sentry; repo example-org/payments-worker). No stored profile, lessons or incident history exist yet, so I build a profile after wave 0.
 
-You also asked about prod. Prod is account 111122223333 (profile prod-read); I will check that profile in wave 0 as well.
+Window: 06:30 UTC carries an explicit zone, so it is used as given. Incident window 06:30-07:15 UTC (01:30-02:15 America/Bogota), previous window 05:45-06:30 UTC, same-length -7d window 2026-10-18 06:30-07:15 UTC. Assumption: today is 2026-10-25 and now is 07:15 UTC. The clock read printed nothing in this shell, so I took the latest time the data can show; correct me if that is wrong.
 ```
 
-### Wave 0, printed in full, then run
+## Phase 0: run directory, problem statement, window
 
-Printed to the operator:
+- Service/environment known (payments-worker, staging). Created `out/runs/payments-worker-staging-20261025-0715/` with `raw/` and `raw/helper/`; copied `templates/ledger.md` into it as `ledger.md` (written after every wave). `RUN=.culiops/sre-investigate/runs/payments-worker-staging-20261025-0715/raw`.
+- Mode: Fast (ongoing, operator asked for Fast).
+- Window rule 1 (explicit zone "UTC"): 06:30 UTC used as given. Incident 06:30-07:15 UTC; previous 05:45-06:30; -7d 2026-10-18 06:30-07:15. Epoch seconds used in commands: incident 1792909800-1792912500; previous 1792907100-1792909800; -7d 1792305000-1792307700; recurrence pull 1791700200-1792909800.
+- Local time for reports: America/Bogota (UTC-5): 06:30 UTC = 01:30.
 
-```text
-Wave 0 (7 calls)
-1. date -u +%H:%M:%S
-2. aws sts get-caller-identity --profile staging-read --region eu-west-1
-3. arn=$(aws sts get-caller-identity --profile staging-read --region eu-west-1 --query Arn --output text); role=${arn#*:assumed-role/}; role=${role%%/*}; role_arn=$(aws iam get-role --profile staging-read --region eu-west-1 --role-name "$role" --query Role.Arn --output text); aws iam simulate-principal-policy --profile staging-read --region eu-west-1 --policy-source-arn "$role_arn" --action-names s3:PutObject s3:DeleteObject ec2:TerminateInstances ec2:AuthorizeSecurityGroupIngress ecs:UpdateService iam:PutRolePolicy iam:CreateAccessKey rds:ModifyDBInstance lambda:UpdateFunctionCode cloudformation:DeleteStack --query 'EvaluationResults[].[EvalActionName,EvalDecision]' --output text
-4. aws sts get-caller-identity --profile prod-read --region eu-west-1
-5. [ -n "${SENTRY_AUTH_TOKEN:+x}" ] && echo "SENTRY_AUTH_TOKEN: set" || echo "SENTRY_AUTH_TOKEN: unset"
-6. aws logs describe-log-groups --profile staging-read --region eu-west-1 --log-group-name-prefix /ecs/payments-worker --output json
-7. helper TASK: PROFILE (cheapest tier), commands listed below
-No stored profile and no lessons exist, so there is nothing to copy. The trigger is a chat report, not an alarm, so no alarm history is pulled. No Kubernetes context is listed. The prod write-check is not run: the prod identity call comes first and decides it.
+## Phase 0, wave 0 (access and intake)
+
+Printed in full, then run (budget: wave 0 counted as 5 backend queries, W0-Q1..Q5; local shell checks are not counted):
+
+```bash
+date -u +%H:%M:%S
+aws sts get-caller-identity --profile staging-read --region eu-west-1
+aws sts get-caller-identity --profile prod-read --region eu-west-1
+arn=$(aws sts get-caller-identity --profile staging-read --region eu-west-1 --query Arn --output text) && role=${arn#*:assumed-role/} && role=${role%%/*} && role_arn=$(aws iam get-role --profile staging-read --region eu-west-1 --role-name "$role" --query Role.Arn --output text) && aws iam simulate-principal-policy --profile staging-read --region eu-west-1 --policy-source-arn "$role_arn" --action-names s3:PutObject s3:DeleteObject ec2:TerminateInstances ec2:AuthorizeSecurityGroupIngress ecs:UpdateService iam:PutRolePolicy iam:CreateAccessKey rds:ModifyDBInstance lambda:UpdateFunctionCode cloudformation:DeleteStack --query 'EvaluationResults[].[EvalActionName,EvalDecision]' --output text
+arn=$(aws sts get-caller-identity --profile prod-read --region eu-west-1 --query Arn --output text) && role=${arn#*:assumed-role/} && role=${role%%/*} && role_arn=$(aws iam get-role --profile prod-read --region eu-west-1 --role-name "$role" --query Role.Arn --output text) && aws iam simulate-principal-policy --profile prod-read --region eu-west-1 --policy-source-arn "$role_arn" --action-names s3:PutObject s3:DeleteObject ec2:TerminateInstances ec2:AuthorizeSecurityGroupIngress ecs:UpdateService iam:PutRolePolicy iam:CreateAccessKey rds:ModifyDBInstance lambda:UpdateFunctionCode cloudformation:DeleteStack --query 'EvaluationResults[].[EvalActionName,EvalDecision]' --output text
+[ -n "${SENTRY_AUTH_TOKEN:+x}" ] && echo "SENTRY_AUTH_TOKEN: set" || echo "SENTRY_AUTH_TOKEN: unset"
+aws logs describe-log-groups --profile staging-read --region eu-west-1 --log-group-name-prefix "/ecs/payments-worker" --output json
 ```
-
-Results:
 
 | ID | Command | World file | Key facts |
 |---|---|---|---|
-| W0-Q1 | `date -u +%H:%M:%S` | `_empty.txt` | no output; clock unavailable; "now" assumed 07:15Z (end of returned data) |
-| W0-Q2 | sts get-caller-identity staging-read | `sts-01.json` | Account 444455556666 (matches environment.md); role AWSReservedSSO_ReadOnly_9f8e7d6c5b4a3921; session name not recorded |
-| W0-Q3 | iam get-role (chained in call 3) | `iam-01.json` | path `/aws-reserved/sso.amazonaws.com/`, role ARN resolved |
-| W0-Q4 | iam simulate-principal-policy (call 3) | `iam-02.json` | 10 results, all implicitDeny; BUT the reply lacks 3 requested actions (ec2:AuthorizeSecurityGroupIngress, iam:CreateAccessKey, cloudformation:DeleteStack) and holds 3 unrequested (ec2:ModifyInstanceAttribute, ecs:StopTask, iam:AttachRolePolicy). Handled as a gap, not as "read-only confirmed". No boxed warning. |
-| W0-Q5 | sts get-caller-identity prod-read | `aws-err-01.txt` (INDEX: any aws command with profile prod-read, exit 255) | "Token has expired and refresh failed" (SSO). Gap with `! aws sso login --profile prod-read`. Not routed around; no further prod-read call made. |
-| W0-Q6 | SENTRY_AUTH_TOKEN presence | `_empty.txt` | no "set" line printed; treated as unset; gap; no Sentry call |
-| W0-Q7 | logs describe-log-groups | `logs-01.json` | /ecs/payments-worker, STANDARD, retention 14 d, storedBytes 3,758,096,384, created before the retention span so span = 14 d; estimate for 03:00-07:15 = about 0.048 GB (below the 5 GB ask) |
+| (local) | `date -u +%H:%M:%S` | _empty.txt | nothing printed; no clock |
+| W0-Q1 | `aws sts get-caller-identity --profile staging-read` | sts-01.json | Account 444455556666 (matches environment.md); assumed-role `AWSReservedSSO_ReadOnly_9f8e7d6c5b4a3921` (session name not recorded) |
+| W0-Q2 | `aws sts get-caller-identity --profile prod-read` | aws-err-01.txt | exit 255, "Error when retrieving token from sso: Token has expired and refresh failed" -> gap |
+| W0-Q3 | staging-read write-check chain (sts Arn -> iam get-role -> iam simulate-principal-policy) | sts-01.json, iam-01.json, iam-02.json | role path `/aws-reserved/sso.amazonaws.com/` resolved by get-role; simulation returned 10 rows but only 7 are in the fixed list (all `implicitDeny`: s3:PutObject, s3:DeleteObject, ec2:TerminateInstances, ecs:UpdateService, iam:PutRolePolicy, rds:ModifyDBInstance, lambda:UpdateFunctionCode). No rows for ec2:AuthorizeSecurityGroupIngress, iam:CreateAccessKey, cloudformation:DeleteStack (gap per action). Three rows for actions not requested (ec2:ModifyInstanceAttribute, ecs:StopTask, iam:AttachRolePolicy), also implicitDeny, ignored. |
+| W0-Q4 | prod-read write-check chain | aws-err-01.txt | first step fails (exit 255, same expired-token message); chain stops; write capability unknown (gap) |
+| (local) | token presence for SENTRY_AUTH_TOKEN | _empty.txt | no output = expands to nothing = unset -> gap. No Sentry call is made. |
+| W0-Q5 | `aws logs describe-log-groups --log-group-name-prefix "/ecs/payments-worker"` (the one wave-0 log probe: a size estimate, no Insights query) | logs-01.json | `/ecs/payments-worker` (verified), STANDARD class, retention 14 d, storedBytes 3,758,096,384 (3.76 GB), created 2025-03 so span = 14 d. Estimate bytes = storedBytes x window / 1,209,600 s: last 15 min = 0.003 GB; 06:20-06:40 = 0.004 GB; 03:00-07:15 = 0.048 GB. All under the 1 GB soft limit and 5 GB ask threshold. |
 
-Helper `[helper PROFILE, cheapest tier]` (simulated inline; discovery checklist, one wave):
+Not run in wave 0 (and why): no alarm named, so no alarm history; no Grafana/Prometheus alert; no ticket named; WAF not involved; Sentry top issues blocked by the missing token; no stored profile, `lessons.md` or incidents to read.
+
+### Message shown to the operator after wave 0, verbatim
+
+```text
+Wave 0 done. staging-read works; prod-read does not.
+
+Identity: staging-read -> account 444455556666 (matches environment.md), role AWSReservedSSO_ReadOnly_9f8e7d6c5b4a3921. prod-read -> no usable session.
+
+Write check, staging-read: no write found, but the check is incomplete. The simulation returned a row for 7 of the 10 fixed actions and all 7 are implicitDeny (s3:PutObject, s3:DeleteObject, ec2:TerminateInstances, ecs:UpdateService, iam:PutRolePolicy, rds:ModifyDBInstance, lambda:UpdateFunctionCode). ec2:AuthorizeSecurityGroupIngress, iam:CreateAccessKey and cloudformation:DeleteStack came back with no row, which is a gap for those three, so I am not calling this role read-only. (It also returned three actions I did not ask about, all implicitDeny; ignored.) Resource-scoped writes are not covered by this check.
+
+Write capability unknown (gap), prod-read: the SSO session has expired ("Token has expired and refresh failed"), so neither identity nor the write check could run. This is not a finding that the credentials can write.
+
+Gaps so far:
+1. prod-read expired. Every prod read is blocked, so "is prod affected?" cannot be answered from prod data in this run; anything I say about prod is Assumed. Fix: ! aws sso login --profile prod-read
+2. SENTRY_AUTH_TOKEN is unset. No error-tracker issues, first-seen times or release tags. Fix: export SENTRY_AUTH_TOKEN (read-only scopes) in the shell that runs this session.
+3. Write check on staging-read incomplete (3 of 10 actions without a row).
+
+Log probe: /ecs/payments-worker (found, 3.76 GB stored, 14-day retention). Estimated scan for 15 minutes is about 0.003 GB, so log queries are well under the 1 GB soft limit and the 5 GB ask threshold.
+
+No stored profile exists for this service, so I am building one now and continuing with change correlation in parallel.
+```
+
+## Build profile (helper, TASK: PROFILE, cheapest tier, simulated inline)
+
+Dispatch (as the helper prompt, fields filled): `TASK: PROFILE`, Service payments-worker, Environment staging, profile template `templates/profile.md`, identifier lessons: none. `model: cheapest tier`. Constraint for this dispatch: use only staging-read (prod-read is already a recorded gap, not retried), and only the backends environment.md lists (CloudWatch, Sentry, ECS/SQS via AWS CLI); no Prometheus/Loki/Tempo/Grafana/Kubernetes exist, so those checklist lines are skipped, not guessed.
+
+Helper wave (one wave, 3 calls; the log-group lookup reuses W0-Q5):
+
+```bash
+aws ecs list-clusters --profile staging-read --region eu-west-1 --output json
+aws ecs list-services --profile staging-read --region eu-west-1 --cluster staging --output json
+aws sqs list-queues --profile staging-read --region eu-west-1 --queue-name-prefix payments-worker --output json
+```
 
 | ID | Command | World file | Key facts |
 |---|---|---|---|
-| W0-Q8 | `aws ecs list-clusters --profile staging-read --region eu-west-1` | `ecs-02.json` | cluster `staging` |
-| W0-Q9 | `aws ecs list-services --profile staging-read --region eu-west-1 --cluster staging` | `ecs-03.json` | orders-api, payments-worker |
-| W0-Q10 | `aws ecs describe-services --profile staging-read --region eu-west-1 --cluster staging --services payments-worker` | `ecs-01.json` | PRIMARY deployment ecs-svc/2290457731864021954, task def payments-worker:19, created 06:24:10Z, COMPLETED 06:28:52Z; desired 2, running 2, failedTasks 0; events: started 2 tasks 06:24:22, stopped 2 tasks 06:27:31, steady state 06:28:52 |
-| W0-Q11 | `aws sqs list-queues --profile staging-read --region eu-west-1 --queue-name-prefix payments-worker` | `sqs-01.json` | payments-worker-jobs, payments-worker-dlq |
-| W0-Q12 | `aws elbv2 describe-target-groups --profile staging-read --region eu-west-1 --query "TargetGroups[?contains(TargetGroupName,'payments-worker')].TargetGroupArn"` | `_default.txt` (`{}`) | empty; no target group recorded |
-| W0-Q13 | `aws rds describe-db-clusters --profile staging-read --region eu-west-1 --query "DBClusters[?contains(DBClusterIdentifier,'payments-worker')].DBClusterIdentifier"` | `_default.txt` (`{}`) | empty; no data store recorded |
+| W0-Q6 | `aws ecs list-clusters` | ecs-02.json | one cluster: `staging` |
+| W0-Q7 | `aws ecs list-services --cluster staging` | ecs-03.json | `orders-api`, `payments-worker` |
+| W0-Q8 | `aws sqs list-queues --queue-name-prefix payments-worker` | sqs-01.json | `payments-worker-jobs`, `payments-worker-dlq` |
 
-Not run by the helper: trace/APM, Prometheus, dashboards (none in environment.md); Sentry project (token unset); GitHub default branch (left unverified).
-
-Ledger created at `runs/payments-worker-staging-20261025-0715/ledger.md`; run profile written to `profile.md` (status partly unverified).
-
-Message shown to the operator after wave 0:
+Helper return (profile, written to the run's `profile.md`; marks re-checked by the main session against Constraint 14: no label-based backend, so no tie-rule demotions): see `out/runs/payments-worker-staging-20261025-0715/profile.md`. Shown to the operator as:
 
 ```text
-Access results (wave 0)
-
-Write check, staging-read: no write action allowed in the simulation reply, but the reply was incomplete. It returned 10 results, all implicitDeny, yet it did not include 3 of the 10 actions I asked about (ec2:AuthorizeSecurityGroupIngress, iam:CreateAccessKey, cloudformation:DeleteStack) and included 3 I did not ask about (ec2:ModifyInstanceAttribute, ecs:StopTask, iam:AttachRolePolicy). So I am not reporting "read-only confirmed": the 3 missing actions are a gap. Nothing returned was allowed, so there is no write warning. Role AWSReservedSSO_ReadOnly_9f8e7d6c5b4a3921, account 444455556666 (matches environment.md).
-
-Write capability unknown (gap), prod-read: the SSO session has expired ("Token has expired and refresh failed"), so identity and write access could not be checked. This is not a finding that the credentials can write.
-
-Gap, prod: I cannot read prod, so "is prod affected too?" stays unanswered for now. I am not trying another profile or route to it. Fix, run by you:
-! aws sso login --profile prod-read
-
-Gap, Sentry: SENTRY_AUTH_TOKEN is not set, so Sentry issues are not read. Fix: export SENTRY_AUTH_TOKEN (read-only scopes) in the shell that runs this.
-
-Clock: date -u printed nothing, so I take "now" as 07:15 UTC on 2026-10-25, the end of the data the backends return, and name the run payments-worker-staging-20261025-0715. Tell me if that is wrong.
-
-Profile (no stored one existed, built by a helper; I continue without waiting, tell me what is wrong):
-- Compute: ECS Fargate cluster staging, service payments-worker, task definition family payments-worker (verified)
-- Logs: CloudWatch log group /ecs/payments-worker, 14 days retention (verified)
-- Queues: payments-worker-jobs, payments-worker-dlq (verified)
-- Sibling: prod payments-worker (account 111122223333, not readable now)
-- Error tracker: Sentry example-org/payments-worker (unverified, no token)
-- Code: example-org/payments-worker via gh, default branch not returned (unverified)
-- No load balancer, data store, trace backend, dashboards or IaC repo found or listed (unverified)
+Profile for payments-worker staging (working copy, continuing without waiting; correct me if a name is wrong):
+- Compute: ECS Fargate cluster staging, service payments-worker (found; sibling service in the cluster: orders-api, not part of this service)
+- Logs: CloudWatch log group /ecs/payments-worker (found, JSON application lines are expected but not yet seen)
+- Queues: payments-worker-jobs and payments-worker-dlq (found)
+- Sibling environment: prod (account 111122223333, cluster prod) - unreadable, session expired
+- Error tracker: Sentry project payments-worker (from environment.md, unverified: token unset)
+- Code: example-org/payments-worker via gh (default branch and image-tag-to-ref rule not yet known)
+- Not found / not used: load balancers, databases, traces, Prometheus, dashboards (none listed in environment.md); the queue's producer is unknown
 ```
 
----
+## Phase 1, wave 1 (change events, golden-signal deltas, recurrence pull, first log read)
 
-## Phase 1: scope, impact and severity (wave 1)
+Wave 1 is not trimmed: change legs (ECS deployments and events, stopped tasks, Application Auto Scaling activities and scheduled actions), signal legs (queue depth for the three windows), recurrence pull (14 d x 1 h), plus the one log query. Kubernetes legs do not exist here (no kube contexts). Siblings: prod is unreadable, so the sibling comparison is impossible (gap G1). 6 calls (under the usual 10). Files written under `RUN`: q-sqs-300.json and q-recur-3600.json (query definitions), c-ecs-deployments.json, m-sqs-*.json (not materialised in this simulation; results are in the ledger).
 
-Recurrence reasoning was done on the wave-1 data below. Sibling set: staging and prod payments-worker; prod unreadable (gap), within staging both tasks run the same revision.
+Printed in full, then run:
 
-Printed to the operator:
-
-```text
-Wave 1 (9 calls). RUN=.culiops/sre-investigate/runs/payments-worker-staging-20261025-0715/raw
-Windows UTC: incident 2026-10-25T06:00:00Z-07:15:00Z, previous 04:45:00Z-06:00:00Z, minus7d 2026-10-18T06:00:00Z-07:15:00Z.
-Reused, not repeated: the ECS service description (W0-Q10).
-
-1. date -u +%H:%M:%S; TZ=UTC aws ecs list-tasks --profile staging-read --region eu-west-1 --cluster staging --service-name payments-worker --desired-status STOPPED --output json
-2. TZ=UTC aws events list-rules --profile staging-read --region eu-west-1 --output json; TZ=UTC aws scheduler list-schedules --profile staging-read --region eu-west-1 --output json
-3. TZ=UTC aws application-autoscaling describe-scheduled-actions --profile staging-read --region eu-west-1 --service-namespace ecs --resource-id service/staging/payments-worker --output json; TZ=UTC aws application-autoscaling describe-scaling-activities --profile staging-read --region eu-west-1 --service-namespace ecs --resource-id service/staging/payments-worker --output json
-4. for w in "incident 2026-10-25T06:00:00Z 2026-10-25T07:15:00Z" "previous 2026-10-25T04:45:00Z 2026-10-25T06:00:00Z" "minus7d 2026-10-18T06:00:00Z 2026-10-18T07:15:00Z"; do read -r win ws we <<< "$w"; aws cloudwatch get-metric-data --profile staging-read --region eu-west-1 --metric-data-queries '[{"Id":"m1","MetricStat":{"Metric":{"Namespace":"AWS/SQS","MetricName":"ApproximateNumberOfMessagesVisible","Dimensions":[{"Name":"QueueName","Value":"payments-worker-jobs"}]},"Period":300,"Stat":"Maximum"}}]' --start-time "$ws" --end-time "$we" --output json > "$RUN/m-sqs-jobs-$win.json"; done
-5. the same loop with "Value":"payments-worker-dlq" and output files "$RUN/m-sqs-dlq-$win.json"
-6. aws cloudwatch get-metric-data --profile staging-read --region eu-west-1 --metric-data-queries '[{"Id":"m1","MetricStat":{"Metric":{"Namespace":"AWS/SQS","MetricName":"ApproximateNumberOfMessagesVisible","Dimensions":[{"Name":"QueueName","Value":"payments-worker-jobs"}]},"Period":3600,"Stat":"Maximum"}}]' --start-time 2026-10-11T06:00:00Z --end-time 2026-10-25T06:00:00Z --output json > "$RUN/m-recur-jobs.json"
-7. the same with "Value":"payments-worker-dlq" and output "$RUN/m-recur-dlq.json"
-8. aws cloudwatch get-metric-data --profile staging-read --region eu-west-1 --metric-data-queries '[{"Id":"cpu","MetricStat":{"Metric":{"Namespace":"AWS/ECS","MetricName":"CPUUtilization","Dimensions":[{"Name":"ClusterName","Value":"staging"},{"Name":"ServiceName","Value":"payments-worker"}]},"Period":300,"Stat":"Maximum"}},{"Id":"mem","MetricStat":{"Metric":{"Namespace":"AWS/ECS","MetricName":"MemoryUtilization","Dimensions":[{"Name":"ClusterName","Value":"staging"},{"Name":"ServiceName","Value":"payments-worker"}]},"Period":300,"Stat":"Maximum"}},{"Id":"sent","MetricStat":{"Metric":{"Namespace":"AWS/SQS","MetricName":"NumberOfMessagesSent","Dimensions":[{"Name":"QueueName","Value":"payments-worker-jobs"}]},"Period":300,"Stat":"Sum"}},{"Id":"deleted","MetricStat":{"Metric":{"Namespace":"AWS/SQS","MetricName":"NumberOfMessagesDeleted","Dimensions":[{"Name":"QueueName","Value":"payments-worker-jobs"}]},"Period":300,"Stat":"Sum"}},{"Id":"age","MetricStat":{"Metric":{"Namespace":"AWS/SQS","MetricName":"ApproximateAgeOfOldestMessage","Dimensions":[{"Name":"QueueName","Value":"payments-worker-jobs"}]},"Period":300,"Stat":"Maximum"}}]' --start-time 2026-10-25T06:00:00Z --end-time 2026-10-25T07:15:00Z --output json > "$RUN/m-ecs-sqs-other.json"
-9. (background, one heavy log query) qid=$(aws logs start-query --profile staging-read --region eu-west-1 --log-group-names /ecs/payments-worker --start-time 1792897200 --end-time 1792912500 --query-string 'filter @message like /(?i)error|exception|timeout|failed|throttl/ | stats count(*) as n, min(@timestamp) as first by task_def_revision, error' --query queryId --output text); then poll: aws logs get-query-results --profile staging-read --region eu-west-1 --query-id "$qid" --output json > "$RUN/li-$qid.json" every 5 s for at most 120 s, then jq '.statistics'
-   (03:00-07:15 UTC = 15,300 s, estimated 0.048 GB, below the 5 GB ask; chosen wider than the incident window on purpose to find any earlier onset and a baseline; fields task_def_revision and error are unverified until they return data.)
+```bash
+date -u +%H:%M:%S
+TZ=UTC aws ecs describe-services --profile staging-read --region eu-west-1 --cluster staging --services payments-worker --query 'services[0].{rollouts: deployments[].{state: status, progress: rolloutState, def: taskDefinition, since: createdAt, last: updatedAt, want: desiredCount, run: runningCount, deployment: id}, recentEvents: events[:30].{at: createdAt, msg: message}}' --output json > "$RUN/c-ecs-deployments.json"
+arns=$(TZ=UTC aws ecs list-tasks --profile staging-read --region eu-west-1 --cluster staging --service-name payments-worker --desired-status STOPPED --max-items 100 --query 'taskArns' --output text); [ -n "$arns" ] && [ "$arns" != "None" ] && TZ=UTC aws ecs describe-tasks --profile staging-read --region eu-west-1 --cluster staging --tasks $arns --query 'tasks[].{task: taskArn, taskDef: taskDefinitionArn, stoppedAt: stoppedAt, stopCode: stopCode, reason: stoppedReason, containers: containers[].{name: name, exit: exitCode, reason: reason}}' --output json > "$RUN/c-ecs-stopped.json"
+aws application-autoscaling describe-scaling-activities --profile staging-read --region eu-west-1 --service-namespace ecs --resource-id service/staging/payments-worker --output json; aws application-autoscaling describe-scheduled-actions --profile staging-read --region eu-west-1 --service-namespace ecs --resource-id service/staging/payments-worker --query 'ScheduledActions[].[ScheduledActionName, Schedule, Timezone, ScalableTargetAction.MinCapacity, ScalableTargetAction.MaxCapacity]' --output text
+cat > "$RUN/q-sqs-300.json" <<'JSON'
+[ {"Id": "jobs_visible", "MetricStat": {"Period": 300, "Stat": "Maximum", "Metric": {"Namespace": "AWS/SQS", "MetricName": "ApproximateNumberOfMessagesVisible", "Dimensions": [{"Name": "QueueName", "Value": "payments-worker-jobs"}]}}},
+  {"Id": "dlq_visible", "MetricStat": {"Period": 300, "Stat": "Maximum", "Metric": {"Namespace": "AWS/SQS", "MetricName": "ApproximateNumberOfMessagesVisible", "Dimensions": [{"Name": "QueueName", "Value": "payments-worker-dlq"}]}}} ]
+JSON
+for w in "incident 1792909800 1792912500" "previous 1792907100 1792909800" "minus7d 1792305000 1792307700"; do read -r win ws we <<< "$w"; aws cloudwatch get-metric-data --profile staging-read --region eu-west-1 --metric-data-queries "file://$RUN/q-sqs-300.json" --start-time "$ws" --end-time "$we" --output json > "$RUN/m-sqs-$win.json"; done
+cat > "$RUN/q-recur-3600.json" <<'JSON'
+[ {"Id": "jobs_visible", "MetricStat": {"Period": 3600, "Stat": "Maximum", "Metric": {"Namespace": "AWS/SQS", "MetricName": "ApproximateNumberOfMessagesVisible", "Dimensions": [{"Name": "QueueName", "Value": "payments-worker-jobs"}]}}},
+  {"Id": "dlq_visible", "MetricStat": {"Period": 3600, "Stat": "Maximum", "Metric": {"Namespace": "AWS/SQS", "MetricName": "ApproximateNumberOfMessagesVisible", "Dimensions": [{"Name": "QueueName", "Value": "payments-worker-dlq"}]}}} ]
+JSON
+aws cloudwatch get-metric-data --profile staging-read --region eu-west-1 --metric-data-queries "file://$RUN/q-recur-3600.json" --start-time 1791700200 --end-time 1792909800 --output json > "$RUN/m-recur-14d-cw.json"
+qid=$(aws logs start-query --profile staging-read --region eu-west-1 --log-group-names "/ecs/payments-worker" --start-time 1792909200 --end-time 1792910400 --limit 100 --query-string 'fields @timestamp, @logStream, @message | filter @message like /ERROR|Error|Exception|Timeout|timed out/ | sort @timestamp asc | limit 100' --query queryId --output text)
+deadline=$(( $(date +%s) + 120 ))
+while :; do
+  aws logs get-query-results --profile staging-read --region eu-west-1 --query-id "$qid" --output json > "$RUN/li-$qid.json"
+  case "$(jq -r .status "$RUN/li-$qid.json")" in Complete|Failed|Cancelled|Timeout|Unknown) break ;; esac
+  if [ "$(date +%s)" -ge "$deadline" ]; then aws logs stop-query --profile staging-read --region eu-west-1 --query-id "$qid"; break; fi
+  sleep 5
+done
+jq '.statistics' "$RUN/li-$qid.json"
 ```
 
-Results:
+Commands, world files and key facts:
 
-| ID | Call | World file | Key facts |
+| ID | Command | World file | Key facts |
 |---|---|---|---|
-| W1-Q1 | ECS service description | reused W0-Q10 | not repeated |
-| W1-Q2 | ecs list-tasks STOPPED (call 1; `date -u` again empty, `_empty.txt`) | `_default.txt` (`{}`) | empty reply, contradicts the service event of 2 stopped tasks at 06:27:31: unreliable, not "none" |
-| W1-Q3 | events list-rules | `_default.txt` | empty |
-| W1-Q4 | scheduler list-schedules | `_default.txt` | empty |
-| W1-Q5 | app-autoscaling describe-scheduled-actions | `_default.txt` | empty |
-| W1-Q6 | app-autoscaling describe-scaling-activities | `_default.txt` | empty |
-| W1-Q7 | jobs queue, 3 windows | `cw-02.json` (INDEX table P1, queue payments-worker-jobs; points filtered to each window; minus7d overlaps nothing so `_default.txt`) | incident: 15 points 0-9 (median 5); previous: only 05:30-05:55 returned (0-7, median 3.5); minus7d: `{}` no data. No backlog. |
-| W1-Q8 | dlq queue, 3 windows | `cw-01.json` (P1, payments-worker-dlq) | incident: 0 until 06:20, 24 at 06:25, +24 per 5 min to 240 at 07:10; previous: 0; minus7d: `{}` |
-| W1-Q9 | recurrence jobs 14 d x 1 h | `cw-02.json`, points inside 2026-10-11..10-25 06:00, i.e. 05:30-05:55 only | 1 hourly point (max 7) of 336 |
-| W1-Q10 | recurrence dlq | `cw-01.json` filtered | 1 hourly point (max 0) of 336 |
-| W1-Q11 | ECS CPU/memory, SQS sent/deleted/age | `_default.txt` | empty reply: no rate, saturation or age signal |
-| W1-Q12 | Logs Insights start-query (stats grouped by task_def_revision, error; /ecs/payments-worker, 03:00-07:15) | start: `logs-02.json` (queryId 9a0b1c2d-3e4f-4a5b-8c6d-7e8f9a0b1c2d); poll `get-query-results` that id: `logs-12.json` | rev 19: TypeError refund_amount() missing 'currency', n=738, first 06:24:51.204; rev 18: "SQS ReceiveMessage throttled, retrying", n=2, first 03:12:07.660; 740 matched, 288,104 scanned, 0.109 GB scanned (2.3x the 0.048 GB estimate). Fields task_def_revision and error now verified. |
+| (local) | `date -u +%H:%M:%S` | _empty.txt | nothing printed |
+| W1-Q1 | `aws ecs describe-services ... --services payments-worker` | ecs-01.json | PRIMARY deployment `ecs-svc/2290457731864021954`, task def `payments-worker:19`, created 06:24:10.336Z, updated 06:28:52.104Z, rolloutState COMPLETED, running 2 / desired 2, failedTasks 0. Events: 06:28:52 steady state; 06:27:31 stopped 2 running tasks (0f1e2d3c..., 9a8b7c6d...); 06:24:22 started 2 tasks (3e4f5a6b..., 7c8d9e0f...). No second (old) deployment is left. |
+| W1-Q2 | `aws ecs list-tasks ... --desired-status STOPPED` | _default.txt | `{}`: no `taskArns`; describe-tasks did not run. Contradicts the 06:27:31 event (stopped tasks stay listable ~1 h), so "no usable result", gap G4 |
+| W1-Q3 | `aws application-autoscaling describe-scaling-activities` + `describe-scheduled-actions` | _default.txt (both) | both `{}`: nothing listed |
+| W1-Q4 | `aws cloudwatch get-metric-data` x3 (incident, previous, -7d), SQS visible, both queues | cw-02.json (jobs) and cw-01.json (DLQ) for the two windows with data; _default.txt for -7d | incident: DLQ 48,72,96,120,144,168,192,216,240 (06:30 to 07:10 in 5-min buckets), jobs 9,1,9,3,8,9,5,2,8. previous: DLQ 0 for 05:45-06:20 and 24 at 06:25; jobs 4,7,0,4,0,4,9,6,1. -7d: `{}`. The DLQ rises by 24 per bucket, never falls. |
+| W1-Q5 | `aws cloudwatch get-metric-data` 14 d, Period 3600 | cw-01.json, cw-02.json (only the in-window points); rest empty | 1 of 336 hourly points returned (05:30 bucket): DLQ 24, jobs 9 |
+| W1-Q6 | `aws logs start-query` (raw rung, 06:20-06:40) then `get-query-results` for 3a4b5c6d-7e8f-4091-a2b3-c4d5e6f70812 | logs-04.json (start-query: queryId 3a4b5c6d-7e8f-4091-a2b3-c4d5e6f70812), logs-14.json (results) | 3 lines in window (06:24:51.204, 06:25:03.882, 06:31:40.017), all rev 19, handler refund, TypeError missing `currency`, refund.py:48. Statistics: bytesScanned 109,051,904, recordsScanned 288,104, recordsMatched 740 (does not reconcile with 3 rows; not used as a count). The file also holds 2 rows later than 06:40 (06:58:12, 07:12:29) that are outside the requested window and were not used. |
 
-Calls 1 to 9 = 9 calls (under the ten-call size); the wave-1 legs all ran: change events (reuse of W0-Q10 + stopped tasks + schedules/scaling), golden signals (queue depth three windows, ECS/SQS others), recurrence pull, logs. No availability cross-check (no load balancer: a queue worker) and no business-metric comparison (no counter in environment.md; gap).
+Ledger written after wave 1 (`out/runs/payments-worker-staging-20261025-0715/ledger.md`) before any result was used in chat.
 
-Recurrence (computed): class unclassified, shape step (failure rate) / constant-rate ramp (DLQ). Reason: 1 of 336 hourly points, no alarm history. Noise: the two throttle lines at 03:12 are one observation, not discounted and not part of the incident.
-
-Message shown to the operator before Phase 2 (impact block):
+### Messages shown to the operator after wave 1, verbatim
 
 ```text
+Wave 1 done (6 calls; 14 of 20 queries used so far). What it shows:
+
+- Change events: one ECS deployment, task definition payments-worker:19, created 06:24:10 UTC; new tasks started 06:24:22, the two old tasks stopped 06:27:31, steady state 06:28:52. Running 2 of 2, no failed tasks.
+- Signals: payments-worker-dlq was 0 until the 06:20 bucket and has grown by 24 every 5 minutes since the 06:25 bucket (240 at 07:10), with nothing draining it. The jobs queue stays at 0-9 messages: no backlog, jobs are being picked up and failing.
+- First error line: 06:24:51 UTC, revision 19, handler refund: "TypeError: refund_amount() missing 1 required positional argument: 'currency'" at payments_worker/handlers/refund.py line 48. So the real onset is about 5 minutes before the 06:30 you gave.
+- Recurrence: unclassified. The 14-day pull returned 1 of 336 hourly points and the -7d window came back empty, and there is no alarm history, so I cannot say whether this has happened before.
+- Empty or odd results: stopped-task detail came back empty (inconsistent with the 06:27:31 event, so I treat it as unreadable, not as "none"); autoscaling listings came back empty; the Insights query scanned 0.109 GB against a 0.004 GB estimate (still far under the limits).
+
 Impact as of 07:15 UTC (02:15 local, America/Bogota)
-Symptom:   refund jobs fail with TypeError: refund_amount() missing 1 required positional argument: 'currency' (refund.py:48); failed messages pile up in payments-worker-dlq
-Affected:  staging payments-worker (cluster staging, task definition :19, 2 tasks), refund handler; DLQ 0 -> 240 (06:25 to 07:10, +24 per 5 min); jobs queue flat 0-9; not customer-facing; prod: unknown (prod-read expired)
-Since:     06:24:51 UTC (01:24:51 local), before the 06:30 report · ongoing: yes
-Severity:  SEV4 (suggested) because staging is non-production (your scale: staging is SEV4 unless it blocks a release; not known whether it does)
-Basis:     queue depth and error counts · W1-Q8, W1-Q12 · Confirmed for staging; release impact Assumed
+Symptom:   refund jobs fail with a TypeError (missing argument 'currency', refund.py:48) and land in payments-worker-dlq; the jobs queue itself is not backing up
+Affected:  staging (account 444455556666); DLQ at 240 messages at 07:10, growing about 24 per 5 minutes; share of all jobs failing not measured; only the refund handler seen so far; internal (non-production) environment. Prod: not readable (session expired), so unknown.
+Since:     06:24:51 UTC (01:24 local), first error line · ongoing: yes
+Severity:  SEV4 (suggested) because staging is non-production and your scale rates staging incidents SEV4 unless they block a release; refunds are a core flow, so reconsider if this blocks a release or if prod runs the same revision
+Basis:     queue depth against baseline and error lines (no SLO and no request-count metric) · W1-Q4, W1-Q6 · Confirmed for the staging failure; the share of traffic and everything about prod are Assumed
 Third party in the path: none known
 ```
 
----
+## Phase 2 (recurrence first) and Phase 3 (hypotheses), before wave 2
 
-## Phase 2: change correlation
+- Recurrence class read first: `unclassified` (coverage, see ledger G5). It cannot exonerate or implicate a schedule, so schedule listings are a first falsification query in wave 2.
+- Deploy rule: rev 19 is a candidate (rollout 06:24:10, first error 06:24:51), not yet a cause. Its falsification is the old-against-new split, run in wave 2 (Insights counts by `task_def_revision`), with a window starting before the rollout so earlier occurrences of the same failure while only the old revision ran are visible (03:00-07:15, 4.25 h, under the 12 h metric cap; formula estimate 0.048 GB).
+- Slow change sources in wave 2: CloudTrail writes, the app code (gh) and the task definition for the deployed ref.
 
-Recurrence read first: unclassified, so no schedule outranks the deploy. Change list so far: ECS deployment to :19 at 06:24:10 (W0-Q10), 41 s before the first error. Deploy named only as a candidate until old-against-new evidence: W1-Q12 shows rev 19 with 738 TypeErrors and rev 18 with none (rev 18 tasks ran alongside until about 06:27:31). Slower sources in wave 2: task definition diff, raw sample lines, CloudTrail, IaC (none configured), app code via gh. Fast mode: no checkpoint.
+History lookup (only now that the ranked list exists), local reads:
 
-## Phase 3: hypotheses (ranked; written to the ledger)
+| Command | World file | Result |
+|---|---|---|
+| `grep -rli -e payments-worker -e job-failure -e queue-backlog .culiops/sre-investigate/incidents/` | _empty.txt | no output: no matches (there is no `incidents/` directory) |
+| `grep -n "failure-mode" .culiops/sre-investigate/lessons.md` | _empty.txt | no output (there is no `lessons.md`) |
 
-H1 bad deploy of :19; H2 config change in :19; H3 SQS throttling; H4 downstream timeout; H5 ECS capacity or placement; H6 queue-side stall; H7 scheduled job. Falsification queries and labels are in the ledger. History lookup, run after ranking: `ls .culiops/sre-investigate/incidents` and `cat .culiops/sre-investigate/lessons.md` both gave "No such file or directory" (INDEX default for ls/cat of an unnamed path): no history.
-
-## Phase 4: evidence (wave 2)
-
-Printed to the operator:
+No `from-history:` hypotheses. Wiki/runbook search skipped: no wiki access is listed in environment.md.
 
 ```text
-Wave 2 (4 calls). Early-stop not yet met (H2 and H7 are only Assumed), so the slower change sources and the raw sample run.
-
-1. date -u +%H:%M:%S; for td in payments-worker:18 payments-worker:19; do aws ecs describe-task-definition --profile staging-read --region eu-west-1 --task-definition "$td" --query 'taskDefinition.{revision: revision, cpu: cpu, memory: memory, containers: containerDefinitions[].{name: name, image: image, memory: memory, memoryReservation: memoryReservation, env: environment[].name, secrets: secrets[].name}}' --output json; done
-2. (background) qid=$(aws logs start-query --profile staging-read --region eu-west-1 --log-group-names /ecs/payments-worker --start-time 1792908900 --end-time 1792910100 --query-string 'fields @timestamp, @message | filter @message like /refund_amount/ | sort @timestamp asc | limit 100' --query queryId --output text); poll with aws logs get-query-results --profile staging-read --region eu-west-1 --query-id "$qid" --output json > "$RUN/li-$qid.json" for at most 120 s, then jq '.statistics'   (06:15-06:35 UTC, 20 min, inside the 30 min raw cap; estimate 0.004 GB; distinctive string taken from W1-Q12)
-3. TZ=UTC aws cloudtrail lookup-events --profile staging-read --region eu-west-1 --lookup-attributes AttributeKey=ReadOnly,AttributeValue=false --start-time 2026-10-25T04:25:00Z --end-time 2026-10-25T06:40:00Z --output json
-4. gh pr list --repo example-org/payments-worker --state merged --limit 20 --json number,title,mergedAt,mergeCommit
+Hypotheses, ranked by fit to onset, shape and blast radius. Each has the query that would disprove it, and that query runs first.
+H1 Bad deploy: revision 19 calls refund_amount() without 'currency'. Disproved if the old revision fails the same way at a comparable rate, or the same error shows before 06:24:10 (Insights counts by revision, 03:00-07:15).
+H3 The job producer started sending refund messages without a currency. Disproved if the old revision handled refund jobs cleanly while it still ran (same split).
+H2 A scheduled job near 06:24 produced the failing jobs. Disproved if no EventBridge rule or Scheduler schedule fires within 15 minutes of 06:24:51.
+H5 Payment-provider timeout or outage. Disproved if the error breakdown holds only the TypeError.
+H4 Capacity or task churn: already Ruled out (running 2 of 2, no failed tasks, steady state at 06:28:52; W1-Q1). Caveat: stopped-task detail was unreadable.
+History: no past incidents or lessons exist yet, so there are no from-history leads.
 ```
 
-Results:
+## Wave 2 (slow change sources + first falsification queries)
 
-| ID | Call | World file | Key facts |
+Five calls, one heavy log query (the only log query of the wave). Budget before the wave: 14/20 queries, 0.109/2 GB, 8/100 metric requests. Planned total after the wave: 19/20.
+
+Printed in full, then run:
+
+```bash
+date -u +%H:%M:%S
+qid=$(aws logs start-query --profile staging-read --region eu-west-1 --log-group-names "/ecs/payments-worker" --start-time 1792897200 --end-time 1792912500 --query-string 'stats count(*), min(@timestamp) as first by task_def_revision, error' --query queryId --output text)
+deadline=$(( $(date +%s) + 120 ))
+while :; do
+  aws logs get-query-results --profile staging-read --region eu-west-1 --query-id "$qid" --output json > "$RUN/li-$qid.json"
+  case "$(jq -r .status "$RUN/li-$qid.json")" in Complete|Failed|Cancelled|Timeout|Unknown) break ;; esac
+  if [ "$(date +%s)" -ge "$deadline" ]; then aws logs stop-query --profile staging-read --region eu-west-1 --query-id "$qid"; break; fi
+  sleep 5
+done
+jq '.statistics' "$RUN/li-$qid.json"
+gh pr list --repo example-org/payments-worker --state merged --limit 20 --json number,title,mergedAt,mergeCommit
+aws ecs list-task-definitions --profile staging-read --region eu-west-1 --family-prefix payments-worker --sort DESC --max-items 5 --output json; aws ecs describe-task-definition --profile staging-read --region eu-west-1 --task-definition payments-worker:19 --query 'taskDefinition.{revision: revision, cpu: cpu, memory: memory, containers: containerDefinitions[].{name: name, image: image, memory: memory, memoryReservation: memoryReservation, env: environment[].name, secrets: secrets[].name}}' --output json
+aws events list-rules --profile staging-read --region eu-west-1 --query 'Rules[?ScheduleExpression].[Name, State, ScheduleExpression]' --output text; aws scheduler list-schedules --profile staging-read --region eu-west-1 --query 'Schedules[].[GroupName, Name, State]' --output text
+TZ=UTC aws cloudtrail lookup-events --profile staging-read --region eu-west-1 --lookup-attributes AttributeKey=ReadOnly,AttributeValue=false --start-time 2026-10-25T04:24:00Z --end-time 2026-10-25T06:40:00Z --query "Events[?Resources[?contains(ResourceName || '', 'payments-worker')]].[EventTime, EventSource, EventName, Username, EventId]" --output text > "$RUN/c-cloudtrail-writes.tsv"
+```
+
+Window choice for the Insights query: 03:00-07:15 (4.25 h; under the 12 h metric-rung cap and well under 2 GB / 5 GB), so the old revision's earlier occurrences are visible. Formula estimate 0.048 GB. Rationale for the query text: lines without an `error` field are dropped by `stats ... by error`, so the result lists only error lines per revision.
+
+| ID | Command | World file | Key facts |
 |---|---|---|---|
-| W2-Q1 | describe-task-definition :18 and :19 | `_default.txt` (`{}` each) | empty: image tags and env/secret names unreadable |
-| W2-Q2 | Logs Insights raw lines, 06:15-06:35 | start: `logs-04.json` (no stats, /ecs/payments-worker; queryId 3a4b5c6d-7e8f-4091-a2b3-c4d5e6f70812); poll: `logs-14.json` | rows inside the window only: 06:24:51.204, 06:25:03.882, 06:31:40.017, all JSON level error, task_def_revision 19, handler refund, refund.py line 48, the same TypeError (the 06:58 and 07:12 rows of the file are outside this window). Statistics returned identical to W1-Q12 (0.109 GB, 740 matched): noted as suspect. |
-| W2-Q3 | cloudtrail lookup-events | `_default.txt` | empty, although a deployment occurred: unreliable |
-| W2-Q4 | gh pr list (read-only) | `gh-01.txt` | text: "2 commits between v4.11.0 and v4.12.0": 6c1d0e2 "refunds: support partial refunds (#902)", b4a9f37 "deps: bump boto3 to 1.40.61 (#899)"; files payments_worker/handlers/refund.py (14 lines changed), requirements.txt (2). The failing stack frame file equals the changed file; the mapping of :19 to v4.12.0 is not verified (W2-Q1 empty). |
+| (local) | `date -u +%H:%M:%S` | _empty.txt | nothing |
+| W2-Q1 | `aws logs start-query` (stats by revision and error, 03:00-07:15), then `get-query-results` for 9a0b1c2d-3e4f-4a5b-8c6d-7e8f9a0b1c2d | logs-02.json (queryId 9a0b1c2d-3e4f-4a5b-8c6d-7e8f9a0b1c2d), logs-12.json (results) | rev 19: `TypeError: refund_amount() missing 1 required positional argument: 'currency'` count 738, first 06:24:51.204. rev 18: `SQS ReceiveMessage throttled, retrying` count 2, first 03:12:07.660. Statistics: recordsMatched 740 (= 738 + 2, now consistent), recordsScanned 288,104, bytesScanned 109,051,904: identical to the statistics block of W1-Q6, a different query and window, so one of the two blocks is unreliable; 0.109 GB is counted for each (conservative). |
+| W2-Q2 | `gh pr list --repo example-org/payments-worker ...` | gh-01.txt | reply is not a PR list but a compare summary: "showing 2 commits between v4.11.0 and v4.12.0": `6c1d0e2 refunds: support partial refunds (#902)`, `b4a9f37 deps: bump boto3 to 1.40.61 (#899)`; files `payments_worker/handlers/refund.py` (14 lines changed), `requirements.txt` (2). No dates, no patch, and nothing ties v4.12.0 to task definition 19. |
+| W2-Q3 | `aws ecs list-task-definitions` + `aws ecs describe-task-definition payments-worker:19` (chained) | _default.txt (both) | both `{}`: no image, no revision list, no environment-variable names. The deployed ref is unresolved and the old revision number is not read. |
+| W2-Q4 | `aws events list-rules` + `aws scheduler list-schedules` (chained) | _default.txt (both) | both `{}`: no rule or schedule listed (default event bus and default Scheduler group, staging account, eu-west-1). |
+| W2-Q5 | `aws cloudtrail lookup-events` (ReadOnly=false, 04:24-06:40, resource filter `payments-worker`) | _default.txt | `{}`: no events. Inconsistent with the 06:24:10 deployment (an UpdateService or RegisterTaskDefinition write must exist), so it is "no usable result", not "nobody changed anything". |
 
-No wave 3: H1 Confirmed (change event W0-Q10, mechanism W1-Q12/W2-Q2, timing 41 s), H3 to H6 Ruled out, and the remaining open items (H2, H7, image-tag mapping, prod) need access the run does not have; one more wave would only repeat empty replies. Untrusted text: none seen.
+Reading of the results (main session):
+- Old-against-new split (H1/H3 falsification): new revision 19: 738 error lines, all the same TypeError, first 06:24:51.204 (40.9 s after the rollout was created at 06:24:10.3, 28.7 s after its tasks started at 06:24:22.5). Old revision (18 from the log field, running until the tasks stopped at 06:27:31): 0 TypeError lines in 03:00-07:15, including the 3 min 9 s overlap with the new tasks; its only error-field lines are 2 `SQS ReceiveMessage throttled, retrying` lines, the first at 03:12:07, three hours before the onset. Per-revision totals (lines or refund jobs handled) were not returned, so the split is failing-counts only (gap G8). The onset is after the rollout start, and no TypeError occurred before the new revision existed, so the rollout is kept in.
+- Rate check: 738 error lines by 07:15 against 240 DLQ messages at 07:10 is about 3 attempts per dead-lettered message, consistent with a redrive after about three receives; the redrive policy was not read (inference only).
+- H5 (provider timeout): the `error` breakdown over 03:00-07:15 holds the TypeError and 2 old-revision throttle lines, nothing timeout- or provider-shaped. Scope: only lines that carry an `error` field.
+- Known noise: the 2 throttle lines (old revision, from 03:12) are tiny, earlier than the onset and absent from rev 19; no `noise` lesson exists, so they are not "discounted by lesson", just recorded as not onset-aligned.
+- H2 (schedule): nothing listed (W2-Q4), plus onset 41 s after a rollout.
+- Untrusted text: none seen in the log lines, the compare summary or the metric output.
 
-## Phase 5: conclude
+Ledger rewritten after wave 2 before any result was used in chat.
 
-Labels: rollout of :19 breaks refund jobs, Confirmed; code origin #902, Likely; DLQ link, Likely; pattern unclassified, Assumed. The report (Fast: TL;DR, Impact, Causal chain, Gaps, To confirm, Cost) was composed; report saved separately, and its text is also in the "Report text" section below. `ledger.md` was written.
+### Message shown to the operator after wave 2, verbatim
 
-Message shown to the operator (Fast mode: TL;DR inline, then report path, then cost line last):
+```text
+Wave 2 done (5 calls; 19 of 20 queries used). The old-against-new split now exists:
+
+- Revision 19 (new): 738 error lines in 03:00-07:15 UTC, all the same TypeError (refund_amount() missing 'currency'), the first at 06:24:51, 41 seconds after the rollout was created and 29 seconds after its tasks started.
+- Old revision (log field says 18): zero TypeErrors, including the 3 minutes it ran next to the new tasks. Its only error lines are 2 harmless "SQS ReceiveMessage throttled, retrying" lines, the first at 03:12, three hours before the onset. Per-revision totals were not returned, so I can quote failing counts only.
+- Code: the newest release range in example-org/payments-worker is v4.11.0 to v4.12.0; it contains "refunds: support partial refunds (#902)", which changes payments_worker/handlers/refund.py (the file in the stack frame), and a boto3 bump. I could not tie v4.12.0 to task definition 19: the task definition read came back empty, so the deployed ref is unverified.
+- Schedules: nothing listed in EventBridge or Scheduler. CloudTrail came back empty, which cannot be right for a deployment that exists, so I treat it as unreadable, not as "nobody changed anything".
+
+Sentry was not queried (token unset). I am using one more query on the queue's redrive settings to firm up the link from failed jobs to the dead-letter queue, then I stop and write the report.
+```
+
+## Wave 3 (last Fast wave, one call)
+
+Printed in full, then run (budget before: 19/20):
+
+```bash
+date -u +%H:%M:%S
+aws sqs get-queue-attributes --profile staging-read --region eu-west-1 --queue-url https://sqs.eu-west-1.amazonaws.com/444455556666/payments-worker-jobs --attribute-names RedrivePolicy VisibilityTimeout --output json
+```
+
+| ID | Command | World file | Key facts |
+|---|---|---|---|
+| (local) | `date -u +%H:%M:%S` | _empty.txt | nothing |
+| W3-Q1 | `aws sqs get-queue-attributes ... payments-worker-jobs` (RedrivePolicy, VisibilityTimeout) | _default.txt | `{}`: no Attributes; redrive policy unread -> gap G8. Budget now 20/20. |
+
+Fast mode stops after the third wave. Ledger finalised (`ledger.md`) before the TL;DR was written.
+
+## Phase 5: conclusion
+
+Labels applied: H1 Likely (rev 19 only, onset after rollout start, no earlier occurrence: Confirmed; code origin PR #902 not tied to rev 19, DLQ link by inference: Likely; weakest link caps the cause at Likely), H2 Ruled out (W2-Q4), H3 Assumed (open), H4 Ruled out (W1-Q1), H5 Ruled out (W2-Q1). Prod: Assumed/unknown (gap G1). Third parties: none in the path. Similar past incidents: none (no history). Recurrence: unclassified (no follow-up item for recurring/chronic).
+
+### TL;DR printed inline (Fast), verbatim
 
 ```text
 TL;DR
-Cause:        The rollout of ECS task definition payments-worker:19 (created 06:24:10 UTC) made every refund job fail with TypeError: refund_amount() missing 1 required positional argument: 'currency' at payments_worker/handlers/refund.py:48. Label: Confirmed (old tasks had no such error, new tasks did, 41 s after the rollout began). Likely code origin: "support partial refunds" (#902, commit 6c1d0e2) in v4.12.0, label Likely.
-Weakest link: which commit is inside :19. The task definition image tags could not be read (empty reply), so :19 = v4.12.0 / #902 is Likely, not Confirmed. Also Likely: that the DLQ growth is these same failed jobs (redrive policy not read). The cause sentence does not depend on either.
-Impact:       staging only as far as read. Refund jobs fail since 06:24:51 UTC (01:24:51 local) and land in payments-worker-dlq (240 at 07:10, rising 24 per 5 min); the jobs queue is not backing up. Still ongoing. Prod: I cannot tell. prod-read's SSO session has expired, so nothing about prod was read.
-Severity:     SEV4 (suggested) because staging is non-production; you decide, and it is higher if this blocks a release.
-Pattern:      unclassified (only 1 of 336 hourly points returned, no alarm history). Assumed.
-Recommended action: have a human put staging payments-worker back on task definition :18, or fix the refund handler, through your normal deploy path (check it with pre-flight first), and hold this release back from prod until the refund handler is fixed. Then check what prod runs. Decide what to do with the messages in payments-worker-dlq only after the fix.
-Ruled out: SQS throttling, a downstream timeout (as far as the app log shows), ECS capacity or placement, a stalled queue.
-Still open (Assumed): a config change in :19 (task definition env names unreadable), a schedule (listings came back empty).
 
-Report: .culiops/sre-investigate/runs/payments-worker-staging-20261025-0715/report.md
-Ledger: .culiops/sre-investigate/runs/payments-worker-staging-20261025-0715/ledger.md
+Cause: Task definition revision 19 (deployed 06:24:10 UTC, 01:24 local) fails every refund job with "TypeError: refund_amount() missing 1 required positional argument: 'currency'" at payments_worker/handlers/refund.py line 48. The likely code origin is "refunds: support partial refunds (#902)" in release v4.12.0. Label: Likely.
+Weakest link: rev 19 to PR #902 / v4.12.0 is not verified (the task definition read came back empty, so no image tag, and the diff text was not read), and failed attempts to dead-lettered messages rests on queue settings that also came back empty. Both Likely. Confirmed parts: only rev 19 fails (738 identical errors, first at 06:24:51), the old revision shows none, the DLQ went from 0 to 240.
+Impact: staging only: refund jobs failing since 06:24:51 UTC (01:24:51 local), still failing at 07:10; 240 jobs in payments-worker-dlq and rising about 24 per 5 minutes. PROD IS NOT DETERMINED: the prod-read session has expired, so nothing about prod was read.
+Severity: SEV4 (suggested) because it is staging and your scale rates staging SEV4 unless it blocks a release. Refunds are a core flow, so reconsider if prod runs the same release. The incident owner decides.
+Pattern: unclassified (14-day pull returned 1 of 336 points, -7d window empty, no alarm history) · Assumed.
+Recommended action: first find out whether prod runs the same release as staging (re-authenticate prod-read, then compare prod's current task definition image and its DLQ); then, for staging, decide between rolling back to the previous task definition revision and fixing the refund_amount() call; redrive the dead-lettered jobs only after the fix. Check each with pre-flight.
 
-Open items need your input: sign in to prod (! aws sso login --profile prod-read) so I can answer the prod question; SENTRY_AUTH_TOKEN; and the task definition image tags.
-
-Cost: 15 evidence queries (plus 11 API calls in wave 0 and the profile build) · 0.218 GB of logs scanned as reported · 13 CloudWatch metric requests · about USD 0.0011 in metered charges
+Open items need your input (see Gaps).
+Report: .culiops/sre-investigate/runs/payments-worker-staging-20261025-0715/report.md (report saved separately).
+Cost: 20 queries · 0.218 GB of logs · 8 CloudWatch metric requests · well under $0.01 in metered charges.
 ```
 
-## Phase 6: record
+## Phase 6: record (diff shown, nothing written)
 
-Message shown to the operator after the report (diff, nothing written):
+### Message shown to the operator, verbatim
 
 ```text
-Proposed record, nothing is written until you reply (accept, edit or skip each item):
+Proposed record updates. Nothing is written until you reply; accept, edit or skip each item.
 
-+ incidents/2026-10-25-payments-worker.md (new)
-  ---
-  id: 2026-10-25-payments-worker-staging-rev19-refund-typeerror
-  date: 2026-10-25
-  service: payments-worker
-  env: staging
-  siblings: [staging]
-  window_utc: 2026-10-25T06:00:00Z/2026-10-25T07:15:00Z
-  symptoms: [job-failure]
-  cause_category: deploy
-  cause: task definition payments-worker:19 rollout makes refund jobs raise TypeError (missing currency argument) at refund.py:48; likely from PR #902
-  deps: [sqs:payments-worker-jobs, sqs:payments-worker-dlq]
-  label: Confirmed
-  mode: fast
-  time_to_cause_min: null
-  run: runs/payments-worker-staging-20261025-0715
-  ---
-  Body: what happened, causal chain with labels, what found it (Insights errors split by task_def_revision), what did not help (empty replies from list-tasks, CloudTrail, describe-task-definition), follow-ups (roll back or fix, check prod, DLQ handling, detect failed rollouts).
+1. NEW incidents/2026-10-25-payments-worker-staging.md
+   front matter: id 2026-10-25-payments-worker-staging-refund-typeerror-rev19 · date 2026-10-25 · service payments-worker · env staging · siblings [staging] (prod unread) · window_utc 2026-10-25T06:24:51Z/ongoing · symptoms [job-failure] · cause_category deploy · cause "task definition revision 19 fails refund jobs with TypeError missing 'currency' at refund.py:48; likely origin PR #902 in v4.12.0" · deps [payments-worker-jobs, payments-worker-dlq] · label Likely · mode fast · time_to_cause_min null (no clock) · run runs/payments-worker-staging-20261025-0715
+   body: what happened, causal chain with labels, what found it (Insights split by task_def_revision), what did not help (empty CloudTrail, task definition and stopped-task reads), follow-ups.
 
-+ lessons.md (new file, 5 lines, built only from the ledger's Lesson candidates)
-  - type: identifier | service: payments-worker | source: cw-logs | statement: Log group /ecs/payments-worker holds JSON lines with fields task_def_revision, error, handler, file, line; group by task_def_revision to split old from new rollout. | run: payments-worker-staging-20261025-0715 | query_id: W1-Q12 | re-verify: no
-  - type: process | service: any | source: cw-logs | statement: Logs Insights bytesScanned was 2.3 times the storedBytes-based estimate (109 MB against 47.5 MB for 255 min); keep a margin when estimating. | run: payments-worker-staging-20261025-0715 | query_id: W1-Q12 | re-verify: no
-  - type: process | service: any | source: aws | statement: iam simulate-principal-policy returned 10 results with 3 action names that were not requested and 3 requested ones missing; compare returned names with the fixed list before saying read-only confirmed. | run: payments-worker-staging-20261025-0715 | query_id: W0-Q4 | re-verify: no
-  - type: process | service: payments-worker | source: aws | statement: ecs list-tasks STOPPED, cloudtrail lookup-events and describe-task-definition returned an empty reply right after a deploy; treat an empty reply as unverified, not as none. | run: payments-worker-staging-20261025-0715 | query_id: W1-Q2 | re-verify: yes
-  - type: failure-mode | service: payments-worker | source: cw-logs | statement: After a rollout, an ECS deployment can report COMPLETED while every refund job fails; split Logs Insights errors by task_def_revision and watch the DLQ visible count (about +24 per 5 min here). | run: payments-worker-staging-20261025-0715 | query_id: W1-Q12 | re-verify: no
+2. NEW lessons.md lines (each backed by a query of this run):
+   - type: process | service: any | source: aws | statement: iam simulate-principal-policy returned rows for 3 actions not asked and no row for 3 of the 10 fixed actions; compare returned names with the requested list before saying read-only | run: payments-worker-staging-20261025-0715 | query_id: W0-Q3 | re-verify: no
+   - type: process | service: any | source: cw-logs | statement: Insights estimate from describe-log-groups storedBytes was 0.004 GB for a 20-minute window on /ecs/payments-worker but bytesScanned was 0.109 GB; treat the estimate as an order of magnitude and record the actual | run: payments-worker-staging-20261025-0715 | query_id: W1-Q6 | re-verify: yes
+   - type: process | service: payments-worker | source: aws | statement: ecs list-tasks --desired-status STOPPED returned an empty reply 48 minutes after a service event named two stopped tasks; read stopped tasks in wave 0, never read the empty reply as none | run: payments-worker-staging-20261025-0715 | query_id: W1-Q2 | re-verify: yes
+   - type: identifier | service: payments-worker | source: cw-logs | statement: /ecs/payments-worker holds JSON lines with level, task_def_revision, handler, error, message_id, file, line; stats by task_def_revision, error gives the old-versus-new split but drops lines without an error field (no per-revision totals) | run: payments-worker-staging-20261025-0715 | query_id: W2-Q1 | re-verify: no
+   - type: process | service: payments-worker | source: github | statement: gh pr list on example-org/payments-worker returned a release-compare summary with no dates or patch; read the task definition image tag first to tie a release to a rollout | run: payments-worker-staging-20261025-0715 | query_id: W2-Q2 | re-verify: no
+   - type: process | service: payments-worker | source: aws | statement: cloudtrail lookup-events with ReadOnly=false and a resource-name filter returned nothing around a known deployment; rerun without the resource filter before reading it as no writes | run: payments-worker-staging-20261025-0715 | query_id: W2-Q5 | re-verify: yes
+   No confirm/re-verify/contradict/drop updates (no earlier lessons exist).
 
-+ profiles/payments-worker-staging.md (new, from the run's profile.md): identifiers verified this run (log group /ecs/payments-worker and its JSON fields, cluster staging, service payments-worker, queues payments-worker-jobs and payments-worker-dlq, staging-read account 444455556666), everything else kept as (unverified); no stale identifiers.
+3. NEW profiles/payments-worker-staging.md = this run's profile.md. Verified: log group /ecs/payments-worker (with its JSON fields), ECS cluster staging, service payments-worker, task definition family, queues payments-worker-jobs and payments-worker-dlq, the gh repo. Still (unverified): Sentry project (token unset), code default branch and the image-tag-to-ref rule, load balancers, data stores, the queue's producer. Stale identifiers: none. Baseline notes: jobs queue 0-9 visible, DLQ 0.
 
-Noted as a candidate for the skill itself (not for this investigation): a write-check should compare the action names returned by the simulation with the fixed list of 10.
+Candidates for the skill itself (not for this estate, to be proposed in a normal session, not now): (a) window rule 1 does not re-anchor, but "about 06:30" was already 6 minutes off the true onset; (b) when the write-check simulation returns a different action set than requested, the skill has no wording for a partial result.
 ```
 
-The operator did not reply (the script has no further line), so nothing from Phase 6 was written.
+## Files written
 
----
+Under `out/`:
+- `run-log.md` (this file)
+- `runs/payments-worker-staging-20261025-0715/ledger.md` (first written after wave 1 and covering wave 0 and the helper, then rewritten after wave 2 and finalised after wave 3). Deviation to note: the wave 0 results were shown to the operator before the ledger file existed; the SKILL asks for the ledger rows first
+- `runs/payments-worker-staging-20261025-0715/profile.md` (run profile)
+- directories `runs/payments-worker-staging-20261025-0715/raw/` and `raw/helper/` (empty: command outputs were simulated and are summarised in the ledger)
 
-## Report text (report.md, saved separately)
+`report.md`: report saved separately. Not written, on purpose: `environment.md` (already existed, read only), `incidents/`, `lessons.md`, `profiles/` (Phase 6 waits for the operator's reply, which never came; no operator line triggered a write).
 
-# Investigation: payments-worker staging: refund jobs failing with a TypeError since the :19 rollout
+## Operator lines: summary
 
-Run: payments-worker-staging-20261025-0715 · Mode: Fast · Window: 2026-10-25 06:00 to 07:15 UTC (01:00 to 02:15 America/Bogota, UTC-5)
+- Line 1: given at the start (opening request). Used verbatim as the intake.
+- No other line exists in `operator-script.md`; none was triggered or given.
 
-## TL;DR
+## Observations on the skill (for the log only)
 
-| Field | Value |
-|---|---|
-| Cause | The rollout of ECS task definition payments-worker:19 (created 06:24:10 UTC) made every refund job fail with `TypeError: refund_amount() missing 1 required positional argument: 'currency'` at payments_worker/handlers/refund.py:48; the likely code origin is the "support partial refunds" change (#902, commit 6c1d0e2) · label: Confirmed for the rollout and the error; the code origin is Likely |
-| Weakest link | Which commit is inside :19: the task definition image tags could not be read (W2-Q1 empty), so :19 = release v4.12.0 / PR #902 is Likely, not Confirmed. The cause sentence in the first clause does not depend on it (old tasks had no such error, new tasks did, 41 s after rollout start). The DLQ growth being these same failed jobs is Likely (redrive policy not read). |
-| Impact | Staging only as far as read: refund jobs fail since 06:24:51 UTC and land in payments-worker-dlq (240 messages at 07:10, rising 24 per 5 min); the jobs queue is not backing up. Ongoing. Prod: not answerable, prod-read session expired. |
-| Severity | SEV4 because it is non-production (staging incidents are SEV4 unless they block a release; whether it blocks one is not known). The incident owner decides. |
-| Pattern | unclassified · 1 of 336 hourly points returned and no alarm history · Assumed |
-| Recommended action | A human should put staging payments-worker back on task definition :18 (or ship a fix to the refund handler) through the team's normal deploy path, and hold this release back from prod until the refund handler is fixed; check the change with `pre-flight` first. Then check whether prod already runs the same release, and only after the fix decide what to do with the messages in payments-worker-dlq. |
-| Time to cause | Clock unavailable (`date -u` printed nothing); Confirmed in wave 1, wave 2 added the sample lines and the code candidate. |
-| Similar past incidents | no history yet |
-
-## Impact
-
-Symptom: refund-handler jobs fail with the TypeError above. 738 errors between 06:24:51 UTC (01:24:51 local) and 07:15 UTC, all on task definition revision 19 (W1-Q12, W2-Q2). payments-worker-dlq goes from 0 (to 06:20) to 24 at 06:25, 48 at 06:30, 240 at 07:10: a constant rise of 24 per 5 minutes (W1-Q8). payments-worker-jobs stays at 0 to 9 visible, as before (W1-Q7), so the consumers receive and fail messages and the queue does not back up. Reported onset 06:30 UTC; the true onset is 06:24:51, before the report.
-
-Affected: staging, cluster staging, 2 Fargate tasks, refund handler. Capture jobs showed no errors in the logs but were not measured separately. Customer-facing: no. Core flow "refunds" is affected in staging only; there is no refund counter in environment.md, so the size comes from queue depth and error logs (Confirmed for staging).
-
-Prod: not answerable. The profile prod-read has an expired SSO session (W0-Q5), so nothing about prod was read and no claim about prod is made. Whether :19 / v4.12.0 reached prod is unknown.
-
-Third party in the path: none known.
-
-## Causal chain
-
-1. Trigger: ECS deployment ecs-svc/2290457731864021954 to payments-worker:19 created at 06:24:10 UTC, new tasks started 06:24:22, rollout COMPLETED 06:28:52 with 2 of 2 running and no failed tasks, so ECS saw nothing wrong · Confirmed · W0-Q10
-2. Mechanism: tasks on revision 19 raise `TypeError: refund_amount() missing 1 required positional argument: 'currency'` at refund.py:48 in the `refund` handler; first error 06:24:51.204, 41 s after the rollout began; 738 of the 740 matched error lines. Revision 18 tasks, which ran alongside :19 from 06:24:22 until about 06:27:31, logged no such error; their only matched lines are 2 SQS throttle retries at 03:12, three hours earlier · Confirmed · W1-Q12, W2-Q2
-3. Symptom: refund jobs fail in staging (738 errors) and failed messages accumulate in payments-worker-dlq, starting 06:25 (34 s after the first error) · jobs failing: Confirmed (W1-Q12); DLQ growth caused by these failures: Likely, the redrive policy was not read (W1-Q8)
-4. Code origin (side branch, not needed for steps 1 to 3): the failing file is the file changed by commit 6c1d0e2 "refunds: support partial refunds (#902)" (14 lines in refund.py) between v4.11.0 and v4.12.0; the other commit in that gap is a boto3 bump (#899, requirements.txt only) · Likely · W2-Q4. The error text is a call-signature mismatch (a `currency` argument now required), which fits a change to the refund function. Deployed ref not verified.
-
-Ruled out (queries in the ledger): SQS throttling (2 lines, 03:12, none after 06:00; W1-Q12), a downstream or provider timeout as far as the app log shows (every matched error is the TypeError; W1-Q12), capacity or placement on ECS (running 2 of 2, failedTasks 0; W0-Q10), a stalled consumer or queue-side backlog (jobs queue flat; W1-Q7).
-
-Still open, Assumed: a configuration change in :19 as the mechanism (task definition env and secret names could not be compared, W2-Q1 empty; the error text does not look like a config failure), and a schedule (four schedule listings returned empty replies, W1-Q3 to W1-Q6; the onset is 41 s after the deployment event).
-
-## Gaps
-
-| Gap | Impact on claims | How a human could fill it |
-|---|---|---|
-| prod-read: SSO session expired, refresh failed (W0-Q5). Write capability of prod-read unknown. | "Is prod affected?" is unanswered; no claim about prod. | `! aws sso login --profile prod-read`, then ask for a prod wave (prod payments-worker, its DLQ and the task definition image tag). |
-| SENTRY_AUTH_TOKEN not set (W0-Q6). | Sentry first-seen and release data not read; log evidence stands alone. | Export SENTRY_AUTH_TOKEN with read-only scopes in the shell that runs the skill. |
-| staging-read write-check incomplete: 3 of the 10 requested actions missing from the simulation reply (W0-Q4). | "Read-only confirmed" is not claimed; nothing returned was allowed, so no warning. | Have the account owner confirm the role is read-only, or rerun the simulation until all 10 actions are listed. |
-| Task definition image tags, env and secret names unreadable (W2-Q1 empty). | :19 = v4.12.0 / #902 is Likely; H2 (config) stays Assumed. | Read the image tag and env/secret names of payments-worker:18 and :19 in the ECS console. |
-| Empty replies: stopped tasks, schedules, ECS/SQS rate and age metrics, CloudTrail, target group and RDS lookups (W1-Q2 to W1-Q6, W1-Q11, W2-Q3, W0-Q12, W0-Q13). | None used as a negative. Who deployed, why the old tasks stopped, and consumer rate are unknown. | Re-run with a profile that returns data, or ask the owning team. |
-| Recurrence: 1 of 336 hourly points, no alarm history (W1-Q9, W1-Q10). | Pattern is unclassified. | Check whether the queues are new or metric history is missing; name any alarm on payments-worker-dlq. |
-| No refund / capture counter, no IaC repo, no trace backend in environment.md. | Impact sized from queue depth and logs; IaC drift not checked. | Add the counter, IaC repo and trace backend to environment.md. |
-
-Open items need your input.
-
-## To confirm, a human would…
-
-1. Open task definitions payments-worker:18 and :19 in the ECS console and read the image tags: if :19 carries v4.12.0 (or the commit of #902) and :18 carries v4.11.0, the code origin moves from Likely to Confirmed.
-2. Read payments_worker/handlers/refund.py around line 48 at the :19 image's commit, and the patch of #902: if `refund_amount` gained a required `currency` parameter and the call site in the handler does not pass it, that explains the TypeError.
-3. Read the redrive policy of payments-worker-jobs: if the maximum receive count is 3, the 738 errors against about 246 dead-lettered messages (240 at 07:10) fit three attempts per message, which would confirm the DLQ link.
-4. In the prod account, after signing in, read which task definition and image tag payments-worker runs, whether payments-worker-dlq is growing, and whether the same TypeError appears in /ecs/payments-worker: this answers the prod question.
-5. Ask who or what started the 06:24 deployment (a pipeline run or a person); CloudTrail returned nothing to this run.
-6. Check whether anything uses the refund handler's output in staging tests (for example a release gate), to settle whether the incident blocks a release and the severity moves above SEV4.
-
-## Cost
-
-15 evidence queries (waves 1 and 2; 11 more API calls in wave 0 and the profile build) · 0.218 GB of logs scanned as reported (2 Logs Insights queries) · 13 CloudWatch metric requests · no other metered units · about USD 0.0011 in metered charges (Logs Insights 0.218 GB at the published per-GB scan price, plus 13 metric requests at the published GetMetricData price; check the CloudWatch pricing page for current rates)
+- The `date` command had no world mapping, so run naming and "Start" cells rely on an assumed clock.
+- A 14-day recurrence pull with a gauge statistic returned a single in-window hourly point; I reported it as 1 of 336 and did not sum it.
+- The simulation's Insights `statistics` block was identical for two different queries and windows; counted both.

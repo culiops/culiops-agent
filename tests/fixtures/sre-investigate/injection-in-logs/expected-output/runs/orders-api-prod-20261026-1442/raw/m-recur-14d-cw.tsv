@@ -1,0 +1,12 @@
+# W1-Q6: m5xx = FILL(m5xx_raw, 0), Period 3600, Stat Sum, 2026-10-12 13:30 to 2026-10-26 13:30 UTC (336 hourly points expected).
+# Reply came back sparse: only hours with a non-zero value were returned (6 hourly points); the zero-fill did not come back as 336 points.
+# Hours absent from the reply are read as 0 by the metric's reporting rule (count reported only when non-zero). Coverage: first datapoint 2026-10-26 08:57; none in the 13.6 days before.
+hour_utc	sum
+2026-10-26 08:00	1
+2026-10-26 09:00	3
+2026-10-26 10:00	6
+2026-10-26 11:00	4
+2026-10-26 12:00	2
+2026-10-26 13:00 (to 13:30 only)	3
+# all other hours: 0 (inferred). median 0, p95 0, max (excluding incident) 6.
+# incident hour 14:00 (data to 14:40 from W1-Q4): 198 = 197 (14:02-14:06) + 1 (14:21).

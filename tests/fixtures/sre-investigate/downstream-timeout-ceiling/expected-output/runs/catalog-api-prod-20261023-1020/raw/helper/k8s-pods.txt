@@ -1,0 +1,7 @@
+NAME                           READY   STATUS    RESTARTS   AGE
+catalog-api-6b9d7c5f48-2hxkq   1/1     Running   0          9d
+catalog-api-6b9d7c5f48-4tq8w   1/1     Running   0          9d
+catalog-api-6b9d7c5f48-7mzpl   1/1     Running   0          9d
+catalog-api-6b9d7c5f48-c2r5d   1/1     Running   0          9d
+catalog-api-6b9d7c5f48-kx9vn   1/1     Running   0          48m
+catalog-api-6b9d7c5f48-p6wfj   1/1     Running   0          47m

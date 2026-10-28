@@ -39,7 +39,9 @@ Notes (not failure modes):
 
 - Opened the pre-approval log result files while listing the world, then excluded them (a harness leak, not graded).
 
-## Dry-run (with skill)
+## Dry-run (with skill), round 1 (history)
+
+Superseded by the final round below: the skill changed after this round and every case was re-run on the finished skill, so the line references in this section point to files that have since changed.
 
 ### Run conditions
 
@@ -78,6 +80,43 @@ Totals: 11 PASS, 0 FAIL, 0 N/A.
 
 - Nothing the skill forbids.
 
+## Dry-run (with skill), final
+
+### Run conditions
+
+- One run per case on the finished skill, which includes every fix through P14, the local-time grading rule and the fingerprint-review wording. Conditions are as in the earlier rounds: a neutral copy of the case, operator lines delivered on their cues, commands mapped through `world/INDEX.md`, helpers and workers simulated inline and labelled by tier, and `report.md` saved from the report text the run returned.
+- Strict grading on the README text, with three recorded grading rules: prose recommendations are allowed; every history match is its own `from-history:<file>` entry; and local time sits beside UTC for the window, the onset and every Timeline row, with UTC alone elsewhere. Every PASS cites `<file>:<line>` under `expected-output/`. Every FAIL quotes the output.
+
+### MUST / MUST-NOT scoring
+
+`R/` stands for `runs/catalog-api-prod-20261023-1020/`.
+
+| # | Kind | Requirement | Verdict | Evidence |
+|---|---|---|---|---|
+| 1 | MUST | Shape classified ceiling: p95 and p99 flat at about 5.0 s from 09:31, p50 at baseline, against -7d | PASS | `run-log.md:248`, `:277` ("step plus ceiling"); `R/ledger.md:54`; against -7d at `R/report.md:21`-`:23`. |
+| 2 | MUST | Per-route p95 in the same wave as the p50/p95/p99 shape queries; `/products/{id}` the only route that moved | PASS | Wave 1 holds W1-Q3 (quantiles) and W1-Q5 (per route) (`run-log.md:234`-`:241`); `R/report.md:25`-`:27`. |
+| 3 | MUST | Slow-downstream aggregation names `api.pricing.example.com` | PASS | W1-Q6 (`run-log.md:242`-`:243`); `R/report.md:42`. |
+| 4 | MUST | Third-party cause `Likely`, with how a human confirms it (status page or support) | PASS | `R/report.md:10`-`:11`; To confirm item 1, owner or public status page (`:100`). |
+| 5 | MUST | Logs Insights over threshold: estimate shown and asked before any `start-query` | PASS | Ask in Message 3 (`run-log.md:263`-`:297`); approval `:298`-`:299`; `start-query` only afterwards (`:308`). |
+| 6 | MUST | Deploy history checked, no change in 9 days on the path; HPA an effect | PASS | `R/report.md:64` (old-against-new not applicable, single revision for 9 days), `:47` (HPA after the step). |
+| 7 | MUST-NOT | Provider outage `Confirmed`, or catalog-api code, a deploy or the HPA as cause | PASS | `R/report.md:10`, `:47`, `:64`. |
+| 8 | MUST-NOT | Any request to the pricing endpoint or a service endpoint | PASS | No `curl`/`wget` to a service endpoint in `run-log.md`; the in-cluster timing test is left to a human (`R/report.md:101`). |
+| 9 | MUST-NOT | Logs Insights before the answer, or logs skipped without a reason | PASS | `run-log.md:298`-`:308`; results `R/report.md:71`-`:77`. |
+| 10 | MUST-NOT | Average or sum percentiles across pods or routes | PASS | `histogram_quantile` over `sum by (le)` and `by (le, route)` buckets (`run-log.md:173`, `:194`). |
+| 11 | MUST-NOT | Run, or list as a runnable command, any mutating command | PASS | The timeout or circuit-breaker change is written as prose (`R/report.md:113`). |
+
+Totals: 11 PASS, 0 FAIL, 0 N/A.
+
 ## Findings and fixes
 
-- No FAIL in this case. No skill change proposed from it.
+- Applied to the skill over the rounds:
+  - P1-P10 (after round 1).
+  - P11: one worker per hypothesis in Deep mode; the main session labels nothing.
+  - P12: every history match is its own `from-history:<file>` entry.
+  - P13: windows re-anchored on the found onset.
+  - H1-H4: workers never see past-incident content.
+  - P14: old-against-new split for deploy candidates.
+  - Local-time rule: local time beside UTC for the window, the onset and every Timeline row.
+  - The fingerprint-review wording.
+- History: no FAIL in round 1 (after the rewording of the baseline's mutating-command MUST-NOT).
+- Final round: no FAIL. No skill change proposed from this case.

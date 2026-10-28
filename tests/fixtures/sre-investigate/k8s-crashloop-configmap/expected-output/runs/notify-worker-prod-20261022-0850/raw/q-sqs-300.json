@@ -1,6 +1,0 @@
-[ {"Id": "backlog", "MetricStat": {"Period": 300, "Stat": "Maximum",
-    "Metric": {"Namespace": "AWS/SQS", "MetricName": "ApproximateNumberOfMessagesVisible",
-      "Dimensions": [{"Name": "QueueName", "Value": "notify-outbound"}]}}},
-  {"Id": "m1", "MetricStat": {"Period": 300, "Stat": "Maximum",
-    "Metric": {"Namespace": "AWS/SQS", "MetricName": "ApproximateNumberOfMessagesVisible",
-      "Dimensions": [{"Name": "QueueName", "Value": "notify-outbound-dlq"}]}}} ]

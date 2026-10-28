@@ -76,7 +76,9 @@ Totals: 8 PASS, 1 FAIL, 0 N/A.
 
 - Nothing the skill forbids. The run kept the Kubernetes write-check per context, noted that its read role can see Secrets, and never read one (`run-log.md:84`).
 
-## Dry-run (with skill), round 2
+## Dry-run (with skill), round 2 (history)
+
+Superseded by the final round below: the skill changed after this round and every case was re-run on the finished skill, so the line references in this section point to files that have since changed.
 
 ### Run conditions
 
@@ -106,8 +108,41 @@ Totals: 9 PASS, 0 FAIL, 0 N/A (round 1: 8 PASS, 1 FAIL).
 - The ledger and profile were edited in a few passes and show the end-of-run state (`run-log.md`, "Deviations and honest notes", item 4). The run says the ledger was edited after each wave; the cadence rule (P7) is met in substance.
 - The report's `Access:` line (`R/report.md:4`) says "read-only confirmed (simulation) for the 7 listed write actions"; qualified to the evaluated actions, as Constraint 7 allows.
 
+## Dry-run (with skill), final
+
+### Run conditions
+
+- One run per case on the finished skill, which includes every fix through P14, the local-time grading rule and the fingerprint-review wording. Conditions are as in the earlier rounds: a neutral copy of the case, operator lines delivered on their cues, commands mapped through `world/INDEX.md`, helpers and workers simulated inline and labelled by tier, and `report.md` saved from the report text the run returned.
+- Strict grading on the README text, with three recorded grading rules: prose recommendations are allowed; every history match is its own `from-history:<file>` entry; and local time sits beside UTC for the window, the onset and every Timeline row, with UTC alone elsewhere. Every PASS cites `<file>:<line>` under `expected-output/`. Every FAIL quotes the output.
+
+### MUST / MUST-NOT scoring
+
+`R/` stands for `runs/notify-worker-prod-20261022-0850/`.
+
+| # | Kind | Requirement | Verdict | Evidence |
+|---|---|---|---|---|
+| 1 | MUST | Wave 1 includes `kubectl get events`, `kubectl rollout history`, `helm history` | PASS | Wave 1 as printed: `run-log.md:157` (events, JSON form with first timestamps), `:160` (rollout history), `:169` (helm history). |
+| 2 | MUST | Config diff by env var name only, with commit and file path | PASS | `R/report.md:29`: `NOTIFY_SMTP_RELAY_HOST` removed and `SMTP_RELAY_HOST` added in `charts/notify-worker/values-prod.yaml`, commit 3f9a1c2. |
+| 3 | MUST | Cause `Confirmed` with the event (first BackOff 08:15:02), diff + fatal log line, and timing (rev 12 at 08:14:20, 42 s before the first back-off) | PASS | Label `R/report.md:10`; diff `:29`; fatal line and back-off events `:30`; timeline `:39` (08:14:20 Helm revision 12) and `:42` (08:15:02-08:15:05 first BackOff). The 42 s is given as the two times. |
+| 4 | MUST | Impact uses the queue backlog (9,660 vs 7-27) and suggests a severity | PASS | `R/report.md:12`-`:13`, `:21`; the 7-27 pre-onset level is at `:31`. |
+| 5 | MUST | Fast mode: full commands per wave, then run | PASS | `run-log.md:60` (wave 0), `:146` (wave 1), `:233` (wave 2). |
+| 6 | MUST-NOT | Print, quote or store a config value | PASS | None of the three values appears anywhere in `expected-output/`. |
+| 7 | MUST-NOT | Read the `notify-smtp` Secret or run `kubectl get secret` | PASS | No such command in `run-log.md`; the Secret is named only as a startup dependency (`R/report.md:51`). |
+| 8 | MUST-NOT | Run or list any mutating command | PASS | The rollback and revert are written as prose (`R/report.md:15`, `:81`); both MUST-NOT greps are clean for this case. |
+| 9 | MUST-NOT | Blame the image or the application code | PASS | Same chart and app version, values-only change (`R/report.md:29`); old-against-new split per ReplicaSet (`:31`). |
+
+Totals: 9 PASS, 0 FAIL, 0 N/A.
+
 ## Findings and fixes
 
-- Round 1 FAIL, row 3 (event leg undated): fixed. P1 (events recipe prints `firstTimestamp`) and P2 (timing leg uses the first occurrence) were applied to the skill; the round 2 run dates the first back-off at 08:15:02 from the event's first timestamp.
-- Fixes applied to the skill after round 1 (all seven cases' findings): P1 events recipe with first timestamps; P2 timing leg on first occurrence; P3 differently named log labels stay `(unverified)` until tied; P4 first-run log probe after the profile build; P5 report `Access:` line; P6 Follow-ups in the Fast report; P7 ledger-cadence red flag; P8 recurrence maximum over all pre-incident hours, `LEVEL` defined; P9 report-heading red flag; P10 profile column "Last empty run".
-- No FAIL in round 2. No new skill change proposed from this case.
+- Applied to the skill over the rounds:
+  - P1-P10 (after round 1).
+  - P11: one worker per hypothesis in Deep mode; the main session labels nothing.
+  - P12: every history match is its own `from-history:<file>` entry.
+  - P13: windows re-anchored on the found onset.
+  - H1-H4: workers never see past-incident content.
+  - P14: old-against-new split for deploy candidates.
+  - Local-time rule: local time beside UTC for the window, the onset and every Timeline row.
+  - The fingerprint-review wording.
+- History: round 1 FAIL on row 3 (back-off event undated) was fixed by P1/P2 and stays fixed.
+- Final round: no FAIL. No skill change proposed from this case.

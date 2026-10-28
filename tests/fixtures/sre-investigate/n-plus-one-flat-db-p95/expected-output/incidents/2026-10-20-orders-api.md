@@ -4,40 +4,37 @@ date: 2026-10-20
 service: orders-api
 env: prod
 siblings: [all]
-window_utc: 2026-10-20T13:08Z/ongoing at 2026-10-20T15:30Z
+window_utc: 2026-10-20T13:08Z/2026-10-20T15:30Z
 symptoms: [latency]
 cause_category: deploy
-cause: v2.15.0 list handler loads items with one query per order (N+1): median 41 descendant spans per GET /orders request against 3, p95 0.18 s to 0.71 s
-deps: [orders-db]
+cause: release v2.15.0 changed the GET /orders list handler to one items query per order (N+1): about 10 times more database operations and p95 0.18 s -> 0.71 s
+deps: [orders-db, auth-api]
 label: Confirmed
 mode: deep
 time_to_cause_min: null
 run: runs/orders-api-prod-20261020-1530
 ---
 
-# orders-api GET /orders about 4x slower after the v2.15.0 rollout
+# orders-api GET /orders slow after v2.15.0 (N+1)
 
 ## What happened
 
-Helm revision 24 (orders-api v2.15.0) was deployed at 13:04:50 UTC on 2026-10-20. From the 13:08 sample, p95 of `GET /orders` went from 0.18 s to 0.71 s (p50 0.09 s to 0.31 s) and stayed there up to 15:30 UTC. No other endpoint moved. The database was not saturated (CPU 25% to 41%, no pool waiters). The p95 alert kept firing.
+At 13:08 UTC on 2026-10-20 the p95 of `GET /orders` on orders-api (prod) went from about 0.18 s to about 0.71 s and stayed there; p50 went from about 0.09 s to about 0.31 s. Request rate stayed at about 56/s, other routes were flat, and the window was still open (ongoing) at 15:30 UTC. The p95 alert kept firing; its history could not be read.
 
 ## Causal chain
 
-1. Trigger: commit a4c1e9b (#2211) in v2.15.0 changed `list_orders.py` to call `repo.list_items(order.id)` once per returned order (up to 50) instead of one joined query. Confirmed.
-2. Mechanism: each request makes about 1 + N statements (descendant spans p50 41, p95 52 against p50 3, p95 4 before; 24 traces each), each statement as fast as before (about 4 ms); service-wide DB statements per second x10.4 with a flat call rate. Confirmed.
-3. Symptom: GET /orders p95 x3.9, p50 x3.4 from 13:08, three minutes after the upgrade. Confirmed.
+1. Trigger: release v2.15.0 (Helm revision 24, about 13:05 UTC, all 3 pods replaced) contains commit a4c1e9b (#2211), which changes the list handler from one joined query to one items query per order · Confirmed.
+2. Mechanism: each request now makes 1 + up to 50 serial database queries (descendant spans per request p50 41, max 52, against p50 3, max 4 before); database operations rose 10.4 times at the same minute; per-query latency stayed at about 4 ms; pool and database had headroom · Confirmed.
+3. Symptom: trace duration follows the span count (about 101 ms + 5.8 ms per span), which accounts for the p50 and p95 step · Confirmed.
 
 ## What found it
 
-The statement rate stepping x10.4 at the same sample as the latency step while the endpoint's call rate and the per-statement DB p95 stayed flat (a flat database p95 did not clear the database), then the span count per request in the incident window against the pre-deploy window.
+The span count per request, new window against old window (W2-Q8 against W2-Q9), together with the 10.4 times step in database operations at 13:08 with a flat request rate (W1-Q15) and flat per-call database latency (W1-Q17).
 
 ## What did not help
 
-- p90 and p99 queries returned nothing; the shape was read from p50 against p95.
-- The Loki stream for the service is labelled app="orders" and its lines carry no pod or trace ID; it could not be tied to the service and was not used as evidence.
-- Kubernetes events for the rollout had expired; the histogram has no pod label, so there was no old-versus-new split by pod.
-- The earlier orders-api latency incident (2026-08-14) pointed at the connection pool; here pool waiters are 0 at every point.
+Database CPU and pool were dead ends within the first queries (read latency flat, pending requests 0). p90 and p99 returned nothing. The -7d request-rate query came back identical to the unshifted one. The Loki lines carried a label that could not be tied to the pods. Kubernetes events had expired. A bare Tempo search returned no traces although the service name was right. No alert history was available, so detection delay is unknown.
 
 ## Follow-ups raised
 
-Fix or roll back the list handler; a statement-count test and canary gate for list endpoints; pod/version labels and p90/p99 recording rules; Performance Insights on orders-db; name the alert and add the chart values repo to environment.md.
+Restore a single-round-trip read for the list view (or roll back as a stop-gap, which also withdraws the shipment ETA shipped in the same release); add a database-calls-per-request check to tests or rollout analysis; add a status label, a revision label on traces and metrics, a latency recording rule, an alert-history source, and throttling and limit series; reconcile the size of the extra database work with the operations counter; narrow the Kubernetes read grant from all resources to the built-in view role.

@@ -1,0 +1,6 @@
+# W2-Q4  git -C ~/src/notify-deploy show 3f9a1c2 -- charts/notify-worker : NAMES ONLY (values deliberately not stored)
+file: charts/notify-worker/values-prod.yaml   (config: block)
+removed key: NOTIFY_SMTP_RELAY_HOST
+added key:   SMTP_RELAY_HOST
+other keys unchanged: NOTIFY_FROM_ADDRESS, NOTIFY_QUEUE_URL, NOTIFY_WORKER_CONCURRENCY
+commit: 3f9a1c2e7b8d4f60a1b2c3d4e5f60718293a4b5c  "notify-worker: align config key names with the shared SMTP chart (#214)"  author date 2026-10-22 08:03:41 +0000

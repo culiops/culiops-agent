@@ -1,5 +1,0 @@
-{"query_id": "3a4b5c6d-7e8f-4091-a2b3-c4d5e6f70812", "log_group": "/ecs/payments-worker", "window_utc": "2026-10-25T06:15:00Z/2026-10-25T06:35:00Z", "note": "rows inside the requested window only", "rows": [
- {"@timestamp": "2026-10-25 06:24:51.204", "message_id": "msg-7c1d", "task_def_revision": 19, "handler": "refund", "error": "TypeError: refund_amount() missing 1 required positional argument: 'currency'", "file": "payments_worker/handlers/refund.py", "line": 48},
- {"@timestamp": "2026-10-25 06:25:03.882", "message_id": "msg-91aa", "task_def_revision": 19, "handler": "refund", "error": "TypeError: refund_amount() missing 1 required positional argument: 'currency'", "file": "payments_worker/handlers/refund.py", "line": 48},
- {"@timestamp": "2026-10-25 06:31:40.017", "message_id": "msg-0b3e", "task_def_revision": 19, "handler": "refund", "error": "TypeError: refund_amount() missing 1 required positional argument: 'currency'", "file": "payments_worker/handlers/refund.py", "line": 48}],
- "statistics": {"recordsMatched": 740, "recordsScanned": 288104, "bytesScanned": 109051904}, "status": "Complete"}

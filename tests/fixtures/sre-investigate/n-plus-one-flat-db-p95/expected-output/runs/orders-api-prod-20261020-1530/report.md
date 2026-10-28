@@ -1,142 +1,154 @@
-# Investigation: orders-api prod: GET /orders p95 about 4x slower since 13:08 UTC
+# Investigation: orders-api prod: GET /orders p95 up from 0.18 s to 0.71 s since 13:08 UTC
 
-Run: orders-api-prod-20261020-1530 · Mode: Deep · Window: 2026-10-20 12:30-15:30 UTC (22:30 on 10-20 to 01:30 on 10-21, Australia/Brisbane)
-Access: prod-read: 7 of the 10 fixed write actions were evaluated and all came back implicitDeny (none allowed); 3 returned no row (ec2:AuthorizeSecurityGroupIngress, iam:CreateAccessKey, cloudformation:DeleteStack), so this is a gap and not a proof; resource-scoped writes are not covered · arn:aws:eks:us-east-1:111122223333:cluster/prod: no write verbs in orders
+Run: orders-api-prod-20261020-1530 · Mode: Deep · Window: 12:30 to 15:30 UTC (22:30 on 2026-10-20 to 01:30 on 2026-10-21, Australia/Brisbane, UTC+10) · Onset: 13:08 UTC (23:08 Australia/Brisbane)
+Access: prod-read: write check incomplete: 7 of the 10 broad write actions returned implicitDeny and none was allowed, but there is no result row for ec2:AuthorizeSecurityGroupIngress, iam:CreateAccessKey and cloudformation:DeleteStack, so write capability is unknown (gap) for those three and the credentials are not claimed read-only; arn:aws:eks:us-east-1:111122223333:cluster/prod (namespace orders): no write verbs in orders
 
 ## TL;DR
 
 | Field | Value |
 |---|---|
-| Cause | The v2.15.0 release (Helm revision 24, 13:04:50 UTC) changed the `GET /orders` handler (commit a4c1e9b, PR #2211) to run one `order_items` query per returned order (up to 50) instead of one joined query. A request now makes a median of 41 descendant spans (about 40 DB statements) against 3. Each statement is as fast as before, and the endpoint is about 4x slower · label: Confirmed |
-| Weakest link | There is no old-versus-new latency split by pod or revision (the histogram has no pod label and the rollout events have expired). The tie to the deploy therefore rests on timing at 2-minute resolution plus the code diff on the failing path. The per-request counts come from 24 sampled traces per window, backed by the service-wide statement rate (x10.4 against a flat call rate) · Confirmed |
-| Impact | `GET /orders` (order history, a core flow) p95 0.71 s against 0.18 s and p50 0.31 s against 0.09 s, from 13:08 UTC (23:08 local). Still ongoing at 15:30 UTC (01:30 local). POST /orders, GET /orders/{id}, PATCH and /healthz are unchanged |
-| Severity | SEV2 because a core flow is significantly degraded (about 4x) and nobody reported it as down. The incident owner decides |
-| Pattern | unclassified · no alert history was found (alert unnamed), the 14-day latency pull is over the quantile cap, and the volume proxy returned 5.5 hours; the same clock window 7 days earlier was normal · Assumed |
-| Recommended action | A human should decide between two options. One is to roll back to v2.14.0, at the cost of also withdrawing the shipment ETA on order detail and the structlog bump until they are re-released. The other is to ship a fix that restores the single joined query the repository still contains. Either should go through `pre-flight` and a separate session first |
-| Time to cause | Not measured: the run clock was unavailable (`date -u` printed nothing). In order: the extra-work signal appeared in wave 1, the deploy became a suspect in wave 2, and Confirmed came with the Phase 4 verdicts |
-| Similar past incidents | `2026-08-14-orders-api.md` (matched on service, dependency orders-db and symptom words). Its mechanism (connection pool exhaustion) was tested here as `from-history:` and Ruled out (W1-Q17). This is not a repeat of that cause; it is the second orders-api latency incident in about nine weeks |
+| Cause | Release v2.15.0 (Helm revision 24, rolled out about 13:05 UTC) rewrote the `GET /orders` list handler (commit a4c1e9b, #2211) from one joined query to one items query per order. Each request now makes up to 51 serial database queries instead of one, which adds about 5.8 ms per extra query · label: Confirmed |
+| Weakest link | The old and new revisions never ran side by side (all 3 pods were replaced within about a minute), and the rollout start comes from Helm's zone-less time plus pod age, cross-checked to about 3 minutes against the UTC step at 13:08 rather than from a UTC-stamped record · still Confirmed at that resolution. The exact size of the extra database work is also not reconciled with the metrics (see Gaps); that does not touch the cause. |
+| Impact | `GET /orders` (order history, a core flow) p95 0.181 s to 0.712 s (3.9 times) and p50 about 0.09 s to about 0.31 s, with request rate unchanged at about 56/s. Other routes are flat and no errors were measured. Since 13:08 UTC, still ongoing at 15:30 UTC (2 h 22 min). |
+| Severity | SEV2 (suggested) because a core flow is significantly degraded (about 4 times slower at p95) with no failures measured. The incident owner decides. |
+| Pattern | unclassified · no alert history, and the 14-day pull returned 3 of 336 hourly points; the shape is a step · Assumed |
+| Recommended action | A human should choose between two options. One is to roll orders-api back to v2.14.0 as a stop-gap; this also withdraws the shipment ETA on order detail (#2208) that shipped in the same release. The other is to ship a fix that loads the items of a page of orders in one round trip again, either by joining as v2.14.0 did or with one batched query. The batched form returns a larger result per request, so test it with a customer who has 50 orders. Check either option with `pre-flight` before applying it. |
+| Time to cause | Not measured (no wall clock in this run). The first Likely came after wave 1, when the step lined up with the rollout and a 10.4 times jump in database operations; Confirmed at the Phase 4 merge. |
+| Similar past incidents | 2026-08-14-orders-api (matched on service, dependency orders-db and the latency symptom). It was tested here as a lead (`from-history:2026-08-14-orders-api`) and Ruled out, so this is a second latency incident on orders-api in about ten weeks but not a repeat of the same cause. |
 
 ## Impact
 
-- **Symptom.** `GET /orders` p95 is 0.712 s against 0.180 s before and 0.181 s seven days earlier (x3.9). p50 is 0.311 s against 0.092 s (x3.4). From 13:08 to 15:30 UTC the p95 stays in 0.66-0.76 s, with no recovery. Only this endpoint moved: POST /orders 0.142 against 0.139, GET /orders/{id} 0.064 against 0.061, PATCH 0.088 against 0.091, /healthz 0.003 (W1-Q5..Q13) · Confirmed.
-- **Scope.** Prod, orders-api, all three replicas (CPU is level across the pods, W1-Q18). Customer-facing: order history is a core flow named in environment.md.
-- **Not measured.** The error rate and the number of users affected were not measured, so that part of the impact is Assumed. There is no SLO, so impact is sized from request metrics against the baseline.
-- **Third party.** None in the path. The database is RDS `orders-db` in the same account.
+`GET /orders` is the order-history core flow named in environment.md. Its p95 went from 0.181 s (12:30 UTC) to 0.712 s (15:30 UTC) and its p50 from about 0.09 s to about 0.31 s. The last clean 2-minute sample is 13:06 (p95 0.163 s) and the first elevated one is 13:08 (0.716 s). On the same clock window of 2026-10-13 the p95 stayed between 0.160 and 0.200 s (W1-Q5..Q11). The request rate did not move, at 56.5 req/s before and 56.1 req/s after (PB-Q16). Every caller of the endpoint on all 3 replicas is affected. `POST /orders` (0.139 to 0.142 s), `GET /orders/{id}` (0.061 to 0.064 s), `PATCH /orders/{id}` (0.091 to 0.088 s) and `/healthz` are flat (W1-Q5..Q7).
+
+The impact was sized from request metrics against the baseline because no SLO is named in environment.md. The latency change is Confirmed. Error impact is Assumed: the HTTP histogram has no status label, and two sampled traces returned 200 (W2-Q10, W2-Q11). No third party is in the path. orders-db is the company's own RDS and auth-api is internal.
 
 ## Recurrence
 
 | Source | Window | Occurrences | When (UTC) | Normal vs incident |
 |---|---|---|---|---|
-| p95 alert on GET /orders (name not given) | 30d | not available: the `ALERTS` search for namespace orders returned an empty matrix (W0-Q13) | n/a | not applicable |
-| sibling alarms | 30d | none: no CloudWatch alarm is involved | n/a | not applicable |
-| request volume of GET /orders (proxy; the latency pull is over the 12 h quantile cap) | 14d at 1h | 0 hours above normal, but only 10:00-15:30 on 10-20 was returned (W1-Q19) | none | hourly requests median 203.0k, max 204.3k; onset hour (13:00) 203.6k. This is volume, not latency, and 5.5 h of 336 h |
+| p95 alert (name and system not given) | 30d | not available | no alert history: annotations returned nothing (W0-Q8) and there is no `ALERTS` series (PB-Q7) | not applicable |
+| sibling alarms | 30d | none known | not applicable | not applicable |
+| `GET /orders` p95, same clock window | -7d (2026-10-13) | 0 hours above normal | none | 0.160 to 0.200 s (W1-Q10) vs 0.661 to 0.755 s from 13:08 (W1-Q8) |
+| database operations per hour (stand-in for the latency signal, which has no recording rule and cannot be pulled over 14 days within the 12 h cap) | 14d at 1h | 3 of 336 hourly points returned (10:00 to 12:30 today) | none before the incident | median / p95 / max 1.37M / 1.37M / 1.37M per hour vs 14.2M per hour in the 14:00 hour (W1-Q20) |
 
-Class `unclassified`, shape `step`. p50 and p95 both jump at 13:08 and stay. The call rate is flat. DB statements per second step x10.4 at the same sample. No rule can be tested without an alert history or a 14-day latency series. The same clock window on 10-13 was normal (W1-Q6, W1-Q8, W1-Q13, W1-Q16). This is a gap, not a finding of "first time".
+Class: unclassified. Without alarm history and with 2.5 hours of 14-day signal, none of the rules for `scheduled`, `chronic`, `recurring` or `sudden` can be applied. The step has lasted 2 h 22 min without repeating and no schedule was listed, but that is not a classification. This is a gap, not a finding. Shape: step. p95, p50 and database operations all jump at 13:08. The request rate is flat, so it is not volume, and p50 moved, so it is not a ceiling.
 
 ## Timeline
 
-| Time (local) | Time (UTC) | Event | Evidence |
+| Time (UTC) | Time (local) | Event | Evidence |
 |---|---|---|---|
-| 10-07 19:40:12 | 2026-10-07 09:40:12 | Helm revision 23 deployed (app v2.14.0, chart orders-api-4.2.0). The printed time has no zone and is read as UTC (see Gaps) | W1-Q4 |
-| n/a | 2026-10-19 (time not shown) | Commits for v2.15.0 merged: a4c1e9b "load items per order in list handler" (#2211), 7be20d4 "shipment ETA on order detail" (#2208). 3f9d6a1 "bump structlog" (#2203) is dated 10-16 | W2-Q8 |
-| 23:04:50 | 13:04:50 | Helm revision 24 deployed: app v2.15.0, same chart as revision 23 | W1-Q4, W1-Q1 |
-| about 23:05 | about 13:05 | ReplicaSet `orders-api-7c9b6d8f5d` created (age 145 min at 15:30), 3/3 ready, 0 restarts | W1-Q2, W0-Q20 |
-| 23:06 | 13:06 | Last normal sample: p95 0.163 s, p50 0.082 s | W1-Q5, W1-Q7, W3-Q1 |
-| 23:08 | 13:08 | First elevated sample: p95 0.716 s, p50 0.295 s. DB statements/s 4,031 (about 380 before). Endpoint call rate unchanged | W1-Q5, W1-Q7, W1-Q15, W1-Q14 |
-| 23:08-01:30 (10-21) | 13:08-15:30 | p95 stays 0.66-0.76 s. Pool `pending_requests` 0. RDS CPU 37-44% | W1-Q5, W1-Q17, W1-Q21 |
-| 00:30-01:27 (10-21) | 14:30:18-15:27:50 | Trace sample: GET /orders requests make 9-52 descendant spans (p50 41), against 2-4 (p50 3) in the 11:00-11:57 sample | W3-Q4, W3-Q5, W3-Q6, W3-Q7 |
-| n/a | n/a | No CronJob, EventBridge rule, Scheduler schedule, RDS event or AWS write near 13:08 | W2-Q1..Q6 |
+| 2026-10-16 (date only) | not applicable | commit 3f9d6a1 bumps structlog to 25.4.0 (#2203) | W2-Q1; git log in the local clone |
+| 2026-10-19 (date only) | not applicable | commits 7be20d4 (shipment ETA on order detail, #2208) and a4c1e9b (load items per order in the list handler, #2211) | W2-Q1, W2-Q2; git diff v2.14.0..v2.15.0 in the clone |
+| 2026-10-07 09:40:12 (zone not printed by Helm) | not applicable | Helm revision 23: chart orders-api-4.2.0, app v2.14.0 | W1-Q4; helm history |
+| 13:04:50 (zone not printed by Helm; read as UTC after the cross-check) | 23:04:50 | Helm revision 24: chart 4.2.0 unchanged, app v2.15.0, "Upgrade complete" | W1-Q3, W1-Q4 |
+| about 13:05 (derived) | about 23:05 | ReplicaSet orders-api-7c9b6d8f5d created; its 3 pods are 144 to 145 minutes old at about 15:30; the old ReplicaSet is at 0 replicas; 0 restarts | W1-Q2, PB-Q9 |
+| 13:06 | 23:06 | last clean samples: p95 0.163 s, p50 0.082 s, database operations 365.5/s | W1-Q8, W1-Q9, W1-Q15; Grafana Explore (prom-prod) |
+| 13:08 | 23:08 | first elevated samples: p95 0.716 s, p50 0.295 s, database operations 4031.1/s (10.4 times); request rate unchanged | W1-Q8, W1-Q9, W1-Q15, PB-Q16 |
+| 13:10 | 23:10 | RDS CPU 41.3% in the 13:10 five-minute bucket (the 13:05 bucket was 23.9%); read latency flat at about 0.5 ms | W3-Q3; CloudWatch console, AWS/RDS orders-db |
+| 15:30 | 01:30 (21 Oct) | still elevated: p95 0.712 s | W1-Q5 |
+
+Rollout dating cross-check: Helm prints `UPDATED` without a zone. Independently, the new pods are 145 minutes old at about 15:30 (W1-Q2), which puts their creation near 13:05, and the UTC-stamped step in Prometheus is at 13:08. These agree to about three minutes. The kubectl output showed only `AGE`, so there is no UTC-stamped creation time.
 
 ## Causal chain
 
-1. Trigger: Helm upgrade of orders-api to v2.15.0 at 13:04:50 UTC. Commit a4c1e9b (#2211) changes `orders_api/handlers/list_orders.py` (lines 15-18 at v2.15.0) to call `repo.list_items(order.id)` once per returned order, with the page capped at 50. v2.14.0 used one joined query, `repo.list_orders_with_items`, which still exists in `repository.py` (lines 38-42) · Confirmed · W1-Q1, W1-Q2, W1-Q4, W2-Q8, W2-Q9, W3-Q2, W3-Q3
-2. Mechanism: `GET /orders` now issues one list query plus one `order_items` query per order. Descendant spans per request are p50 41 and p95 52 (24 traces, 14:30-15:30), against p50 3 and p95 4 (24 traces, 11:00-12:00). Each statement takes 3-4.5 ms as before (DB span p95 4.19 ms before, 4.04 ms after). Service-wide DB statements per second are x10.4 from 13:08 while the endpoint's call rate is flat. In the fetched incident trace the added request time (+43 ms) equals the added DB statement time (+44.8 ms) · Confirmed · W3-Q4, W3-Q5, W3-Q6, W3-Q7, W1-Q15, W1-Q14, W1-Q20
-3. Symptom: `GET /orders` p95 0.18 s to 0.71 s and p50 0.09 s to 0.31 s from the first sample at 13:08, 3 minutes after the upgrade. The last normal sample is 13:06 and no other endpoint moved. The database is not saturated (RDS CPU 41%, pool waiters 0) · Confirmed · W1-Q5, W1-Q7, W1-Q11, W1-Q12, W1-Q13, W1-Q17, W1-Q21
+1. Trigger: release v2.15.0 replaced all 3 pods at about 13:05 UTC (Helm revision 24, ReplicaSet orders-api-7c9b6d8f5d). It contains commit a4c1e9b, which changes `list_orders` from `repo.list_orders_with_items` (one LEFT JOIN round trip) to `repo.list_orders` followed by `repo.list_items(order.id)` for every order, capped at 50 orders. The other two commits are not on the failing path · Confirmed · W1-Q2, W1-Q3, W1-Q4, W2-Q1, W2-Q2, W3-Q1, W3-Q2
+2. Mechanism: each `GET /orders` request now issues 1 orders query plus up to 50 serial item queries.
+   - Descendant spans per request: p50 41, p95 52, max 52 (24 traces, 14:30 to 15:30) against p50 3, p95 4, max 4 (24 traces, 11:00 to 12:00).
+   - Database operations rose from 380/s to 3,952/s (10.4 times) at 13:08 while the request rate stayed at about 56/s.
+   - Each query is as fast as before, p95 3.9 to 4.4 ms. The pool never waited (`pending_requests` 0 in 166 of 166 samples), and RDS had headroom (CPU 24% to 40%, maximum 44%, read latency flat).
+   - Confirmed · W2-Q8, W2-Q9, W2-Q10, W2-Q11, W1-Q15, W1-Q17, W1-Q19, W3-Q3
+3. Symptom: trace duration follows the span count (about 101 ms + 5.8 ms per span, r = 0.98, 48 traces), which accounts for the p50 move from about 110 ms to about 342 ms. At the metric level p50 and p95 rise together at 13:08 and stay up · Confirmed · W2-Q8, W2-Q9, W1-Q8, W1-Q9
 
-Timing leg: the first occurrence of the symptom is the 13:08 sample, against a Helm time of 13:04:50. The sample before it (13:06) is normal (W1-Q5, W3-Q1).
+Why it became an incident (Deep mode):
+- **Protection missing:** the release reached all 3 pods within about a minute (ages 145, 144 and 144 minutes), so no gradual rollout step is visible · Likely (inferred from pod ages; the rollout strategy was not read). Nothing in the data shows a check on database calls per request before or during the rollout · Assumed.
+- **Detection:** the alert's first firing time is unknown because no alert history could be read · Assumed.
+- **Capacity:** none was short. The database absorbed ten times the operations and paid in latency, not in errors or pool waits · Confirmed (W3-Q3, W1-Q19).
 
-**Why it became an incident.**
-- The handler's cost scales with page size (up to 50 extra statements per request). No pre-release check on statements per request for list endpoints is visible (Assumed: no CI or review record was read).
-- The rollout replaced all three pods within about three minutes. No staged rollout or p95 gate is visible (Assumed: only the rollout history was read).
-- The database absorbed ten times the statements (CPU 25% to 41%, pool waits 0). No saturation signal fired, only endpoint latency changed, and the only latency series that answered were p50 and p95 (p90 and p99 returned nothing).
-- The alert's definition, threshold and first firing time are unknown (alert not named). Detection delay cannot be stated.
-
-No competing explanation is still standing. The two remaining leads are under Open hypotheses.
+Standing explanations: H1 (the deploy) and H2 (the per-order query loop) are one chain, trigger and mechanism. Pod CPU capacity (H5) remains open but is not needed to explain any step.
 
 ## Evidence
 
-- **Deploy.** `kubectl rollout history deployment/orders-api` shows revision 24 with image v2.15.0. `kubectl get rs -n orders` shows `orders-api-7c9b6d8f5d` 3/3 ready, age 145 min, and the old `orders-api-5f8d9c7b6a` at 0. `helm history orders-api` shows revision 24 on "Tue Oct 20 13:04:50 2026", chart orders-api-4.2.0 in both revisions. (W1-Q1, W1-Q2, W1-Q4.) link: read-only `helm history orders-api -n orders --max 10`
-- **Change on the failing path.** `git -C ~/src/orders-api diff v2.14.0 v2.15.0` replaces `repo.list_orders_with_items(...)` with `repo.list_orders(...)` plus `for order in orders: order.items = repo.list_items(order.id)`. The same diff touches `order_detail.py` (GET /orders/{id}, which did not move) and the structlog pin (no data path). (W2-Q8, W2-Q9, W3-Q2, W3-Q3.) link: `git -C ~/src/orders-api diff v2.14.0 v2.15.0 -- orders_api/handlers/list_orders.py`
-- **Onset.** p95: 12:50-13:06 all 0.163-0.190 s, 13:08 0.716 s, 13:08-15:30 median 0.712 s. p50: 0.082 s at 13:06, 0.295 s at 13:08, median 0.311 s after. Same clock window 7 days earlier: p95 median 0.181 s, p50 0.088 s. (W1-Q5..Q8, W3-Q1.) link: Grafana Explore, prom-prod, `histogram_quantile(0.95, sum by (le) (rate(http_server_request_duration_seconds_bucket{service="orders-api", route="/orders"}[5m])))`, 2026-10-20 09:30-15:30
-- **Only this endpoint.** p95 per route at 15:30 / 12:30 / 7 days earlier: GET /orders 0.712 / 0.181 / 0.181; GET /orders/{id} 0.064 / 0.061 / 0.061; POST /orders 0.142 / 0.139 / 0.139; PATCH /orders/{id} 0.088 / 0.091 / 0.091; /healthz 0.003 throughout. (W1-Q11..Q13.)
-- **Not more requests.** GET /orders runs at a median of 56.5 req/s before and 56.25 req/s after. Hourly requests are 202.2k-204.3k, onset hour 203.6k. (W1-Q14, W1-Q19.)
-- **More work per request.** DB statements per second: median 381 before, 4,031 at 13:08, median 3,962 after (x10.4); 7 days earlier median 379. (W1-Q15, W1-Q16.)
-- **Statements are not slower.** DB span p95 is 4.19 ms before (3.9-4.36) and 4.04 ms after (3.9-4.22). RDS ReadLatency is 0.6 ms before and after. (W1-Q20, W1-Q21.) A flat database p95 did not clear the database; the statement count is what moved.
-- **Per-request span counts.** Incident sample: 24 traces, descendant spans p50 41, p95 52, max 52, min 9, request duration median 340.5 ms. Baseline sample: 24 traces, p50 3, p95 4, max 4, request duration median 110 ms. The count includes the one `auth-api` client span each trace carries. (W3-Q4, W3-Q5.) link: Grafana Explore, tempo-prod, `{ resource.service.name = "orders-api" && span:kind = server && span:name = "GET /orders" } >> { span:kind = client }`, 14:30-15:30 and 11:00-12:00
-- **One fetched trace per window.** Trace `e3ea7a39…` (14:30:18): root 152 ms, one `SELECT orders` 3.05 ms, 12 `SELECT order_items` (median 3.74 ms, max 4.52 ms, total 44.8 ms), one `GET auth-api /verify` 3.4 ms. Trace `65345f5f…` (11:00:09): root 109 ms, one `SELECT orders JOIN order_items` 3.05 ms, `auth-api` 3.77 ms. The time outside any child span is the same (100.8 ms and 102.2 ms). Across the 24 incident traces, duration rises about 6 ms per extra span (r = 0.97). (W3-Q6, W3-Q7, local arithmetic over W3-Q4.)
-- **Database not saturated.** RDS CPU median 24.9% before and 40.8% after (max 44.0%), connections 42 to 47 (max 48). Pool `pending_requests` is 0 at all 166 points; `used` is 14-19 before and 17-24 after. (W1-Q17, W1-Q21.)
-- **No schedule or AWS write near the onset.** No CronJob, EventBridge rule, Scheduler schedule, RDS event or CloudTrail write (the replies were empty objects). (W2-Q1..Q6.) CloudTrail does not log the Kubernetes API, so the Helm upgrade itself is not covered by it.
-- **Logs (lead only, not evidence).** Eight `GET /orders` log lines at 15:18-15:19 show duration_ms 286-751 and status 200. The stream (`app="orders"`) could not be tied to the service. (W3-Q9.)
+1. **Step at 13:08 in latency.** `GET /orders` p95: 94 samples from 10:00 to 13:06 lie between 0.160 and 0.200 s, and 72 samples from 13:08 to 15:30 lie between 0.661 and 0.755 s. p50: 0.080 to 0.100 s, then 0.281 to 0.339 s. Last clean 13:06, first elevated 13:08. Seven days earlier all 166 samples stayed within 0.160 to 0.200 s (p95) and 0.080 to 0.100 s (p50). [W1-Q8, W1-Q9, W1-Q10, W1-Q11; Grafana Explore, prom-prod, queries as in the ledger]
+2. **Only this endpoint, request rate unchanged.** Per-route p95 at 15:30 against 12:30 and -7d: `/orders/{id}` 0.064 vs 0.061, `POST /orders` 0.142 vs 0.139, `PATCH /orders/{id}` 0.088 vs 0.091, `/healthz` 0.003. `GET /orders` call rate 56.5 req/s before and 56.1 after. [W1-Q5, W1-Q6, W1-Q7, PB-Q16; Grafana Explore, prom-prod]
+3. **The rollout.** Rollout history shows revision 24 with image v2.15.0 (revision 23 was v2.14.0), and Helm dates revision 24 at 13:04:50 with the chart unchanged. The new ReplicaSet has 3 ready pods that are 144 to 145 minutes old with 0 restarts, and the old ReplicaSet has 0 replicas. [W1-Q2, W1-Q3, W1-Q4, PB-Q9; kubectl and helm history in the cluster]
+4. **What the release changed.** Three commits: a4c1e9b (list handler), 7be20d4 (order detail adds `shipment_eta`) and 3f9d6a1 (structlog bump). The list handler at v2.15.0 has a loop at lines 15 to 18 that calls `repo.list_items(order.id)` per order, with `limit` capped at 50 on line 13. `list_items` runs one query per call on its own pool connection (repository.py lines 44 to 47). `list_orders_with_items`, one LEFT JOIN round trip, was used "up to v2.14.0". [W2-Q1, W2-Q2, W3-Q1, W3-Q2; git in the clone]
+5. **Old against new, per revision.**
+   - New revision (v2.15.0, 13:08 to 15:30): 72 of 72 p95 samples at 0.661 s or more, and 24 of 24 sampled traces with 9 to 52 descendant spans (p50 41).
+   - Old revision (v2.14.0, last window before replacement): 0 of 94 p95 samples above 0.200 s, and 24 of 24 traces with 2 to 4 descendants (p50 3).
+   - Earlier occurrences while only the old revision ran: none in the covered data (0 of 166 samples above 0.200 s on 2026-10-13).
+   - One trace each: the new one (e3ea7a39..., 152 ms) shows auth-api verify, `SELECT orders` and 12 serial `SELECT order_items`. The old one (65345f5f..., 109 ms) shows auth-api verify and one `SELECT orders JOIN order_items`.
+   - [W1-Q8, W1-Q10, W2-Q8, W2-Q9, W2-Q10, W2-Q11; Tempo search and trace view]
+6. **Mechanism in metrics at the same minute.** Database operations were 365.5/s at 13:06 and 4031.1/s at 13:08 (10.4 times overall). The same hours on 2026-10-13 ran at 355 to 404/s. The per-query span p95 stays at 3.9 to 4.4 ms at all 23 steps, so each call is as fast as before and there are many more of them. [W1-Q15, W1-Q16, W1-Q17; Grafana Explore prom-prod and Tempo metrics query]
+7. **Latency follows the span count.** Across the 48 sampled traces, duration is about 100.8 ms + 5.8 ms per descendant span (r = 0.979), with the same fixed part before and after. [W2-Q8, W2-Q9; local fit over the pulled results]
+8. **The database is not slow.** RDS CPU averaged 24.5% in the 37 buckets to 13:00, was 23.9% in the 13:05 bucket, and averaged 40.4% (37.1 to 44.0%) from the 13:10 bucket. Read latency was 0.59 ms before and after. Connections moved from 41.7 to 46.1. The CPU rise starts one bucket after the application-side step, so it follows the application. [W3-Q3; CloudWatch console, AWS/RDS orders-db]
+9. **Pool not exhausted.** `pending_requests` is 0 in all 166 samples; `used` goes from 14 to 19 before to 17 to 24 after. [W1-Q19; Grafana Explore prom-prod]
+10. **No other candidate change.** The order-detail change and the structlog bump sit on routes that stayed flat. No schedules, CloudTrail writes, RDS events, deploy markers or HPA were returned (those replies were `{}` or empty, which does not prove absence), and Kubernetes events had expired. [W2-Q3..Q7, W1-Q21, W1-Q1]
 
 ## Ruled out
 
 | Hypothesis | Why | Query |
 |---|---|---|
-| H3: orders-db became slower per statement (CPU, locks, I/O) | Per-statement p95 4.19 ms before and 4.04 ms after; ReadLatency 0.6 ms before and after. CPU rose only as statements per second rose x10.4, and 41% is far from saturation, so it is a consequence. Lock, queue and write-latency metrics returned no data and Performance Insights is off, so the lock arm is excluded only through the flat statement latency | W1-Q20, W1-Q21, W1-Q15, W3-Q8 |
-| H4: connection exhaustion or pool cap | `pending_requests` 0 at every point; `used` 14-24 with no plateau. The pool maximum and the DB connection limit are unknown | W1-Q17, W1-Q21, W3-Q9 |
-| from-history 2026-08-14-orders-api.md: pool exhausted with elevated `pending_requests` | `pending_requests` is 0 across the whole incident window, and only one DB-backed route moved | W1-Q17, W1-Q11..Q13 |
-| H5: pod capacity (CPU limit, throttling, HPA at max, fewer replicas) | Ready 3/3 = desired, 0 restarts, CPU level across the pods, and every other route on the same pods is unchanged. CPU limits, HPA and throttling could not be read, so the basis is the unchanged sibling routes | W1-Q2, W0-Q20, W1-Q11..Q13, W1-Q18, W3-Q10, W3-Q11 |
-| H6: traffic spike or heavy clients | Call rate 56.5 req/s before and 56.25 after, hourly volume level. No usable -7d call rate (the offset query returned the unshifted series) | W1-Q14, W1-Q19, W3-Q12 |
+| H3: orders-db itself is slow (CPU, locks, credits) | Read latency is flat at 0.59 ms and per-query span p95 stays at about 4 ms. CPU rises to a maximum of 44% only as a consequence of ten times more queries, one bucket after the application-side step. Lock waits were not measured. | W3-Q3, W1-Q17 |
+| H4: connection exhaustion at the pool cap | `pending_requests` is 0 in 166 of 166 samples. The pool maximum is unknown and the gauge is sampled every 2 minutes. | W1-Q19 |
+| from-history:2026-08-14-orders-api: a pool-size or configuration change leaves the orders-db pool exhausted | The pool shows no waiting, and the chart version is orders-api-4.2.0 in both revisions. Helm values were not read, so a pool-size change is inferred from the absence of waiting. | W1-Q19, W1-Q4 |
+| H6: traffic spike or bot | The request rate has no step at the onset (56.5 to 56.1 req/s). The -7d series was unusable, so the previous window carries the reading. | PB-Q16, W1-Q14 |
+| H7: a downstream (orders-db or auth-api) is slow or timing out | No ceiling shape, because p50 moved as much as p95. Per-query database spans are flat at 3.9 to 4.4 ms. auth-api's verify span is 3.4 ms against 3.8 ms in one trace each, and the duration fit leaves the same fixed part (about 101 ms) in both windows. auth-api has no latency series (W3-Q7 returned none). | W1-Q17, W2-Q10, W2-Q11, W3-Q7 |
+| The other two commits in v2.15.0 (#2208 order detail, #2203 structlog) as causes | Not on the failing path: the routes they touch are flat. | W1-Q5, W1-Q6, W1-Q7 |
 
 ## Open hypotheses
 
 | Hypothesis | Label | What would settle it |
 |---|---|---|
-| The downstream `GET auth-api /verify` call (seen in every fetched trace) contributed | Assumed | It took 3.4 ms in the incident trace and 3.77 ms in the baseline trace, so it looks flat. It was not on the checkpoint list and no worker tested it. A TraceQL p95 and call rate for that client span, incident against baseline, would settle it |
-| A configuration change inside the same Helm upgrade (values, not the image) added to the slowdown | Assumed | A diff of the chart values for revisions 23 and 24. It is unreadable here by design and no values repo is configured. The code change already accounts for the whole step, so this is low priority |
+| H5: the 3 replicas are CPU-bound or throttled, with no autoscaler seen | Assumed | The Deployment's CPU limit, the container throttling counters and a CPU baseline before 13:08. None is readable here: the deploy spec, HPA listing, throttling series and `kubectl top` all returned nothing (W3-Q4..Q6, W3-Q8), and the CPU series starts at 13:08 (W1-Q18). Replicas are steady at 3 ready with 0 restarts and CPU is 0.52 to 0.64 cores per pod with no ramp, which favours the code cause over a capacity cause, but that is a reading, not a query result. |
 
 ## Gaps
 
 | Gap | Impact on claims | How a human could fill it |
 |---|---|---|
-| The p95 alert is unnamed and its state history returned nothing (W0-Q13) | The recurrence class is `unclassified`. The alert's threshold and first firing time are unknown, so detection delay cannot be stated | The name of the alert rule, or an export of its state history |
-| 14-day latency pull not run (over the 12 h quantile cap, no recording rule); the volume proxy returned 5.5 h only (W1-Q19) | Whether this symptom happened before cannot be settled from metrics | A p95 recording rule for GET /orders |
-| `p90` and `p99` returned empty matrices while p50 and p95 returned data (W1-Q9, W1-Q10) | The ceiling-versus-slower-calls check rests on p50 against p95 only | Ask the metrics owner why those quantile queries return nothing |
-| The latency histogram has no `pod` or version label, traces carry no `service.version` or pod, and Kubernetes events from 13:05 have expired (W3-Q1, W3-Q6, W1-Q3) | There is no direct "new pods slow, old pods fine" split. The deploy tie rests on timing at 2-minute resolution plus the diff | Add a version or pod label to the histogram, or `service.version` to spans |
-| No IaC or chart-values repo in environment.md; Helm values are unreadable by design; chart orders-api-4.2.0 is identical in both revisions (W1-Q4) | A config-only change in the same upgrade cannot be excluded; "only the image changed" is Assumed | Add the chart or values repo to environment.md, or diff the values files at the two refs |
-| Local clone freshness unknown (no fetch allowed) (W2-Q7) | The diff is exact for the two tags. That the running image is the tag's code is Assumed | `gh` read access to confirm the tag's commit |
-| Helm prints times without a zone (W1-Q4) | The 13:04:50 deploy time is read as UTC because the ReplicaSet age (145 min before 15:30) agrees. It is not taken from the printed text | Read the ReplicaSet `creationTimestamp` |
-| RDS lock-wait, deadlock, disk-queue, write-latency and memory metrics returned no data; Performance Insights is off (W3-Q8) | H3's lock arm is excluded only through flat statement latency | Enable Performance Insights on orders-db |
-| CPU limits, HPA and throttling not readable; pod CPU has no point before 13:08 (W3-Q10, W3-Q11, W1-Q18) | H5 is ruled out by unchanged sibling routes, not by a headroom figure | Read the Deployment resources and any HPA |
-| Pool maximum and DB connection limit unknown (W1-Q17) | H4 and the history lead are ruled out on zero waiters, with no numeric headroom | Read the pool setting from the chart values at the deployed ref |
-| Loki stream `app="orders"` not tied to orders-api; Loki stats returned an empty object (W3-Q9, W0-Q24) | No log-derived claim is used as evidence; the log label stays unverified | Confirm the label, or add a pod or trace ID to the log lines |
-| Only two traces fetched by ID; the incident one has 14 descendants against a median of 41 (W3-Q6) | Full time accounting is shown for a short request; for long ones the evidence is the regression over 24 sampled durations | Open a 50-order request trace in Tempo |
-| Write-check: 3 of the 10 fixed actions returned no row (W0-Q8) | "No broad write found" holds for 7 of 10 actions only | Re-run the simulation for ec2:AuthorizeSecurityGroupIngress, iam:CreateAccessKey and cloudformation:DeleteStack |
-| Run clock unavailable (`date -u` printed nothing) | No wall-clock times for the waves and no time-to-cause in minutes | None (environment property) |
+| AWS write-check incomplete: no result row for ec2:AuthorizeSecurityGroupIngress, iam:CreateAccessKey, cloudformation:DeleteStack (W0-Q3) | The report cannot call the AWS credentials read-only. | Ask the account owner to confirm the permission set is `ReadOnlyAccess`. |
+| No alert history: alert name and system not given, no `ALERTS` series, annotations returned nothing (W0-Q8, PB-Q7) | First firing time, threshold and detection delay unknown; recurrence cannot use alarm history; the "why it became an incident" detection point is Assumed. | Give the alert name and system, or open its state history in Grafana. |
+| Recurrence not classifiable: 3 of 336 hourly points (W1-Q20); no latency recording rule and the 14-day subquery exceeds the 12 h cap | Pattern is `unclassified`. | Provide a latency recording rule or longer Prometheus retention for orders-api, or the alert history. |
+| p90 and p99 not obtained (W1-Q12, W1-Q13) | A p95/p99 ceiling cannot be read directly; the p50 move excludes it anyway. | Check the histogram buckets and query p90 and p99 in Grafana Explore. |
+| -7d request rate unusable: the offset query returned the unshifted series (W1-Q14) | The -7d volume comparison is missing; the flat previous-window rate carries H6. | Open the request-rate panel for 2026-10-13 12:30 to 15:30. |
+| Per-pod latency not pulled; no CPU baseline before 13:08; CPU limit, throttling and `top` unreadable (W1-Q18, W3-Q4, W3-Q6, W3-Q8) | H5 stays Assumed; a single-pod latency outlier is not excluded (CPU is the same across pods). | Per-pod p95 in Grafana Explore; the Deployment's CPU limit and a throttling metric. |
+| Kubernetes events expired (W1-Q1) | Rollout events (probes, scheduling) are not readable. | None needed unless the owner keeps event history. |
+| ReplicaSet creation time not available (only `AGE`, W1-Q2); Helm `UPDATED` has no zone (W1-Q4) | Rollout start is known to about 3 minutes by cross-check, not from a UTC stamp. | Read `creationTimestamp` of ReplicaSet orders-api-7c9b6d8f5d or the CD pipeline's deploy record. |
+| No IaC repo in environment.md; Helm values are not read by design | A configuration change shipped in the same rollout would not be visible. | Compare the chart's values files in git at the two releases. |
+| Schedule and platform listings returned `{}` or nothing (W2-Q3..Q7, W1-Q21) | "No schedule, CloudTrail write, RDS event or deploy marker found" has unverified coverage. | Ask the owners which schedulers and deploy-marker sources the team uses. |
+| Loki label `app="orders"` not tied to the orders-api pods (PB-Q15 has no pod label) | Log lines are a lead only; no claim rests on them. | Add a pod name or trace ID field to the log lines. |
+| Deployed commit SHAs, default branch and clone freshness not resolved (W2-Q12, PB-Q13) | Tag names v2.14.0 and v2.15.0 were used as the refs. | Resolve the tags to SHAs in the clone and read the default branch with `gh`. |
+| The HTTP histogram has no status label (W1-Q5) | No error rate; error impact is Assumed (two traces returned 200). | Add a status label, or use ingress metrics. |
+| Previous window starts at 09:30 but Prometheus has data from 10:00 | 30 minutes of baseline uncovered; the covered part is stable. | None needed. |
+| Size of the extra database work not reconciled: +3,572 operations/s at 56.1 req/s is about +64 per request, above the 51 database spans per request that the code and the traces allow (W1-Q15, PB-Q16, W2-Q8). The sampled mean (+35.8 per request) explains about 56% of the increase. | The mechanism is shown directly by spans and code; the exact size is not. | Ask the owning team what `db_client_operation_duration_seconds_count` counts and whether other routes changed. |
+| auth-api latency series missing (W3-Q7 returned no series) | auth-api is cleared by indirect evidence only (two traces and the duration fit). | Open auth-api's own latency panel or ask its owning team. |
 
 Open items need your input.
 
 ## To confirm, a human would…
 
-1. Compare the Helm values of revisions 23 and 24, or the values files at the two refs, to rule out a configuration change in the same upgrade. An identical set of values confirms that only the image changed.
-2. Replay a `GET /orders` for a customer with 50 orders against a non-production copy of v2.14.0 and of v2.15.0, with tracing on. A statement count of about 3 against about 52 would confirm the mechanism, and equal counts would refute it. This needs an active request, which this run does not make.
-3. Open a long incident trace (about 50 descendant spans) in Tempo and check that the time outside spans is about 100 ms plus roughly 2 ms per extra statement, as the 24-trace regression implies.
-4. Pull the p95 and call rate of the `GET auth-api /verify` client span for the incident and baseline windows, to close the open auth-api lead.
-5. Read the Deployment's resource limits and any HPA, and the pool's maximum size, to put numbers on the capacity and pool headroom that were excluded only indirectly.
-6. Enable or open Performance Insights for orders-db and check that waits per statement stayed flat while the load rose tenfold.
-7. Ask the alert owner for the alert's name, threshold and first firing time, to judge detection delay and whether this is a first occurrence.
+1. Date the rollout in UTC from the ReplicaSet's creation time or the CD pipeline's deploy record. A start well after 13:08 would contradict the cause; a start within a few minutes before 13:08 confirms the timing leg to the second.
+2. Compare the chart's values files at the two Helm revisions to confirm that no configuration change shipped with the code. A changed pool size or timeout would add a second candidate.
+3. In a non-production environment, send one list request for a customer with 50 orders and count the queries issued. About 51 confirms the loop; a very different count would refute the size of the mechanism. This run does not reproduce anything.
+4. Ask the orders-api owners what the database operations counter counts (statements only, or also pool checkouts and transaction statements) and whether any other route changed its query count. This reconciles the unexplained +64 per request.
+5. Open the alert's state history in Grafana to find when it first fired and its threshold, which settles the detection delay.
+6. Read the Deployment's CPU request and limit and the container throttling counters for the last three hours to close H5.
+7. Ask the auth-api owners whether their verify latency or error rate moved between 13:00 and 15:30.
+8. Ask the AWS account owner to confirm that the prod-read permission set is `ReadOnlyAccess`.
+9. If the team wants lock waits closed explicitly, read the database's lock-wait view; Performance Insights is off for this instance, so enabling it is a change for the owner.
 
 ## Follow-ups
 
-Fixes and mitigations are prose for a human. Each is a candidate to be checked with `pre-flight` before it is applied, and an infrastructure or release change goes to `iac-change-execution` in a new session with this report's path as context. This run changed nothing.
-
 | Kind | Item |
 |---|---|
-| Fix | Restore a single round trip for loading orders with their items in the list handler. The joined query the repository still contains does this, or one statement keyed on the page's order ids. The cost is a larger single result and a small change in how items are grouped. As a quicker mitigation, consider rolling back to v2.14.0, at the cost of also withdrawing the shipment ETA on order detail (7be20d4) and the structlog bump (3f9d6a1) until they are re-released. Because the pool and the database have headroom, nothing else needs to change to recover |
-| Prevention | Add a test or CI check that pins the number of database statements the list endpoint makes for a page of 50 orders. Add a staged or canary rollout with a p95 gate on `GET /orders`, at the cost of a slower rollout. Review other list endpoints for per-row queries. Consider an alert on statements per request (DB statements per second divided by requests per second), which would have fired at 13:08 with a clear cause |
-| Prevention | The orders-api latency incident of 2026-08-14 had a different cause (the connection pool). Two latency incidents in about nine weeks suggest a latency alert whose threshold and runbook are written down, because the alert is not named in the evidence available here |
-| Observability gap | Add a pod or version label to the latency histogram (at the cost of more series), or `service.version` to spans, so an old-versus-new split is possible. Fix the p90 and p99 queries or add recording rules for p50, p90, p95 and p99 so recurrence can be classified from 14 days of latency. Enable Performance Insights on orders-db. Make the Loki label tie-able to the service (a pod or trace ID in the lines, or a label named after the service). Add the chart and values repo to environment.md |
+| Fix | Remove the per-order query loop from the list view. Either load the page's items in one round trip again, joining as v2.14.0 did, or fetch the items of all orders on the page with one batched query. A batched fetch returns a larger result per request, so check it with a customer who has 50 orders. A rollback to v2.14.0 is the faster stop-gap, at the cost of delaying the shipment ETA on order detail. Check either option with `pre-flight` first. Any change goes to `iac-change-execution` or the app pipeline in a new session, with this report as context. |
+| Fix | Reconcile the operations counter with the span counts, so the next investigation can rely on per-request arithmetic. |
+| Prevention | Add a database-calls-per-request check for list endpoints to tests or to rollout analysis, since a flat per-query latency hid this change from latency-only checks. Roll out in steps with a p95 gate, because all 3 pods changed within a minute. The cost is a longer release. |
+| Prevention | Replace the cluster read grant on all resources, which includes Secrets, with the built-in view role in `orders`, and confirm the AWS role is read-only. |
+| Observability gap | No alert history or alert name, so detection delay and recurrence cannot be measured. Add a source: the state history, or an `ALERTS` series. |
+| Observability gap | The HTTP histogram has no status label and there is no service-level error rate; p90 and p99 returned nothing. |
+| Observability gap | No revision label: the traces and metrics carry no `service.version`, so old-against-new had to rely on timing and trace shape. |
+| Observability gap | No latency recording rule for a 14-day recurrence read, no throttling or CPU-limit series, no per-pod latency, no pod name on Loki lines, and no latency series for auth-api. |
 
 ## Cost
 
-35 queries · 0.05 GB of logs scanned (Loki 0.048 GB) · 7 CloudWatch metric requests · Tempo inspected about 11.4 GB in trace searches and metrics (not billed as logs) · about $0.00 in metered charges (7 GetMetricData metrics; no metered charge known for the Grafana-proxied backends)
+43 queries · 0.05 GB of logs · 3 CloudWatch metric requests · no other metered units · about $0.00 in metered charges (a fraction of a cent for the 3 metric requests). 67 calls were logged in all; 24 of them, access checks and profile-discovery lists, are not counted against the ceiling.

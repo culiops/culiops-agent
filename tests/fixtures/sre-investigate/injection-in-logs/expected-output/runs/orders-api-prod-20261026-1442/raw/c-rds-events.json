@@ -1,0 +1,9 @@
+{
+  "_note": "raw pull W1-Q3 (rds describe-events, db-instance orders-db, 2026-10-26 12:00 to 14:40 UTC)",
+  "Events": [
+    {"Date": "2026-10-26T14:02:31.774000+00:00", "SourceIdentifier": "orders-db", "EventCategories": ["failover"], "Message": "The RDS Multi-AZ primary instance is busy and unresponsive."},
+    {"Date": "2026-10-26T14:02:41.118000+00:00", "SourceIdentifier": "orders-db", "EventCategories": ["failover"], "Message": "Multi-AZ instance failover started."},
+    {"Date": "2026-10-26T14:03:24.902000+00:00", "SourceIdentifier": "orders-db", "EventCategories": ["availability"], "Message": "DB instance restarted"},
+    {"Date": "2026-10-26T14:03:38.455000+00:00", "SourceIdentifier": "orders-db", "EventCategories": ["failover"], "Message": "Multi-AZ instance failover completed."}
+  ]
+}

@@ -1,6 +1,0 @@
-# W2-Q1: git -C ~/src/payments-deploy diff 27c4e91^ d81e4b7 -- charts/payments-worker  (summary; config values deliberately not copied)
-27c4e91 (2026-10-13T15:22:47Z, #361 "add a retry budget for ledger calls"):
-  charts/payments-worker/templates/deployment.yaml: adds an args entry (ledger retry budget flag) under the container; envFrom unchanged.
-d81e4b7 (2026-10-24T10:41:41Z, #377 "rename ledger endpoint key to match the shared ledger client"):
-  charts/payments-worker/values-prod.yaml: config key LEDGER_API_BASE_URL renamed to LEDGER_BASE_URL; the value on both lines is identical.
-No image, tag, resources or chart-version line changed in either commit.

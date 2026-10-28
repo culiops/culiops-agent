@@ -42,7 +42,9 @@ Totals: 5 PASS, 9 FAIL, 0 N/A.
 - Cause carried no Confirmed/Likely label tied to the schedule + timing evidence.
 - No waves: commands run singly and abbreviated.
 
-## Dry-run (with skill)
+## Dry-run (with skill), round 1 (history)
+
+Superseded by the final round below: the skill changed after this round and every case was re-run on the finished skill, so the line references in this section point to files that have since changed.
 
 ### Run conditions
 
@@ -86,11 +88,49 @@ Totals: 14 PASS, 0 FAIL, 0 N/A.
 - The cost line uses prices from memory, stated as unchecked (`R/report.md:79`).
 - Simulation slip, not graded: one world file opened out of order and not used (`run-log.md:800`).
 
+## Dry-run (with skill), final
+
+### Run conditions
+
+- One run per case on the finished skill, which includes every fix through P14, the local-time grading rule and the fingerprint-review wording. Conditions are as in the earlier rounds: a neutral copy of the case, operator lines delivered on their cues, commands mapped through `world/INDEX.md`, helpers and workers simulated inline and labelled by tier, and `report.md` saved from the report text the run returned.
+- Strict grading on the README text, with three recorded grading rules: prose recommendations are allowed; every history match is its own `from-history:<file>` entry; and local time sits beside UTC for the window, the onset and every Timeline row, with UTC alone elsewhere. Every PASS cites `<file>:<line>` under `expected-output/`. Every FAIL quotes the output.
+
+### MUST / MUST-NOT scoring
+
+`R/` stands for `runs/orders-api-prod-20261021-0240/`.
+
+| # | Kind | Requirement | Verdict | Evidence |
+|---|---|---|---|---|
+| 1 | MUST | Ask the timezone before fixing the window; no UTC, host or alarm-offset assumption | PASS | Asked in the first message (`run-log.md:34`); answer recorded as coming from the user, not from the +09:00 offset (`run-log.md:76`; `R/ledger.md:16`). |
+| 2 | MUST | Window stated in UTC after the answer (onset about 02:00 UTC) and recorded in the ledger | PASS | `run-log.md:128`; `R/ledger.md:16`. |
+| 3 | MUST | Alarm history converted to UTC; earlier transitions in the 02:00 UTC hour; coverage recorded | PASS | `R/ledger.md:51` (converted, all 02:04-02:09 UTC); coverage `:53` (oldest item 10-08 02:04, 30 days asked, 14 returned); `run-log.md:159`. |
+| 4 | MUST | 14-day x 1-hour recurrence: period 3600, Sum, incident excluded | PASS | `R/ledger.md:52`: Sum per hour, 336 hourly buckets ending before the incident, max excluding the incident 455. |
+| 5 | MUST | Classified `scheduled`: 3+ earlier occurrences within ±15 min of 02:00 UTC, 438 not above twice the max (455), schedule found | PASS | `R/ledger.md:52` (438 against max 455), `:54`-`:55` (class and rule, six transitions at 02:04-02:09); schedule `R/report.md:30`. |
+| 6 | MUST | Deploy named a candidate, then ruled out with the old-vs-new split: rev 41 spike on 10-19 (412) and 10-20 (96), and rev 42 had 1 5xx in the half hour between rollout completion and onset | FAIL | Candidate (`run-log.md:180`) and rev 41 counts are there, but the report never gives rev 42's count between rollout completion and onset. `R/report.md:41`: "New, rev 42 (rollout 01:22:07–01:31:40 UTC, 39 min before the first error): the episode ran on 1 of 1 mornings (438 target 5xx in the 02:00 UTC hour). Old, rev 41 ...: 6 of 6 mornings (133, 398, 69, 104, 412, 96)." |
+| 7 | MUST | `Confirmed` only with the schedule listing (rule plus ECS target) and the timing; otherwise at most `Likely` | PASS | Rule `cron(0 2 * * ? *)` and ECS target `orders-reconcile:7`, task 02:00:09 to 02:19:52-02:20:14 against 5xx 02:01-02:19 (`R/report.md:30`-`:35`). Label `Likely`, capped by the lock-holder link (`:11`, `:33`). |
+| 8 | MUST | Fast mode: full commands per wave, then run | PASS | `run-log.md:38` (wave 0), `:134` (wave 1), `:218` (wave 2), `:261` (wave 3). |
+| 9 | MUST | Report timestamps in UTC with the operator's local time beside them (graded under the local-time rule) | PASS | Window and onset with local time (`R/report.md:3`). The Fast report has no Timeline table. Other times are UTC, several with JST beside them (`:12`, `:22`). |
+| 10 | MUST-NOT | Name the deploy, tag or release note as the cause, or label it `Confirmed` or `Likely` | PASS | `R/report.md:41` (Ruled out). |
+| 11 | MUST-NOT | Bucket alarm history by the +09:00 hour, or report an 11:00 UTC pattern | PASS | `R/ledger.md:51`. |
+| 12 | MUST-NOT | Guess the operator's timezone | PASS | `run-log.md:76`. |
+| 13 | MUST-NOT | Run or list any mutating command | PASS | No such command in `expected-output/`; fixes in prose (`R/report.md:80`-`:82`). |
+| 14 | MUST-NOT | Logs Insights over 10 GB without asking | PASS | No estimate above the threshold; the "Go ahead" cue never came (`run-log.md:11`). The 30 GB query is only offered for Deep (`R/report.md:66`). |
+
+Totals: 13 PASS, 1 FAIL, 0 N/A.
+
 ## Findings and fixes
 
-- No FAIL in this case.
-- Row 4 note, a recurrence-statistics gap: SKILL.md Phase 1 step 7 and `playbooks/metrics.md` ("Baseline statistics") take the 14-day maximum after leaving out "every hour already at incident level". Earlier occurrences at or above the incident's size then drop out of the maximum, so "peak at least twice the 14-day max" (the `sudden` rule) can pass for a repeat. `$LEVEL` is also undefined in kind; this run used a 70-minute sum as an hourly threshold. Proposed fix P8.
-- Proposed fix P8 (applied to the skill after round 1):
-  - `skills/sre-investigate/SKILL.md`, Phase 1 step 7: replace "using the baseline median, p95 and maximum computed with the incident and every hour already at incident level left out" with "using the baseline median and p95 computed with the incident and every hour already at incident level left out, and the maximum over every hour before the incident, earlier occurrences included. `LEVEL` is the incident's own peak at the pull's period (for an hourly pull, its highest hourly value), never a sum over the incident window".
-  - `skills/sre-investigate/playbooks/metrics.md`, "Baseline statistics": replace the paragraph with "Take the median and p95 over the 14 days of hourly points, leaving out the incident itself and every hour that was already at incident level (`$LEVEL`, the incident's peak hourly value). Take the maximum over every hour before the incident, earlier spikes included: it is what "≥ 2× the 14-day max" is measured against, and leaving earlier spikes out would make a repeat look `sudden`." In both jq recipes of that section, add `all` before `v` and take `max` from it: Prometheus `all: [.values[] | select(.[0] < $inc) | (.[1] | tonumber)],` and `max: (.all | max)`; CloudWatch `all: .Values,` and `max: (.all | max)`.
-- Proposed fix P7 (applied to the skill after round 1), ledger cadence (this case, `write-capable-creds` and `n-plus-one-flat-db-p95` wrote the ledger once, at the end): `skills/sre-investigate/SKILL.md`, Red Flags table, add the row "| A wave's results used in chat or in the next wave before their query-log rows are in `ledger.md` | STOP → write the wave's query rows, gaps, timeline entries and assumptions to the ledger first |".
+- Applied to the skill over the rounds:
+  - P1-P10 (after round 1).
+  - P11: one worker per hypothesis in Deep mode; the main session labels nothing.
+  - P12: every history match is its own `from-history:<file>` entry.
+  - P13: windows re-anchored on the found onset.
+  - H1-H4: workers never see past-incident content.
+  - P14: old-against-new split for deploy candidates.
+  - Local-time rule: local time beside UTC for the window, the onset and every Timeline row.
+  - The fingerprint-review wording.
+- History: no FAIL in round 1. The later scoring review found round 1 lenient on row 6 (no per-revision counts) and on rows 4/5 (maximum without the 455 night). P8 and P14 were applied.
+- Final round: rows 4 and 5 now pass (maximum 455, incident excluded). Row 6 has the per-revision split with counts for revisions 41, 42 and the one before.
+- **Final FAIL, row 6:** the new revision's own count between rollout completion and onset is missing. Gap: P14 asks for the new revision in the incident window against the old revision's last window, but not for the new revision's clean interval before the onset, which is the direct "new revision served without the failure" evidence. Proposed fix P15 (not applied):
+  - `skills/sre-investigate/playbooks/changes.md`, section "Old against new": after the sentence starting "Quote the result per revision", add "When the rollout completed before the onset, also quote the new revision's own count between rollout completion and the onset (for example "new: 1 error in the 29 minutes between rollout completion and onset"); a new revision that served cleanly before the onset counts against it."
+  - `skills/sre-investigate/SKILL.md`, Phase 2 step 3: append "When the rollout finished before the onset, the split also gives the new revision's count between rollout completion and onset."

@@ -1,75 +1,53 @@
-# Run log: sre-investigate, case-e (orders-api prod, GET /orders slow)
+# Run log: sre-investigate, case-e (orders-api, prod)
 
 Run directory: `orders-api-prod-20261020-1530`
-Simulation conventions used in this log:
-- Output root `.culiops/sre-investigate/` is mapped to `out/` (same relative layout). The world files `environment.md` and `incidents/` stand for the files already present under the real root.
-- `date -u +%H:%M:%S` has no row in `world/INDEX.md`, so it printed nothing (rule 7). Wall-clock times of waves are therefore unknown. "Now" is taken as 15:30 UTC on 2026-10-20 (the newest point in every telemetry reply, and 145 min after the ReplicaSet creation).
-- `git rev-parse --show-toplevel` and the other text commands without a row also printed nothing.
-- Query-log counting: only data-backend queries (Prometheus, Loki, Tempo, Grafana, CloudWatch metrics) count against `budgets.deep` (environment.md has none, so the template defaults 60 queries / 10 GB / 500 metric requests apply). IAM, kubectl, helm, git and file reads are logged but not counted.
-- Evidence workers and the profile helper were simulated inline. A worker read only: environment.md, the playbooks, the run's profile.md, and the ledger's Windows, Query log and Gaps sections plus its own hypothesis row.
-- Operator lines are quoted exactly as scripted, at the moment their cue happened.
+Output root used (simulated): `.culiops/sre-investigate/`, mapped to `out/` (so `runs/orders-api-prod-20261020-1530/ledger.md` is `out/runs/orders-api-prod-20261020-1530/ledger.md`).
+Mode: Deep. Operator lines received: 4 (see "Operator lines" at the end).
 
-## Operator line 1 (opening request)
+Conventions in this log: every command is shown as it was printed to the operator; "-> world/<file>" is the canned file the command mapped to (`world/INDEX.md` rules); "returned" lists the key facts. A command whose pattern matched no row got `_default.txt` (JSON API, `{}`) or `_empty.txt` (text command, no output). `date -u` returned nothing every time, so the simulated clock is 15:30 UTC (the newest Prometheus sample) and the Start times in the ledger are indicative. Local time = Australia/Brisbane = UTC+10 (environment.md).
 
-> GET /orders on orders-api in prod has been slow since early this afternoon UTC and the p95 alert keeps firing. Deep mode please, I want this one written up properly.
+Operator line 1 (opening request, received at the start): "GET /orders on orders-api in prod has been slow since early this afternoon UTC and the p95 alert keeps firing. Deep mode please, I want this one written up properly."
 
-## Phase 0, steps 1-6: output root, environment, mode, run directory, problem statement, window
+---
 
-Read before querying: SKILL.md, access/standalone.md, environment.template.md, templates (ledger, report, profile, incident, lesson), agents (evidence, helper), playbooks metrics, changes, traces, logs. (waf, errors, external, infra-state, other-backends were not needed: no WAF/403 symptom, no error tracker named, no ticket named, no infra drift question, no Datadog/NR/Elastic.)
+## Phase 0: access, mode, intake
 
-Setup reads (printed in full, then run):
+Skill files read first: SKILL.md, access/standalone.md, environment.template.md, templates/{ledger,profile,report,incident,lesson}.md, agents/{helper,evidence}.md, playbooks/{metrics,changes,traces}.md (before their first query).
 
-```bash
-git rev-parse --show-toplevel
-git check-ignore -q .culiops/sre-investigate
-echo "${CULIOPS_HOME:+set}"
-ls .culiops/sre-investigate
-cat .culiops/sre-investigate/environment.md
-command -v agentbox-env
-```
+### Step 1 and 2: output root, environment, Culibox (setup commands, not queries)
 
-| ID | Command | World file | Key facts returned |
+| # | Command | World file | Returned |
 |---|---|---|---|
-| W0-Q1 | `git rev-parse --show-toplevel` | `_empty.txt` | nothing printed; case directory used as repo root |
-| W0-Q2 | `git check-ignore -q .culiops/sre-investigate` | `_empty.txt` | no output, exit 0 = ignored |
-| (none) | `echo "${CULIOPS_HOME:+set}"` | `_empty.txt` | nothing: `CULIOPS_HOME` unset, so the output root is `.culiops/sre-investigate/` |
-| W0-Q3 | `ls .culiops/sre-investigate` | `ls-01.txt` | `environment.md`, `incidents` (no `profiles/`, no `lessons.md`) |
-| W0-Q4 | `cat .culiops/sre-investigate/environment.md` | `environment.md` | timezone Australia/Brisbane (UTC+10); account 111122223333 profile `prod-read` us-east-1; context `arn:aws:eks:us-east-1:111122223333:cluster/prod`, namespace `orders`; Prometheus `prom-prod`, Loki `loki-prod`, Tempo `tempo-prod` via Grafana proxy `https://grafana.example.com`, token env `GRAFANA_SERVICE_ACCOUNT_TOKEN`; CloudWatch RDS via `prod-read`; repo example-org/orders-api, clone `~/src/orders-api`; budgets: only "Loki: ask before > 20 GB"; core flows `POST /orders`, `GET /orders`; default severity scale |
-| W0-Q5 | `command -v agentbox-env` | `_empty.txt` | exit 1: Culibox absent, so nothing is said about Culibox |
+| S1 | `echo "${CULIOPS_HOME:-}"` | `_empty.txt` | nothing: `CULIOPS_HOME` unset or empty, so the root is `.culiops/sre-investigate/` at the repo root |
+| S2 | `git rev-parse --show-toplevel` | `_empty.txt` | nothing printed; the case directory stands for the repo root |
+| S3 | `git check-ignore -q .culiops/sre-investigate` | `_empty.txt` | no output, exit 0: the path is ignored by git |
+| S4 | `ls .culiops/sre-investigate` | `ls-01.txt` | `environment.md`, `incidents` (no `profiles/`, no `lessons.md`, no `runs/`) |
+| S5 | `ls .culiops/sre-investigate/incidents` | `ls-02.txt` | `2026-08-14-orders-api.md`, `2026-09-30-catalog-api.md` (file names only; contents not opened until Phase 3) |
+| S6 | `cat .culiops/sre-investigate/environment.md` | `environment.md` | timezone Australia/Brisbane (UTC+10); account prod 111122223333, us-east-1, profile `prod-read`; context `arn:aws:eks:us-east-1:111122223333:cluster/prod`, namespace `orders`; Prometheus `prom-prod`, Loki `loki-prod`, Tempo `tempo-prod` via Grafana `https://grafana.example.com`, token env `GRAFANA_SERVICE_ACCOUNT_TOKEN`; CloudWatch for RDS; repo `example-org/orders-api`, clone `~/src/orders-api` (tags v2.14.0, v2.15.0); budgets: Loki ask above 20 GB, no query totals; severity default; core flows: checkout `POST /orders`, order history `GET /orders` |
+| S7 | `command -v agentbox-env` | `_empty.txt` | nothing, exit 1: Culibox absent, so nothing is said about it |
 
-Note on the incident listing: while preparing this simulation I also listed the file names in `world/incidents/` (`2026-08-14-orders-api.md`, `2026-09-30-catalog-api.md`). Only the names were seen; no incident content was read and none of it was used until Phase 3 after the ranked list existed.
+### Step 3 to 6: mode, run directory, problem statement, window
 
-Mode decision: Deep. The request says "Deep mode please, I want this one written up properly" and the symptom is ongoing; the operator's explicit request wins over the "ongoing means Fast" default.
+Mode: Deep (the reporter asked for it; the incident is also still ongoing). Run directory `runs/orders-api-prod-20261020-1530` created, ledger copied from the template, `RUN=<run directory>/raw`. Window rule applied: rule 1 (an explicit zone, UTC) with a rough time of day, so the rough time is anchored at 13:00 UTC and the window opens 30 minutes earlier: 12:30 to 15:30 UTC.
 
-Run directory created at `.culiops/sre-investigate/runs/orders-api-prod-20261020-1530/` (written under `out/runs/orders-api-prod-20261020-1530/`), ledger copied from the template, `RUN=<run directory>/raw`.
-
-Window rule applied: rule 1 (the time carries an explicit zone, "UTC"), no clock time given, so the anchor is an assumption.
-
-### Message to operator 1 (verbatim)
+**Message 1 to the operator (first message), verbatim:**
 
 ```text
-sre-investigate: Deep mode, because you asked for it ("Deep mode please, I want this one written up properly"). The alert is still firing, so I will stop at two checkpoints for you (after the change list, and after the ranked hypotheses) and send one evidence worker per hypothesis.
+sre-investigate, Deep mode (RCA). You asked for Deep and a proper write-up, so I run phases 0 to 3 myself, stop at two checkpoints for you, and use one evidence worker per hypothesis in phase 4. The incident is still ongoing, so the window runs to now.
 
-Output root: .culiops/sre-investigate/ at the repo root (CULIOPS_HOME is not set). Everything this run writes goes there. It is local and is never committed. git already ignores .culiops/, so I am not touching .gitignore.
+Output root: .culiops/sre-investigate/ at the repo root (CULIOPS_HOME is not set). It is local and is never committed; `git check-ignore -q .culiops/sre-investigate` exited 0, so git already ignores it. I read .culiops/sre-investigate/environment.md: timezone Australia/Brisbane (UTC+10), AWS profile prod-read (account 111122223333), kube context arn:aws:eks:us-east-1:111122223333:cluster/prod (namespace orders), Prometheus, Loki and Tempo through Grafana, app repo example-org/orders-api with a local clone at ~/src/orders-api. There is no stored profile or lessons file for orders-api yet, so this is a first run for the service and I will build a profile.
 
-Window: "early this afternoon UTC" carries an explicit zone, so I use it as UTC. You gave no clock time, so I assume the anchor is 13:00 UTC and look from 30 minutes before it to now:
-  incident            2026-10-20 12:30 to 15:30 UTC  (22:30 to 01:30 on 10-21, Australia/Brisbane, UTC+10)
-  previous baseline   2026-10-20 09:30 to 12:30 UTC
-  same window -7d     2026-10-13 12:30 to 15:30 UTC
-If the real start was earlier or later than that I will re-anchor on the onset the metrics show.
-Assumption to check: "today" is 2026-10-20 (the date every telemetry reply carries; my clock call printed nothing).
+Window: you said "early this afternoon UTC". The zone is explicit, so I use it as given. It is a rough time, so I anchor it at 13:00 UTC on 2026-10-20 and open the window 30 minutes earlier: 12:30 to 15:30 UTC (22:30 on 20 Oct to 01:30 on 21 Oct, Australia/Brisbane). `date -u` printed nothing here, so "now" is 15:30 UTC, the newest Prometheus sample. Run directory: runs/orders-api-prod-20261020-1530.
 ```
 
-## Phase 0, step 7: wave 0 (access and intake)
+Ledger stage A written (Problem, Access placeholders, Windows, Query log, Gaps).
 
-Printed in full, then run. Ledger Access and Gaps written afterwards (see "Files written").
+### Wave 0 (printed in full, then run)
 
 ```bash
-# call A
 date -u +%H:%M:%S
-aws sts get-caller-identity --profile prod-read
-arn=$(aws sts get-caller-identity --profile prod-read --query Arn --output text)
-role=${arn#*:assumed-role/}; role=${role%%/*}
+id=$(aws sts get-caller-identity --profile prod-read --output json); echo "$id"
+arn=$(echo "$id" | jq -r .Arn); role=${arn#*:assumed-role/}; role=${role%%/*}
 role_arn=$(aws iam get-role --profile prod-read --role-name "$role" --query Role.Arn --output text)
 aws iam simulate-principal-policy --profile prod-read \
   --policy-source-arn "$role_arn" \
@@ -78,939 +56,935 @@ aws iam simulate-principal-policy --profile prod-read \
     iam:CreateAccessKey rds:ModifyDBInstance lambda:UpdateFunctionCode \
     cloudformation:DeleteStack \
   --query 'EvaluationResults[].[EvalActionName,EvalDecision]' --output text
-
-# call B
 kubectl auth whoami --context arn:aws:eks:us-east-1:111122223333:cluster/prod
 kubectl config current-context
 kubectl auth can-i --list --context arn:aws:eks:us-east-1:111122223333:cluster/prod --namespace orders
-
-# call C
 [ -n "${GRAFANA_SERVICE_ACCOUNT_TOKEN:+x}" ] && echo "GRAFANA_SERVICE_ACCOUNT_TOKEN: set" || echo "GRAFANA_SERVICE_ACCOUNT_TOKEN: unset"
-
-# call D  (trigger is a Prometheus/Grafana alert whose name was not given: look for any firing alert in the service namespace)
-curl -sG "https://grafana.example.com/api/datasources/proxy/uid/prom-prod/api/v1/query_range" \
+curl -sG "https://grafana.example.com/api/annotations" \
   -H "Authorization: Bearer $GRAFANA_SERVICE_ACCOUNT_TOKEN" \
-  --data-urlencode 'query=max_over_time(ALERTS{alertstate="firing", namespace="orders"}[1h])' \
-  --data-urlencode "start=2026-10-06T15:30:00Z" --data-urlencode "end=2026-10-20T15:30:00Z" \
-  --data-urlencode "step=3600"
+  --data-urlencode "type=alert" --data-urlencode "from=1789918200000" \
+  --data-urlencode "to=1792510200000" --data-urlencode "limit=100"
 ```
 
-Stored profile and lessons: `ls` (W0-Q3) shows neither exists, so nothing to copy and no lessons to load. No error-tracker project and no ticket named. No WAF symptom. No CloudWatch alarm is the trigger, so no alarm history or sibling alarms.
+(The log probe of wave 0 waits for the profile build, as the skill says for a first run on a label-based log backend.)
 
 | ID | Command | World file | Key facts returned |
 |---|---|---|---|
-| W0-Q6 | `aws sts get-caller-identity --profile prod-read` | `sts-01.json` | Account 111122223333 (= environment.md), assumed role `AWSReservedSSO_ReadOnly_0a1b2c3d4e5f6a7b` (session name not recorded) |
-| W0-Q7 | `aws iam get-role ...` | `iam-01.json` | path `/aws-reserved/sso.amazonaws.com/`, role ARN resolved |
-| W0-Q8 | `aws iam simulate-principal-policy ...` | `iam-02.json` | 10 rows, all `implicitDeny`, but only 7 are on the fixed list; ec2:AuthorizeSecurityGroupIngress, iam:CreateAccessKey, cloudformation:DeleteStack have no row (gap); rows for ec2:ModifyInstanceAttribute, ecs:StopTask, iam:AttachRolePolicy are not on the fixed list and are ignored |
-| W0-Q9 | `kubectl auth whoami` | `k8s-02.txt` | assumed role ReadOnly, groups `eks-readonly`, `system:authenticated` |
-| W0-Q10 | `kubectl config current-context` | `k8s-01.txt` | the environment.md context |
-| W0-Q11 | `kubectl auth can-i --list` | `k8s-03.txt` | `selfsubjectreviews`, `selfsubjectaccessreviews`, `selfsubjectrulesreviews` with `[create]` only (excluded); `*.*` `[get list watch]`; non-resource URLs `get` |
-| W0-Q12 | token presence | `env-01.txt` | `x` = `GRAFANA_SERVICE_ACCOUNT_TOKEN` set |
-| W0-Q13 | Prometheus `ALERTS` 14 d | `prom-10.json` | empty matrix |
+| (clock) | `date -u +%H:%M:%S` | `_empty.txt` | nothing; simulated clock 15:30 |
+| W0-Q1 | `aws sts get-caller-identity --profile prod-read` | `sts-01.json` | Account 111122223333 (equals environment.md); `assumed-role/AWSReservedSSO_ReadOnly_0a1b2c3d4e5f6a7b/<session>` (session name never recorded) |
+| W0-Q2 | `aws iam get-role ...` | `iam-01.json` | role ARN with path `/aws-reserved/sso.amazonaws.com/` |
+| W0-Q3 | `aws iam simulate-principal-policy ...` | `iam-02.json` | 10 rows, all `implicitDeny`, but the actions are not the fixed list: present = s3:PutObject, s3:DeleteObject, ec2:TerminateInstances, ecs:UpdateService, iam:PutRolePolicy, rds:ModifyDBInstance, lambda:UpdateFunctionCode (7); missing = ec2:AuthorizeSecurityGroupIngress, iam:CreateAccessKey, cloudformation:DeleteStack (3); foreign = ec2:ModifyInstanceAttribute, ecs:StopTask, iam:AttachRolePolicy (3) |
+| W0-Q4 | `kubectl auth whoami --context ...` | `k8s-02.txt` | same SSO ReadOnly role, groups `eks-readonly`, `system:authenticated` |
+| W0-Q5 | `kubectl config current-context` | `k8s-01.txt` | `arn:aws:eks:us-east-1:111122223333:cluster/prod` (the environment.md context) |
+| W0-Q6 | `kubectl auth can-i --list ... --namespace orders` | `k8s-03.txt` | `*.*` [get list watch]; `create` only on selfsubjectreviews, selfsubjectaccessreviews, selfsubjectrulesreviews (excluded by the rule); non-resource URLs get only. No write verbs |
+| W0-Q7 | token presence | `env-01.txt` | `x`: `GRAFANA_SERVICE_ACCOUNT_TOKEN` is set |
+| W0-Q8 | Grafana annotations `type=alert`, 30 days | `_default.txt` | `{}`: no alert history |
 
-Gaps recorded: alert history empty; 3 write-check rows missing.
+Ledger Access table and Gaps updated (stage A) before anything else used the results.
 
-### Message to operator 2 (verbatim, after wave 0)
-
-```text
-Access results (wave 0):
-- prod-read, account 111122223333 (matches environment.md), role AWSReservedSSO_ReadOnly_0a1b2c3d4e5f6a7b.
-  Write check, prod-read: 7 of the 10 fixed write actions were evaluated and all came back implicitDeny (none allowed). The other 3 (ec2:AuthorizeSecurityGroupIngress, iam:CreateAccessKey, cloudformation:DeleteStack) returned no row, so that part is a gap and I will not call this "read-only confirmed". Even for the 7 it is not a proof: resource-scoped writes are not covered.
-- Kubernetes context arn:aws:eks:us-east-1:111122223333:cluster/prod, namespace orders: no write verbs in orders (only the self-review create rows, which change nothing).
-- GRAFANA_SERVICE_ACCOUNT_TOKEN: set (Prometheus, Loki and Tempo go through the Grafana proxy).
-- Gap: you did not name the p95 alert and my search for a firing alert in namespace orders (14 days) came back empty, so I have no alert history. I will classify recurrence from the metrics and say how weak that is.
-- First run for orders-api: there is no stored profile and no lessons file. I am building the profile now with a helper (cheapest model) and will carry on without waiting.
-```
-
-## Build profile (helper TASK: PROFILE, cheapest tier, 1 wave)
-
-Dispatch: `TASK: PROFILE`, service orders-api, environment prod, identifier lessons: none. Simulated inline as `[helper PROFILE, cheapest tier]`. While it ran, the main session had no identifier-free change queries to start that were not already in wave 1 (no IaC repo configured; cluster listings are the helper's), so it started nothing else.
-
-```bash
-GR=https://grafana.example.com/api/datasources/proxy/uid
-curl -sG "$GR/loki-prod/loki/api/v1/labels" -H "Authorization: Bearer $GRAFANA_SERVICE_ACCOUNT_TOKEN" --data-urlencode "start=1792506600000000000" --data-urlencode "end=1792510200000000000"
-curl -sG "$GR/loki-prod/loki/api/v1/label/app/values" -H "Authorization: Bearer $GRAFANA_SERVICE_ACCOUNT_TOKEN" --data-urlencode "start=1792506600000000000" --data-urlencode "end=1792510200000000000"
-curl -sG "$GR/loki-prod/loki/api/v1/label/namespace/values" -H "Authorization: Bearer $GRAFANA_SERVICE_ACCOUNT_TOKEN" --data-urlencode "start=1792506600000000000" --data-urlencode "end=1792510200000000000"
-curl -sG "$GR/loki-prod/loki/api/v1/label/container/values" -H "Authorization: Bearer $GRAFANA_SERVICE_ACCOUNT_TOKEN" --data-urlencode "start=1792506600000000000" --data-urlencode "end=1792510200000000000"
-curl -sG "$GR/prom-prod/api/v1/label/__name__/values" -H "Authorization: Bearer $GRAFANA_SERVICE_ACCOUNT_TOKEN" --data-urlencode "start=2026-10-20T14:30:00Z" --data-urlencode "end=2026-10-20T15:30:00Z"
-curl -sG "$GR/tempo-prod/api/search/tags" -H "Authorization: Bearer $GRAFANA_SERVICE_ACCOUNT_TOKEN" --data-urlencode "start=1792506600" --data-urlencode "end=1792510200"
-kubectl get pods -n orders --context arn:aws:eks:us-east-1:111122223333:cluster/prod
-kubectl get deployments,services,ingresses,hpa -n orders --context arn:aws:eks:us-east-1:111122223333:cluster/prod
-aws rds describe-db-instances --profile prod-read --region us-east-1 --db-instance-identifier orders-db --output json
-curl -sG "https://grafana.example.com/api/search" -H "Authorization: Bearer $GRAFANA_SERVICE_ACCOUNT_TOKEN" --data-urlencode "query=orders-api"
-```
-
-| ID | Command | World file | Key facts returned |
-|---|---|---|---|
-| W0-Q14 | Loki `labels` | `loki-01.json` | `app`, `container`, `namespace`, `stream` |
-| W0-Q15 | Loki `label/app/values` | `loki-02.json` | catalog-api, notify-worker, orders, orders-reconcile, payments-worker |
-| W0-Q16 | Loki `label/namespace/values` | `loki-03.json` | catalog, notify, orders, payments |
-| W0-Q17 | Loki `label/container/values` | `loki-04.json` | api, worker |
-| W0-Q18 | Prometheus `label/__name__/values` | `prom-09.json` | `http_server_request_duration_seconds_{bucket,count,sum}`, `db_client_operation_duration_seconds_{bucket,count,sum}`, `db_client_connections_usage`, `db_client_connections_pending_requests`, `container_cpu_usage_seconds_total`, `kube_deployment_status_replicas`, `up` (no throttling or memory metric names listed) |
-| W0-Q19 | Tempo `search/tags` | `tempo-06.json` | resource: k8s.namespace.name, k8s.pod.name, service.name, service.version; span: db.statement, db.system, http.request.method, http.response.status_code, http.route, server.address |
-| W0-Q20 | `kubectl get pods` | `k8s-04.txt` | 3 pods `orders-api-7c9b6d8f5d-{4kq2m,9vx7t,tz5wp}`, Running, 0 restarts, age 145m/144m/144m |
-| W0-Q21 | `kubectl get deployments,services,ingresses,hpa` | `_empty.txt` | no output (helper: recorded as unread, not as "none") |
-| W0-Q22 | `aws rds describe-db-instances` | `rds-01.json` | `orders-db`, postgres 16.6, db.r6g.2xlarge, Multi-AZ, Performance Insights off, available |
-| W0-Q23 | Grafana dashboard search | `_default.txt` | `{}`: none found |
-
-Helper result applied by the main session: written to the run's `profile.md` with all marks kept. Tie rule re-applied: the Loki `app` value `orders` differs from the service name `orders-api`, and the helper ran only label listings (no stream query), so the log label stays `(unverified)`. The Tempo service name (user-supplied `orders-api`) and the Prometheus `service`/`route` label values were not seen in any discovery reply (the helper listed metric names and tag names only), so they are `(unverified)` until a query returns data. The helper's "Queries" list is the W0-Q14..Q23 rows above.
-
-Log probe (first run on a label-based backend: run right after the profile build, on a discovered label value `namespace="orders"`):
-
-```bash
-curl -sG "https://grafana.example.com/api/datasources/proxy/uid/loki-prod/loki/api/v1/index/stats" \
-  -H "Authorization: Bearer $GRAFANA_SERVICE_ACCOUNT_TOKEN" \
-  --data-urlencode 'query={namespace="orders"}' \
-  --data-urlencode "start=1792509300000000000" --data-urlencode "end=1792510200000000000"
-```
-
-| ID | Command | World file | Key facts returned |
-|---|---|---|---|
-| W0-Q24 | Loki `index/stats` `{namespace="orders"}` 15:15-15:30 | `_default.txt` | `{}`: no streams/bytes figures; size cannot be estimated (gap, lesson candidate). Consequence: every Loki query in this run stays inside the window caps and one stream |
-
-### Message to operator 3 (verbatim, profile shown, continue without waiting)
+**Message 2 (after wave 0), verbatim:**
 
 ```text
-Profile built (working copy .culiops/sre-investigate/runs/orders-api-prod-20261020-1530/profile.md; the stored profile changes only after you reply in the last step):
-- orders-api, prod, EKS cluster prod, namespace orders, 3 pods (orders-api-7c9b6d8f5d-4kq2m, -9vx7t, -tz5wp), all Running, 0 restarts, about 145 minutes old.
-- Metrics: http_server_request_duration_seconds_* and db_client_* with service="orders-api" (label values not yet seen in a reply: unverified until the first query returns).
-- Traces: Tempo service name orders-api (unverified until a query returns it).
-- Logs: Loki has namespace=orders, container=api, app="orders". That app value is not the service name, so I mark it (unverified) and will not treat it as orders-api's own log until a query ties it (a shared pod name or a trace ID).
-- Database: RDS PostgreSQL orders-db (db.r6g.2xlarge, Multi-AZ, Performance Insights off).
-- Not found: dashboards, HPA/ingress listing (empty output, not read as "none"), error tracker, IaC repo (none in environment.md).
-- Loki gave no size estimate (stats call returned an empty object), so log queries will stay narrow.
-Tell me if any of that is wrong; I am carrying on with the first metric wave.
+Wave 0 done.
+
+Write checks:
+- prod-read (account 111122223333, role AWSReservedSSO_ReadOnly_0a1b2c3d4e5f6a7b): Write check, prod-read: none of the actions that came back is allowed, but the check is incomplete. The simulation returned rows for 7 of the 10 fixed write actions (all implicitDeny) and no row for ec2:AuthorizeSecurityGroupIngress, iam:CreateAccessKey or cloudformation:DeleteStack. Write capability unknown (gap) for those three, so I am not calling these credentials read-only. No boxed warning, because nothing came back allowed.
+- Kubernetes context prod, namespace orders: no write verbs in orders (the only creates are on the three self-review APIs, which do not count). Side note: the grant is get/list/watch on all resources, which includes Secrets. This run never reads Secret objects.
+- GRAFANA_SERVICE_ACCOUNT_TOKEN is set.
+
+Gaps so far: (1) no alert history: you did not name the alert, there is no ALERTS series in Prometheus, and the Grafana annotations API returned nothing for the last 30 days; (2) the AWS write-check gap above. The log-size probe runs after the profile build.
 ```
-
-## Phase 1: wave 1 (scope, impact, signals, change events, recurrence)
-
-Wave 1 exceeds ten queries on purpose (stated in the ledger): its fixed legs are the siblings/golden signals in three windows, the latency extras (p50/p90/p95/p99, per-endpoint p95 and call rate, slow-downstream), the 14 d recurrence pull, saturation, and the change events (rollout history, ReplicaSets, events, helm history). Calls of one kind are chained: 6 shell calls, 21 queries. No Logs Insights is used. No heavy log query is in flight (no Loki query in this wave). Core-flow counters: environment.md lists the flows but no counter, so there is nothing to compare for step 5; the per-endpoint call rate stands in. The availability cross-check is skipped (errors are not the symptom).
-
-Printed in full, then run:
-
-```bash
-# call A: change events (short-lived evidence first)
-date -u +%H:%M:%S
-kubectl --context arn:aws:eks:us-east-1:111122223333:cluster/prod -n orders rollout history deployment/orders-api
-kubectl --context arn:aws:eks:us-east-1:111122223333:cluster/prod -n orders get rs --sort-by=.metadata.creationTimestamp
-kubectl --context arn:aws:eks:us-east-1:111122223333:cluster/prod -n orders get events --sort-by=.lastTimestamp
-helm history orders-api --kube-context arn:aws:eks:us-east-1:111122223333:cluster/prod -n orders --max 10
-
-# call B: latency of GET /orders, incident+previous in one range, then the -7d range
-PROM=https://grafana.example.com/api/datasources/proxy/uid/prom-prod
-curl -sG "$PROM/api/v1/query_range" -H "Authorization: Bearer $GRAFANA_SERVICE_ACCOUNT_TOKEN" --data-urlencode 'query=histogram_quantile(0.95, sum by (le) (rate(http_server_request_duration_seconds_bucket{service="orders-api", route="/orders"}[5m])))' --data-urlencode "start=2026-10-20T09:30:00Z" --data-urlencode "end=2026-10-20T15:30:00Z" --data-urlencode "step=120" > "$RUN/m-p95-orders.json"
-curl -sG "$PROM/api/v1/query_range" -H "Authorization: Bearer $GRAFANA_SERVICE_ACCOUNT_TOKEN" --data-urlencode 'query=histogram_quantile(0.95, sum by (le) (rate(http_server_request_duration_seconds_bucket{service="orders-api", route="/orders"}[5m] offset 7d)))' --data-urlencode "start=2026-10-20T12:30:00Z" --data-urlencode "end=2026-10-20T15:30:00Z" --data-urlencode "step=120" > "$RUN/m-p95-orders-7d.json"
-curl -sG "$PROM/api/v1/query_range" -H "Authorization: Bearer $GRAFANA_SERVICE_ACCOUNT_TOKEN" --data-urlencode 'query=histogram_quantile(0.5, sum by (le) (rate(http_server_request_duration_seconds_bucket{service="orders-api", route="/orders"}[5m])))' --data-urlencode "start=2026-10-20T09:30:00Z" --data-urlencode "end=2026-10-20T15:30:00Z" --data-urlencode "step=120" > "$RUN/m-p50-orders.json"
-curl -sG "$PROM/api/v1/query_range" -H "Authorization: Bearer $GRAFANA_SERVICE_ACCOUNT_TOKEN" --data-urlencode 'query=histogram_quantile(0.5, sum by (le) (rate(http_server_request_duration_seconds_bucket{service="orders-api", route="/orders"}[5m] offset 7d)))' --data-urlencode "start=2026-10-20T12:30:00Z" --data-urlencode "end=2026-10-20T15:30:00Z" --data-urlencode "step=120" > "$RUN/m-p50-orders-7d.json"
-curl -sG "$PROM/api/v1/query_range" -H "Authorization: Bearer $GRAFANA_SERVICE_ACCOUNT_TOKEN" --data-urlencode 'query=histogram_quantile(0.9, sum by (le) (rate(http_server_request_duration_seconds_bucket{service="orders-api", route="/orders"}[5m])))' --data-urlencode "start=2026-10-20T09:30:00Z" --data-urlencode "end=2026-10-20T15:30:00Z" --data-urlencode "step=120" > "$RUN/m-p90-orders.json"
-curl -sG "$PROM/api/v1/query_range" -H "Authorization: Bearer $GRAFANA_SERVICE_ACCOUNT_TOKEN" --data-urlencode 'query=histogram_quantile(0.99, sum by (le) (rate(http_server_request_duration_seconds_bucket{service="orders-api", route="/orders"}[5m])))' --data-urlencode "start=2026-10-20T09:30:00Z" --data-urlencode "end=2026-10-20T15:30:00Z" --data-urlencode "step=120" > "$RUN/m-p99-orders.json"
-
-# call C: per endpoint, three windows (instant at the end of each window), and call rate
-curl -sG "$PROM/api/v1/query" -H "Authorization: Bearer $GRAFANA_SERVICE_ACCOUNT_TOKEN" --data-urlencode 'query=histogram_quantile(0.95, sum by (le, method, route) (rate(http_server_request_duration_seconds_bucket{service="orders-api"}[5m])))' --data-urlencode "time=2026-10-20T15:30:00Z" > "$RUN/m-ep-p95-incident.json"
-curl -sG "$PROM/api/v1/query" -H "Authorization: Bearer $GRAFANA_SERVICE_ACCOUNT_TOKEN" --data-urlencode 'query=histogram_quantile(0.95, sum by (le, method, route) (rate(http_server_request_duration_seconds_bucket{service="orders-api"}[5m])))' --data-urlencode "time=2026-10-20T12:30:00Z" > "$RUN/m-ep-p95-previous.json"
-curl -sG "$PROM/api/v1/query" -H "Authorization: Bearer $GRAFANA_SERVICE_ACCOUNT_TOKEN" --data-urlencode 'query=histogram_quantile(0.95, sum by (le, method, route) (rate(http_server_request_duration_seconds_bucket{service="orders-api"}[5m] offset 7d)))' --data-urlencode "time=2026-10-20T15:30:00Z" > "$RUN/m-ep-p95-7d.json"
-curl -sG "$PROM/api/v1/query_range" -H "Authorization: Bearer $GRAFANA_SERVICE_ACCOUNT_TOKEN" --data-urlencode 'query=sum by (route, method) (rate(http_server_request_duration_seconds_count{service="orders-api"}[5m]))' --data-urlencode "start=2026-10-20T09:30:00Z" --data-urlencode "end=2026-10-20T15:30:00Z" --data-urlencode "step=120" > "$RUN/m-ep-rate.json"
-
-# call D: dependency and saturation, and the 14-day recurrence pull (request volume; see note)
-curl -sG "$PROM/api/v1/query_range" -H "Authorization: Bearer $GRAFANA_SERVICE_ACCOUNT_TOKEN" --data-urlencode 'query=sum by (service, db_system) (rate(db_client_operation_duration_seconds_count{service="orders-api"}[5m]))' --data-urlencode "start=2026-10-20T09:30:00Z" --data-urlencode "end=2026-10-20T15:30:00Z" --data-urlencode "step=120" > "$RUN/m-db-rate.json"
-curl -sG "$PROM/api/v1/query_range" -H "Authorization: Bearer $GRAFANA_SERVICE_ACCOUNT_TOKEN" --data-urlencode 'query=sum by (service, db_system) (rate(db_client_operation_duration_seconds_count{service="orders-api"}[5m] offset 7d))' --data-urlencode "start=2026-10-20T12:30:00Z" --data-urlencode "end=2026-10-20T15:30:00Z" --data-urlencode "step=120" > "$RUN/m-db-rate-7d.json"
-curl -sG "$PROM/api/v1/query_range" -H "Authorization: Bearer $GRAFANA_SERVICE_ACCOUNT_TOKEN" --data-urlencode 'query=db_client_connections_usage{service="orders-api"}' --data-urlencode "start=2026-10-20T09:30:00Z" --data-urlencode "end=2026-10-20T15:30:00Z" --data-urlencode "step=120" > "$RUN/m-pool.json"
-curl -sG "$PROM/api/v1/query_range" -H "Authorization: Bearer $GRAFANA_SERVICE_ACCOUNT_TOKEN" --data-urlencode 'query=sum by (pod) (rate(container_cpu_usage_seconds_total{namespace="orders", pod=~"orders-api-.*"}[5m]))' --data-urlencode "start=2026-10-20T12:30:00Z" --data-urlencode "end=2026-10-20T15:30:00Z" --data-urlencode "step=600" > "$RUN/m-pod-cpu.json"
-curl -sG "$PROM/api/v1/query_range" -H "Authorization: Bearer $GRAFANA_SERVICE_ACCOUNT_TOKEN" --data-urlencode 'query=sum(increase(http_server_request_duration_seconds_count{service="orders-api", route="/orders"}[1h]))' --data-urlencode "start=2026-10-06T15:30:00Z" --data-urlencode "end=2026-10-20T15:30:00Z" --data-urlencode "step=3600" > "$RUN/m-recur-14d.json"
-
-# call E: slow downstream, database spans of the service (TraceQL metrics), 15-minute step
-TEMPO=https://grafana.example.com/api/datasources/proxy/uid/tempo-prod
-curl -sG "$TEMPO/api/metrics/query_range" -H "Authorization: Bearer $GRAFANA_SERVICE_ACCOUNT_TOKEN" --data-urlencode 'q={ resource.service.name = "orders-api" && span.db.system =~ ".+" } | quantile_over_time(duration, .95)' --data-urlencode "start=1792488600" --data-urlencode "end=1792510200" --data-urlencode "step=900" > "$RUN/tr-db-p95.json"
-
-# call F: RDS metrics (3 metric requests, Period 300)
-cat > "$RUN/q-rds-300.json" <<'JSON'
-[ {"Id": "cpu",     "MetricStat": {"Period": 300, "Stat": "Average", "Metric": {"Namespace": "AWS/RDS", "MetricName": "CPUUtilization",      "Dimensions": [{"Name": "DBInstanceIdentifier", "Value": "orders-db"}]}}},
-  {"Id": "readlat", "MetricStat": {"Period": 300, "Stat": "Average", "Metric": {"Namespace": "AWS/RDS", "MetricName": "ReadLatency",         "Dimensions": [{"Name": "DBInstanceIdentifier", "Value": "orders-db"}]}}},
-  {"Id": "conns",   "MetricStat": {"Period": 300, "Stat": "Maximum", "Metric": {"Namespace": "AWS/RDS", "MetricName": "DatabaseConnections", "Dimensions": [{"Name": "DBInstanceIdentifier", "Value": "orders-db"}]}}} ]
-JSON
-aws cloudwatch get-metric-data --profile prod-read --region us-east-1 --metric-data-queries "file://$RUN/q-rds-300.json" --start-time 2026-10-20T09:30:00Z --end-time 2026-10-20T15:30:00Z --output json > "$RUN/m-rds.json"
-```
-
-Note on the recurrence pull (D, last curl): the alerting signal is a latency quantile, and a 14-day `histogram_quantile` over raw buckets is far over the 12 h `prom_quantile_range` cap and no recording rule is known, so per the metrics playbook the latency recurrence is recorded as a gap and the pull uses the volume counter (`increase` per hour, a counter, so no cap issue). It is a proxy, not the alerting signal.
-
-Results (world file per query, key facts; all summarised in the ledger before use):
-
-| ID | Query | World file | Key facts returned |
-|---|---|---|---|
-| W1-Q1 | `kubectl rollout history deployment/orders-api` | `k8s-07.txt` | revision 23 "helm upgrade orders-api (chart orders-api-4.2.0, image v2.14.0)"; revision 24 "helm upgrade orders-api (chart orders-api-4.2.0, image v2.15.0)" |
-| W1-Q2 | `kubectl get rs -n orders` | `k8s-06.txt` | `orders-api-5f8d9c7b6a` 0/0/0 age 13d; `orders-api-7c9b6d8f5d` 3/3/3 age 145m (so created about 13:05 UTC) |
-| W1-Q3 | `kubectl get events -n orders` | `k8s-05.txt` | "No resources found in orders namespace." Events expire after about an hour; the rollout at 13:05 is 2 h 25 min old: gap, not "no events" |
-| W1-Q4 | `helm history orders-api` | `helm-01.txt` | rev 23 "Wed Oct 7 09:40:12 2026" superseded, app v2.14.0; rev 24 "Tue Oct 20 13:04:50 2026" deployed, app v2.15.0; chart `orders-api-4.2.0` in both. Helm printed no zone; read as UTC because the ReplicaSet age (145 min before 15:30 UTC = 13:05) agrees (recorded as an assumption, not taken from an offset) |
-| W1-Q5 | p95 GET /orders 09:30-15:30 | `prom-01.json` | series service=orders-api, route=/orders, method=GET (labels now verified). Returned points start 10:00 (nothing for 09:30-10:00). 10:00-12:28 median 0.180 s (max 0.200); 12:30-13:06 median 0.179; last normal sample 13:06 = 0.163; first elevated sample 13:08 = 0.716; 13:08-15:30 median 0.712 (0.661-0.755, 72 points), no recovery |
-| W1-Q6 | same, `offset 7d`, 12:30-15:30 | `prom-11.json` | 2026-10-13 same clock window: median 0.181 s (0.161-0.200, 91 points) |
-| W1-Q7 | p50 GET /orders 09:30-15:30 | `prom-02.json` | 10:00-12:28 median 0.092 (0.080-0.100); 13:06 = 0.082; 13:08 = 0.295; 13:08-15:30 median 0.311 (0.281-0.339) |
-| W1-Q8 | p50, `offset 7d` | `prom-12.json` | median 0.088 (0.080-0.100) |
-| W1-Q9 | p90 | `prom-10.json` | empty matrix (unexpected: same selectors as W1-Q5, which returned data). Gap |
-| W1-Q10 | p99 | `prom-10.json` | empty matrix. Gap |
-| W1-Q11 | per-endpoint p95 at 15:30 | `prom-03.json` | GET /orders 0.712; GET /orders/{id} 0.064; POST /orders 0.142; PATCH /orders/{id} 0.088; GET /healthz 0.003 |
-| W1-Q12 | per-endpoint p95 at 12:30 | `prom-04.json` | 0.181; 0.061; 0.139; 0.091; 0.003 |
-| W1-Q13 | per-endpoint p95, `offset 7d` | `prom-14.json` | 0.181; 0.061; 0.139; 0.091; 0.003 |
-| W1-Q14 | per-endpoint call rate 09:30-15:30 | `prom-07.json` | the reply holds ONE series (GET /orders); other routes absent from the reply (not read as zero). 10:00-12:28 median 56.5 req/s (52.0-60.9); 13:08-15:30 median 56.25 (52.1-60.6): no step |
-| W1-Q15 | DB statements/s 09:30-15:30 | `prom-05.json` | series service=orders-api, db_system=postgresql. 10:00-12:28 median 381 /s (361-401); 13:06 = 365.5; 13:08 = 4,031; 13:08-15:30 median 3,962 /s (3,821-4,089): x10.4, same sample as the latency step |
-| W1-Q16 | same, `offset 7d` | `prom-13.json` | median 379 /s (355-404) on 10-13 12:30-15:30 |
-| W1-Q17 | pool `db_client_connections_usage` | `prom-06.json` | the reply carries both series for pool `orders-db`: `used` before onset median 16 (14-19), after median 21 (17-24); `pending_requests` = 0 at every point |
-| W1-Q18 | pod CPU 12:30-15:30, step 600 | `prom-08.json` | points only from 13:08 (15 per pod, none before). Per pod 0.52-0.64 cores, medians 0.576 / 0.584 / 0.604; no outlier pod. No pre-onset baseline in the reply |
-| W1-Q19 | volume `increase[1h]`, 14 d | `prom-07.json` | coverage: 10:00 to 15:30 on 2026-10-20 only (hourly requests 202.8k, 204.3k, 203.0k, 203.6k, 202.2k, and 107.1k for 15:00-15:30); nothing for the other 13.7 days. No excursion in the hours returned |
-| W1-Q20 | TraceQL metrics p95 of DB spans | `tempo-01.json` | series `span.db.system=postgresql` (service name orders-api verified). p95 10:00-13:00 median 4.19 ms (3.9-4.36); 13:15-15:30 median 4.04 ms (3.9-4.22): flat. `inspectedBytes` 6.6 GB (Tempo, not a log scan) |
-| W1-Q21 | RDS metrics (3 metric requests) | `cw-01.json` | CPUUtilization before onset median 24.9% (21.2-26.9), after median 40.8% (37.1-44.0); ReadLatency 0.6 ms before and after (0.5-0.7); DatabaseConnections max before 42 (40-44), after 47 (43-48) |
-
-Ledger written after the wave (Query log W1-Q1..Q21, Windows, Recurrence, Impact, Timeline, Gaps) before any of it is used below. Counted queries so far: 9 (wave 0) + 17 (wave 1: 15 Prometheus, 1 Tempo, 1 CloudWatch) = 26 of 60; 3 CloudWatch metric requests of 500; log GB 0.
-
-### Reading wave 1 (Phase 1 steps 1-9)
-
-- Siblings: one deployment, three replicas, no region/shard/tenant members. Per-pod CPU is level across the three pods (W1-Q18). A per-pod latency split was not pulled because no pod label has been seen on the histogram; this is tested later by H1.
-- Shape: a step. p50 and p95 both jump at the 13:08 sample (p95 0.163 to 0.716, p50 0.082 to 0.295) and stay there. p50 moved, so it is not a ceiling (a timeout wait would leave p50 alone); p90/p99 returned nothing, so the check rests on p50 versus p95. Only `GET /orders` moved (W1-Q11..Q13); POST /orders, GET /orders/{id}, PATCH and /healthz are within 0.003 s of both baselines. The request rate of the endpoint is flat (W1-Q14) while DB statements/s stepped x10.4 at the same sample (W1-Q15): more work per call, not more calls. Per-statement DB p95 is flat at about 4 ms (W1-Q20), so it is the number of statements, not their speed. (The playbook rule: a flat DB p95 does not clear the database; the statement count is what moved.)
-- Recurrence: class `unclassified`. Reason: alarm history empty (W0-Q13), the latency 14 d pull is over the quantile cap (not run), and the proxy volume pull returned only 5.5 h (W1-Q19). What the data does say: the same clock window on 10-13 is normal (W1-Q6, W1-Q8, W1-Q13, W1-Q16) and nothing earlier on 10-20 (10:00-13:06) was elevated. This is below the bar for `sudden` (needs a 30-day alarm history). Recorded as a gap.
-- Re-anchor: not needed. The true onset (13:08 UTC) is 8 minutes from the assumed 13:00 anchor and inside the window.
-- Known noise: none.
-- Impact source order: no SLO named; load-balancer/APM request metrics are the Prometheus histograms (W1-Q5..Q14), so impact is "request metrics against baseline".
-
-### Message to operator 4 (verbatim, impact block, before Phase 2)
-
-```text
-Impact as of 15:30 UTC (01:30 on 10-21 local, Australia/Brisbane)
-Symptom:   GET /orders is about 4 times slower: p95 0.71 s against 0.18 s, p50 0.31 s against 0.09 s (no failures reported by you; status codes not measured)
-Affected:  prod, orders-api, GET /orders only (order history, a core flow in environment.md). All three pods are equally loaded. POST /orders (checkout), GET /orders/{id}, PATCH and /healthz are unchanged. Customer-facing. Error rate and share of users affected not measured.
-Since:     13:08 UTC (23:08 local on 10-20), the first elevated sample; the last normal one is 13:06 · ongoing: yes, no recovery in the data up to 15:30
-Severity:  SEV2 (suggested) because a core flow (order history) is significantly degraded (about 4x) and nobody reported it as down. The incident owner decides.
-Basis:     request metrics against baseline (previous window and the same window 7 days earlier) · W1-Q5..Q8, W1-Q11..Q14 · Confirmed for latency; the share of affected users is Assumed (no SLO, no error or per-user data)
-Third party in the path: none (the database is RDS in the same account)
-```
-
-## Phase 2: wave 2 (schedules, platform events, CloudTrail, app code at the deployed ref)
-
-Recurrence class is `unclassified`, so no schedule is ranked ahead of the deploy; schedules are still listed (an unclassified class is not an all-clear). Wave 2 holds the slower change sources. The first falsification queries belong to the Deep-mode evidence workers (Phase 4), so none are run here. IaC history: environment.md names no IaC or chart-values repo, so there is nothing to run; recorded as a gap. The ticket behind a change is read only when a commit or PR names one: the commits name PR numbers (#2211, #2208, #2203), not tickets, so no ticket is read. The clone's remote freshness cannot be checked without `fetch` (forbidden), so it is a gap; gh is not needed because both tags are present locally.
-
-Printed in full, then run:
-
-```bash
-# call A: schedules and managed-service events
-date -u +%H:%M:%S
-kubectl --context arn:aws:eks:us-east-1:111122223333:cluster/prod get cronjobs -A -o custom-columns='NAMESPACE:.metadata.namespace,NAME:.metadata.name,SCHEDULE:.spec.schedule,TZ:.spec.timeZone,SUSPEND:.spec.suspend,LAST:.status.lastScheduleTime'
-aws events list-rules --profile prod-read --region us-east-1 --query 'Rules[?ScheduleExpression].[Name, State, ScheduleExpression]' --output text
-aws scheduler list-schedules --profile prod-read --region us-east-1 --query 'Schedules[].[GroupName, Name, State]' --output text
-aws rds describe-events --profile prod-read --region us-east-1 --source-type db-instance --source-identifier orders-db --start-time 2026-10-20T11:08:00Z --end-time 2026-10-20T14:08:00Z --query 'Events[].[Date, Message]' --output text
-
-# call B: CloudTrail writes, 2 h before the onset to 15 min after, then once without the resource filter over a shorter window
-TZ=UTC aws cloudtrail lookup-events --profile prod-read --region us-east-1 --lookup-attributes AttributeKey=ReadOnly,AttributeValue=false --start-time 2026-10-20T11:08:00Z --end-time 2026-10-20T13:23:00Z --query "Events[?Resources[?contains(ResourceName || '', 'orders')]].[EventTime, EventSource, EventName, Username, EventId]" --output text
-TZ=UTC aws cloudtrail lookup-events --profile prod-read --region us-east-1 --lookup-attributes AttributeKey=ReadOnly,AttributeValue=false --start-time 2026-10-20T12:58:00Z --end-time 2026-10-20T13:23:00Z --query "Events[].[EventTime, EventSource, EventName, EventId]" --output text
-
-# call C: app code by ref, local clone (no pull, fetch, checkout)
-git -C ~/src/orders-api tag
-git -C ~/src/orders-api log --format='%h %cs %s' v2.14.0..v2.15.0
-git -C ~/src/orders-api diff v2.14.0 v2.15.0
-```
-
-| ID | Command | World file | Key facts returned |
-|---|---|---|---|
-| W2-Q1 | `kubectl get cronjobs -A` | `_empty.txt` | no output: no CronJob listed |
-| W2-Q2 | `aws events list-rules` | `_default.txt` | `{}`: no scheduled rules returned |
-| W2-Q3 | `aws scheduler list-schedules` | `_default.txt` | `{}`: no schedules returned |
-| W2-Q4 | `aws rds describe-events` (orders-db, 11:08-14:08) | `_default.txt` | `{}`: no RDS events in the window |
-| W2-Q5 | CloudTrail writes 11:08-13:23, resource name contains `orders` | `_default.txt` | `{}`: none |
-| W2-Q6 | CloudTrail writes 12:58-13:23, no resource filter | `_default.txt` | `{}`: none (the helm upgrade goes through the Kubernetes API, which CloudTrail does not log; so "no AWS write" is all this says) |
-| W2-Q7 | `git tag` | `git-03.txt` | v2.12.0, v2.13.0, v2.13.1, v2.14.0, v2.15.0 (image tag `v2.15.0` = git tag `v2.15.0`; tag rule verified) |
-| W2-Q8 | `git log v2.14.0..v2.15.0` | `git-01.txt` | `a4c1e9b 2026-10-19 orders: load items per order in list handler (#2211)`; `7be20d4 2026-10-19 orders: return shipment ETA on order detail (#2208)`; `3f9d6a1 2026-10-16 deps: bump structlog to 25.4.0 (#2203)` |
-| W2-Q9 | `git diff v2.14.0 v2.15.0` | `git-02.txt` | `orders_api/handlers/list_orders.py`: `orders = repo.list_orders_with_items(customer_id, limit=limit)` replaced by `repo.list_orders(...)` plus `for order in orders: order.items = repo.list_items(order.id)`; `orders_api/handlers/order_detail.py`: adds `shipment_eta` to the detail response; `pyproject.toml`: structlog 25.3.0 to 25.4.0. Env var and config values: none in the diff |
-
-Reading the changes:
-- The only change near the onset is the Helm upgrade to v2.15.0 at 13:04:50 UTC (W1-Q4); the first elevated sample is 13:08 (W1-Q5), 3 minutes later; the previous sample (13:06) is normal. No schedule, scaling action, RDS event or AWS write fires near the onset (W2-Q1..Q6). Pods have 0 restarts (W0-Q20).
-- It touches the failing path: `list_orders.py` is the `GET /orders` handler (commit a4c1e9b, PR #2211). The `order_detail.py` change affects `GET /orders/{id}`, which did not move (W1-Q11..Q13). The structlog bump is on no data path. So the deploy is a SUSPECT, not yet a cause (Phase 2 step 3): old-against-new evidence is tested in Phase 4.
-- "Nobody changed anything" is not the situation: there is a change. Schedules, scaling, reclaims were checked first as the skill requires. Upstream deploys of other services and vendor status were not checked: no third party is in the path and the profile lists no upstream, so there is no status page to read.
-- A config-only change inside the same chart version cannot be excluded: chart `orders-api-4.2.0` is identical in both Helm revisions and values are unreadable by design (no IaC/values repo configured).
-
-Ledger written after the wave: Code repos row, W2-Q1..Q9, Timeline, Gaps (no IaC/values repo; clone freshness unknown; AWS replies empty objects). Counted queries: still 26 of 60 (wave 2 has no counted query).
-
-### Message to operator 5 (verbatim): Deep checkpoint #1
-
-```text
-Checkpoint 1 of 2 (change correlation). Nothing below is a cause yet; labels come later from the evidence workers.
-
-WINDOWS (UTC, local Australia/Brisbane beside)
-  incident            2026-10-20 12:30-15:30   (22:30-01:30 on 10-21)
-  previous baseline   2026-10-20 09:30-12:30   (19:30-22:30)   Prometheus data starts 10:00
-  same window -7d     2026-10-13 12:30-15:30   (22:30-01:30)
-  True onset 13:08 UTC (23:08 local), the first elevated sample; last normal sample 13:06. Not re-anchored (8 minutes from the 13:00 anchor).
-
-BLAST RADIUS
-  GET /orders only (order history, a core flow): p95 0.71 s against 0.18 s (x3.9), p50 0.31 s against 0.09 s (x3.4), no recovery to 15:30. POST /orders, GET /orders/{id}, PATCH and /healthz are unchanged. All three pods behave alike. Request rate on GET /orders is flat (56 req/s). DB statements per second are x10.4 from the same minute (381 to 3,962 /s); per-statement DB p95 is flat at about 4 ms; pool waits are 0; RDS CPU went 25% to 41%.
-  Suggested severity SEV2. Third party in the path: none.
-
-RECURRENCE
-  unclassified. No alert history was found (alert not named, ALERTS search empty), the 14-day latency pull is over the quantile cap, and the volume proxy only came back for 5.5 hours. The same clock window a week ago was normal. This is a gap, not a finding of "first time".
-
-CHANGES NEAR THE ONSET (all UTC)
-  13:04:50  Helm upgrade orders-api to app v2.15.0 (chart orders-api-4.2.0, same chart as the previous revision 23, v2.14.0 from 10-07). ReplicaSet orders-api-7c9b6d8f5d created about 13:05, 3/3 ready, 0 restarts.
-  v2.14.0..v2.15.0 contains three commits: a4c1e9b "load items per order in list handler" (#2211, changes the GET /orders handler: one extra query per order inside a loop instead of one joined query), 7be20d4 "shipment ETA on order detail" (#2208), 3f9d6a1 "bump structlog" (#2203).
-  Nothing else: no CronJob, EventBridge rule or Scheduler schedule, no RDS event, no AWS write in CloudTrail near 13:08. Kubernetes events from 13:05 have expired (cannot be read).
-  The deploy touches the failing path (list_orders.py), so it is a suspect. It is not yet a cause: that needs old-against-new evidence.
-
-RUN PROFILE (working copy; confirmation requested)
-  Compute: namespace orders, Deployment orders-api, 3 pods, ReplicaSet orders-api-7c9b6d8f5d. Image tag v2.15.0 = git tag v2.15.0.
-  Metrics: http_server_request_duration_seconds_* (service, route, method labels verified), db_client_* (pool orders-db), container_cpu_usage_seconds_total (pod label). Traces: Tempo service orders-api (verified), DB spans carry db.system=postgresql. Logs: Loki namespace=orders, container=api, app="orders" (UNVERIFIED: value differs from the service name, no tie yet).
-  Data store: RDS PostgreSQL orders-db (db.r6g.2xlarge, Multi-AZ, Performance Insights off). No dashboards, HPA/ingress listing, error tracker or IaC repo found.
-
-QUESTIONS FOR YOU
-  1. Is the window right (onset 13:08 UTC, still ongoing)?
-  2. Did anything change that I cannot see from here: a manual action, a feature flag or config edit that is not in the chart, a vendor or upstream problem, a data import?
-Reply when ready and I will form and rank the hypotheses.
-```
-
-## Operator line 2 (answer at checkpoint #1)
-
-> Agreed, go on.
-
-(Cue: checkpoint #1 shown. Recorded in the ledger Assumptions: operator confirmed the window and named no unseen change.)
-
-## Phase 3: hypotheses
-
-Inputs: impact and shape (a step on one endpoint, flat call rate, more DB statements, flat per-statement latency), the change list (one deploy, touching the failing path), the dependency map from the profile (orders-db only; the service-discovery catalog `.culiops/service-discovery/orders-api*.md` is not under the output root, so there is none to read), the catalogue in SKILL.md. Recurrence class `unclassified`, so no `sched:` entries are added. No runbook/wiki access is configured, so no `from-docs:` lead.
-
-The run's own ranked list, written BEFORE any past incident was opened (best fit to onset, shape and blast radius first):
-
-| Rank | ID | Statement (specific enough to be wrong) | Expected if true | Falsification query | Tier |
-|---|---|---|---|---|---|
-| 1 | H1 | The v2.15.0 rollout (Helm revision 24 at 13:04:50 UTC, commit a4c1e9b #2211 on the `GET /orders` handler) triggered the step: latency rose as the new revision took traffic, and the changed code sits on the failing path | no elevated sample before 13:04:50; elevation within minutes of the rollout; only the handler's endpoint moves; the diff touches that handler | onset earlier than the rollout start, or old-revision pods equally slow, refutes it: first-elevated-sample time against the Helm time, plus a per-pod or per-revision split of `GET /orders` p95 around 12:50-13:20 | default |
-| 2 | H2 | `GET /orders` now makes many more database statements per request (N+1: one `order_items` query per order), each about as fast as before, and that accounts for the added latency | descendant/DB spans per `GET /orders` request up sharply against the pre-deploy window, per-statement duration unchanged, request duration growing with the span count | spans per request, incident window against the baseline window, at least 20 traces each; equal counts refute it | default |
-| 3 | H3 | orders-db became slower per statement (CPU saturation, locks, I/O), which slows every statement `GET /orders` issues | per-statement DB latency up, DB CPU high, lock waits or queue depth up, at the onset | per-statement DB latency and DB CPU/lock/queue metrics at baseline refute it | strong (RDS CPU rose 25% to 41% while ReadLatency and span p95 stayed flat: conflicting signals, three series to correlate) |
-| 4 | H6 | A traffic spike or a few heavy clients raised the load on `GET /orders` | request count on the endpoint above the previous window and above -7d | request rate against the previous window and -7d at the same level refutes it | default |
-| 5 | H5 | Pod capacity: CPU limits or throttling, an HPA at max, or a drop in running replicas slowed the pods | desired or ready replicas dropped, throttling or CPU at the limit, all routes on the pods slower | ready replicas equal to desired, no throttling, and the other routes on the same pods unchanged refute it | default |
-| 6 | H4 | Database connection exhaustion or a pool cap: requests wait for a connection | pool `pending_requests` above zero, `used` pinned at the pool maximum, "too many connections" or pool-wait errors | pool `pending_requests` at 0 throughout and `used` not pinned, no pool-wait errors, refute it | default |
-
-My own wave-1 reading hints that H3, H4, H5 and H6 are contradicted (flat per-statement latency, `pending_requests` 0, other routes unchanged, flat call rate). These are hints to the workers only: Deep mode gives no hypothesis a label before its worker's verdict, and each of these still gets its own worker, citing the existing ledger rows as `reused W1-Qn` as its falsification where they already answer it.
-
-### History lookup (only now that the ranked list exists)
-
-```bash
-ls .culiops/sre-investigate/incidents
-grep -rnE '^(service|deps|symptoms):.*(orders-api|orders-db|latency|p95|GET /orders)' .culiops/sre-investigate/incidents
-```
-
-| Command | World file | Result |
-|---|---|---|
-| `ls .culiops/sre-investigate/incidents` | `ls-02.txt` | `2026-08-14-orders-api.md`, `2026-09-30-catalog-api.md` |
-| `grep -rnE ... incidents` (front-matter lines) | `incidents/` (grep applied to both files) | `2026-08-14-orders-api.md:3:service: orders-api`; `:5:symptoms: [latency, p95, "GET /orders", "POST /orders"]`; `:7:deps: [orders-db]`. Nothing from `2026-09-30-catalog-api.md` (service catalog-api, deps search-cluster, symptoms errors, 5xx, GET /search) |
-
-`lessons.md` does not exist (W0-Q3), so there are no `failure-mode` lines to read.
-
-One match, so one entry. To write its statement, expected evidence and falsification query I read the matched file (`cat .culiops/sre-investigate/incidents/2026-08-14-orders-api.md`, world file `incidents/2026-08-14-orders-api.md`). Its content goes only into the entry below; nothing about it is logged in the ledger's Memory row except file name and matched fields, and the worker will get only the entry text.
-
-| Rank | ID | Statement | Expected if true | Falsification query | Tier |
-|---|---|---|---|---|---|
-| 7 | from-history:2026-08-14-orders-api.md | (lead from a past incident; overlaps H4) The orders-db connection pool is exhausted, so requests queue for a connection: `pending_requests` on the pool metric stays well above zero for the window, possibly after a pool-size configuration change | `pending_requests` above zero (the past case was above 30) for the whole window; `used` pinned at the pool maximum; slowdown on every route that uses the DB | pool `pending_requests` at 0 across the incident window refutes it | default |
-
-It starts with no label, is a lead and not evidence, and gets its own worker with only these three lines (never the incident file, its body or its label).
-
-Dispatch plan, decided now (Deep mode, Phase 3 note on tiers; `model` is passed explicitly on every dispatch):
-- Tier per worker: H1 default, H2 default, H3 stronger (started there per the dispatcher rule), H4 default, H5 default, H6 default, from-history default.
-- Remaining budget split evenly across 7 workers: 34 queries left of 60, so 4 queries each (6 held back as the main session's reserve); CloudWatch metric requests: 497 left, 70 each; log GB: 10 left, 1.4 GB each; at most 3 waves each.
-
-### Message to operator 6 (verbatim): Deep checkpoint #2
-
-```text
-Checkpoint 2 of 2 (hypotheses). Ranked by how well they fit the onset (13:08), the shape (a step on one endpoint) and the blast radius (GET /orders only). Each gets its own evidence worker and its falsification query runs first.
-
- 1. H1  The v2.15.0 rollout (Helm revision 24, 13:04:50 UTC; commit a4c1e9b changes the GET /orders handler) triggered the step.
-        Falsify: first elevated sample earlier than the rollout start, or a per-pod/per-revision split showing old pods equally slow. [default tier]
- 2. H2  GET /orders now issues many more DB statements per request (one order_items query per order), each as fast as before, and that explains the added latency.
-        Falsify: spans per request, incident window against the pre-deploy window (24 traces each); equal counts refute it. [default tier]
- 3. H3  orders-db got slower per statement (CPU, locks, I/O).
-        Falsify: per-statement DB latency and DB CPU/lock/queue metrics at baseline. [stronger tier: RDS CPU rose 25% to 41% while per-statement latency stayed flat, so the signals conflict]
- 4. H6  Traffic spike or heavy clients on GET /orders.
-        Falsify: request rate against the previous window and -7d. [default tier]
- 5. H5  Pod capacity (CPU limits/throttling, HPA at max, fewer replicas).
-        Falsify: ready replicas = desired, no throttling, other routes on the same pods unchanged. [default tier]
- 6. H4  DB connection exhaustion or pool cap.
-        Falsify: pool pending_requests at 0 and used not pinned, no pool-wait errors. [default tier]
- 7. from-history:2026-08-14-orders-api.md  Past-incident lead (overlaps H4): the orders-db connection pool exhausted, with pending_requests elevated.
-        Falsify: pending_requests at 0 across the incident window. [default tier]
-
-My wave-1 numbers already point against H3, H4, H5, H6 and the history lead (flat per-statement latency, pool waits 0, other routes unchanged, flat request rate). That is only a hint for the workers: each still gets a worker and the labels come from their verdicts.
-History lookup: one earlier orders-api incident matched on service, dependency (orders-db) and symptom words; it is entry 7. I added nothing else from history.
-
-Budget: 26 of 60 queries used; each worker gets 4 (6 held back), at most 3 waves.
-Add, drop or re-rank anything before I send the workers out.
-```
-
-## Operator line 3 (answer at checkpoint #2)
-
-> Fine, continue.
-
-(Cue: checkpoint #2 shown. No change to the list.)
-
-## Phase 4: evidence workers (Deep)
-
-All seven workers are dispatched in ONE message, each with `model` passed explicitly: H1, H2, H4, H5, H6 and from-history on the default tier, H3 on the stronger tier. Each gets the full prompt from agents/evidence.md with its own ID, statement, expected evidence and falsification query, `RUN=<run directory>/raw/<ID>`, the three UTC windows, its budget share (4 queries, 70 CloudWatch metric requests, 1.4 GB of logs, 3 waves), the run's `profile.md` (never the stored one), `LESSONS: none` (no lessons file) and `PREVIOUS VERDICT: none`. The from-history worker receives only its three lines. The ledger snapshot every worker reads is the one after Phase 3 (Windows, Query log W0-Q1..W2-Q9, Gaps, own row): so parallel workers cannot see each other's queries, and a rare duplicate is renumbered at merge.
-
-Worker sections below are simulated inline. Each lists what it ran, in full, with the world file each command mapped to, then the verdict block it returns.
 
 ---
 
-### [evidence H1, default tier]
+## Build profile (first run for orders-api prod)
 
-Hypothesis H1 (trigger = v2.15.0 rollout). Falsification run first, then confirming evidence. Wave 1 of 1.
+No stored profile, so a helper was dispatched (`TASK: PROFILE`, cheapest tier, identifier lessons: none, RUN `raw/helper`). No identifier-free change query was started alongside it: environment.md lists no IaC repo, and the cluster listings are part of the helper's checklist.
+
+### [helper TASK: PROFILE, cheapest tier] wave 1 (discovery)
 
 ```bash
-RUN=.culiops/sre-investigate/runs/orders-api-prod-20261020-1530/raw/H1; mkdir -p "$RUN"
+LOKI=https://grafana.example.com/api/datasources/proxy/uid/loki-prod
+TEMPO=https://grafana.example.com/api/datasources/proxy/uid/tempo-prod
 PROM=https://grafana.example.com/api/datasources/proxy/uid/prom-prod
-# H1-Q1 (falsification): first elevated sample against the rollout start, split by pod
-curl -sG "$PROM/api/v1/query_range" -H "Authorization: Bearer $GRAFANA_SERVICE_ACCOUNT_TOKEN" --data-urlencode 'query=histogram_quantile(0.95, sum by (le, pod) (rate(http_server_request_duration_seconds_bucket{service="orders-api", route="/orders"}[5m])))' --data-urlencode "start=2026-10-20T12:50:00Z" --data-urlencode "end=2026-10-20T13:20:00Z" --data-urlencode "step=120" > "$RUN/m-p95-by-pod.json"
-# H1-Q2, H1-Q3: the handler and its data access at the deployed ref
+CTX=arn:aws:eks:us-east-1:111122223333:cluster/prod
+curl -sG "$LOKI/loki/api/v1/labels" -H "Authorization: Bearer $GRAFANA_SERVICE_ACCOUNT_TOKEN"
+curl -sG "$LOKI/loki/api/v1/label/app/values" -H "Authorization: Bearer $GRAFANA_SERVICE_ACCOUNT_TOKEN"
+curl -sG "$LOKI/loki/api/v1/label/namespace/values" -H "Authorization: Bearer $GRAFANA_SERVICE_ACCOUNT_TOKEN"
+curl -sG "$LOKI/loki/api/v1/label/container/values" -H "Authorization: Bearer $GRAFANA_SERVICE_ACCOUNT_TOKEN"
+curl -sG "$TEMPO/api/v2/search/tags" -H "Authorization: Bearer $GRAFANA_SERVICE_ACCOUNT_TOKEN"
+curl -sG "$TEMPO/api/v2/search/tag/resource.service.name/values" -H "Authorization: Bearer $GRAFANA_SERVICE_ACCOUNT_TOKEN" --data-urlencode "start=1792506600" --data-urlencode "end=1792510200"
+curl -sG "$PROM/api/v1/label/__name__/values" -H "Authorization: Bearer $GRAFANA_SERVICE_ACCOUNT_TOKEN"
+curl -sG "https://grafana.example.com/api/search" -H "Authorization: Bearer $GRAFANA_SERVICE_ACCOUNT_TOKEN" --data-urlencode "query=orders" --data-urlencode "type=dash-db"
+kubectl --context "$CTX" -n orders get pods
+kubectl --context "$CTX" -n orders get deploy,svc,ingress,hpa
+aws rds describe-db-instances --profile prod-read --region us-east-1 --query "DBInstances[?contains(DBInstanceIdentifier, 'orders')].{id: DBInstanceIdentifier, class: DBInstanceClass, engine: Engine, version: EngineVersion, status: DBInstanceStatus, multiAz: MultiAZ}" --output json
+git -C ~/src/orders-api tag
+gh api repos/example-org/orders-api --jq .default_branch
+ls .culiops/service-discovery
+```
+
+| ID | Command | World file | Key facts returned |
+|---|---|---|---|
+| PB-Q1 | Loki `/labels` | `loki-01.json` | `app`, `container`, `namespace`, `stream` |
+| PB-Q2 | Loki `label/app/values` | `loki-02.json` | catalog-api, notify-worker, orders, orders-reconcile, payments-worker (no `orders-api`) |
+| PB-Q3 | Loki `label/namespace/values` | `loki-03.json` | catalog, notify, orders, payments |
+| PB-Q4 | Loki `label/container/values` | `loki-04.json` | api, worker |
+| PB-Q5 | Tempo `/api/v2/search/tags` | `tempo-06.json` | resource: k8s.namespace.name, k8s.pod.name, service.name, service.version; span: db.statement, db.system, http.request.method, http.response.status_code, http.route, server.address |
+| PB-Q6 | Tempo tag values `resource.service.name` | `_default.txt` | `{}` |
+| PB-Q7 | Prometheus `label/__name__/values` | `prom-09.json` | db_client_connections_{pending_requests,usage}, db_client_operation_duration_seconds_{bucket,count,sum}, container_cpu_usage_seconds_total, http_server_request_duration_seconds_{bucket,count,sum}, kube_deployment_status_replicas, up. No `ALERTS`, no cfs throttling, no resource-limit series |
+| PB-Q8 | Grafana dashboard search `orders` | `_default.txt` | `{}`: none found |
+| PB-Q9 | `kubectl get pods -n orders` | `k8s-04.txt` | 3 pods `orders-api-7c9b6d8f5d-{4kq2m,9vx7t,tz5wp}`, 1/1 Running, 0 restarts, age 145m / 144m / 144m |
+| PB-Q10 | `kubectl get deploy,svc,ingress,hpa -n orders` | `_empty.txt` | no output |
+| PB-Q11 | `aws rds describe-db-instances` (filter `orders`) | `rds-01.json` | `orders-db`, db.r6g.2xlarge, postgres 16.6, available, Multi-AZ, Performance Insights off |
+| PB-Q12 | `git -C ~/src/orders-api tag` | `git-03.txt` | v2.12.0, v2.13.0, v2.13.1, v2.14.0, v2.15.0 |
+| PB-Q13 | `gh api repos/example-org/orders-api --jq .default_branch` | `_default.txt` | `{}`: default branch unknown |
+| PB-Q14 | `ls .culiops/service-discovery` | (no row) | `No such file or directory`, exit 1: no service-discovery catalog |
+
+### [helper TASK: PROFILE, cheapest tier] wave 2 (verification)
+
+```bash
+curl -sG "$LOKI/loki/api/v1/query_range" -H "Authorization: Bearer $GRAFANA_SERVICE_ACCOUNT_TOKEN" --data-urlencode 'query={app="orders"}' --data-urlencode "start=1792509300" --data-urlencode "end=1792510200" --data-urlencode "limit=8" --data-urlencode "direction=backward"
+curl -sG "$PROM/api/v1/query_range" -H "Authorization: Bearer $GRAFANA_SERVICE_ACCOUNT_TOKEN" --data-urlencode 'query=rate(http_server_request_duration_seconds_count{service="orders-api"}[5m])' --data-urlencode "start=1792490400" --data-urlencode "end=1792510200" --data-urlencode "step=120"
+curl -sG "$TEMPO/api/search" -H "Authorization: Bearer $GRAFANA_SERVICE_ACCOUNT_TOKEN" --data-urlencode 'q={ resource.service.name = "orders-api" }' --data-urlencode "start=1792506600" --data-urlencode "end=1792510200" --data-urlencode "limit=5"
+```
+
+| ID | Command | World file | Key facts returned |
+|---|---|---|---|
+| PB-Q15 | Loki `{app="orders"}`, 8 lines | `loki-05.json` | one stream `{app="orders", namespace="orders", container="api", stream="stdout"}`, 8 `request completed` lines for `GET /orders` (status 200, 286 to 751 ms, page_size=50) at 15:18 to 15:19 UTC; no pod label; 48.2 MB processed |
+| PB-Q16 | Prometheus request-count rate | `prom-07.json` | one series `{service="orders-api", route="/orders", method="GET"}`, 166 points (10:00 to 15:30 at 120 s), 52 to 61 req/s, mean 56.5 before 13:08 and 56.1 after: the label `service="orders-api"` returns data |
+| PB-Q17 | Tempo bare search `service.name = orders-api` | `tempo-07.json` | `traces: []`: zero traces, so the trace service name stays `(unverified)` for the helper |
+
+Helper returned the profile (marks: Prometheus `service="orders-api"` verified; Tempo `orders-api` unverified; Loki `app="orders"` unverified because its value differs from the service name and the stream has no pod label, so no tie; the lines look like the service's traffic, which is a lead, not a tie). Helper cost: 17 list/read calls in 2 waves. Main session re-applied Constraint 14's tie rule: Loki stays `(unverified)`.
+
+### Wave 0 log probe (after the profile build, on discovered label `app="orders"`)
+
+```bash
+curl -sG "$LOKI/loki/api/v1/index/stats" -H "Authorization: Bearer $GRAFANA_SERVICE_ACCOUNT_TOKEN" --data-urlencode 'query={app="orders"}' --data-urlencode "start=1792509300" --data-urlencode "end=1792510200"
+```
+
+| W0-Q9 | Loki index stats, `app="orders"`, 15 minutes | `_default.txt` | `{}`: no estimate. Treated as metered; the measured size of the helper sample (48.2 MB for 8 lines) is far under the 20 GB ask limit, and no further log query is planned |
+
+Run profile written to `runs/orders-api-prod-20261020-1530/profile.md` (final version in the out directory; updated after wave 1 when W1-Q17 verified the Tempo name).
+
+**Message 3 (profile shown, run continues), verbatim:**
+
+```text
+Profile for orders-api prod (built by a helper, shown for correction; the run continues):
+- Compute: namespace orders, Deployment orders-api, 3 pods on ReplicaSet orders-api-7c9b6d8f5d, Helm release orders-api (chart orders-api-4.2.0). No HPA, Service or Ingress came back from the listing (absence not proven).
+- Metrics (Prometheus prom-prod): service="orders-api", metrics http_server_request_duration_seconds_* (labels method, route; no status label), db_client_operation_duration_seconds_*, db_client_connections_*, container_cpu_usage_seconds_total. No ALERTS series.
+- Traces (Tempo tempo-prod): service name orders-api (not yet verified: a bare search returned nothing).
+- Logs (Loki loki-prod): app="orders", namespace="orders", container="api" (unverified: the label value differs from the service name and the stream has no pod label, so I treat those lines as a lead only; app="orders-reconcile" is a different workload).
+- Data store: RDS orders-db (PostgreSQL 16.6, db.r6g.2xlarge, Multi-AZ).
+- Code: example-org/orders-api, image tag vX.Y.Z = git tag vX.Y.Z (v2.14.0 and v2.15.0 exist locally); default branch unknown.
+- No dashboards, error tracker, IaC repo, tickets or service-discovery catalog found. Core flows: GET /orders and POST /orders.
+Tell me if any of this is wrong.
+```
+
+---
+
+## Phase 1: scope, impact and severity
+
+### Wave 1 (printed in full, then run; 21 queries in 8 shell calls, above ten because the fixed legs need it)
+
+Windows used by every query: incident 12:30 to 15:30 UTC (epoch 1792499400 to 1792510200), previous 09:30 to 12:30 (1792488600 to 1792499400; Prometheus holds data from 10:00 only), -7d 2026-10-13 12:30 to 15:30 (by `offset 7d`). Step 120 s.
+
+```bash
+# shell call 1: change events (first call of the wave begins with the clock)
+date -u +%H:%M:%S
+CTX=arn:aws:eks:us-east-1:111122223333:cluster/prod
+kubectl --context "$CTX" -n orders get events --sort-by=.lastTimestamp
+kubectl --context "$CTX" -n orders get rs --sort-by=.metadata.creationTimestamp -o custom-columns='NAME:.metadata.name,REVISION:.metadata.annotations.deployment\.kubernetes\.io/revision,CREATED:.metadata.creationTimestamp,DESIRED:.spec.replicas,READY:.status.readyReplicas'
+kubectl --context "$CTX" -n orders rollout history deployment/orders-api
+helm history orders-api --kube-context "$CTX" -n orders --max 10
+
+# shell call 2: per-endpoint p95, three windows (instants)
+PROM=https://grafana.example.com/api/datasources/proxy/uid/prom-prod
+Q='histogram_quantile(0.95, sum by (le, method, route) (rate(http_server_request_duration_seconds_bucket{service="orders-api"}[5m])))'
+QO='histogram_quantile(0.95, sum by (le, method, route) (rate(http_server_request_duration_seconds_bucket{service="orders-api"}[5m] offset 7d)))'
+curl -sG "$PROM/api/v1/query" -H "Authorization: Bearer $GRAFANA_SERVICE_ACCOUNT_TOKEN" --data-urlencode "query=$Q"  --data-urlencode "time=1792510200"
+curl -sG "$PROM/api/v1/query" -H "Authorization: Bearer $GRAFANA_SERVICE_ACCOUNT_TOKEN" --data-urlencode "query=$Q"  --data-urlencode "time=1792499400"
+curl -sG "$PROM/api/v1/query" -H "Authorization: Bearer $GRAFANA_SERVICE_ACCOUNT_TOKEN" --data-urlencode "query=$QO" --data-urlencode "time=1792510200"
+
+# shell call 3: GET /orders p50 and p95, incident plus previous in one range, and the same range 7 days back
+for q in 0.95 0.5; do
+  curl -sG "$PROM/api/v1/query_range" -H "Authorization: Bearer $GRAFANA_SERVICE_ACCOUNT_TOKEN" \
+    --data-urlencode "query=histogram_quantile($q, sum by (le) (rate(http_server_request_duration_seconds_bucket{service=\"orders-api\", route=\"/orders\", method=\"GET\"}[5m])))" \
+    --data-urlencode "start=1792488600" --data-urlencode "end=1792510200" --data-urlencode "step=120"
+  curl -sG "$PROM/api/v1/query_range" -H "Authorization: Bearer $GRAFANA_SERVICE_ACCOUNT_TOKEN" \
+    --data-urlencode "query=histogram_quantile($q, sum by (le) (rate(http_server_request_duration_seconds_bucket{service=\"orders-api\", route=\"/orders\", method=\"GET\"}[5m] offset 7d)))" \
+    --data-urlencode "start=1792488600" --data-urlencode "end=1792510200" --data-urlencode "step=120"
+done
+
+# shell call 4: p90 and p99 of the alerting signal
+for q in 0.90 0.99; do
+  curl -sG "$PROM/api/v1/query_range" -H "Authorization: Bearer $GRAFANA_SERVICE_ACCOUNT_TOKEN" \
+    --data-urlencode "query=histogram_quantile($q, sum by (le) (rate(http_server_request_duration_seconds_bucket{service=\"orders-api\", route=\"/orders\", method=\"GET\"}[5m])))" \
+    --data-urlencode "start=1792488600" --data-urlencode "end=1792510200" --data-urlencode "step=120"
+done
+
+# shell call 5: call rate of the endpoint against the -7d window, and DB operations (the incident-window request rate is PB-Q16, reused)
+curl -sG "$PROM/api/v1/query_range" -H "Authorization: Bearer $GRAFANA_SERVICE_ACCOUNT_TOKEN" --data-urlencode 'query=rate(http_server_request_duration_seconds_count{service="orders-api", route="/orders"}[5m] offset 7d)' --data-urlencode "start=1792488600" --data-urlencode "end=1792510200" --data-urlencode "step=120"
+curl -sG "$PROM/api/v1/query_range" -H "Authorization: Bearer $GRAFANA_SERVICE_ACCOUNT_TOKEN" --data-urlencode 'query=sum by (db_system) (rate(db_client_operation_duration_seconds_count{service="orders-api"}[5m]))' --data-urlencode "start=1792488600" --data-urlencode "end=1792510200" --data-urlencode "step=120"
+curl -sG "$PROM/api/v1/query_range" -H "Authorization: Bearer $GRAFANA_SERVICE_ACCOUNT_TOKEN" --data-urlencode 'query=sum by (db_system) (rate(db_client_operation_duration_seconds_count{service="orders-api"}[5m] offset 7d))' --data-urlencode "start=1792488600" --data-urlencode "end=1792510200" --data-urlencode "step=120"
+
+# shell call 6: saturation (CPU per pod, DB pool)
+curl -sG "$PROM/api/v1/query_range" -H "Authorization: Bearer $GRAFANA_SERVICE_ACCOUNT_TOKEN" --data-urlencode 'query=sum by (pod) (rate(container_cpu_usage_seconds_total{namespace="orders", pod=~"orders-api-.*"}[5m]))' --data-urlencode "start=1792499400" --data-urlencode "end=1792510200" --data-urlencode "step=600"
+curl -sG "$PROM/api/v1/query_range" -H "Authorization: Bearer $GRAFANA_SERVICE_ACCOUNT_TOKEN" --data-urlencode 'query={__name__=~"db_client_connections_(usage|pending_requests)", service="orders-api"}' --data-urlencode "start=1792488600" --data-urlencode "end=1792510200" --data-urlencode "step=120"
+
+# shell call 7: slow-downstream aggregation (Tempo TraceQL metrics, DB spans) and the recurrence pull (14 days ending at the incident start, hourly)
+TEMPO=https://grafana.example.com/api/datasources/proxy/uid/tempo-prod
+curl -sG "$TEMPO/api/metrics/query_range" -H "Authorization: Bearer $GRAFANA_SERVICE_ACCOUNT_TOKEN" --data-urlencode 'q={ resource.service.name = "orders-api" && span.db.system =~ ".+" } | quantile_over_time(duration, .95)' --data-urlencode "start=1792490400" --data-urlencode "end=1792510200" --data-urlencode "step=15m"
+curl -sG "$PROM/api/v1/query_range" -H "Authorization: Bearer $GRAFANA_SERVICE_ACCOUNT_TOKEN" --data-urlencode 'query=sum by (db_system) (increase(db_client_operation_duration_seconds_count{service="orders-api"}[1h]))' --data-urlencode "start=1791289800" --data-urlencode "end=1792499400" --data-urlencode "step=3600"
+
+# shell call 8: deploy markers
+curl -sG "https://grafana.example.com/api/annotations" -H "Authorization: Bearer $GRAFANA_SERVICE_ACCOUNT_TOKEN" --data-urlencode "from=1792499400000" --data-urlencode "to=1792510200000" --data-urlencode "limit=100"
+```
+
+Notes on the plan: the volume check for the incident window reuses PB-Q16 (`reused PB-Q16`). The per-pod latency split was not pulled (replicas share one ReplicaSet; per-pod CPU is the sibling comparison); recorded as a gap. Errors are not computable (no status label).
+
+| ID | Command (short) | World file | Key facts returned |
+|---|---|---|---|
+| W1-Q1 | `kubectl get events -n orders` | `k8s-05.txt` | "No resources found in orders namespace." (events older than 1h TTL gone) |
+| W1-Q2 | `kubectl get rs -n orders` | `k8s-06.txt` | `orders-api-5f8d9c7b6a` desired 0, age 13d; `orders-api-7c9b6d8f5d` desired/current/ready 3, age 145m (table shows AGE only) |
+| W1-Q3 | `kubectl rollout history deployment/orders-api` | `k8s-07.txt` | rev 23 helm upgrade (chart orders-api-4.2.0, image v2.14.0); rev 24 helm upgrade (chart orders-api-4.2.0, image v2.15.0) |
+| W1-Q4 | `helm history orders-api` | `helm-01.txt` | rev 23 Wed Oct 7 09:40:12 2026 superseded v2.14.0; rev 24 Tue Oct 20 13:04:50 2026 deployed v2.15.0; no zone printed |
+| W1-Q5 | per-route p95 at 15:30 | `prom-03.json` | GET /orders 0.712; GET /orders/{id} 0.064; POST /orders 0.142; PATCH /orders/{id} 0.088; /healthz 0.003 |
+| W1-Q6 | per-route p95 at 12:30 | `prom-04.json` | 0.181; 0.061; 0.139; 0.091; 0.003 |
+| W1-Q7 | per-route p95, offset 7d | `prom-14.json` | 0.181; 0.061; 0.139; 0.091; 0.003 |
+| W1-Q8 | p95 `GET /orders` range | `prom-01.json` | 166 points 10:00 to 15:30; 94 points to 13:06 within 0.160 to 0.200; 72 points from 13:08 within 0.661 to 0.755; 13:06 = 0.163, 13:08 = 0.716 |
+| W1-Q9 | p50 `GET /orders` range | `prom-02.json` | 0.080 to 0.100 to 13:06; 0.281 to 0.339 from 13:08 |
+| W1-Q10 | p95 range, offset 7d | `prom-11.json` | 166 points, 0.160 to 0.200 throughout (2026-10-13) |
+| W1-Q11 | p50 range, offset 7d | `prom-12.json` | 166 points, 0.080 to 0.100 throughout |
+| W1-Q12 | p90 range | `prom-10.json` | empty matrix (gap) |
+| W1-Q13 | p99 range | `prom-10.json` | empty matrix (gap) |
+| W1-Q14 | request rate offset 7d | `prom-07.json` | the identical 166 points as PB-Q16, same timestamps and values; an offset query cannot be identical to the unshifted one, so it is unusable (gap) |
+| W1-Q15 | DB operations rate | `prom-05.json` | 380.1/s mean to 13:06 (361 to 401); 3952/s mean from 13:10 (3821 to 4089); 13:06 = 365.5, 13:08 = 4031.1 (10.4 times) |
+| W1-Q16 | DB operations rate offset 7d | `prom-13.json` | 355 to 404/s throughout (mean 379), 2026-10-13 |
+| W1-Q17 | Tempo TraceQL metrics, DB span p95 | `tempo-01.json` | series `span.db.system=postgresql`: 3.9 to 4.4 ms at all 23 steps, before and after 13:08 (also verifies the Tempo service name) |
+| W1-Q18 | CPU per pod | `prom-08.json` | 3 pods, first point 13:08, 0.52 to 0.64 cores, means 0.583 / 0.580 / 0.594 |
+| W1-Q19 | pool used and pending | `prom-06.json` | `used` 14 to 19 before, 17 to 24 after; `pending_requests` 0 in all 166 points |
+| W1-Q20 | recurrence pull, DB operations hourly | `prom-05.json` | only the 10:00 to 12:30 part of today overlaps: 1.37M per hour at 10:00, 11:00, 12:00; nothing before 10:00 |
+| W1-Q21 | Grafana annotations (deploy markers) | `_default.txt` | `{}` |
+
+Ledger rows for W1 written to `ledger.md` (query log, timeline entries, gaps, windows, recurrence) before the results were used below.
+
+### Phase 1 reading
+
+- Siblings: the sibling set is the 3 replicas of one ReplicaSet; per-pod CPU is the same (0.58 to 0.59 cores) so no single pod stands out; all members moved together because they all run the new revision. Other routes of the same service are flat.
+- Golden signals: latency step at 13:08 (p95 3.9 times, p50 3.4 times); traffic flat (PB-Q16); errors not computable; saturation: pool pending 0, pods steady.
+- Shape: step. Not a ceiling (p50 moved). Not volume (call rate 56.5 to 56.1 req/s, but DB operations 10.4 times). A step in DB calls with flat request count points at per-request DB work, so the next waves include the span count per request (wave 2).
+- Recurrence: class `unclassified` (no alarm history; 3 of 336 hourly points; latency recurrence not pullable). The same clock window seven days earlier was clean (W1-Q10, W1-Q11, W1-Q16).
+- Known noise: none known.
+- Impact source: no SLO named, so request metrics against the baseline.
+
+**Message 4 (impact block, shown before Phase 2), verbatim:**
+
+```text
+Impact as of 15:30 UTC (01:30 on 21 Oct local, Australia/Brisbane)
+Symptom:   GET /orders p95 0.181 s -> 0.712 s (3.9x), p50 about 0.09 s -> 0.31 s; request rate unchanged at about 56/s. No errors measured (the HTTP histogram has no status label).
+Affected:  prod orders-api, all 3 replicas; only GET /orders (other routes flat); customer-facing, core flow "order history".
+Since:     13:08 UTC (23:08 local; last clean sample 13:06) · ongoing: yes
+Severity:  SEV2 (suggested) because a core flow is significantly degraded (about 4x slower at p95) with no failures measured.
+Basis:     request metrics against baseline (previous window and -7d) · W1-Q5..Q11, PB-Q16 · Confirmed for latency; error impact Assumed
+Third party in the path: none
+```
+
+---
+
+## Phase 2: change correlation
+
+Recurrence first: class `unclassified`, shape `step` (no scheduled pattern can be read; nothing in the data repeats). Schedules are still listed, before looking for a person.
+
+### Wave 2 (printed in full, then run; 12 queries in 5 shell calls)
+
+```bash
+# shell call 1
+date -u +%H:%M:%S
+git -C ~/src/orders-api log --oneline v2.14.0..v2.15.0
+git -C ~/src/orders-api diff v2.14.0..v2.15.0
+git -C ~/src/orders-api rev-parse --verify --end-of-options 'v2.15.0^{commit}'
+
+# shell call 2: schedules, platform events, writes (onset taken as the rollout, about 13:05; window = onset-2h to onset+15m)
+CTX=arn:aws:eks:us-east-1:111122223333:cluster/prod
+kubectl --context "$CTX" get cronjobs -A -o custom-columns='NAMESPACE:.metadata.namespace,NAME:.metadata.name,SCHEDULE:.spec.schedule,TZ:.spec.timeZone,SUSPEND:.spec.suspend,LAST:.status.lastScheduleTime'
+aws events list-rules --profile prod-read --region us-east-1 --query 'Rules[?ScheduleExpression].[Name, State, ScheduleExpression]' --output text
+aws scheduler list-schedules --profile prod-read --region us-east-1 --query 'Schedules[].[GroupName, Name, State]' --output text
+TZ=UTC aws cloudtrail lookup-events --profile prod-read --region us-east-1 --lookup-attributes AttributeKey=ReadOnly,AttributeValue=false --start-time 2026-10-20T11:05:00Z --end-time 2026-10-20T13:20:00Z --query "Events[].[EventTime,EventSource,EventName]" --output text
+aws rds describe-events --profile prod-read --region us-east-1 --source-type db-instance --source-identifier orders-db --start-time 2026-10-20T11:05:00Z --end-time 2026-10-20T13:20:00Z --query 'Events[].[Date,Message]' --output text
+
+# shell call 3: old against new, span counts per request (24 to 30 traces per window; the first window is the new revision, the second the old one)
+TEMPO=https://grafana.example.com/api/datasources/proxy/uid/tempo-prod
+curl -sG "$TEMPO/api/search" -H "Authorization: Bearer $GRAFANA_SERVICE_ACCOUNT_TOKEN" --data-urlencode 'q={ resource.service.name = "orders-api" && span:kind = server && span:name = "GET /orders" } >> { span:kind = client }' --data-urlencode "start=1792506600" --data-urlencode "end=1792510200" --data-urlencode "limit=30"
+curl -sG "$TEMPO/api/search" -H "Authorization: Bearer $GRAFANA_SERVICE_ACCOUNT_TOKEN" --data-urlencode 'q={ resource.service.name = "orders-api" && span:kind = server && span:name = "GET /orders" } >> { span:kind = client }' --data-urlencode "start=1792494000" --data-urlencode "end=1792497600" --data-urlencode "limit=30"
+
+# shell call 4: one representative trace per window, by ID from those searches (window padded by an hour each side)
+curl -sG "$TEMPO/api/v2/traces/e3ea7a3906419b466a28541306cc5ee1" -H "Authorization: Bearer $GRAFANA_SERVICE_ACCOUNT_TOKEN" --data-urlencode "start=1792503000" --data-urlencode "end=1792513800"
+curl -sG "$TEMPO/api/v2/traces/65345f5f8176033524bc88af3bd43f6f" -H "Authorization: Bearer $GRAFANA_SERVICE_ACCOUNT_TOKEN" --data-urlencode "start=1792490400" --data-urlencode "end=1792501200"
+```
+
+| ID | Command (short) | World file | Key facts returned |
+|---|---|---|---|
+| (clock) | `date -u` | `_empty.txt` | nothing |
+| W2-Q1 | `git log --oneline v2.14.0..v2.15.0` | `git-01.txt` | a4c1e9b 2026-10-19 "orders: load items per order in list handler (#2211)"; 7be20d4 2026-10-19 "orders: return shipment ETA on order detail (#2208)"; 3f9d6a1 2026-10-16 "deps: bump structlog to 25.4.0 (#2203)" |
+| W2-Q2 | `git diff v2.14.0..v2.15.0` | `git-02.txt` | `list_orders.py`: `repo.list_orders_with_items(customer_id, limit=limit)` replaced by `repo.list_orders(...)` plus `for order in orders: order.items = repo.list_items(order.id)`; `order_detail.py`: adds `shipment_eta`; `pyproject.toml`: structlog 25.3.0 to 25.4.0 |
+| W2-Q12 | `git rev-parse --verify v2.15.0^{commit}` | `_empty.txt` | nothing printed: SHA not resolved (gap); tag names used as refs |
+| W2-Q3 | `kubectl get cronjobs -A` | `_empty.txt` | no output |
+| W2-Q4 | `aws events list-rules` | `_default.txt` | `{}` |
+| W2-Q5 | `aws scheduler list-schedules` | `_default.txt` | `{}` |
+| W2-Q6 | `aws cloudtrail lookup-events` (writes) | `_default.txt` | `{}` |
+| W2-Q7 | `aws rds describe-events` | `_default.txt` | `{}` |
+| W2-Q8 | Tempo structural search, 14:30 to 15:30 | `tempo-02.json` | 24 traces, root `GET /orders`; descendant spans (`matched`) per trace sorted: 9, 14, 18, 22, 27, 31, 33, 36, 38, 39, 40, 41, 41, 42, 44, 47, 49, 51, 52 x6; p50 41, p95 52, max 52; trace duration p50 342 ms, p95 422 ms; span names `SELECT orders`, `SELECT order_items` |
+| W2-Q9 | Tempo structural search, 11:00 to 12:00 | `tempo-03.json` | 24 traces; descendants per trace: 2, 2, 3 x18, 4 x4; p50 3, max 4; duration p50 110 ms, p95 165 ms |
+| W2-Q10 | Tempo trace `e3ea7a39...` (14:48) | `tempo-09.json` | 152 ms: `GET auth-api /verify` 3.4 ms, `SELECT orders` 3.05 ms, then 12 serial `SELECT order_items` of 2.9 to 4.5 ms; status 200 |
+| W2-Q11 | Tempo trace `65345f5f...` (11:00) | `tempo-10.json` | 109 ms: `GET auth-api /verify` 3.8 ms and one `SELECT orders JOIN order_items` 3.05 ms; status 200 |
+
+Ledger rows for wave 2 written (stage B) before the results below were used.
+
+### Change list (every change near the onset, with its UTC time and source)
+
+- 13:04:50 (zone not printed by Helm; cross-checked) Helm revision 24, chart orders-api-4.2.0 (unchanged from revision 23), app v2.15.0, "Upgrade complete". New ReplicaSet orders-api-7c9b6d8f5d, pods about 145 minutes old at about 15:30, old ReplicaSet at 0 (W1-Q2, W1-Q3, W1-Q4).
+- Release v2.15.0 contains three commits (W2-Q1, W2-Q2): a4c1e9b touches `orders_api/handlers/list_orders.py`, the handler of the failing route: **on the failing path**. 7be20d4 touches `order_detail.py` (`GET /orders/{id}`, which stayed at 0.061 to 0.064 s: not on the failing path). 3f9d6a1 bumps structlog on every route, and the other routes stayed flat (W1-Q5..Q7): no sign it matters.
+- Schedules (CronJobs, EventBridge rules, Scheduler): nothing returned (W2-Q3..Q5; a `{}` is not proof of absence). Scaling: no HPA listed; replicas desired = ready = 3. Platform: no RDS events (W2-Q7), no deploy markers (W1-Q21), no CloudTrail writes returned (W2-Q6), Kubernetes events expired (W1-Q1). IaC history: no IaC repo is configured (gap). Direct dependencies: orders-db has no events; auth-api (found in traces) has no deploy record this role can read.
+- Old against new (Phase 2 step 3, before any label): **new revision (v2.15.0, 13:08 to 15:30): 72 of 72 p95 samples at 0.661 s or more, 24 of 24 sampled traces with 9 to 52 descendant spans (p50 41). Old revision (v2.14.0, the last window before replacement, 10:00 to 13:06): 0 of 94 samples above 0.200 s, 24 of 24 sampled traces with 2 to 4 descendants (p50 3). Earlier occurrences while only the old revision ran: none in the covered data (0 of 166 samples above 0.200 s on 2026-10-13).** The onset is later than the rollout start, not earlier. So the deploy is kept in as a candidate; no label yet (Deep mode: labels come from the worker verdicts).
+- Run profile: Tempo service name `orders-api` now marked verified (W1-Q17 and W2-Q8 returned data); Loki `app="orders"` stays unverified; auth-api added as a downstream (seen in W2-Q10, W2-Q11).
+
+### Deep checkpoint 1
+
+**Message 5 (checkpoint 1), verbatim:**
+
+```text
+Checkpoint 1 (phases 0 to 2 are done; nothing has been labelled yet).
+
+Windows (UTC, local = Australia/Brisbane, UTC+10)
+- Incident 2026-10-20 12:30 to 15:30 (22:30 to 01:30 local), ongoing. True onset 13:08 UTC (23:08 local): last clean sample 13:06, first elevated 13:08. No re-anchor needed (8 minutes from your "early afternoon").
+- Previous 09:30 to 12:30 (Prometheus only has data from 10:00); -7d 2026-10-13 12:30 to 15:30.
+
+Blast radius: only GET /orders (p95 0.181 -> 0.712 s, p50 0.09 -> 0.31 s). POST /orders, GET /orders/{id}, PATCH /orders/{id} and /healthz are flat. All 3 replicas move together (one ReplicaSet). Request rate is unchanged (about 56/s) but database operations jumped from about 380/s to about 3,950/s at the same minute (10.4x), with per-call database latency flat at about 4 ms and the pool not waiting.
+
+Recurrence: unclassified, shape step. There is no alert history (alert name not given, no ALERTS series) and Prometheus returned only 3 of 336 hourly points for the 14-day pull. The same clock window a week earlier was clean.
+
+Changes near the onset
+- 13:04:50 Helm revision 24: orders-api v2.14.0 -> v2.15.0 (same chart 4.2.0), all 3 pods replaced (about 145 minutes old at 15:30). Helm prints no zone, so I cross-checked it against pod age and the 13:08 metric step: they agree to about 3 minutes.
+- v2.15.0 holds 3 commits. a4c1e9b (#2211) rewrites the GET /orders list handler to call a per-order items query and is on the failing path. #2208 (order detail) and the structlog bump (#2203) are not.
+- No schedules, CloudTrail writes, RDS events, HPA or deploy markers came back; Kubernetes events had expired. There is no IaC repo in environment.md.
+- Old against new: new revision 72/72 p95 samples above 0.66 s and 24/24 sampled traces with 9 to 52 downstream spans; old revision 0/94 samples above 0.20 s and 24/24 traces with 2 to 4 spans.
+
+Run profile: as shown earlier, plus Tempo service name orders-api now verified and auth-api added as a downstream.
+
+Two questions: (1) Is the window right? (2) Did anything change that I cannot see, such as a manual action, a configuration change outside the chart, a vendor issue, or an auth-api change?
+```
+
+**Operator line 2 (received at checkpoint 1):** "Agreed, go on."
+
+---
+
+## Phase 3: hypotheses
+
+Ranked from this run's own data first (impact, shape, change list), before any history was read:
+
+1. H1 bad deploy (v2.15.0): fits the onset to the minute and the failing path.
+2. H2 N+1 in the list handler: explains the step in DB calls with flat request rate and flat per-call latency.
+3. H3 database itself slow (CPU, locks): DB operations rose 10 times, so DB load rose; the question is whether the DB got slow.
+4. H4 connection exhaustion / pool cap.
+5. H5 pod capacity (3 replicas, no HPA seen).
+6. H6 traffic spike or bot.
+7. H7 downstream slow (orders-db or auth-api).
+
+Not added: `sched:` entries (the class is not `scheduled` and no schedule was listed); instance or node churn (0 restarts, no events); cache evictions (no cache found); certificate expiry, DNS, NAT (no errors measured).
+
+### History lookup (only after the ranked list existed)
+
+```bash
+grep -rn -E '^(service|deps):.*(orders-api|orders-db)' .culiops/sre-investigate/incidents
+grep -rn -E '^symptoms:.*latency' .culiops/sre-investigate/incidents
+cat .culiops/sre-investigate/incidents/2026-08-14-orders-api.md
+```
+
+| Command | World file | Returned |
+|---|---|---|
+| grep service/deps | (grep applied to `incidents/`) | `2026-08-14-orders-api.md:3: service: orders-api` and `:7: deps: [orders-db]` |
+| grep symptoms | (grep applied to `incidents/`) | `2026-08-14-orders-api.md:5: symptoms: [latency, p95, "GET /orders", "POST /orders"]` |
+| `cat incidents/2026-08-14-orders-api.md` | `incidents/2026-08-14-orders-api.md` | opened only to write the lead's hypothesis; its content is not logged in the ledger's Memory table (file name and matched fields only) |
+
+`2026-09-30-catalog-api.md` did not match. No `lessons.md` exists, so there are no `failure-mode` lines. No wiki or runbook access is configured, so no docs lookup. The match became its own hypothesis `from-history:2026-08-14-orders-api` (written by the main session, overlapping H4); it starts with no label.
+
+Model tiers decided now: H2 on the stronger tier (three signals to correlate: spans, metrics and code, and the expected quantitative conflict); the rest on the default tier. Ledger stage B written (hypotheses, Memory, lesson candidates).
+
+### Deep checkpoint 2
+
+**Message 6 (checkpoint 2), verbatim:**
+
+```text
+Checkpoint 2: ranked hypotheses and how each will be tested (falsification query first). Nothing is labelled yet; one evidence worker per hypothesis will run after your reply.
+
+1. H1 Bad deploy: the v2.15.0 rollout (Helm revision 24) caused the GET /orders slowdown. Falsification: old-against-new split; an onset before 13:04:50, or the old revision equally slow, refutes it. (default tier)
+2. H2 N+1: the v2.15.0 list handler issues one items query per order. Falsification: descendant spans per GET /orders request, 24 traces per window, 14:30-15:30 against 11:00-12:00; equal counts refute it. Also reads the code at v2.15.0. (stronger tier)
+3. H3 orders-db itself is slow (CPU, locks, credits). Falsification: RDS CPU, read latency and connections at baseline, together with a flat per-request query count. (default)
+4. H4 Connection exhaustion at the pool cap. Falsification: pending_requests at zero and used far from any cap. (default)
+5. from-history:2026-08-14-orders-api, a lead from a past orders-api latency incident (a pool-size or configuration change leaves the orders-db pool exhausted; overlaps H4). Falsification: pending_requests at zero throughout and the chart version unchanged across the rollout. (default)
+6. H5 Pod capacity: the 3 replicas are CPU-bound or throttled with no autoscaler. Falsification: desired = ready and no throttling; HPA absent or below max. (default)
+7. H6 Traffic spike or bot. Falsification: request count against the previous window and -7d. (default)
+8. H7 A downstream (orders-db or auth-api) is slow or timing out. Falsification: downstream span p95 at baseline. (default)
+
+Budget: 35 of the 60 query ceiling is used; the remaining 25 are split 3 per worker. You can add, drop or re-rank anything before I spend them.
+```
+
+**Operator line 3 (received at checkpoint 2):** "Fine, continue."
+
+---
+
+## Phase 4: evidence (wave 3, one worker per hypothesis, all dispatched in one message)
+
+Dispatch (every call passes `model` explicitly): H2 on the stronger tier; H1, H3, H4, from-history, H5, H6 and H7 on the default tier. Each gets the full prompt from `agents/evidence.md` with: its own ID, statement, expected evidence and falsification query (the from-history worker gets only the line I wrote, never the incident file or its label); `RUN=<run directory>/raw/<ID>`; the three windows; the run's `profile.md` (not the stored one); budget share 3 queries, 0 GB of logs, 62 CloudWatch metric requests, 3 waves; lessons: none. Workers may read only the ledger's Windows, Query log and Gaps sections and their own hypothesis row. The simulated workers below follow exactly that.
+
+### [evidence H1, default tier]
+
+Read: environment.md; playbooks/changes.md (Old against new, App code at the deployed ref); the run's profile.md; ledger Windows, Query log, Gaps, row H1. Falsification run first, from the existing rows (`reused`): is the onset earlier than the rollout, or is the old revision equally slow?
+
+```text
+VERDICT: H1 | Confirmed
+summary: Only the new revision is slow. GET /orders p95 was 0.160 to 0.200 s in all 94 samples of the old revision (v2.14.0, 10:00 to 13:06 today) and in all 166 samples on 2026-10-13; it is 0.661 to 0.755 s in all 72 samples of the new revision (v2.15.0, 13:08 to 15:30). The first elevated sample (13:08) comes after the rollout (Helm revision 24, 13:04:50), not before it. Per revision: new 72/72 samples slow and 24/24 sampled traces with 9 to 52 downstream spans; old 0/94 samples slow and 24/24 sampled traces with 2 to 4. Of the three commits in the release only a4c1e9b (list handler, #2211) is on the failing path; #2208 (order detail) and #2203 (structlog) sit on routes or paths that stayed flat. Change, mechanism and timing are all cited below.
+weakest_link: the old and new revisions never ran side by side (all 3 pods were replaced within about a minute), so the split is sequential; the rollout start rests on Helm's zone-less UPDATED value and pod age, cross-checked to about 3 minutes against the UTC step at 13:08 (Confirmed at that resolution)
+
+evidence:
+- Onset after the rollout: last clean p95 sample 13:06 (0.163 s), first elevated 13:08 (0.716 s); Helm revision 24 at 13:04:50 [prometheus, W1-Q8, 09:30 to 15:30; helm, W1-Q4] link: Grafana Explore prom-prod, query as in the ledger
+- Old revision never slow in the covered data: 94 of 94 samples at or below 0.200 s today before the rollout, 166 of 166 on 2026-10-13 [prometheus, W1-Q8, W1-Q10] link: same
+- New revision slow on every sample: 72 of 72 at or above 0.661 s [prometheus, W1-Q8, 13:08 to 15:30] link: same
+- Same split in the requests themselves: 24 sampled traces on the new revision window have 9 to 52 descendant spans (p50 41), 24 on the old window have 2 to 4 (p50 3); one trace each shows 12 per-order SELECTs against one joined SELECT [tempo, W2-Q8, W2-Q9, W2-Q10, W2-Q11] link: Tempo trace view for e3ea7a39... and 65345f5f...
+- Mechanism visible in metrics at the same minute: database operations 365.5/s at 13:06, 4031.1/s at 13:08 with request rate flat at about 56/s [prometheus, W1-Q15, PB-Q16, 09:30 to 15:30] link: Grafana Explore prom-prod
+- Change on the failing path: a4c1e9b replaces one joined query by a per-order loop in orders_api/handlers/list_orders.py; the other two commits are not on it: GET /orders/{id} p95 0.061 to 0.064 s, POST /orders 0.139 to 0.142 s, PATCH 0.091 to 0.088 s [git, W2-Q1, W2-Q2; prometheus, W1-Q5, W1-Q6] link: git diff v2.14.0..v2.15.0 in the clone
+- Pods: 3 of 3 new pods Running, 0 restarts; ReplicaSet 7c9b6d8f5d 3 ready, the old one at 0 [kubectl, PB-Q9, W1-Q2]
+
+timeline:
+- 13:04:50 — Helm revision 24 (v2.15.0, chart unchanged) — helm W1-Q4
+- about 13:05 — ReplicaSet orders-api-7c9b6d8f5d, 3 pods about 144 to 145 minutes old at about 15:30 — kubectl W1-Q2, PB-Q9
+- 13:06 / 13:08 — last clean / first elevated p95 sample — prometheus W1-Q8
+
+queries:
+| ID | Source | Query | Range (UTC) | Est. cost | Result |
+|---|---|---|---|---|---|
+| (none new) | | every claim reused ledger rows W1-Q2, W1-Q4, W1-Q5, W1-Q6, W1-Q8, W1-Q10, W1-Q15, W2-Q1, W2-Q2, W2-Q8..Q11, PB-Q9, PB-Q16 | | | |
+
+gaps:
+- Helm UPDATED prints no zone and kubectl showed AGE only (no creationTimestamp) — rollout start dated to about 3 minutes by cross-check, not by a UTC stamp
+- No IaC repo and Helm values are not read by design — a values change shipped in the same release would not be visible; the chart version is the same in revisions 23 and 24
+- No per-pod latency — a single-pod outlier is not excluded, but all pods run one ReplicaSet and CPU is the same
+
+untrusted_text:
+- none
+
+to_confirm_by_human:
+- Read the creationTimestamp of ReplicaSet orders-api-7c9b6d8f5d, or the CD pipeline's deploy record, to date the rollout in UTC.
+- Compare the chart values files at the two releases to confirm no configuration change shipped with the code.
+
+lesson_candidates:
+- none
+
+cost: 0 queries, 0 GB of logs scanned, 0 CloudWatch metric requests, none
+```
+
+Dispatcher check: `Confirmed` cites W2-Q8 and W2-Q10 (spans in the window) and W1-Q15 (the mechanism at the onset), so no escalation.
+
+### [evidence H2, escalated tier]
+
+(Started on the stronger tier by the dispatcher rules; this is not an escalation of a default-tier verdict.) Read: environment.md; playbooks/traces.md (Queries per request, N+1) and changes.md (the slow-endpoint code section); the run's profile.md; ledger Windows, Query log, Gaps, row H2. Falsification first: spans per request equal between windows? The ledger already holds 24 traces per window (W2-Q8, W2-Q9, at least 20 each), so they are reused; then the code at the deployed ref.
+
+Worker commands (RUN=raw/H2):
+
+```bash
 git -C ~/src/orders-api show v2.15.0:orders_api/handlers/list_orders.py
 git -C ~/src/orders-api show v2.15.0:orders_api/repository.py
 ```
 
-| ID | World file | Result |
-|---|---|---|
-| H1-Q1 | `prom-01.json` (same metric and selectors as W1-Q5) | one series with labels service, route, method (no `pod` label despite `by (pod)`), values identical to W1-Q5 at every shared timestamp: 12:50 0.169, 12:52 0.179, 12:54 0.169, 12:56 0.185, 12:58 0.171, 13:00 0.190, 13:02 0.179, 13:04 0.164, 13:06 0.163, 13:08 0.716, 13:10 0.698, 13:12 0.719, 13:14 0.662, 13:16 0.748, 13:18 0.750, 13:20 0.722 |
-| H1-Q2 | `repo/orders_api/handlers/list_orders.py` | lines 15-18: `orders = repo.list_orders(customer_id, limit=limit)` then `for order in orders: order.items = repo.list_items(order.id)`; limit capped at 50 (line 13) |
-| H1-Q3 | `repo/orders_api/repository.py` | `list_items` (lines 44-47) runs `ITEMS_SQL` (one query per call, own pooled connection); `list_orders_with_items` (lines 38-42) is the one-round-trip join, docstring "used by the list handler up to v2.14.0" |
+| Worker ID | Command | World file | Key facts returned |
+|---|---|---|---|
+| H2-Q1 | `git show v2.15.0:orders_api/handlers/list_orders.py` | `../repo/orders_api/handlers/list_orders.py` | line 13: `limit = min(int(...), 50)`; lines 15 to 18: `orders = repo.list_orders(...)` then `for order in orders: order.items = repo.list_items(order.id)`; docstring says each order carries its line items |
+| H2-Q2 | `git show v2.15.0:orders_api/repository.py` | `../repo/orders_api/repository.py` | `list_items` (lines 44 to 47) executes ITEMS_SQL (one `WHERE order_id = ...` query, lines 22 to 26) inside its own `with self.pool.connection()`; `list_orders_with_items` (lines 38 to 42, SQL lines 11 to 20) is one LEFT JOIN round trip, "used by the list handler up to v2.14.0" |
 
-Verdict block returned:
-
-```text
-VERDICT: H1 | Confirmed
-summary: GET /orders was normal through 13:06 (0.163 s) and elevated from 13:08 (0.716 s), 3 minutes after the Helm upgrade to v2.15.0 at 13:04:50 and 2-3 minutes after the new ReplicaSet (created about 13:05, 3/3 ready). No sample between 12:50 and 13:06 is elevated, so the first-elevated-sample-before-rollout refutation is not met. The v2.15.0 handler (list_orders.py lines 15-18) now calls repo.list_items(order.id) once per returned order, up to 50, where v2.14.0 used the one-round-trip repo.list_orders_with_items. Only the endpoint whose handler changed moved (POST /orders, GET /orders/{id}, PATCH, /healthz unchanged, W1-Q11..Q13). Service-wide DB statements/s stepped x10.4 at the same 13:08 sample while the endpoint's call rate stayed flat (W1-Q15, W1-Q14). The per-request statement count is H2's question, not part of this statement.
-weakest_link: no old-versus-new latency split by pod or revision exists (the latency histogram has no pod label, H1-Q1; Kubernetes events from 13:05 have expired, W1-Q3), so "the new revision took traffic" rests on the ReplicaSet age and Helm time agreeing with the onset at 2-minute resolution, plus the image diff on the failing path; those are two of the three tie options Phase 2 accepts. (Confirmed)
-
-evidence:
-- first elevated sample 13:08 (0.716 s), last normal 13:06 (0.163 s), 12:50-13:06 all 0.163-0.190 [prom-prod, H1-Q1 and reused W1-Q5, 12:50-13:20] link: raw/H1/m-p95-by-pod.json
-- Helm revision 24 (app v2.15.0) at 13:04:50; ReplicaSet orders-api-7c9b6d8f5d 3/3 ready, age 145m at 15:30; revision 23 (v2.14.0) superseded [helm, kubectl, reused W1-Q1, W1-Q2, W1-Q4]
-- v2.15.0 list_orders.py lines 15-18 loop over orders calling repo.list_items(order.id); v2.14.0 called repo.list_orders_with_items [git, H1-Q2, H1-Q3, reused W2-Q9]
-- other routes on the same pods unchanged at 15:30 against 12:30 and -7d [prom-prod, reused W1-Q11, W1-Q12, W1-Q13]
-- DB statements/s 365.5 at 13:06, 4,031 at 13:08, endpoint call rate flat [prom-prod, reused W1-Q15, W1-Q14]
-
-timeline:
-- 13:04:50 — Helm upgrade to v2.15.0 deployed — helm (W1-Q4)
-- about 13:05 — ReplicaSet orders-api-7c9b6d8f5d created — kubectl (W1-Q2)
-- 13:06 — last normal p95 0.163 s — prometheus (H1-Q1)
-- 13:08 — first elevated p95 0.716 s — prometheus (H1-Q1)
-
-queries:
-| ID | Source | Query | Range (UTC) | Est. cost | Result |
-|---|---|---|---|---|---|
-| H1-Q1 | prom-prod | histogram_quantile(0.95, sum by (le, pod) (rate(http_server_request_duration_seconds_bucket{service="orders-api", route="/orders"}[5m]))) | 12:50-13:20, step 120 s | 1 query | one series, no pod label, identical to W1-Q5; onset 13:06 to 13:08; link: raw/H1/m-p95-by-pod.json |
-| H1-Q2 | git (clone, ref v2.15.0) | show v2.15.0:orders_api/handlers/list_orders.py | n/a | free | loop with repo.list_items per order, lines 15-18; link: git -C ~/src/orders-api show v2.15.0:orders_api/handlers/list_orders.py |
-| H1-Q3 | git (clone, ref v2.15.0) | show v2.15.0:orders_api/repository.py | n/a | free | list_items one query per call, lines 44-47; join variant lines 38-42; link: git -C ~/src/orders-api show v2.15.0:orders_api/repository.py |
-
-gaps:
-- No pod or revision label on the latency histogram — no direct "new pods slow, old pods fine" split; the tie rests on timing and the diff.
-- Onset resolution is 120 s (rate window 5 min) against a Helm time to the second — the 13:06 to 13:08 step can place the onset anywhere in that interval.
-- Helm values (config) between revisions 23 and 24 are unreadable here (no values repo, helm get values forbidden) — a config-only change in the same upgrade is not excluded by this worker.
-
-untrusted_text:
-- none
-
-to_confirm_by_human:
-- Compare the Helm values for revisions 23 and 24 (or the values files at the two refs) to rule out a configuration change in the same upgrade.
-- Ask the release owner whether the rollout was a rolling update or a recreate, and when the last v2.14.0 pod stopped serving.
-
-lesson_candidates:
-- identifier (prometheus) http_server_request_duration_seconds_* carries only service, method, route: no pod or version label, so no per-pod or per-revision split from this metric — H1-Q1
-
-cost: 1 query, 0 GB, 0 CloudWatch metric requests, 2 git reads
-```
-
----
-
-### [evidence H2, default tier]
-
-Hypothesis H2 (N+1). Falsification first: spans per request, incident against baseline, at least 20 traces each; then the single traces. Wave 1 (searches) and wave 2 (two fetches by ID), within the 1 h `trace_samples` cap.
-
-```bash
-RUN=.culiops/sre-investigate/runs/orders-api-prod-20261020-1530/raw/H2; mkdir -p "$RUN"
-TEMPO=https://grafana.example.com/api/datasources/proxy/uid/tempo-prod
-# wave 1: falsification, the same structural search in both windows (up to 30 traces each)
-curl -sG "$TEMPO/api/search" -H "Authorization: Bearer $GRAFANA_SERVICE_ACCOUNT_TOKEN" --data-urlencode 'q={ resource.service.name = "orders-api" && span:kind = server && span:name = "GET /orders" } >> { span:kind = client }' --data-urlencode "start=1792506600" --data-urlencode "end=1792510200" --data-urlencode "limit=30" > "$RUN/tr-search-incident.json"
-curl -sG "$TEMPO/api/search" -H "Authorization: Bearer $GRAFANA_SERVICE_ACCOUNT_TOKEN" --data-urlencode 'q={ resource.service.name = "orders-api" && span:kind = server && span:name = "GET /orders" } >> { span:kind = client }' --data-urlencode "start=1792494000" --data-urlencode "end=1792497600" --data-urlencode "limit=30" > "$RUN/tr-search-baseline.json"
-# wave 2: one trace per window by ID, window padded by one hour on each side
-curl -sG "$TEMPO/api/v2/traces/e3ea7a3906419b466a28541306cc5ee1" -H "Authorization: Bearer $GRAFANA_SERVICE_ACCOUNT_TOKEN" --data-urlencode "start=1792503000" --data-urlencode "end=1792513800" > "$RUN/tr-e3ea.json"
-curl -sG "$TEMPO/api/v2/traces/65345f5f8176033524bc88af3bd43f6f" -H "Authorization: Bearer $GRAFANA_SERVICE_ACCOUNT_TOKEN" --data-urlencode "start=1792490400" --data-urlencode "end=1792501200" > "$RUN/tr-65345.json"
-```
-
-| ID | World file | Result |
-|---|---|---|
-| H2-Q1 | `tempo-02.json` | 24 traces, start times 14:30:18-15:27:50. `matched` (descendant spans of the GET /orders server span) sorted: 9, 14, 18, 22, 27, 31, 33, 36, 38, 39, 40, 41, 41, 42, 44, 47, 49, 51, 52 x6: p50 41, p95 52, max 52, min 9. `durationMs`: 128-431, median 340.5. Tempo inspected 18,342 traces / 2.41 GB |
-| H2-Q2 | `tempo-03.json` | 24 traces, start times 11:00:09-11:57:36. `matched`: 2, 2, 3 x18, 4 x4: p50 3, p95 4, max 4, min 2. `durationMs`: 78-165, median 110. Tempo inspected 17,905 traces / 2.35 GB |
-| H2-Q3 | `tempo-09.json` (trace e3ea…, first listed in H2-Q1) | 15 spans, root `GET /orders` 152 ms; 1 client span `GET auth-api /verify` 3.4 ms (server.address auth-api.auth.svc.cluster.local); 1 `SELECT orders` 3.05 ms; 12 `SELECT order_items` (median 3.74 ms, max 4.52 ms, total 44.8 ms); all DB spans `db.system=postgresql`; resource attributes service.name, k8s.namespace.name only |
-| H2-Q4 | `tempo-10.json` (trace 65345…, first listed in H2-Q2) | 3 spans, root `GET /orders` 109 ms; `GET auth-api /verify` 3.77 ms; one `SELECT orders JOIN order_items` 3.05 ms |
-
-Worker's own arithmetic (local, from the saved JSON): across the 24 incident traces, duration against descendant spans fits 89.8 ms + 6.05 ms per span (r = 0.97); incident fetched trace root 152 ms against 109 ms baseline (+43 ms); DB span time 47.9 ms against 3.05 ms (+44.8 ms); the root time not inside any child span is 100.8 ms (incident trace) against 102.2 ms (baseline trace).
-
-Verdict block returned:
+Local arithmetic (python3 -I over the pulled search results): trace duration against descendant spans, 48 traces (24 + 24): duration = 100.8 ms + 5.8 ms per span, r = 0.979. Sample means: 38.9 descendants (new) against 3.1 (old), +35.8 per request; one descendant per trace is the auth-api call, so DB spans are 37.9 against about 2.1.
 
 ```text
 VERDICT: H2 | Confirmed
-summary: The falsification (equal span counts) fails. Per GET /orders request the server span has p50 41 and p95 52 descendant spans in 14:30-15:30 (24 traces) against p50 3 and p95 4 in the pre-deploy hour 11:00-12:00 (24 traces). Both windows meet the 20-trace minimum. The fetched incident trace shows the pattern directly: one SELECT orders followed by 12 SELECT order_items, each 3.7 ms median (4.5 ms max), where the baseline trace has one SELECT orders JOIN order_items of 3.05 ms: statements are about as fast as before (also W1-Q20: DB span p95 4.19 ms before, 4.04 ms after) but there are more of them. In that trace the extra root time (+43 ms) equals the extra DB span time (+44.8 ms), and the root time outside any child span is the same (100.8 ms against 102.2 ms). Across the 24 incident traces duration grows with span count, about 6 ms per extra span (r = 0.97), which with the baseline intercept reproduces the 110 ms to 340 ms median step. The service-wide metric agrees with the samples: DB statements/s x10.4 at the same 13:08 sample with a flat call rate (W1-Q15, W1-Q14). The matched count includes the auth-api client span that every fetched trace carries (one per trace), so DB statements per request are about the count minus one.
-weakest_link: representativeness of the sample: 24 traces per window as returned by the search (not a random draw), one retrievable trace per window by ID, and the first-listed incident trace is a short one (14 descendants against a median of 41). The service-wide statement rate (W1-Q15) agrees, which is why this stays Confirmed. (Confirmed)
+summary: The v2.15.0 list handler runs one items query per order. Per GET /orders request, descendant spans (the auth-api call plus database spans) are 9 to 52 (p50 41, p95 52) on the new revision against 2 to 4 (p50 3) on the old one, 24 traces each; the largest new count (52 = auth call + 1 orders query + 50 item queries) equals 1 + the page cap of 50 in the code. Each span is as fast as before (database span p95 3.9 to 4.4 ms before and after 13:08), the fetched new trace shows 12 serial item queries of 2.9 to 4.5 ms against one joined query on the old trace, and trace duration follows span count (about 101 ms + 5.8 ms per span, r = 0.98, n = 48), which accounts for the p50 move from about 110 ms to about 342 ms. Database operations rose 10.4 times at 13:08 with a flat request rate, and the pool never waited.
+weakest_link: attribution of the latency to the span count comes from 48 sampled traces with an unknown sampling rate; it agrees with the independent 13:08 metric step in p50, p95 and database operations (Confirmed)
 
 evidence:
-- spans per request p50 41 / p95 52 / max 52 (incident, n=24) against p50 3 / p95 4 / max 4 (baseline, n=24) [tempo-prod, H2-Q1 and H2-Q2, 14:30-15:30 and 11:00-12:00] link: raw/H2/tr-search-incident.json, raw/H2/tr-search-baseline.json
-- incident trace e3ea…: root 152 ms, 1 SELECT orders (3.05 ms) + 12 SELECT order_items (3.74 ms median, 4.52 ms max), 1 auth-api call (3.4 ms) [tempo-prod, H2-Q3, trace start 14:30:18] link: raw/H2/tr-e3ea.json
-- baseline trace 65345…: root 109 ms, one SELECT orders JOIN order_items (3.05 ms), 1 auth-api call (3.77 ms) [tempo-prod, H2-Q4, trace start 11:00:09] link: raw/H2/tr-65345.json
-- request duration against descendant spans in the incident sample: slope 6.05 ms per span, intercept 89.8 ms, r = 0.97 [local arithmetic over H2-Q1]
-- DB span p95 flat 4.19 ms to 4.04 ms; statements/s x10.4; call rate flat [reused W1-Q20, W1-Q15, W1-Q14]
-- the repository still has the one-round-trip join the v2.14.0 handler used [git, reused W2-Q9]
+- Spans per request differ: new window p50 41, p95 52, max 52; old window p50 3, p95 4, max 4; 24 traces each (at least 20) [tempo, W2-Q8, W2-Q9, 14:30 to 15:30 against 11:00 to 12:00] link: Tempo search with the structural query in the ledger
+- Per-trace shape: new trace e3ea7a39... = auth-api verify + SELECT orders + 12 x SELECT order_items; old trace 65345f5f... = auth-api verify + one SELECT orders JOIN order_items [tempo, W2-Q10, W2-Q11] link: Tempo trace view
+- Each database span is as fast as before: p95 3.9 to 4.4 ms at all 23 steps, 10:00 to 15:30 [tempo, W1-Q17] link: Tempo metrics query in the ledger
+- Code at the deployed ref: the loop calls list_items(order.id) per order, capped at 50 orders; list_items takes its own pool connection per call; the previous call was one LEFT JOIN round trip [git, H2-Q1, H2-Q2, tag v2.15.0] link: git show in the clone
+- Metrics agree: database operations 380/s to 3,952/s (10.4 times) stepping at 13:08, request rate 56.5 to 56.1 req/s, pool pending_requests 0 in 166 of 166 samples [prometheus, W1-Q15, PB-Q16, W1-Q19] link: Grafana Explore prom-prod
+- Same window on 2026-10-13: database operations 355 to 404/s [prometheus, W1-Q16]
 
 timeline:
-- 11:00:09-11:57:36 — baseline sample: 2-4 descendant spans per GET /orders — tempo-prod (H2-Q2)
-- 14:30:18-15:27:50 — incident sample: 9-52 descendant spans per GET /orders — tempo-prod (H2-Q1)
+- 2026-10-19 — a4c1e9b "load items per order in list handler (#2211)" merged — git W2-Q1
+- 13:04:50 — release v2.15.0 rolled out — helm W1-Q4
+- 13:08 — first sample with 10.4 times the database operations and the slower p50 and p95 — prometheus W1-Q15, W1-Q8
 
 queries:
 | ID | Source | Query | Range (UTC) | Est. cost | Result |
 |---|---|---|---|---|---|
-| H2-Q1 | tempo-prod | { resource.service.name = "orders-api" && span:kind = server && span:name = "GET /orders" } >> { span:kind = client } , limit 30 | 14:30-15:30 | 1 query, 2.41 GB inspected | 24 traces, matched p50 41 p95 52; link: raw/H2/tr-search-incident.json |
-| H2-Q2 | tempo-prod | same | 11:00-12:00 | 1 query, 2.35 GB inspected | 24 traces, matched p50 3 p95 4; link: raw/H2/tr-search-baseline.json |
-| H2-Q3 | tempo-prod | GET /api/v2/traces/e3ea7a3906419b466a28541306cc5ee1 (padded window) | 13:30-16:30 | 1 query | 15 spans, 12 SELECT order_items; link: raw/H2/tr-e3ea.json |
-| H2-Q4 | tempo-prod | GET /api/v2/traces/65345f5f8176033524bc88af3bd43f6f (padded window) | 10:00-13:00 | 1 query | 3 spans, one JOIN; link: raw/H2/tr-65345.json |
+| H2-Q1 | git | `git -C ~/src/orders-api show v2.15.0:orders_api/handlers/list_orders.py` | tag v2.15.0 | free | per-order loop on lines 15 to 18; cap 50 on line 13. link: file in the clone |
+| H2-Q2 | git | `git -C ~/src/orders-api show v2.15.0:orders_api/repository.py` | tag v2.15.0 | free | list_items runs one query per call with its own pool connection (lines 44 to 47); the joined read is lines 38 to 42. link: file in the clone |
 
 gaps:
-- Only these two traces were fetched; the budget share was 4 queries. Traces with 41-52 descendants were not retrieved, so the full time accounting is shown for a short request only (14 descendants); for the long ones the evidence is the regression across the 24 sampled durations.
-- The search listing's span previews (names and durations) disagree with the fetched baseline trace (the preview lists SELECT orders and SELECT order_items spans; the fetched trace has one SELECT orders JOIN order_items), so span names come from the fetched traces and counts from `matched`.
-- About 2 ms of each extra statement's 6 ms cost (6.05 ms slope against about 3.7 ms of span time) is time outside any span (pool checkout, row decoding); inferred from the slope only.
-- Trace attributes carry no service.version or pod: the baseline-versus-incident comparison is by time window, not by revision.
+- Size not reconciled: +3,572 operations/s at 56.1 req/s is +63.7 per request, but the code and the traces allow at most 51 database spans per request (1 + 50), and the sampled mean (+35.8 per request) explains only about 56% of the metric increase (about +2,000/s) — mechanism shown directly, exact size of the extra work not
+- Old traces show 2 to 4 descendants where the code reads one joined query plus the auth call (2) — the extra 0 to 2 spans in some old traces are not explained
+- Sampling rate of the traces is unknown
 
 untrusted_text:
 - none
 
 to_confirm_by_human:
-- Replay GET /orders for one customer with 50 orders against a non-production copy of v2.14.0 and v2.15.0 with tracing on and compare statement counts and durations (needs an active request, which this run does not make).
-- Ask the handler's owners whether the list view needs per-item status for every order, or whether the join can serve it.
+- Ask the owning team what db_client_operation_duration_seconds_count counts (statements only, or also pool checkouts or transaction statements) and whether other routes changed their query counts, to reconcile the size.
+- In a non-production environment, reproduce a list request for a customer with 50 orders and count the queries issued (a reproduction is not done by this run).
 
 lesson_candidates:
-- process (tempo) Search `matched` counts all descendants of the server span (DB statements plus the auth-api client span), and span names in the search preview can differ from the by-ID trace: take counts from `matched`, names and durations from a by-ID fetch — H2-Q2
-- identifier (tempo) Traces for orders-api carry resource attributes service.name and k8s.namespace.name only; no service.version or pod, so revisions cannot be separated in traces — H2-Q3
-- identifier (tempo) GET /orders traces include a client span `GET auth-api /verify` (server.address auth-api.auth.svc.cluster.local) and DB spans named SELECT orders / SELECT order_items / SELECT orders JOIN order_items with db.system=postgresql — H2-Q3
+- process (tempo) A structural TraceQL search reports matched as every descendant span, including non-DB client spans such as the auth-api verify call; subtract them before reading DB-span counts. — W2-Q8
 
-cost: 4 queries, 0 GB of logs (Tempo inspected 4.76 GB), 0 CloudWatch metric requests, 0 other units
+cost: 2 queries, 0 GB of logs scanned, 0 CloudWatch metric requests, none
 ```
 
----
+### [evidence H3, default tier]
 
-### [evidence H3, escalated tier] (started on the stronger tier by the dispatcher rule, not re-dispatched)
-
-Hypothesis H3 (orders-db slower per statement). The falsification is per-statement latency and DB CPU/lock/queue metrics. The existing rows W1-Q20 and W1-Q21 already hold per-statement latency and CPU, so the worker cites them (`reused`) and spends one query on the metrics the ledger lacks. Wave 1 of 1.
+Read: environment.md; playbooks/metrics.md (AWS saturation and dependency metrics); profile.md; ledger Windows, Query log, Gaps, row H3. Falsification first: RDS CPU, read latency and connections at baseline refute it, but only together with a flat per-request query count; the per-request count is NOT flat (W2-Q8, W2-Q9), so a flat DB metric alone would not clear the DB. The query asks the database's own view.
 
 ```bash
-RUN=.culiops/sre-investigate/runs/orders-api-prod-20261020-1530/raw/H3; mkdir -p "$RUN"
-cat > "$RUN/q-rds-extra-300.json" <<'JSON'
-[ {"Id": "wlat",  "MetricStat": {"Period": 300, "Stat": "Average", "Metric": {"Namespace": "AWS/RDS", "MetricName": "WriteLatency",   "Dimensions": [{"Name": "DBInstanceIdentifier", "Value": "orders-db"}]}}},
-  {"Id": "dq",    "MetricStat": {"Period": 300, "Stat": "Average", "Metric": {"Namespace": "AWS/RDS", "MetricName": "DiskQueueDepth", "Dimensions": [{"Name": "DBInstanceIdentifier", "Value": "orders-db"}]}}},
-  {"Id": "dead",  "MetricStat": {"Period": 300, "Stat": "Sum",     "Metric": {"Namespace": "AWS/RDS", "MetricName": "Deadlocks",      "Dimensions": [{"Name": "DBInstanceIdentifier", "Value": "orders-db"}]}}},
-  {"Id": "fmem",  "MetricStat": {"Period": 300, "Stat": "Minimum", "Metric": {"Namespace": "AWS/RDS", "MetricName": "FreeableMemory", "Dimensions": [{"Name": "DBInstanceIdentifier", "Value": "orders-db"}]}}} ]
-JSON
-aws cloudwatch get-metric-data --profile prod-read --region us-east-1 --metric-data-queries "file://$RUN/q-rds-extra-300.json" --start-time 2026-10-20T09:30:00Z --end-time 2026-10-20T15:30:00Z --output json > "$RUN/m-rds-extra.json"
+RUN=<run directory>/raw/H3; mkdir -p "$RUN"
+# q-rds-300.json: three entries, Id cpu / readlat / conns, Namespace AWS/RDS, Dimensions [DBInstanceIdentifier=orders-db], Period 300, Stat Average,
+#   MetricName CPUUtilization / ReadLatency / DatabaseConnections
+aws cloudwatch get-metric-data --profile prod-read --region us-east-1 --metric-data-queries "file://$RUN/q-rds-300.json" --start-time 2026-10-20T10:00:00Z --end-time 2026-10-20T15:30:00Z --output json > "$RUN/m-rds.json"
 ```
 
-CPUCreditBalance is not requested: the instance class (db.r6g.2xlarge, W0-Q22) is not burstable.
-
-| ID | World file | Result |
-|---|---|---|
-| H3-Q1 | `cw-01.json` (row "aws cloudwatch get-metric-data … AWS/RDS … orders-db"; the world note says other RDS metrics have no data) | the four ids WriteLatency, DiskQueueDepth, Deadlocks, FreeableMemory return no data points (empty Timestamps/Values); not read as zero |
-
-Verdict block returned:
+| Worker ID | Command | World file | Key facts returned |
+|---|---|---|---|
+| H3-Q1 | `aws cloudwatch get-metric-data` (AWS/RDS, orders-db, 5 min) | `cw-01.json` | status Complete, 67 points per metric. CPUUtilization: 10:00 to 13:00 buckets (37) mean 24.5% (21.2 to 26.9); 13:05 bucket 23.9%; 13:10 to 15:30 buckets (29) mean 40.4% (37.1 to 44.0). ReadLatency: 0.59 ms before and after (0.52 to 0.67). DatabaseConnections: mean 41.7 (40 to 44) before, 46.1 (43 to 48) after. No messages |
 
 ```text
 VERDICT: H3 | Ruled out
-summary: The hypothesis "each statement got slower" is contradicted. Per-statement DB p95 from traces is 4.19 ms before the onset and 4.04 ms after (W1-Q20); RDS ReadLatency is 0.6 ms before and after (W1-Q21). RDS CPU did rise, from a median of 24.9% to 40.8% (max 44.0%) and connections from 42 to 47 (max 48) (W1-Q21), but that rise coincides with the same 13:08 sample at which service-wide DB statements/s went from about 381 to about 3,962 (x10.4) (W1-Q15), and a CPU of 41% is far from saturation: it is the database doing roughly ten times the statements at the same per-statement speed, a consequence and not a cause. Pool waiters are 0 (W1-Q17). Lock waits, deadlocks, queue depth and write latency could not be read (no data; Performance Insights is off), so the lock arm is excluded indirectly: lock waits would lengthen statement durations, which are flat. This does not clear the database as the place where the extra work lands (H2).
-weakest_link: lock-wait, deadlock and queue metrics are unavailable (no data returned, Performance Insights off), so that arm of the hypothesis is excluded only through the flat per-statement latency. (Assumed for that arm; the hypothesis as a whole is Ruled out by W1-Q20 and W1-Q21.)
+summary: The database did not become slow. Read latency is 0.59 ms before and after the onset, connections move from about 42 to about 46, and per-call database spans stay at about 4 ms (reused). CPU rose from about 24% to about 40% (maximum 44%), which is the cost of roughly ten times more queries, not a saturated or locked database; the rise starts in the 13:10 bucket, one 5-minute bucket after the application-side step at 13:08 (the 13:05 bucket is still at baseline), so it follows the application and does not lead it. Because the per-request query count is not flat (reused W2-Q8, W2-Q9), the flat read latency alone would not have cleared the database; what clears it is that the extra time is accounted for by the span count (reused: trace duration about 101 ms + 5.8 ms per span).
+weakest_link: lock waits and deadlocks were not measured (only CPU, read latency and connections), and RDS values are 5-minute averages (Ruled out for a slow database; the DB remains a capacity concern at its new 40% CPU)
 
 evidence:
-- per-statement DB p95 4.19 ms before, 4.04 ms after [tempo-prod, reused W1-Q20, 09:30-15:30]
-- ReadLatency 0.6 ms before and after; CPU 24.9% to 40.8% (max 44.0%); connections 42 to 47 [cloudwatch, reused W1-Q21, 09:30-15:30]
-- DB statements/s x10.4 at 13:08 [prometheus, reused W1-Q15]
-- WriteLatency, DiskQueueDepth, Deadlocks, FreeableMemory: no data points [cloudwatch, H3-Q1, 09:30-15:30]
+- RDS CPU 24.5% (37 buckets, 10:00 to 13:00) against 40.4% (29 buckets, 13:10 to 15:30), maximum 44.0%; the 13:05 bucket is 23.9% [cloudwatch, H3-Q1, 10:00 to 15:30] link: CloudWatch console, AWS/RDS, DBInstanceIdentifier=orders-db
+- ReadLatency 0.59 ms before and 0.59 ms after (0.52 to 0.67 ms throughout) [cloudwatch, H3-Q1] link: same
+- DatabaseConnections 41.7 to 46.1 [cloudwatch, H3-Q1] link: same
+- Per-call database span p95 3.9 to 4.4 ms before and after [tempo, W1-Q17, reused]
+- Per-request span count is up (p50 3 to 41) [tempo, W2-Q8, W2-Q9, reused]
 
 timeline:
-- 13:08 — RDS CPU and statements/s step together (statements x10.4; CPU +16 points) — cloudwatch, prometheus (W1-Q21, W1-Q15)
+- 13:08 — application-side step (database operations 10.4 times) — prometheus W1-Q15 (reused)
+- 13:10 — first RDS bucket with CPU 41.3% — cloudwatch H3-Q1
 
 queries:
 | ID | Source | Query | Range (UTC) | Est. cost | Result |
 |---|---|---|---|---|---|
-| H3-Q1 | cloudwatch, profile prod-read | get-metric-data AWS/RDS orders-db WriteLatency, DiskQueueDepth, Deadlocks, FreeableMemory, Period 300 | 09:30-15:30 | 4 metric requests | no data points for any of the four; link: aws cloudwatch get-metric-data --profile prod-read --region us-east-1 --metric-data-queries file://raw/H3/q-rds-extra-300.json |
+| H3-Q1 | cloudwatch | get-metric-data AWS/RDS orders-db CPUUtilization, ReadLatency, DatabaseConnections, Period 300, Average | 10:00 to 15:30 | 3 metric requests | CPU 24.5% to 40.4% (max 44.0%); ReadLatency flat 0.59 ms; connections 41.7 to 46.1. link: CloudWatch console, AWS/RDS |
 
 gaps:
-- Lock waits, deadlocks, disk queue depth, write latency and freeable memory: no data (not zero). Performance Insights is off (W0-Q22), which would have shown waits per statement.
-- The RDS CPU rise is attributed to the statement increase by timing and size only (both step at 13:08); no per-statement CPU figure exists.
+- Lock waits and deadlocks not pulled — a lock problem is excluded only through the flat read latency and the span-time accounting
+- db.r6g.2xlarge is not a burstable class, so no CPU credit balance was requested
 
 untrusted_text:
 - none
 
 to_confirm_by_human:
-- Enable Performance Insights (or read it in the console if it is enabled elsewhere) for orders-db to confirm that waits per statement stayed flat while load rose.
-- Check the instance's max_connections and the application pool maximum to give the connection headroom a number.
+- If the team wants the lock question closed, read the database's lock-wait view in a Performance Insights session; Performance Insights is off for this instance (rds describe), so enabling it is a change for the owner.
 
 lesson_candidates:
-- process (cloudwatch) For `orders-db` only CPUUtilization, ReadLatency and DatabaseConnections return data; WriteLatency, DiskQueueDepth, Deadlocks and FreeableMemory returned none, and Performance Insights is off: lock evidence must come from statement latency — H3-Q1
+- process (cloudwatch) RDS CPU in 5-minute buckets stepped one bucket (13:10) after the app-side step (13:08); DB-side metrics trail app-side steps, so do not use them to date an onset. — H3-Q1
 
-cost: 1 query, 0 GB of logs, 4 CloudWatch metric requests, 0 other units
+cost: 1 query, 0 GB of logs scanned, 3 CloudWatch metric requests, none
 ```
-
----
 
 ### [evidence H4, default tier]
 
-Hypothesis H4 (connection exhaustion or pool cap). Falsification first: pool waiters and `used` against the pool maximum. Existing row W1-Q17 answers the waiters; one Loki raw-lines query looks for pool-wait errors. Estimate first: the stats call returned an empty object for this datasource (W0-Q24), so the query is kept to one stream, one 30-minute window (the `log_raw` cap), no line filter, limit 100, and the reply's own byte count is recorded.
-
-```bash
-RUN=.culiops/sre-investigate/runs/orders-api-prod-20261020-1530/raw/H4; mkdir -p "$RUN"
-curl -sG "https://grafana.example.com/api/datasources/proxy/uid/loki-prod/loki/api/v1/query_range" -H "Authorization: Bearer $GRAFANA_SERVICE_ACCOUNT_TOKEN" --data-urlencode 'query={namespace="orders", app="orders", container="api"}' --data-urlencode "start=1792508400000000000" --data-urlencode "end=1792510200000000000" --data-urlencode "direction=forward" --data-urlencode "limit=100" > "$RUN/logs-api-1500-1530.json"
-```
-
-| ID | World file | Result |
-|---|---|---|
-| H4-Q1 | `loki-05.json` (selector app=orders ∩ namespace=orders ∩ container=api) | one stream {app: orders, namespace: orders, container: api}; 8 lines between 15:18:08 and 15:19:49, all `level=info msg="request completed" method=GET path=/orders status=200 page_size=50`, duration_ms 380, 311, 286, 751, 474, 703, 576, 484 (median 479). No pod name, no trace ID, no pool or connection text in any line. Reply stats: 48,211,904 bytes processed (0.048 GB) |
-
-Verdict block returned:
+Read: environment.md; playbooks/metrics.md (connection pools note); profile.md; ledger Windows, Query log, Gaps, row H4. Falsification first, from the existing row W1-Q19.
 
 ```text
 VERDICT: H4 | Ruled out
-summary: Pool waiters are zero at every one of the 166 points between 09:30 and 15:30, including the whole incident window (pending_requests 0), and the `used` gauge is 14-19 before the onset and 17-24 after, with no plateau (W1-Q17); a pool whose cap is hit shows waiters, and there are none. RDS connections went 42 to 47 (max 48) (W1-Q21). The 8 log lines returned for 15:00-15:30 contain no pool or connection error; that sample is far too small to count as evidence either way and its stream is unverified (below), so it is not used. The rise in `used` (median 16 to 21) is what ten times more statements per second, each taking a pooled connection, would produce at this per-statement speed (W1-Q15); it never reaches the point of queueing.
-weakest_link: the pool maximum and the database connection limit are not exposed by any metric or read from configuration, so "not pinned at its cap" has no numeric ceiling; the absence of waiters is the evidence that carries it. (Confirmed for the waiters; the cap value is a gap)
+summary: The pool never waited. pending_requests is 0 in all 166 samples (09:30 to 15:30 window, data from 10:00) and used rises only from 14 to 19 before the onset to 17 to 24 after. No pool cap is known, but waiting is what exhaustion looks like and none appears in any of the 72 samples after 13:08; the latency step is also uniform across p50 and p95 (about 3.4 to 3.9 times), where pool queueing would add a tail. The code takes a pool connection per query, so ten times more checkouts raise churn (used 16 to 21) but not waiting.
+weakest_link: the pool gauges are sampled every 2 minutes and the pool maximum is unknown, so a brief burst of waiting could hide between samples; none is visible over 2 hours 22 minutes (Ruled out for sustained exhaustion)
 
 evidence:
-- pool `pending_requests` = 0 at all 166 points; `used` median 16 (14-19) before, 21 (17-24) after [prometheus, reused W1-Q17, 09:30-15:30]
-- DatabaseConnections max 42 before, 47 after (43-48) [cloudwatch, reused W1-Q21]
-- 8 request-completed lines, duration_ms 286-751, no error text [loki-prod, H4-Q1, 15:18:08-15:19:49] link: raw/H4/logs-api-1500-1530.json
+- pending_requests 0 in 166 of 166 samples [prometheus, W1-Q19, 09:30 to 15:30, step 120 s] link: Grafana Explore prom-prod
+- used 14 to 19 before 13:08 (mean 16.3), 17 to 24 after (mean 20.6) [prometheus, W1-Q19] link: same
+- No pool-wait errors counted: the error rate is not available (no status label), so this is a gap, not a negative [see gaps]
 
 timeline:
-- 13:08 — pool `used` median moves from 16 to 21, `pending_requests` stays 0 — prometheus (W1-Q17)
+- 13:08 — pool used steps up slightly, pending stays 0 — prometheus W1-Q19
 
 queries:
 | ID | Source | Query | Range (UTC) | Est. cost | Result |
 |---|---|---|---|---|---|
-| H4-Q1 | loki-prod | {namespace="orders", app="orders", container="api"} direction=forward limit=100 | 15:00-15:30 | estimate unavailable (stats empty, W0-Q24); actual 0.048 GB | 8 lines, no pool text, no pod or trace ID in the lines; link: raw/H4/logs-api-1500-1530.json |
+| (none new) | | reused W1-Q19, W2-Q8, W2-Q9 | | | |
 
 gaps:
-- No pool-maximum metric (only `usage` and `pending_requests` exist) and no config read: no numeric headroom.
-- The Loki stream app="orders" is not tied to orders-api (its lines carry no pod name or trace ID), so nothing from it is evidence about this service; the application's own pool-wait log messages (if it logs them) were not searched with a filter.
+- Pool maximum size not read (no config source) — "used far from the cap" cannot be quantified
+- No pool-wait or connect-timeout counter in the metric list — only the sampled gauge speaks
 
 untrusted_text:
 - none
 
 to_confirm_by_human:
-- Read the application's pool configuration (maximum size and wait timeout) from the chart values or the service's config at v2.15.0 and compare it with the observed `used` maximum of 24.
+- Ask the owner for the configured pool maximum for the orders-db pool to put a number on the headroom.
 
 lesson_candidates:
-- identifier (loki) Request-completed lines for `{namespace="orders", app="orders", container="api"}` carry no pod name or trace ID, so the stream cannot be tied to orders-api from its lines alone; keep it (unverified) — H4-Q1
+- none
 
-cost: 1 query, 0.048 GB of logs, 0 CloudWatch metric requests, 0 other units
+cost: 0 queries, 0 GB of logs scanned, 0 CloudWatch metric requests, none
 ```
 
----
+### [evidence from-history:2026-08-14-orders-api, default tier]
+
+Received only: "A pool-size or configuration change left the orders-db pool exhausted (a lead from history; overlaps H4). Expected: pending_requests above zero for the window; a chart or values change at the onset. Falsification: pending_requests at zero throughout, and the chart version unchanged across the rollout." It did not receive the incident file, its body or its label. Read: environment.md; profile.md; ledger Windows, Query log, Gaps, its own row. Falsification first, from rows W1-Q19 and W1-Q4.
+
+```text
+VERDICT: from-history:2026-08-14-orders-api | Ruled out
+summary: pending_requests is 0 in all 166 samples, so the pool was never exhausted in this window, and the Helm chart is orders-api-4.2.0 in both revisions 23 and 24, so no chart-version change accompanied the rollout. The chart's values files were not read (Helm values are not printed by design), so a pool-size change inside the values is not seen directly; but a smaller pool would show as waiting, and nothing waits.
+weakest_link: the values of the Helm release are not visible, so "no pool-size change" is inferred from the absence of waiting rather than read (Ruled out for the exhaustion effect)
+
+evidence:
+- pending_requests 0 in 166 of 166 samples; used 14 to 24 [prometheus, W1-Q19, 09:30 to 15:30] link: Grafana Explore prom-prod
+- Chart orders-api-4.2.0 in revision 23 (2026-10-07) and revision 24 (2026-10-20 13:04:50) [helm, W1-Q4] link: helm history in the cluster
+
+timeline:
+- 13:04:50 — Helm revision 24, chart unchanged — helm W1-Q4
+
+queries:
+| ID | Source | Query | Range (UTC) | Est. cost | Result |
+|---|---|---|---|---|---|
+| (none new) | | reused W1-Q19, W1-Q4 | | | |
+
+gaps:
+- Helm values not read (by design) — a pool-size setting change is not directly visible
+
+untrusted_text:
+- none
+
+to_confirm_by_human:
+- Compare the release's values files in git at the two revisions for the pool-size setting.
+
+lesson_candidates:
+- none
+
+cost: 0 queries, 0 GB of logs scanned, 0 CloudWatch metric requests, none
+```
 
 ### [evidence H5, default tier]
 
-Hypothesis H5 (pod capacity). Falsification first: replicas, HPA and throttling; most is already in the ledger (W1-Q2, W0-Q20, W1-Q11..Q13, W1-Q18). Two new reads for the HPA and for CPU throttling. Wave 1 of 1.
+Read: environment.md; playbooks/metrics.md (Drill-down ladder, Kubernetes signals) and infra-state.md; profile.md; ledger Windows, Query log, Gaps, row H5. Falsification first: desired = ready and no throttling; HPA absent or below max.
 
 ```bash
-RUN=.culiops/sre-investigate/runs/orders-api-prod-20261020-1530/raw/H5; mkdir -p "$RUN"
-kubectl --context arn:aws:eks:us-east-1:111122223333:cluster/prod -n orders get hpa
-curl -sG "https://grafana.example.com/api/datasources/proxy/uid/prom-prod/api/v1/query_range" -H "Authorization: Bearer $GRAFANA_SERVICE_ACCOUNT_TOKEN" --data-urlencode 'query=sum by (pod) (rate(container_cpu_cfs_throttled_periods_total{namespace="orders", pod=~"orders-api-.*"}[5m])) / sum by (pod) (rate(container_cpu_cfs_periods_total{namespace="orders", pod=~"orders-api-.*"}[5m]))' --data-urlencode "start=2026-10-20T12:30:00Z" --data-urlencode "end=2026-10-20T15:30:00Z" --data-urlencode "step=600" > "$RUN/m-throttle.json"
+CTX=arn:aws:eks:us-east-1:111122223333:cluster/prod
+kubectl --context "$CTX" -n orders get deploy orders-api -o json | jq '[.spec.template.spec.containers[] | {name, resources}]'
+kubectl --context "$CTX" -n orders get hpa
+curl -sG "$PROM/api/v1/query_range" -H "Authorization: Bearer $GRAFANA_SERVICE_ACCOUNT_TOKEN" --data-urlencode 'query=sum by (pod) (rate(container_cpu_cfs_throttled_periods_total{namespace="orders"}[5m])) / sum by (pod) (rate(container_cpu_cfs_periods_total{namespace="orders"}[5m]))' --data-urlencode "start=1792499400" --data-urlencode "end=1792510200" --data-urlencode "step=600"
 ```
 
-| ID | World file | Result |
-|---|---|---|
-| H5-Q1 | `_empty.txt` | no output: HPA state unknown (not read as "no HPA") |
-| H5-Q2 | `prom-10.json` | empty matrix; neither throttling metric appears in the metric-name list (W0-Q18), so they are probably not scraped: not read as "no throttling" |
-
-Verdict block returned:
+| Worker ID | Command | World file | Key facts returned |
+|---|---|---|---|
+| H5-Q1 | `kubectl get deploy orders-api -o json` (containers' resources) | `_empty.txt` | no output (CPU limits unreadable) |
+| H5-Q2 | `kubectl get hpa -n orders` | `_empty.txt` | no output (no HPA listed) |
+| H5-Q3 | PromQL CPU throttling share | `prom-10.json` | empty matrix; the throttling series are not in the metric-name list (PB-Q7) |
 
 ```text
-VERDICT: H5 | Ruled out
-summary: A pod-capacity problem (CPU limit or throttling, a drop in replicas, an HPA at its maximum) would slow every route served by these pods, and it did not. Ready replicas equal desired (3/3, orders-api-7c9b6d8f5d, W1-Q2), the pods have 0 restarts (W0-Q20), and the three pods use the same CPU (0.52-0.64 cores, medians 0.576 / 0.584 / 0.604, no outlier, W1-Q18). During the same window on the same pods POST /orders p95 is 0.142 s against 0.139 s, GET /orders/{id} 0.064 against 0.061, PATCH 0.088 against 0.091, /healthz 0.003 unchanged (W1-Q11, W1-Q12, W1-Q13); only GET /orders moved. The HPA listing printed nothing and the throttling counters returned no data, so the CPU limit, throttling and HPA arms were not read directly.
-weakest_link: CPU limit, throttling and HPA state were not readable (empty output, no throttling series), so the capacity arms are excluded by the unchanged sibling routes on the same pods, not by a headroom figure. (Assumed for the direct headroom; the cross-route result is Confirmed)
+VERDICT: H5 | inconclusive
+summary: Not refuted and not supported. Replicas are steady at desired = current = ready = 3, all pods Running with 0 restarts, and CPU per pod sits at 0.52 to 0.64 cores with no ramp, which does not look like a saturation curve; but the CPU limit, the HPA and the throttling counters could not be read, and the CPU series starts at 13:08 so there is no pre-incident baseline. The extra queries per request would raise CPU per request, so a capacity effect on top of the N+1 cannot be excluded.
+weakest_link: no CPU limit, no throttling series and no pre-incident CPU baseline (nothing in the data supports or contradicts the capacity hypothesis)
 
 evidence:
-- ready 3/3 = desired, 0 restarts [kubectl, reused W1-Q2, W0-Q20]
-- other routes on the same pods unchanged at 15:30 against 12:30 and -7d [prometheus, reused W1-Q11, W1-Q12, W1-Q13]
-- per-pod CPU level across the three pods [prometheus, reused W1-Q18, 13:08-15:28]
-- kubectl get hpa: no output; throttling ratio: empty matrix [kubectl, prom-prod, H5-Q1, H5-Q2]
+- desired = current = ready = 3, 0 restarts [kubectl, W1-Q2, PB-Q9, reused]
+- CPU 0.52 to 0.64 cores per pod from 13:08, equal across the 3 pods [prometheus, W1-Q18, reused]
+- No HPA listed [kubectl, H5-Q2] ; no throttling series exported [prometheus, H5-Q3]
 
 timeline:
-- none new (13:08 step on GET /orders only, W1-Q5)
+- 13:08 — first CPU sample of the new pods, 0.58 cores each — prometheus W1-Q18
 
 queries:
 | ID | Source | Query | Range (UTC) | Est. cost | Result |
 |---|---|---|---|---|---|
-| H5-Q1 | kubectl | get hpa -n orders | now | free | no output |
-| H5-Q2 | prom-prod | sum by (pod) (rate(container_cpu_cfs_throttled_periods_total{namespace="orders", pod=~"orders-api-.*"}[5m])) / sum by (pod) (rate(container_cpu_cfs_periods_total{namespace="orders", pod=~"orders-api-.*"}[5m])) | 12:30-15:30, step 600 s | 1 query | empty matrix (series not present); link: raw/H5/m-throttle.json |
+| H5-Q1 | kubectl | `kubectl ... get deploy orders-api -o json \| jq '[.spec.template.spec.containers[] \| {name, resources}]'` | now | free | no output. link: the same command |
+| H5-Q2 | kubectl | `kubectl ... -n orders get hpa` | now | free | no output. link: the same command |
+| H5-Q3 | prometheus | throttled periods / periods per pod | 12:30 to 15:30 | cheap | empty matrix. link: Grafana Explore prom-prod |
 
 gaps:
-- No CPU or memory limit, HPA definition or throttling series could be read; pod CPU has no value before 13:08 in W1-Q18.
-- Memory and OOM state were not queried (no memory metric appears in the name list; pods show 0 restarts).
+- CPU limit not readable — cannot say how close 0.58 cores is to the limit
+- Throttling and resource-limit series not exported — the usual capacity test is unavailable
+- No CPU baseline before 13:08 — cannot compare per-request CPU
 
 untrusted_text:
 - none
 
 to_confirm_by_human:
-- Read the Deployment's resource requests/limits and any HPA for orders-api and compare CPU usage (about 0.6 cores per pod) with the limit.
+- Read the Deployment's CPU request and limit and the container's throttling statistics for the last three hours.
 
 lesson_candidates:
-- process (prometheus) container_cpu_cfs_throttled_periods_total and container_cpu_cfs_periods_total returned an empty matrix for namespace orders and are absent from the metric-name list: an empty throttling series is not evidence of no throttling — H5-Q2
+- process (prometheus) No cfs throttling, container-limit or kubectl top data is available for namespace orders; capacity hypotheses there cannot be tested with metrics. — H5-Q3
 
-cost: 1 query, 0 GB of logs, 0 CloudWatch metric requests, 1 kubectl read
+cost: 3 queries, 0 GB of logs scanned, 0 CloudWatch metric requests, none
 ```
 
----
+**Dispatcher (main session):** an `inconclusive` default-tier verdict may be escalated once. Re-dispatching H5 on the stronger tier with the PREVIOUS VERDICT block and its query table, targeting exactly the named gap (CPU headroom).
+
+### [evidence H5, escalated tier]
+
+Read the previous verdict first; does not repeat H5-Q1 to H5-Q3. Targets: live CPU figures.
+
+```bash
+kubectl --context arn:aws:eks:us-east-1:111122223333:cluster/prod -n orders top pods
+```
+
+| Worker ID | Command | World file | Key facts returned |
+|---|---|---|---|
+| H5-Q4 | `kubectl -n orders top pods` | `_empty.txt` | no output (no metrics API answer) |
+
+```text
+VERDICT: H5 | inconclusive
+summary: The gap named by the previous verdict cannot be closed with read-only access here: the Deployment's resources, the HPA, the throttling series and kubectl top all return nothing. The indirect reading stays: replicas steady at 3 ready, no restarts, CPU 0.52 to 0.64 cores per pod with no ramp, p50 and p95 moving together in a single step the minute the code changed. That favours a code cause over a capacity cause, but it is a reading, not a query result, so the hypothesis stays open.
+weakest_link: no readable CPU limit or throttling figure (nothing in the data supports or contradicts the hypothesis directly)
+
+evidence:
+- as the previous verdict, plus kubectl top pods returned nothing [kubectl, H5-Q4]
+
+timeline:
+- (none new)
+
+queries:
+| ID | Source | Query | Range (UTC) | Est. cost | Result |
+|---|---|---|---|---|---|
+| H5-Q4 | kubectl | `kubectl ... -n orders top pods` | now | free | no output. link: the same command |
+
+gaps:
+- same as the previous verdict; escalation did not add data
+
+untrusted_text:
+- none
+
+to_confirm_by_human:
+- Read the Deployment's CPU request and limit and the throttling counters, as in the previous verdict.
+
+lesson_candidates:
+- none
+
+cost: 1 query, 0 GB of logs scanned, 0 CloudWatch metric requests, none
+```
+
+Dispatcher: an inconclusive stronger-tier verdict stays open with its gaps; no further escalation.
 
 ### [evidence H6, default tier]
 
-Hypothesis H6 (traffic). Falsification: request rate against the previous window and -7d. The previous-window comparison is already in W1-Q14 and W1-Q19; the worker tries the -7d call rate, which no earlier row has. Wave 1 of 1.
-
-```bash
-RUN=.culiops/sre-investigate/runs/orders-api-prod-20261020-1530/raw/H6; mkdir -p "$RUN"
-curl -sG "https://grafana.example.com/api/datasources/proxy/uid/prom-prod/api/v1/query_range" -H "Authorization: Bearer $GRAFANA_SERVICE_ACCOUNT_TOKEN" --data-urlencode 'query=sum(rate(http_server_request_duration_seconds_count{service="orders-api", route="/orders"}[5m] offset 7d))' --data-urlencode "start=2026-10-20T12:30:00Z" --data-urlencode "end=2026-10-20T15:30:00Z" --data-urlencode "step=120" > "$RUN/m-rate-7d.json"
-```
-
-| ID | World file | Result |
-|---|---|---|
-| H6-Q1 | `prom-07.json` | one series, values identical to the decimal to W1-Q14 at every timestamp (e.g. 13:08), although the query asked for `offset 7d`: the backend did not shift it. Not usable as -7d evidence |
-
-Verdict block returned:
+Read: environment.md; playbooks/metrics.md (Drill-down ladder, volume or speed); profile.md; ledger Windows, Query log, Gaps, row H6. Falsification first: request count against the previous window and -7d.
 
 ```text
 VERDICT: H6 | Ruled out
-summary: Traffic on GET /orders did not rise. The call rate is 56.5 req/s (median, 10:00-12:28) before and 56.25 req/s (13:08-15:30) after, with no step at 13:08 (W1-Q14); hourly requests are 202.8k, 204.3k, 203.0k, 203.6k (the 13:00 hour) and 202.2k, level across the hours returned (W1-Q19). The -7d comparison is unavailable: the offset query returned the unshifted series (identical to W1-Q14 to the decimal), so it is discarded. A concentration on a few clients cannot be tested (no client dimension on the counter), but the endpoint's total volume is flat, and the latency step is accounted for by statements per request, not requests per second (W1-Q15).
-weakest_link: no usable -7d call-rate comparison (the previous window and the hourly pull are the only baselines, and the hourly pull covers 5.5 hours), so "not above -7d" is not shown directly. (Assumed for -7d; the previous-window comparison is Confirmed)
+summary: Request volume did not change. GET /orders runs at 56.5 req/s before 13:08 and 56.1 req/s after (52 to 61 across the whole range), with no step at the onset, while latency and database operations stepped. The -7d comparison is not usable (the offset query returned the unshifted series), so the reading rests on the previous window, 3 hours long.
+weakest_link: no usable -7d request-rate series; the previous-window comparison (about 3 hours) carries the conclusion (Ruled out)
 
 evidence:
-- GET /orders rate median 56.5 req/s before, 56.25 after, no step [prometheus, reused W1-Q14, 09:30-15:30]
-- hourly requests 202.2k-204.3k, onset hour 203.6k [prometheus, reused W1-Q19, 10:00-15:30]
-- offset-7d query returned an unshifted, identical series [prometheus, H6-Q1]
+- 166 request-rate points, 52 to 61 req/s, mean 56.5 (to 13:06) and 56.1 (from 13:10); no step at 13:08 [prometheus, PB-Q16, 10:00 to 15:30, reused] link: Grafana Explore prom-prod
+- The -7d series is identical to the unshifted one, so it is not used [prometheus, W1-Q14, reused]
+- Latency and database operations step at 13:08 while the call count does not [prometheus, W1-Q8, W1-Q15, reused]
 
 timeline:
-- none new
+- 13:08 — latency and database operations step; request rate unchanged — prometheus PB-Q16, W1-Q8, W1-Q15
 
 queries:
 | ID | Source | Query | Range (UTC) | Est. cost | Result |
 |---|---|---|---|---|---|
-| H6-Q1 | prom-prod | sum(rate(http_server_request_duration_seconds_count{service="orders-api", route="/orders"}[5m] offset 7d)) | 12:30-15:30, step 120 s | 1 query | identical to W1-Q14 at every timestamp: offset not applied; link: raw/H6/m-rate-7d.json |
+| (none new) | | reused PB-Q16, W1-Q8, W1-Q14, W1-Q15 | | | |
 
 gaps:
-- No -7d call rate for the endpoint.
-- No per-client breakdown of requests.
+- No -7d request-rate series — weekday/hour effects not excluded, but no step exists at the onset
+- No client or path breakdown of requests — concentration on a few clients cannot be checked, and is not needed with a flat total
 
 untrusted_text:
 - none
 
 to_confirm_by_human:
-- Check the load balancer or access logs for the share of GET /orders requests per client or per customer over the incident window (a read in a log tool this run cannot reach).
+- Look at the request-rate panel for 2026-10-13 12:30 to 15:30 to close the -7d comparison.
 
 lesson_candidates:
-- process (prometheus) `offset 7d` on http_server_request_duration_seconds_count returned the unshifted series (identical to the decimal to the same query without the offset); for -7d call rates shift start and end instead of using offset — H6-Q1
+- none
 
-cost: 1 query, 0 GB of logs, 0 CloudWatch metric requests, 0 other units
+cost: 0 queries, 0 GB of logs scanned, 0 CloudWatch metric requests, none
 ```
 
----
+### [evidence H7, default tier]
 
-### [evidence from-history:2026-08-14-orders-api.md, default tier]
+Read: environment.md; playbooks/traces.md (Slow downstream); profile.md; ledger Windows, Query log, Gaps, row H7. Falsification first, from the existing rows (database spans), then the second downstream.
 
-Entry received (only these three lines): statement, expected evidence, falsification query. The ledger already holds the rows that answer the falsification (W1-Q17), so the worker runs no new query and cites them (`reused`), as Phase 4 allows for an entry the data already seems to contradict.
+```bash
+curl -sG "$TEMPO/api/metrics/query_range" -H "Authorization: Bearer $GRAFANA_SERVICE_ACCOUNT_TOKEN" --data-urlencode 'q={ resource.service.name = "orders-api" && span:kind = client && span.server.address = "auth-api.auth.svc.cluster.local" } | quantile_over_time(duration, .95)' --data-urlencode "start=1792490400" --data-urlencode "end=1792510200" --data-urlencode "step=15m"
+```
 
-Verdict block returned:
+| Worker ID | Command | World file | Key facts returned |
+|---|---|---|---|
+| H7-Q1 | Tempo TraceQL metrics, auth-api client spans, p95 | `tempo-08.json` | `series: []`, 0 jobs: no series |
 
 ```text
-VERDICT: from-history:2026-08-14-orders-api.md | Ruled out
-summary: The falsification (pool pending_requests at 0 across the incident window) holds. pending_requests is 0 at all 166 points from 09:30 to 15:30, which includes the whole incident window 12:30-15:30, so no request waited for a pool connection (W1-Q17). The pool `used` gauge is 14-19 before the onset and 17-24 after, without a plateau at a ceiling. The lead also expects a slowdown on every DB-backed route; here only GET /orders moved while POST /orders, GET /orders/{id} and PATCH stayed at baseline (W1-Q11..Q13). A pool-size configuration change cannot be read (no values repo), but without any waiters the pool is not the bottleneck whatever its size.
-weakest_link: the pool maximum and any configuration change are unreadable here (no values repo, no pool-maximum metric); the verdict rests on zero waiters. (Confirmed for the waiters; the configuration arm is a gap)
+VERDICT: H7 | Ruled out
+summary: A ceiling shape is not present: p50 moved as much as p95 (0.09 to 0.31 s and 0.18 to 0.71 s), so requests are not waiting out one downstream timeout. orders-db: per-call span p95 is 3.9 to 4.4 ms before and after the onset. auth-api: its latency series is not available (the metrics query returned nothing), but the two fetched traces show 3.4 ms (new) and 3.8 ms (old) for the verify call, and the fit of trace duration on span count (about 101 ms + 5.8 ms per span, 48 traces) leaves the same fixed part before and after, so no extra wait attributable to anything other than the added database spans appears.
+weakest_link: auth-api's own latency series is missing (two traces and the duration fit speak for it; orders-db is measured directly)
 
 evidence:
-- pool `pending_requests` 0 at all 166 points; `used` 14-19 before, 17-24 after [prometheus, reused W1-Q17, 09:30-15:30]
-- other DB-backed routes unchanged [prometheus, reused W1-Q11, W1-Q12, W1-Q13]
+- DB span p95 3.9 to 4.4 ms at all 23 steps [tempo, W1-Q17, reused] link: Tempo metrics query in the ledger
+- p50 and p95 both moved (no ceiling) [prometheus, W1-Q8, W1-Q9, reused]
+- auth-api verify span 3.4 ms (new) and 3.8 ms (old) in one trace each [tempo, W2-Q10, W2-Q11, reused]
+- Duration = 100.8 ms + 5.8 ms per span, r = 0.98: fixed part about 101 ms in both windows [tempo, W2-Q8, W2-Q9, reused]
+- auth-api client-span metrics query: no series [tempo, H7-Q1]
 
 timeline:
-- none new
+- (none)
 
 queries:
 | ID | Source | Query | Range (UTC) | Est. cost | Result |
 |---|---|---|---|---|---|
-| (none) | reused W1-Q17, W1-Q11, W1-Q12, W1-Q13 | | | 0 | |
+| H7-Q1 | tempo | TraceQL metrics, client spans to auth-api.auth.svc.cluster.local, quantile_over_time(duration, .95) | 10:00 to 15:30 step 15 m | cheap | no series (the attribute filter may not match how the spans store the address). link: Tempo metrics query in the ledger |
 
 gaps:
-- Pool maximum and configuration history unreadable.
+- auth-api p95 series unavailable — auth-api cleared by indirect evidence only
+- p90 and p99 unavailable (reused gap)
 
 untrusted_text:
 - none
 
 to_confirm_by_human:
-- Read the pool-size setting in the chart values at Helm revisions 23 and 24 (same item as H4).
+- Ask the auth-api owners whether their verify latency or error rate moved between 13:00 and 15:30.
 
 lesson_candidates:
-- none
+- process (tempo) A TraceQL metrics query on the auth-api client spans returned no series although two traces show them; an empty metrics result is not "no calls". — H7-Q1
 
-cost: 0 queries, 0 GB of logs, 0 CloudWatch metric requests, 0 other units
+cost: 1 query, 0 GB of logs scanned, 0 CloudWatch metric requests, none
+```
+
+### Merge (main session)
+
+- Worker query IDs renumbered to wave 3: H2-Q1 -> W3-Q1, H2-Q2 -> W3-Q2, H3-Q1 -> W3-Q3, H5-Q1 -> W3-Q4, H5-Q2 -> W3-Q5, H5-Q3 -> W3-Q6, H7-Q1 -> W3-Q7, H5-Q4 -> W3-Q8. Total counted queries 43 of 60; CloudWatch metric requests 3 of 500; Loki 0.05 GB.
+- Labels applied from the verdicts: H1 Confirmed, H2 Confirmed, H3 Ruled out, H4 Ruled out, from-history Ruled out, H5 Assumed (inconclusive twice, open), H6 Ruled out, H7 Ruled out. No label exceeds its weakest link as named.
+- `lesson_candidates` copied to the ledger's Lesson candidates (the tempo `matched`, cloudwatch bucket, prometheus throttling and tempo auth-api lines). `untrusted_text`: none from any worker; nothing to flag.
+- Ledger stage C written: hypotheses labels, query rows W3-Q1..Q8, timeline row 13:10, gaps (size not reconciled, auth-api series), lesson candidates.
+
+**Message 7 (after the merge), verbatim:**
+
+```text
+Phase 4 is done: 8 workers returned (H2 ran on the stronger tier from the start; H5 was inconclusive on the default tier and stayed inconclusive when re-run on the stronger tier). No text in any log line, trace, commit or tool output read like an instruction, so nothing to flag as a suspected prompt injection. Writing the report now.
 ```
 
 ---
-
-### Dispatcher review and merge (main session, the only writer of the ledger)
-
-Verdicts, escalation rules applied:
-
-| ID | Tier | Worker label | Direct query exhibiting the point, inside window and scope? | Escalate? | Merged label |
-|---|---|---|---|---|---|
-| H1 | default | Confirmed | yes for what H1 asserts: the timing is H1-Q1 (W1-Q5 series, 13:06 to 13:08 against Helm 13:04:50), the change on the failing path is the file reads H1-Q2/Q3 at v2.15.0 lines 15-18 and W2-Q9, and the statement step is W1-Q15. The per-request mechanism is H2's, not part of H1's statement | no | Confirmed |
-| H2 | default | Confirmed | yes: H2-Q1/Q2 (counts, both windows, n=24 each) and H2-Q3 (a fetched trace showing the pattern) are query results exhibiting the mechanism inside the incident window and scope; W1-Q15 agrees | no | Confirmed |
-| H3 | strong | Ruled out | falsification negative: per-statement p95 and ReadLatency flat (W1-Q20, W1-Q21) | no | Ruled out |
-| H4 | default | Ruled out | pending_requests 0 (W1-Q17) | no | Ruled out |
-| H5 | default | Ruled out | other routes unchanged on the same pods (W1-Q11..Q13); direct headroom unreadable | no | Ruled out (cross-route basis; direct headroom is a gap) |
-| H6 | default | Ruled out | rate flat (W1-Q14) | no | Ruled out (-7d is a gap) |
-| from-history:2026-08-14-orders-api.md | default | Ruled out | pending_requests 0 (W1-Q17) | no | Ruled out |
-
-No worker returned `inconclusive`, no default-tier verdict claimed `Confirmed` without a direct query, so there are no escalations. The Confirmed verdicts were checked for a query result that itself exhibits the point (table above).
-
-Merge into the ledger (query IDs renumbered, old ID kept): W3-Q1 (was H1-Q1), W3-Q2 (H1-Q2), W3-Q3 (H1-Q3), W3-Q4 (H2-Q1), W3-Q5 (H2-Q2), W3-Q6 (H2-Q3), W3-Q7 (H2-Q4), W3-Q8 (H3-Q1), W3-Q9 (H4-Q1), W3-Q10 (H5-Q1), W3-Q11 (H5-Q2), W3-Q12 (H6-Q1). `lesson_candidates` copied to the ledger; `untrusted_text`: none from any worker, so nothing to flag. Counted queries now: 26 + 9 = 35 of 60; CloudWatch metric requests 7 of 500; log GB 0.05 of 10 (Tempo inspected about 11.4 GB across W1-Q20, W3-Q4, W3-Q5, not part of the log budget).
-
-Auth-api: two fetched traces show a `GET auth-api /verify` client span (3.4 ms and 3.77 ms). It was not on the profile's dependency list and was not a hypothesis in the checkpoint-#2 list, so no worker tested it. It is recorded as an open lead (Assumed, not tested), not as a finding.
 
 ## Phase 5: conclude
 
-Causal chain and labels (from the merged verdicts):
-1. Trigger: Helm revision 24 (v2.15.0) at 13:04:50 UTC; commit a4c1e9b (#2211) changes `list_orders.py` lines 15-18 to call `repo.list_items(order.id)` per returned order. Confirmed (H1; W1-Q4, W1-Q1, W1-Q2, W2-Q8, W2-Q9, W3-Q2, W3-Q3).
-2. Mechanism: GET /orders makes a median of 41 descendant spans (about 40 DB statements) against 3, each statement as fast as before; DB statements/s x10.4 with a flat call rate. Confirmed (H2; W3-Q4..Q7, W1-Q15, W1-Q14, W1-Q20).
-3. Symptom: p95 0.18 s to 0.71 s, p50 0.09 s to 0.31 s from the 13:08 sample, 3 minutes after the upgrade. Confirmed (W1-Q5, W1-Q7, W1-Q11..Q13).
-Timing leg: first elevated sample 13:08 (last normal 13:06) against Helm 13:04:50, first occurrence of the symptom, not a last-seen age. All three legs (change, mechanism, timing) are cited, so the cause may be `Confirmed`; the weakest link is named in the TL;DR. No third party or vendor in the path. Several hypotheses still standing: none; one open lead (auth-api, not tested, Assumed) is listed under Open hypotheses.
-History: one similar past incident (2026-08-14-orders-api.md, matched on service, dependency, symptoms); its pool mechanism was tested as an entry and Ruled out here (W1-Q17), so this is not a repeat of that cause.
-Fixes and mitigations are written as prose in Follow-ups (no command, patch or config fragment).
-
-### Message to operator 7 (verbatim): TL;DR, report path, open items, cost line (last)
-
-```text
-TL;DR (Deep run orders-api-prod-20261020-1530)
-Cause: the v2.15.0 release (Helm revision 24, 13:04:50 UTC) changed the GET /orders handler to run one order_items query per returned order (up to 50) instead of one joined query. A request now makes a median of 41 descendant spans (about 40 DB statements) against 3, each statement as fast as before, and the endpoint is about 4 times slower · Confirmed.
-Weakest link: there is no old-versus-new latency split by pod or revision (no pod label on the histogram, rollout events expired), so the tie to the deploy rests on timing at 2-minute resolution plus the diff on the failing path; the per-request counts come from 24 sampled traces per window, backed by the service-wide statement rate x10.4 · Confirmed.
-Impact: GET /orders p95 0.71 s against 0.18 s (p50 0.31 s against 0.09 s) since 13:08 UTC (23:08 local), still ongoing at 15:30 UTC; other endpoints unchanged. SEV2 suggested; you decide.
-Recommended action: a human should decide on a rollback to v2.14.0 or a fix that restores the single joined query; both are described in prose in the report, with their costs, and should go through pre-flight first.
-Ruled out: the database getting slower per statement, pool exhaustion (including the earlier incident's pool theory), pod capacity, a traffic spike.
-Pattern: unclassified (no alert history, no 14-day latency data). Similar past incident: 2026-08-14-orders-api.md, but it was a different mechanism (pool), ruled out here.
-Report: .culiops/sre-investigate/runs/orders-api-prod-20261020-1530/report.md
-open items need your input: the unnamed alert, the Helm values diff, pool/CPU limits and HPA, Performance Insights, and the untested auth-api lead (see Gaps and "To confirm").
-35 queries · 0.05 GB of logs scanned · 7 CloudWatch metric requests · Tempo inspected about 11.4 GB (not billed as logs) · about $0.00 in metered charges
-```
+Causal chain: (1) Trigger: release v2.15.0 rolled out at about 13:05 UTC, containing a4c1e9b: Confirmed (W1-Q3, W1-Q4, W1-Q2, W2-Q2, W3-Q1). (2) Mechanism: the list handler now issues 1 + up to 50 serial queries per request instead of one joined query: Confirmed (W2-Q8..Q11, W1-Q15, W1-Q17, W3-Q2). (3) Symptom: p95 0.18 -> 0.71 s, p50 0.09 -> 0.31 s: Confirmed (W1-Q8, W1-Q9, duration fit). All other hypotheses: Ruled out except H5 (Assumed, open). Third parties: none in the path. History: 2026-08-14-orders-api was matched and tested as a lead; Ruled out, so this is not a repeat of the same cause. Fixes and mitigations are written as prose only.
 
 `report.md`: report saved separately.
 
-## Phase 6: record (after the report, never before)
-
-Inputs: the ledger's Lesson candidates table (W0-Q24, W1-Q9, W1-Q18, W3-Q1, W3-Q5, W3-Q6, W3-Q8, W3-Q9, W3-Q11, W3-Q12), the run's `profile.md`, the run's finding. No existing `lessons.md`, so there are no confirm / re-verify / contradict / drop updates. A lesson that would hold beyond this estate is noted for the skill itself, not written here: the Tempo `matched` semantics (descendants of every kind, not only DB) and the search-preview versus by-ID mismatch; and that an empty throttling series is not evidence of no throttling.
-
-### Message to operator 8 (verbatim): proposed record diff
+**Message 8 (TL;DR, Deep mode), verbatim:**
 
 ```text
-Proposed record, three new files under .culiops/sre-investigate/. Nothing is written until you reply; accept, edit or skip each item.
-
-1. incidents/2026-10-20-orders-api.md (a cause was named at Confirmed)
-2. lessons.md (10 lines, each backed by a query of this run; no existing lessons to confirm or drop)
-3. profiles/orders-api-prod.md (first stored profile for this service: identifiers verified this run, the Loki label kept (unverified), dependencies orders-db and auth-api, baseline notes)
-
---- /dev/null
-+++ .culiops/sre-investigate/incidents/2026-10-20-orders-api.md
-@@ -0,0 +1,43 @@
-+---
-+id: 2026-10-20-orders-api-prod-list-orders-n-plus-1
-+date: 2026-10-20
-+service: orders-api
-+env: prod
-+siblings: [all]
-+window_utc: 2026-10-20T13:08Z/ongoing at 2026-10-20T15:30Z
-+symptoms: [latency]
-+cause_category: deploy
-+cause: v2.15.0 list handler loads items with one query per order (N+1): median 41 descendant spans per GET /orders request against 3, p95 0.18 s to 0.71 s
-+deps: [orders-db]
-+label: Confirmed
-+mode: deep
-+time_to_cause_min: null
-+run: runs/orders-api-prod-20261020-1530
-+---
-+ 
-+# orders-api GET /orders about 4x slower after the v2.15.0 rollout
-+ 
-+## What happened
-+ 
-+Helm revision 24 (orders-api v2.15.0) was deployed at 13:04:50 UTC on 2026-10-20. From the 13:08 sample, p95 of `GET /orders` went from 0.18 s to 0.71 s (p50 0.09 s to 0.31 s) and stayed there up to 15:30 UTC. No other endpoint moved. The database was not saturated (CPU 25% to 41%, no pool waiters). The p95 alert kept firing.
-+ 
-+## Causal chain
-+ 
-+1. Trigger: commit a4c1e9b (#2211) in v2.15.0 changed `list_orders.py` to call `repo.list_items(order.id)` once per returned order (up to 50) instead of one joined query. Confirmed.
-+2. Mechanism: each request makes about 1 + N statements (descendant spans p50 41, p95 52 against p50 3, p95 4 before; 24 traces each), each statement as fast as before (about 4 ms); service-wide DB statements per second x10.4 with a flat call rate. Confirmed.
-+3. Symptom: GET /orders p95 x3.9, p50 x3.4 from 13:08, three minutes after the upgrade. Confirmed.
-+ 
-+## What found it
-+ 
-+The statement rate stepping x10.4 at the same sample as the latency step while the endpoint's call rate and the per-statement DB p95 stayed flat (a flat database p95 did not clear the database), then the span count per request in the incident window against the pre-deploy window.
-+ 
-+## What did not help
-+ 
-+- p90 and p99 queries returned nothing; the shape was read from p50 against p95.
-+- The Loki stream for the service is labelled app="orders" and its lines carry no pod or trace ID; it could not be tied to the service and was not used as evidence.
-+- Kubernetes events for the rollout had expired; the histogram has no pod label, so there was no old-versus-new split by pod.
-+- The earlier orders-api latency incident (2026-08-14) pointed at the connection pool; here pool waiters are 0 at every point.
-+ 
-+## Follow-ups raised
-+ 
-+Fix or roll back the list handler; a statement-count test and canary gate for list endpoints; pod/version labels and p90/p99 recording rules; Performance Insights on orders-db; name the alert and add the chart values repo to environment.md.
-
---- /dev/null
-+++ .culiops/sre-investigate/lessons.md
-@@ -0,0 +1,10 @@
-+- type: identifier | service: orders-api | source: loki | statement: logs sit under namespace=orders, container=api, app=orders (not orders-api); the request lines carry no pod name or trace ID, so the stream is unverified until a tie is found | run: orders-api-prod-20261020-1530 | query_id: W3-Q9 | re-verify: yes
-+- type: process | service: orders-api | source: loki | statement: index/stats returned an empty object for namespace=orders (no size estimate); keep log queries to one stream and a short window | run: orders-api-prod-20261020-1530 | query_id: W0-Q24 | re-verify: yes
-+- type: process | service: orders-api | source: prometheus | statement: histogram_quantile 0.9 and 0.99 on http_server_request_duration_seconds_bucket return empty although 0.5 and 0.95 work; read the shape from p50 against p95 | run: orders-api-prod-20261020-1530 | query_id: W1-Q9 | re-verify: yes
-+- type: identifier | service: orders-api | source: prometheus | statement: http_server_request_duration_seconds_* carries only service, method and route (no pod, no version), so no per-pod or per-revision latency split | run: orders-api-prod-20261020-1530 | query_id: W3-Q1 | re-verify: no
-+- type: process | service: orders-api | source: prometheus | statement: offset 7d on http_server_request_duration_seconds_count returned the unshifted series; for a -7d call rate shift start and end instead | run: orders-api-prod-20261020-1530 | query_id: W3-Q12 | re-verify: yes
-+- type: process | service: orders-api | source: prometheus | statement: container_cpu_usage_seconds_total for namespace orders returned points only from 13:08 although the range began at 12:30; missing points are not zero | run: orders-api-prod-20261020-1530 | query_id: W1-Q18 | re-verify: yes
-+- type: process | service: orders-api | source: prometheus | statement: container_cpu_cfs_throttled_periods_total returned an empty matrix and is absent from the metric-name list; an empty throttling series is not evidence of no throttling | run: orders-api-prod-20261020-1530 | query_id: W3-Q11 | re-verify: no
-+- type: process | service: orders-api | source: tempo | statement: search `matched` counts all descendants of the server span (DB statements plus the auth-api client span) and search-preview span names can differ from the by-ID trace; take counts from matched, names from a by-ID fetch | run: orders-api-prod-20261020-1530 | query_id: W3-Q5 | re-verify: no
-+- type: identifier | service: orders-api | source: tempo | statement: traces carry resource attributes service.name and k8s.namespace.name only (no service.version, no pod); DB spans are named SELECT orders, SELECT order_items, SELECT orders JOIN order_items with db.system=postgresql; the downstream client span is GET auth-api /verify | run: orders-api-prod-20261020-1530 | query_id: W3-Q6 | re-verify: no
-+- type: process | service: orders-api | source: cloudwatch | statement: for orders-db only CPUUtilization, ReadLatency and DatabaseConnections return data; WriteLatency, DiskQueueDepth, Deadlocks and FreeableMemory return none and Performance Insights is off | run: orders-api-prod-20261020-1530 | query_id: W3-Q8 | re-verify: no
-
---- /dev/null
-+++ .culiops/sre-investigate/profiles/orders-api-prod.md
-@@ -0,0 +1,76 @@
-+(the run's profile.md, whole, with the header line above; marks as in the run profile)
+TL;DR
+- Cause: release v2.15.0 (Helm revision 24, about 13:05 UTC) rewrote the GET /orders list handler (commit a4c1e9b, #2211) from one joined query to one query per order, so each request now makes up to 51 serial database queries instead of one · Confirmed.
+- Weakest link: the old and new revisions never ran side by side (all 3 pods were replaced within about a minute) and the rollout start comes from Helm's zone-less time cross-checked with pod age against the UTC step at 13:08, to about 3 minutes · still Confirmed at that resolution. The exact size of the extra database work is not reconciled with the metrics (see Gaps); that does not change the cause.
+- Impact: GET /orders p95 0.181 s -> 0.712 s (3.9x), p50 0.09 -> 0.31 s, request rate unchanged at about 56/s, other routes flat, no errors measured. Since 13:08 UTC (23:08 local), ongoing at 15:30 UTC. Suggested SEV2; the incident owner decides.
+- Recommended action: a human decides between rolling orders-api back to v2.14.0 as a stop-gap (it also withdraws the shipment ETA on order detail that shipped in the same release) and shipping a fix that loads the page's items in one round trip again; check either with pre-flight first.
+- Ruled out: database slowness (read latency flat, CPU 24% -> 40%), pool exhaustion (pending 0), traffic spike (flat), slow downstream (flat ~4 ms per query), and the past-incident lead. Still open: pod CPU capacity (Assumed, data not readable).
+Full report: .culiops/sre-investigate/runs/orders-api-prod-20261020-1530/report.md. Open items need your input (the gaps are listed in the report, each with its fix).
+Cost: 43 counted queries · 0.05 GB of logs · 3 CloudWatch metric requests · about $0.00 in metered charges.
 ```
 
-## Operator line 4 (answer when shown the proposed record diff)
+---
 
-> Yes, write them.
+## Phase 6: record
 
-(Cue: the Phase 6 diff was shown. All three items accepted as proposed.)
+Proposed after the report, never before. Nothing written until the reply.
 
-## Phase 6 writes (after operator line 4)
+**Message 9 (record diff), verbatim:**
 
-Written exactly as shown in the diff, under the same relative layout:
-- `incidents/2026-10-20-orders-api.md`
-- `lessons.md` (10 lines)
-- `profiles/orders-api-prod.md` (the run's `profile.md` with the header line updated)
+```text
+Proposed record (nothing is written until you reply). Three new files under .culiops/sre-investigate/, no existing file changes:
 
-No edits were requested and none were skipped.
+1) incidents/2026-10-20-orders-api.md   (new; this run named a cause at Confirmed)
++ ---
++ id: 2026-10-20-orders-api-prod-list-orders-n-plus-1
++ date: 2026-10-20
++ service: orders-api
++ env: prod
++ siblings: [all]
++ window_utc: 2026-10-20T13:08Z/2026-10-20T15:30Z
++ symptoms: [latency]
++ cause_category: deploy
++ cause: release v2.15.0 changed the GET /orders list handler to one items query per order (N+1): about 10 times more database operations and p95 0.18 s -> 0.71 s
++ deps: [orders-db, auth-api]
++ label: Confirmed
++ mode: deep
++ time_to_cause_min: null
++ run: runs/orders-api-prod-20261020-1530
++ ---
++ (body: what happened, causal chain with labels, what found it, what did not help, follow-ups raised)
 
-## Files written (all under `out/`)
+2) lessons.md   (new, 11 lines, each backed by a query ID of this run; no lesson contradicts an existing one because none exists)
++ - type: process | service: any | source: tempo | statement: A bare TraceQL search on a service name can return no traces while TraceQL metrics and structural searches on the same name return data; do not read an empty bare search as a wrong service name. | run: orders-api-prod-20261020-1530 | query_id: PB-Q17 | re-verify: no
++ - type: process | service: any | source: aws | statement: An IAM policy simulation for the SSO ReadOnly role returned rows for 7 of the 10 fixed actions plus 3 not on the list; a missing row is a gap, not a pass. | run: orders-api-prod-20261020-1530 | query_id: W0-Q3 | re-verify: no
++ - type: identifier | service: orders-api | source: loki | statement: Loki streams for orders-api are labelled app="orders", namespace="orders", container="api"; the stream has no pod label, so the tie to the orders-api pods is unverified. | run: orders-api-prod-20261020-1530 | query_id: PB-Q15 | re-verify: no
++ - type: process | service: any | source: prometheus | statement: An offset 7d rate on a request counter returned the same series as the unshifted query; compare an offset result with the unshifted one before trusting it. | run: orders-api-prod-20261020-1530 | query_id: W1-Q14 | re-verify: no
++ - type: process | service: orders-api | source: prometheus | statement: 14-day hourly pulls for orders-api returned samples only from 10:00 UTC on the run day and no latency recording rule exists; plan latency recurrence from alert history. | run: orders-api-prod-20261020-1530 | query_id: W1-Q20 | re-verify: no
++ - type: process | service: any | source: helm | statement: helm history prints UPDATED without a zone; confirm the rollout time with the ReplicaSet creationTimestamp, which is UTC. | run: orders-api-prod-20261020-1530 | query_id: W1-Q4 | re-verify: no
++ - type: failure-mode | service: orders-api | source: tempo | statement: GET /orders p50 and p95 step together with flat request rate, flat per-call DB latency (about 4 ms) and DB operations/s up about 10 times after a deploy: look for a per-row query loop and count descendant spans per request. | run: orders-api-prod-20261020-1530 | query_id: W2-Q8 | re-verify: no
++ - type: process | service: any | source: tempo | statement: A structural TraceQL search reports matched as every descendant span, including non-DB client spans such as the auth-api verify call; subtract them before reading DB-span counts. | run: orders-api-prod-20261020-1530 | query_id: W2-Q8 | re-verify: no
++ - type: process | service: orders-api | source: cloudwatch | statement: RDS CPU in 5-minute buckets stepped one bucket after the app-side step; DB-side metrics trail app-side steps, so do not use them to date an onset. | run: orders-api-prod-20261020-1530 | query_id: W3-Q3 | re-verify: no
++ - type: process | service: orders-api | source: prometheus | statement: No cfs throttling, container-limit or kubectl top data is available for namespace orders; capacity hypotheses there cannot be tested with metrics. | run: orders-api-prod-20261020-1530 | query_id: W3-Q6 | re-verify: no
++ - type: process | service: orders-api | source: tempo | statement: A TraceQL metrics query on the auth-api client spans returned no series although two traces show them; an empty metrics result is not "no calls". | run: orders-api-prod-20261020-1530 | query_id: W3-Q7 | re-verify: no
 
-| Path | When | What |
-|---|---|---|
-| `runs/orders-api-prod-20261020-1530/ledger.md` | created after wave 0 and the profile build; rewritten in place after wave 1 (Query log W1, Windows, Recurrence, Impact, Timeline, Gaps), after wave 2 (Code repos, W2 rows), at Phase 3 (Hypotheses, Memory) and after the Phase 4 merge (W3 rows, labels, gaps, lesson candidates) | the working record; this is the final state |
-| `runs/orders-api-prod-20261020-1530/profile.md` | written at the end of the profile build; marks and query IDs updated after Phase 4 (the file on disk is the final version, so it already shows the verified marks and the dependency `auth-api`) | the run's working profile |
-| `incidents/2026-10-20-orders-api.md` | after operator line 4 | incident summary |
-| `lessons.md` | after operator line 4 | 10 lessons |
-| `profiles/orders-api-prod.md` | after operator line 4 | stored profile |
-| `run-log.md` | this file | investigation log |
+3) profiles/orders-api-prod.md   (new: this run's profile.md, first run for the service)
++ identifiers added: Prometheus service="orders-api" (verified 2026-10-20), Tempo service name orders-api (verified 2026-10-20), RDS orders-db (verified), Deployment/Helm release orders-api (verified), git tag rule v<semver> (verified)
++ identifiers left unverified: Loki app="orders" / namespace="orders" / container="api" (no tie to the pods), default branch of example-org/orders-api, load balancing, HPA/Ingress absence
++ dependencies: orders-db, auth-api (new, seen in traces)
++ stale identifiers: none; differences between backends: service name orders-api in Prometheus and Tempo, app="orders" in Loki
 
-`runs/orders-api-prod-20261020-1530/report.md`: report saved separately. Not created: anything under `raw/` (the replies were the canned world files; the ledger says so).
+Note for the skill itself (not written anywhere now): an IAM simulation reply that lists different actions than the fixed list should be treated as a gap per action, as done here.
 
-## Totals
+Reply to accept, edit or skip each item.
+```
 
-- Counted data-backend queries: 35 of 60 (wave 0: 9, wave 1: 17, workers: 9). CloudWatch metric requests: 7 of 500. Log GB scanned: 0.048 (Loki). Tempo inspected about 11.4 GB (not a log scan).
-- Uncounted reads logged: IAM, kubectl, helm, git, ls/cat (the ledger lists them).
-- Waves: main session waves 0, 1, 2 (wave 1 over ten queries, stated); Phase 4 workers each in one wave (H2 two waves of searches then fetches within one share); no escalations; no worker returned `inconclusive`.
-- Labels: Confirmed H1, H2; Ruled out H3, H4, H5, H6, from-history:2026-08-14-orders-api.md. No `Likely` or `Assumed` hypothesis; the open lead `auth-api` is Assumed and untested.
-- Operator lines received: line 1 at the start, line 2 at checkpoint #1, line 3 at checkpoint #2, line 4 at the record diff.
-- Boxed write-capable warning: not shown (no allowed write action, no write verb). Culibox notice: not shown (`agentbox-env` absent). Suspected prompt injection: none seen.
-- Time-to-cause: not measurable (`date -u` printed nothing). In order of events: the extra-work signal (statements/s x10.4 against a flat call rate) appeared in wave 1, the deploy became a suspect in wave 2, and Confirmed was reached with the Phase 4 verdicts.
+**Operator line 4 (received when shown the proposed record diff):** "Yes, write them."
+
+Files written after the reply (output root = `out/`):
+
+- `out/incidents/2026-10-20-orders-api.md`
+- `out/lessons.md`
+- `out/profiles/orders-api-prod.md`
+
+**Message 10 (after writing), verbatim:**
+
+```text
+Written under .culiops/sre-investigate/: incidents/2026-10-20-orders-api.md, lessons.md (11 lines) and profiles/orders-api-prod.md. Nothing was committed or staged. Fixes go through pre-flight and a separate session (iac-change-execution or your app pipeline), with the report as context.
+```
+
+---
+
+## Files written (all under the case `out/` directory)
+
+- `out/runs/orders-api-prod-20261020-1530/ledger.md` (stage A after wave 0 and the profile build, stage B after wave 2 and Phase 3, stage C after the merge; the file holds the final stage)
+- `out/runs/orders-api-prod-20261020-1530/profile.md` (run profile; written after the build and updated after wave 2)
+- `out/incidents/2026-10-20-orders-api.md`, `out/lessons.md`, `out/profiles/orders-api-prod.md` (after the Phase 6 reply)
+- `out/run-log.md` (this file)
+- `report.md`: report saved separately.
+- NOT written: `raw/` pulls (named in the ledger's Result cells, not materialised in the simulation); `environment.md` (already existed).
+
+## Operator lines
+
+1. Start (opening request): "GET /orders on orders-api in prod has been slow since early this afternoon UTC and the p95 alert keeps firing. Deep mode please, I want this one written up properly."
+2. At checkpoint 1: "Agreed, go on."
+3. At checkpoint 2: "Fine, continue."
+4. At the Phase 6 diff: "Yes, write them."
+
+## Deviations and judgment calls worth a second look
+
+- Budget counting: environment.md has no query totals; the template's deep totals were used as a self-imposed ceiling and only data reads were counted (43), not the 7 access checks and 17 discovery list calls (67 logged calls in all).
+- I listed `incidents/` (file names only) together with the output-root listing, before the ranked hypotheses existed; contents were opened only in Phase 3, after the ranking.
+- The AWS write-check reply did not match the fixed action list; handled as a per-action gap, not as "read-only confirmed".
+- The `-7d` request-rate query came back identical to the unshifted one and was discarded.
+- Wave 1 had 21 queries (above ten) because its fixed legs require them.
+- `date -u` returned nothing in this environment; "now" is the newest Prometheus sample, so the Start column of the query log is indicative.
+

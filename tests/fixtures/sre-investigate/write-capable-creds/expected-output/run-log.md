@@ -1,89 +1,69 @@
-# Run log: sre-investigate, case-d (payments-worker, prod)
+# Run log: sre-investigate, case-d, payments-worker prod
 
 Run directory: `payments-worker-prod-20261024-1128`
-Simulated clock: 2026-10-24 11:28:00 UTC (taken from world/INDEX.md, "Ages are relative to 11:28:00 UTC"; `date -u` has no INDEX row and printed nothing).
-Output root used: `.culiops/sre-investigate/` (written under `out/` in this simulation).
-Mode: Fast. Waves after wave 0 and the profile build: 2 of the 3 allowed (wave 3 not needed, stop-early rule).
-Skill files read before the first command: SKILL.md, access/standalone.md, environment.template.md, templates/{ledger,profile,report,incident,lesson}.md, agents/helper.md, playbooks/{changes,metrics}.md, first 60 lines of playbooks/{logs,infra-state}.md.
+Simulated clock: 2026-10-24 11:28:00 UTC (13:28 Europe/Paris, UTC+2). `date -u` has no INDEX row (would return `_empty.txt`); the clock was taken from the INDEX note "ages are relative to 11:28:00 UTC".
 
-CTX used in every kubectl/helm command: `arn:aws:eks:us-east-1:111122223333:cluster/prod`.
+## Operator lines received
 
-## Operator lines
-
-| # | Line | When it was received |
+| # | When | Line |
 |---|---|---|
-| 1 | `payments-worker pods in prod keep restarting and payments are queueing up. Fast mode, please.` | at the very start, as the opening request |
+| 1 | session start (opening request) | `payments-worker pods in prod keep restarting and payments are queueing up. Fast mode, please.` |
 
-`operator-script.md` has only one line. No later cue ever happened and no later line was given. The run never stopped to ask the operator anything (zone known from environment.md, account matched, root writable, no Insights query, no budget or window-cap breach).
+No later lines exist in `operator-script.md` (only line 1).
 
-## Phase 0, steps 1 to 3: output root, environment, mode
+## Phase 0: output root, environment, mode
 
-Pre-step reads (not a wave; no query-log rows):
+Local checks before the first message (not metered, not backend queries):
 
-| # | Command | World file | Key facts |
-|---|---|---|---|
-| 1 | `[ -n "${CULIOPS_HOME:+x}" ] && echo "CULIOPS_HOME: set" \|\| echo "CULIOPS_HOME: unset"` | `_empty.txt` (echo, no row) | nothing printed; treated as unset |
-| 2 | `git rev-parse --show-toplevel` | `_empty.txt` | nothing printed; current directory taken as the repo root |
-| 3 | `git check-ignore -q .culiops/sre-investigate` | `_empty.txt`, exit 0 | exit 0 means ignored |
-| 4 | `command -v agentbox-env` | `_empty.txt`, exit 1 | fails, so no Culibox notice and nothing said about Culibox |
-| 5 | `cat .culiops/sre-investigate/environment.md` | `environment.md` | Timezone Europe/Paris (UTC+2 until 2026-10-25 01:00 UTC); account 111122223333, profile `prod-ops`, us-east-1; context `arn:aws:eks:us-east-1:111122223333:cluster/prod`, namespace `payments`; backends kubectl/Helm and CloudWatch SQS; no token env vars; no log datasource; repo example-org/payments-deploy, clone `~/src/payments-deploy`, chart path charts/payments-worker/values-prod.yaml; only budget `Logs Insights ask above 10 GB`; default severity scale; core flow "payment capture and refunds processed by payments-worker" |
-| 6 | `ls .culiops/sre-investigate` | `ls-01.txt` | only `environment.md`: no profiles/, lessons.md or incidents/ |
+| Command | World file | Key facts |
+|---|---|---|
+| `echo "${CULIOPS_HOME:-}"` | `_empty.txt` | CULIOPS_HOME unset, so output root = `.culiops/sre-investigate/` at the repo root |
+| `git rev-parse --show-toplevel` | `_empty.txt` | empty output (case dir stands for the repo); root taken as the current directory |
+| `git check-ignore -q .culiops/sre-investigate` | `_empty.txt` | exit 0 = ignored; no warning needed |
+| `ls .culiops/sre-investigate` | `ls-01.txt` | only `environment.md` (no profiles/, lessons.md, incidents/, runs/) |
+| `cat .culiops/sre-investigate/environment.md` | `environment.md` | tz Europe/Paris (UTC+2 until 2026-10-25 01:00 UTC); one AWS profile `prod-ops` (account 111122223333, us-east-1); one kube context `arn:aws:eks:us-east-1:111122223333:cluster/prod`, namespace `payments`; backends: kubectl/Helm and CloudWatch (SQS depth); Helm values repo `example-org/payments-deploy`, clone `~/src/payments-deploy`, path `charts/payments-worker/values-prod.yaml`; Logs Insights ask above 10 GB; default SEV scale; core flows = payment capture and refunds processed by payments-worker; no token env vars, no log/metric/trace backend |
+| `command -v agentbox-env` | `_empty.txt` | exit 1, so nothing is said about Culibox (Constraint 8) |
 
-### Message 1 (first message, verbatim)
+Files written: run directory `out/runs/payments-worker-prod-20261024-1128/` (with `raw/helper/`), initial `ledger.md` (Problem table filled).
 
-```text
-sre-investigate for payments-worker, prod.
-
-Mode: Fast. You asked for Fast, and the pods are crash-looping right now, so this is live triage: access checks and a profile build first, then at most 3 waves of read-only queries.
-
-Output root: .culiops/sre-investigate/ at the repo root. It is local and is never committed (git reports it as ignored). environment.md is there, so I am using it. This is the first run for this service, so there is no stored profile and I will build one.
-
-Window: you gave no start time, so I use the Fast default, the last two hours: 09:28 to 11:28 UTC (11:28 to 13:28 CEST, Europe/Paris from environment.md). I will date the true onset from the data and keep this window for the baselines.
-```
-
-Run directory created: `runs/payments-worker-prod-20261024-1128/` with `ledger.md` (template copied, filled as the run went) and `raw/`. `RUN` = `.culiops/sre-investigate/runs/payments-worker-prod-20261024-1128/raw`.
-
-Problem statement, window and assumptions went into the ledger (Problem, Windows tables). Windows (UTC): incident 09:28:00 to 11:28:00; previous 07:28:00 to 09:28:00; minus 7d 2026-10-17 09:28:00 to 11:28:00.
-
-## Phase 0, wave 0: access and intake
-
-### Message 2 (wave 0 commands, verbatim)
+### Message 1 (verbatim)
 
 ```text
-Wave 0 (access and intake), 2 calls, run now without waiting.
+sre-investigate: payments-worker, prod.
 
-W0-Q1, AWS identity and write-check, profile prod-ops:
-date -u +%H:%M:%S
-read -r acct role <<< "$(aws sts get-caller-identity --profile prod-ops --output json | jq -r '[.Account, (.Arn | capture("assumed-role/(?<r>[^/]+)/").r)] | @tsv')"; echo "$acct $role"
-role_arn=$(aws iam get-role --profile prod-ops --role-name "$role" --query Role.Arn --output text)
-aws iam simulate-principal-policy --profile prod-ops --policy-source-arn "$role_arn" --action-names s3:PutObject s3:DeleteObject ec2:TerminateInstances ec2:AuthorizeSecurityGroupIngress ecs:UpdateService iam:PutRolePolicy iam:CreateAccessKey rds:ModifyDBInstance lambda:UpdateFunctionCode cloudformation:DeleteStack --query 'EvaluationResults[].[EvalActionName,EvalDecision]' --output text
+Mode: Fast. The pods are restarting now and payments are queueing, so this is a live incident, and you asked for Fast. Fast means at most 3 query waves after access checks, no checkpoints, and a report with honest labels at the end; "go deep" afterwards keeps the same run.
 
-W0-Q2, Kubernetes identity and write-check, context arn:aws:eks:us-east-1:111122223333:cluster/prod:
-kubectl auth whoami --context arn:aws:eks:us-east-1:111122223333:cluster/prod
-kubectl config current-context
-kubectl auth can-i --list --context arn:aws:eks:us-east-1:111122223333:cluster/prod --namespace payments
+Output root: .culiops/sre-investigate/ at the repo root (CULIOPS_HOME is not set). The run writes everything there (run directory runs/payments-worker-prod-20261024-1128/). It is local and is never committed; `.culiops/sre-investigate` is git-ignored here.
 
-Not run, and why: token presence (environment.md lists no token-based backend), the log probe (no log datasource is listed), the alarm history (the trigger is your message, not an alarm), the stored profile and lessons (none exist).
+Window: you gave no onset, so I use the last two hours: 09:28-11:28 UTC (11:28-13:28 Europe/Paris, UTC+2). Zone comes from environment.md. If wave 1 shows an earlier or later true onset I will re-anchor on it and say so.
+
+Sources in environment.md: kubectl and Helm on context arn:aws:eks:us-east-1:111122223333:cluster/prod (namespace payments), and CloudWatch SQS metrics through profile prod-ops. No log aggregator, Prometheus, trace store or error tracker is listed, so container logs will come from `kubectl logs --previous` only.
+
+Wave 0 (access and identity), commands in full:
+
+1. date -u +%H:%M:%S; aws sts get-caller-identity --profile prod-ops
+2. arn=$(aws sts get-caller-identity --profile prod-ops --query Arn --output text); role=${arn#*:assumed-role/}; role=${role%%/*}; role_arn=$(aws iam get-role --profile prod-ops --role-name "$role" --query Role.Arn --output text); aws iam simulate-principal-policy --profile prod-ops --policy-source-arn "$role_arn" --action-names s3:PutObject s3:DeleteObject ec2:TerminateInstances ec2:AuthorizeSecurityGroupIngress ecs:UpdateService iam:PutRolePolicy iam:CreateAccessKey rds:ModifyDBInstance lambda:UpdateFunctionCode cloudformation:DeleteStack --query 'EvaluationResults[].[EvalActionName,EvalDecision]' --output text
+3. kubectl auth whoami --context arn:aws:eks:us-east-1:111122223333:cluster/prod; kubectl config current-context
+4. kubectl auth can-i --list --context arn:aws:eks:us-east-1:111122223333:cluster/prod --namespace payments
+
+No token variables are listed, so there is no token check, and no log backend, so no log probe. There is no stored profile or lessons.md yet, so the service profile is built next.
 ```
 
-### Wave 0 commands, in order
+### Wave 0 commands and results
 
 | ID | Command | World file | Key facts |
 |---|---|---|---|
-| W0-Q1 | `date -u +%H:%M:%S` | `_empty.txt` | nothing printed; world clock 11:28 used |
-| W0-Q1 | `aws sts get-caller-identity --profile prod-ops --output json` (piped to jq for account and role name) | `sts-01.json` | Account 111122223333 (matches environment.md), role PlatformOperator (session name not recorded) |
-| W0-Q1 | `aws iam get-role --profile prod-ops --role-name PlatformOperator --query Role.Arn --output text` | `iam-01.json` | role ARN `arn:aws:iam::111122223333:role/PlatformOperator`, path `/` |
-| W0-Q1 | `aws iam simulate-principal-policy --profile prod-ops --policy-source-arn <role ARN> --action-names (the fixed 10)` | `iam-02.json` | allowed: s3:PutObject, ecs:UpdateService. implicitDeny: s3:DeleteObject, ec2:TerminateInstances, iam:PutRolePolicy, rds:ModifyDBInstance, lambda:UpdateFunctionCode. No row for ec2:AuthorizeSecurityGroupIngress, iam:CreateAccessKey, cloudformation:DeleteStack (gap for those three). Extra rows (ec2:ModifyInstanceAttribute, ecs:StopTask, iam:AttachRolePolicy) are not on the fixed list and were ignored |
-| W0-Q2 | `kubectl auth whoami --context CTX` | `k8s-02.txt` | assumed-role principal, groups `eks-readonly`, `system:authenticated` |
-| W0-Q2 | `kubectl config current-context` | `k8s-01.txt` | CTX is the current context |
-| W0-Q2 | `kubectl auth can-i --list --context CTX --namespace payments` | `k8s-03.txt` | creates only on selfsubjectreviews, selfsubjectaccessreviews, selfsubjectrulesreviews (excluded); `*.*` get list watch; non-resource GETs. No write verbs |
+| W0-Q1 | `date -u +%H:%M:%S; aws sts get-caller-identity --profile prod-ops` | `sts-01.json` (date: `_empty.txt`) | Account 111122223333 (matches env), assumed-role PlatformOperator |
+| W0-Q2 | sts + `aws iam get-role` + `aws iam simulate-principal-policy` (policy-source-arn = role ARN, not the sts ARN) | `iam-01.json`, `iam-02.json` | Role ARN path `/`. Allowed: s3:PutObject, ecs:UpdateService. 7 implicitDeny. Three of the fixed ten missing from the reply (ec2:AuthorizeSecurityGroupIngress, iam:CreateAccessKey, cloudformation:DeleteStack); three extra rows returned |
+| W0-Q3 | `kubectl auth whoami ...; kubectl config current-context` | `k8s-02.txt`, `k8s-01.txt` | Same assumed role, groups eks-readonly; current context = prod |
+| W0-Q4 | `kubectl auth can-i --list --context ... --namespace payments` | `k8s-03.txt` | No write verbs (only the three excluded selfsubject* creates); `*.*` get list watch |
 
-Ledger written after the wave: Access table, Gaps (IAM rows, no log datasource, no app source), Query log rows W0-Q1, W0-Q2.
+Files written: `ledger.md` (Access, Query log W0, Gaps).
 
-### Message 3 (after wave 0, verbatim)
+### Message 2 (verbatim, after wave 0)
 
 ```text
-Wave 0 results.
+Wave 0 done.
 
 +------------------------------------------------------------------+
 | WARNING: WRITE-CAPABLE CREDENTIALS                               |
@@ -96,296 +76,258 @@ Wave 0 results.
 | work, or Culibox when it is available. Continuing.               |
 +------------------------------------------------------------------+
 
-Gap, prod-ops: the simulation returned no row for 3 of the 10 fixed actions (ec2:AuthorizeSecurityGroupIngress, iam:CreateAccessKey, cloudformation:DeleteStack), so write capability for those three is unknown. It also returned rows for three actions that are not on the fixed list (ec2:ModifyInstanceAttribute, ecs:StopTask, iam:AttachRolePolicy); I ignored them.
+Kubernetes, context arn:aws:eks:us-east-1:111122223333:cluster/prod, namespace payments: no write verbs seen (only the three self-review creates, which do not count). The identity can however get/list/watch every resource, Secrets included; the run will not open Secret objects.
 
-Write check, arn:aws:eks:us-east-1:111122223333:cluster/prod / payments: no write verbs in payments. The only create rows are the three self-review APIs, which do not count; everything else is get, list, watch. The kubectl check says nothing about the AWS profile, which is why both warnings stand on their own. Note that this identity can read all resources, Secrets included; I will not read Secret objects.
+Gaps so far:
+- The IAM simulation did not return rows for 3 of the 10 fixed actions (ec2:AuthorizeSecurityGroupIngress, iam:CreateAccessKey, cloudformation:DeleteStack) and returned 3 I did not ask for. The warning above stands on the two actions that came back allowed.
+- environment.md lists no log aggregator, Prometheus, trace store or error tracker. Logs come only from `kubectl logs --previous` and Kubernetes events (about an hour of retention), so I will read those first.
 
-Account check: prod-ops resolves to account 111122223333, as environment.md says.
-
-Other gaps found: no log aggregator and no tracing or metrics datasource are listed, so logs come only from kubectl logs; no SLO or business counter for payment capture, so customer impact will be Assumed; the application source repo is not listed (only payments-deploy), so I cannot read the app's code at the deployed ref.
+No stored service profile exists for payments-worker/prod, so I am building one now (discovery helper on the cheapest model), then wave 1.
 ```
 
-## Build profile (first run for the service)
+## Build profile
 
-### Message 4 (helper dispatch and commands, verbatim)
+No `profiles/payments-worker-prod.md` exists, so a helper was dispatched (`TASK: PROFILE`, cheapest tier, identifier lessons: none). Simulated inline, section label `[helper PROFILE, cheapest tier]`. It read environment.md, ran one wave, and returned the filled template with `(unverified)` marks. In parallel the main session started the IaC history read (needs no discovered identifier).
 
-```text
-Build profile: dispatching a helper (TASK: PROFILE, cheapest tier) for identifier discovery. While it works I read the IaC history, which needs no identifiers. Three calls, run now.
-
-W0-Q3, helper, kubectl discovery in namespace payments:
-kubectl --context arn:aws:eks:us-east-1:111122223333:cluster/prod -n payments get deploy
-kubectl --context arn:aws:eks:us-east-1:111122223333:cluster/prod -n payments get pods -o wide
-kubectl --context arn:aws:eks:us-east-1:111122223333:cluster/prod -n payments get svc,ingress,hpa
-kubectl --context arn:aws:eks:us-east-1:111122223333:cluster/prod -n payments get configmap
-
-W0-Q4, helper, Helm, SQS and service-discovery catalog:
-helm list --kube-context arn:aws:eks:us-east-1:111122223333:cluster/prod -n payments
-aws sqs list-queues --profile prod-ops --region us-east-1 --queue-name-prefix payments
-ls .culiops/service-discovery/
-
-W0-Q5, main session, IaC history for the chart (14 days instead of the playbook's 3, to reach the previous release; no branch name is guessed, so all refs of the clone are searched):
-git -C ~/src/payments-deploy log --all --since=2026-10-10 --date=iso-strict --format='%h %cI %s' -- charts/payments-worker
-```
-
-Helper simulated inline: `[helper PROFILE, cheapest tier]`. It received no identifier lessons ("none"). It ran W0-Q3 and W0-Q4 only (no log, trace, Prometheus or dashboard backend is listed in environment.md, so those checklist items return "none listed").
+### [helper PROFILE, cheapest tier]
 
 | ID | Command | World file | Key facts |
 |---|---|---|---|
-| W0-Q3 | `kubectl ... -n payments get deploy` | `k8s-12.txt` | payments-worker 0/3 ready, 3 up-to-date, 0 available, age 164d |
-| W0-Q3 | `kubectl ... -n payments get pods -o wide` | `k8s-04.txt` | payments-worker-6d4f8a2b7c-{3mfk8, q7c2z, vn5tr}, 0/1, CrashLoopBackOff, 11 restarts each, age 35m |
-| W0-Q3 | `kubectl ... -n payments get svc,ingress,hpa` | `_empty.txt` | no output: no Service, Ingress or HPA |
-| W0-Q3 | `kubectl ... -n payments get configmap` | `k8s-13.txt` | `kube-root-ca.crt` (1 key), `payments-worker-config` (4 keys) |
-| W0-Q4 | `helm list --kube-context CTX -n payments` | `helm-03.txt` | release payments-worker, revision 31, updated 2026-10-24 10:52:20 UTC, deployed, chart payments-worker-2.3.1, app 5.2.0 |
-| W0-Q4 | `aws sqs list-queues --profile prod-ops --region us-east-1 --queue-name-prefix payments` | `sqs-01.json` | payments-jobs, payments-jobs-dlq |
-| W0-Q4 | `ls .culiops/service-discovery/` | no row: "No such file or directory", exit 1 | no service-discovery catalog |
-| W0-Q5 | `git -C ~/src/payments-deploy log --all --since=2026-10-10 ...` | `git-01.txt` | d81e4b7 (2026-10-24 10:41:41 +0000, "rename ledger endpoint key to match the shared ledger client (#377)"); 27c4e91 (2026-10-13 15:22:47 +0000, "add a retry budget for ledger calls (#361)"). Author addresses not recorded |
+| W0-Q5 | `kubectl --context <ctx> -n payments get deploy; ... get pods; ... get configmap; ... get svc; ... get ingress; ... get hpa` (one chained call) | `k8s-12.txt`, `k8s-04.txt`, `k8s-13.txt`; svc/ingress/hpa: `_empty.txt` | Deployment payments-worker 0/3 ready, age 164d. 3 pods (hash 6d4f8a2b7c) all CrashLoopBackOff, 11 restarts, age 35m. ConfigMaps payments-worker-config (4 keys), kube-root-ca.crt. No svc/ingress/hpa |
+| W0-Q6 | `aws sqs list-queues --profile prod-ops --region us-east-1 --queue-name-prefix payments` | `sqs-01.json` | payments-jobs, payments-jobs-dlq |
+| W0-Q7 | `helm list --kube-context <ctx> -n payments` | `helm-03.txt` | release payments-worker rev 31, updated 2026-10-24 10:52:20 UTC, chart payments-worker-2.3.1, app 5.2.0 |
+| (local) | `ls .culiops/service-discovery` | no row: "No such file or directory", exit 1 | no service-discovery catalog |
 
-The run profile `profile.md` was written from the helper's return. Constraint 14 tie rule re-applied: only names returned by a listing are marked verified; the DLQ pairing, default branch and log source stay `(unverified)`.
+Helper discovery skipped (no such backend in environment.md): log labels, trace service name, Prometheus job, dashboards, ECS, RDS.
 
-### Message 5 (profile shown, verbatim; the run continues without waiting)
-
-```text
-Profile built for payments-worker prod (corrections welcome; I keep going). Written to the run directory as profile.md; the stored profile changes only in the record phase.
-
-Identity
-- Service payments-worker, prod, profile prod-ops, us-east-1, account 111122223333
-- Cluster prod, context arn:aws:eks:us-east-1:111122223333:cluster/prod, namespace payments (verified)
-- IaC: example-org/payments-deploy, clone ~/src/payments-deploy, chart charts/payments-worker/ (values-prod.yaml); Helm release payments-worker, chart payments-worker-2.3.1, app 5.2.0, revision 31 (verified)
-- Core flow served: payment capture and refunds processed by payments-worker. SLO: none.
-
-Sibling set: replicas, 3 pods payments-worker-6d4f8a2b7c-3mfk8, -q7c2z, -vn5tr (verified)
-
-Identifiers per source
-- Logs: none listed; kubectl logs on the pods (unverified until it returns lines)
-- Traces, Prometheus, business counters, error tracker, dashboards: none listed
-- Compute: Deployment payments-worker (verified); ConfigMaps payments-worker-config (4 keys) and kube-root-ca.crt (verified); no Service, Ingress or HPA (verified, empty listing)
-- Queues: payments-jobs, payments-jobs-dlq (verified by listing); which DLQ belongs to which queue is (unverified)
-- Code: example-org/payments-deploy, default branch (unverified); application source repo not listed
-
-Dependencies: SQS payments-jobs (consumed). Others unknown until the evidence shows them.
-Baseline notes, stale identifiers: none yet.
-```
-
-## Phase 1, wave 1: changes, golden signals, recurrence
-
-### Message 6 (wave 1 commands, verbatim)
-
-```text
-Wave 1: change events, signals, recurrence and schedules, 9 calls, run now. Windows (UTC): incident 2026-10-24T09:28:00Z to 11:28:00Z, previous 07:28:00Z to 09:28:00Z, minus 7d 2026-10-17T09:28:00Z to 11:28:00Z. Siblings are the 3 replicas. RUN=.culiops/sre-investigate/runs/payments-worker-prod-20261024-1128/raw
-
-W1-Q1, events in the namespace with first and last timestamps (short-lived, so first):
-date -u +%H:%M:%S
-kubectl --context arn:aws:eks:us-east-1:111122223333:cluster/prod -n payments get events --sort-by=.lastTimestamp -o json | jq -r '.items[] | [(.firstTimestamp // .eventTime), .lastTimestamp, (.count // .series.count // 1), .type, .involvedObject.kind, .reason, .involvedObject.name, (.message // "" | .[:300])] | @tsv'
-
-W1-Q2, rollout history and ReplicaSet ages:
-kubectl --context arn:aws:eks:us-east-1:111122223333:cluster/prod -n payments rollout history deployment/payments-worker
-kubectl --context arn:aws:eks:us-east-1:111122223333:cluster/prod -n payments get rs --sort-by=.metadata.creationTimestamp
-
-W1-Q3, Helm release history:
-helm history payments-worker --kube-context arn:aws:eks:us-east-1:111122223333:cluster/prod -n payments --max 10
-
-W1-Q4, pod state and last termination, all three siblings:
-for p in payments-worker-6d4f8a2b7c-3mfk8 payments-worker-6d4f8a2b7c-q7c2z payments-worker-6d4f8a2b7c-vn5tr; do kubectl --context arn:aws:eks:us-east-1:111122223333:cluster/prod -n payments describe pod "$p"; done
-
-W1-Q5, previous container log of each sibling (the crash line, before it is rotated away):
-for p in payments-worker-6d4f8a2b7c-3mfk8 payments-worker-6d4f8a2b7c-q7c2z payments-worker-6d4f8a2b7c-vn5tr; do kubectl --context arn:aws:eks:us-east-1:111122223333:cluster/prod -n payments logs "$p" --previous --tail=60; done
-
-W1-Q6, Deployment definition and conditions:
-kubectl --context arn:aws:eks:us-east-1:111122223333:cluster/prod -n payments describe deploy payments-worker
-
-W1-Q7, golden signal for a queue worker (backlog and DLQ), three windows, 2 metrics x 3 calls = 6 metric requests:
-cat > "$RUN/q-backlog-300.json" <<'EOF'
-[ {"Id": "backlog", "MetricStat": {"Period": 300, "Stat": "Maximum", "Metric": {"Namespace": "AWS/SQS", "MetricName": "ApproximateNumberOfMessagesVisible", "Dimensions": [{"Name": "QueueName", "Value": "payments-jobs"}]}}},
-  {"Id": "m1", "MetricStat": {"Period": 300, "Stat": "Maximum", "Metric": {"Namespace": "AWS/SQS", "MetricName": "ApproximateNumberOfMessagesVisible", "Dimensions": [{"Name": "QueueName", "Value": "payments-jobs-dlq"}]}}} ]
-EOF
-for w in "incident 2026-10-24T09:28:00Z 2026-10-24T11:28:00Z" "previous 2026-10-24T07:28:00Z 2026-10-24T09:28:00Z" "minus7d 2026-10-17T09:28:00Z 2026-10-17T11:28:00Z"; do read -r win ws we <<< "$w"; TZ=UTC aws cloudwatch get-metric-data --profile prod-ops --region us-east-1 --metric-data-queries "file://$RUN/q-backlog-300.json" --start-time "$ws" --end-time "$we" --output json > "$RUN/m-golden-$win.json"; done
-
-W1-Q8, recurrence pull, 14 days at one-hour resolution ending at the window start, 2 metric requests:
-cat > "$RUN/q-recur-3600.json" <<'EOF'
-[ {"Id": "backlog", "MetricStat": {"Period": 3600, "Stat": "Maximum", "Metric": {"Namespace": "AWS/SQS", "MetricName": "ApproximateNumberOfMessagesVisible", "Dimensions": [{"Name": "QueueName", "Value": "payments-jobs"}]}}},
-  {"Id": "m1", "MetricStat": {"Period": 3600, "Stat": "Maximum", "Metric": {"Namespace": "AWS/SQS", "MetricName": "ApproximateNumberOfMessagesVisible", "Dimensions": [{"Name": "QueueName", "Value": "payments-jobs-dlq"}]}}} ]
-EOF
-TZ=UTC aws cloudwatch get-metric-data --profile prod-ops --region us-east-1 --metric-data-queries "file://$RUN/q-recur-3600.json" --start-time 2026-10-10T09:28:00Z --end-time 2026-10-24T09:28:00Z --output json > "$RUN/m-recur-14d-cw.json"
-
-W1-Q9, schedules that could fire near the onset (before looking for a person):
-kubectl --context arn:aws:eks:us-east-1:111122223333:cluster/prod get cronjobs -A -o custom-columns='NAMESPACE:.metadata.namespace,NAME:.metadata.name,SCHEDULE:.spec.schedule,TZ:.spec.timeZone,SUSPEND:.spec.suspend,LAST:.status.lastScheduleTime'
-aws events list-rules --profile prod-ops --region us-east-1 --query 'Rules[?ScheduleExpression].[Name, State, ScheduleExpression]' --output text
-aws scheduler list-schedules --profile prod-ops --region us-east-1 --query 'Schedules[].[GroupName, Name, State]' --output text
-
-Not run in this wave, with the reason: no ECS or Auto Scaling in the path (EKS), no alarm to pull history for, no error tracker, no availability cross-check (no HTTP 5xx symptom), no business counter (none defined in environment.md).
-```
-
-### Wave 1 commands, in order
+### Main session, parallel with the helper
 
 | ID | Command | World file | Key facts |
 |---|---|---|---|
-| W1-Q1 | `date -u +%H:%M:%S` | `_empty.txt` | nothing printed |
-| W1-Q1 | `kubectl ... get events ... -o json \| jq ...` | `k8s-06.json` | 10:52:21 Deployment scaled old RS 84c1e9d3f5 3 to 0, pod Killing; 10:52:33 new RS 6d4f8a2b7c scaled to 3, pods scheduled; 10:52:36 first Started (12 starts by 11:25:56 on 3mfk8); first BackOff 10:53:02 / 10:53:03 / 10:53:05, 151 / 149 / 150 events, last 11:27:20 / 11:27:38 / 11:27:51. No Unhealthy, FailedScheduling, Evicted, FailedCreate, pull events |
-| W1-Q2 | `kubectl ... rollout history deployment/payments-worker` | `k8s-10.txt` | revisions 14 and 15, no change-cause |
-| W1-Q2 | `kubectl ... get rs --sort-by=.metadata.creationTimestamp` | `k8s-11.txt` | 84c1e9d3f5: 0/0/0, 11d old; 6d4f8a2b7c: desired 3, current 3, ready 0, 35m |
-| W1-Q3 | `helm history payments-worker --kube-context CTX -n payments --max 10` | `helm-01.txt` | rev 30 on 2026-10-13 15:40:02 superseded; rev 31 on 2026-10-24 10:52:20 deployed; both chart 2.3.1, app 5.2.0 |
-| W1-Q4 | `describe pod` x3 | `k8s-07.txt` (same content for each pod apart from its name) | Waiting CrashLoopBackOff; last state Terminated, Reason Error, Exit Code 1, started and finished 11:25:56; restarts 11; image payments-worker:5.2.0; limits 500m / 256Mi; envFrom ConfigMap payments-worker-config; one variable from a Secret (name only, not read); pod annotation checksum/config present; no OOM |
-| W1-Q5 | `logs <pod> --previous --tail=60` x3 | `k8s-08.txt` | `payments-worker 5.2.0 starting`, `loading configuration from environment`, fatal `config: required environment variable LEDGER_API_BASE_URL is not set` (config/load.go:58), all at 11:25:56. No instruction-like text |
-| W1-Q6 | `describe deploy payments-worker` | `k8s-14.txt` | strategy Recreate; 3 desired, 3 updated, 0 available; Available False MinimumReplicasUnavailable; selector instance and name = payments-worker; revision annotation 15 |
-| W1-Q7 | `get-metric-data` incident window (both metrics) | `cw-01.json` (backlog) and `cw-02.json` (DLQ) | only 10:30 to 11:25 returned (12 points). backlog 14, 16, 10, 30, 19, then 74 (10:55), 1060, 2046, 3032, 4018, 5003, 5989 (11:25); steps of about 986 per 5 minutes after 11:00. DLQ 0 throughout |
-| W1-Q7 | same, previous window 07:28 to 09:28 | `_default.txt` | `{}` |
-| W1-Q7 | same, minus 7d window | `_default.txt` | `{}` |
-| W1-Q8 | `get-metric-data` 14d x 1h ending 2026-10-24T09:28Z | `_default.txt` | `{}`, no MetricDataResults: coverage gap |
-| W1-Q9 | `kubectl get cronjobs -A -o custom-columns=...` | `_empty.txt` | no CronJobs |
-| W1-Q9 | `aws events list-rules ...` | `_default.txt` | `{}`: no scheduled rules |
-| W1-Q9 | `aws scheduler list-schedules ...` | `_default.txt` | `{}`: no schedules |
+| W0-Q8 | `git -C ~/src/payments-deploy log --remotes=origin --since=2026-10-21T11:28:00Z --until=2026-10-24T11:28:00Z --date=iso-strict --format='%h %cI %an %s' -- charts/payments-worker` | `git-01.txt` (only the commit inside my range returned) | d81e4b7 (#377) "rename ledger endpoint key to match the shared ledger client", committed 2026-10-24 10:41:41 UTC. The older commit 27c4e91 (#361, retry budget, 2026-10-13) is outside my 3-day range and was not returned |
 
-Not run on purpose: `helm get values` (prints rendered values, which can include credentials; the playbook says compare the values files in git instead) and any read of Secret objects. Not opened: `helm-02.yaml`, `k8s-16.yaml`, `iam-03.txt`, `k8s-05.txt`, `k8s-15.yaml`.
+Files written: `profile.md` (run profile; tie rule re-applied: the queue-consumer link and every identifier not returned by a query stay `(unverified)`), `ledger.md` (Code repos, Query log W0-Q5..Q8).
 
-Phase 1 reading before the ledger write: siblings (all 3 replicas) fail identically, so a shared cause rather than one bad pod or node. Shape: backlog is a ramp, but it is the integral of constant arrival (about 197 per minute) over zero consumption, driven by a step in consumer capacity (3 to 0 at 10:52:21), not a leak. Recurrence: unclassified (no alarm, 14-day pull empty). Wave 1 written to the ledger (Query log W1-Q1 to W1-Q9, Timeline, Recurrence, Windows, Impact, Gaps) before this read-out was used.
-
-### Message 7 (impact block, verbatim)
+### Message 3 (verbatim, profile shown and wave 1 printed)
 
 ```text
-Impact as of 11:28 UTC (13:28 CEST, Europe/Paris from environment.md)
-Symptom:   payments-worker containers exit on startup and restart (CrashLoopBackOff, 11 restarts per pod); queued payment jobs are not consumed and the payments-jobs queue keeps growing
-Affected:  prod, namespace payments: 0 of 3 payments-worker pods available, all three replicas fail alike (shared cause, not one bad pod); payments-jobs backlog 5,989 in the 5-minute bucket starting 11:25 UTC against 10 to 30 at 10:30-10:50 UTC, growing about 197 messages per minute; payments-jobs-dlq at 0; core flow "payment capture and refunds" (internal worker; so far the customer effect is delay, not failure, but that is unmeasured)
-Since:     10:52:21 UTC (12:52:21 CEST), when the old pods were stopped, about 36 minutes ago · ongoing: yes
-Severity:  SEV1 (suggested) because the core flow "payment capture and refunds processed by payments-worker" has no running consumer at all
-Basis:     Deployment availability and queue depth against the level just before the onset (the previous-window and seven-day baselines returned no data; no SLO named) · W1-Q4, W1-Q6, W1-Q7 · Confirmed for the outage and the backlog; Assumed for what customers see
-Third party in the path: none known (the ledger endpoint is configured by key name only; its owner is not in the profile)
+Profile for payments-worker/prod (continuing without waiting; correct me if anything is off):
+
+- Service: Deployment payments-worker in namespace payments, cluster prod, Helm release payments-worker (revision 31, chart payments-worker-2.3.1, app 5.2.0, applied 2026-10-24 10:52:20 UTC). Verified by queries.
+- Replicas (the sibling set): 3 pods, payments-worker-6d4f8a2b7c-3mfk8, -q7c2z, -vn5tr, all CrashLoopBackOff with 11 restarts, age 35 min. Deployment shows 0/3 ready.
+- Config: ConfigMap payments-worker-config (4 keys). No Service, Ingress or HPA in the namespace.
+- Queues: payments-jobs and payments-jobs-dlq exist in us-east-1. That payments-worker consumes payments-jobs is (unverified): it is inferred from the name only.
+- Code: Helm values in example-org/payments-deploy (local clone ~/src/payments-deploy). One commit in the last 3 days on charts/payments-worker: d81e4b7 (#377), 10:41:41 UTC, "rename ledger endpoint key to match the shared ledger client". It is a candidate only; nothing ties it to the failure yet.
+- No logs, metrics or traces backend is known, so there is no request-level data; everything below comes from kubectl, Helm and SQS depth.
+
+The first signs point at a change around 10:52 UTC, earlier than the start of the window I assumed (09:28). If wave 1 confirms it I will re-anchor the windows in wave 2.
+
+Wave 1 (change events, golden signals, recurrence). Commands in full:
+
+1. date -u +%H:%M:%S; kubectl --context arn:aws:eks:us-east-1:111122223333:cluster/prod -n payments rollout history deployment/payments-worker; kubectl --context arn:aws:eks:us-east-1:111122223333:cluster/prod -n payments get rs --sort-by=.metadata.creationTimestamp -o custom-columns='NAME:.metadata.name,REVISION:.metadata.annotations.deployment\.kubernetes\.io/revision,CREATED:.metadata.creationTimestamp,DESIRED:.spec.replicas,READY:.status.readyReplicas'
+2. kubectl --context arn:aws:eks:us-east-1:111122223333:cluster/prod -n payments get events --sort-by=.lastTimestamp -o json | jq -r '.items[] | [(.firstTimestamp // .eventTime), .lastTimestamp, (.count // .series.count // 1), .reason, .involvedObject.name, (.message // "" | .[:300])] | @tsv'
+3. helm history payments-worker --kube-context arn:aws:eks:us-east-1:111122223333:cluster/prod -n payments --max 10
+4. kubectl --context arn:aws:eks:us-east-1:111122223333:cluster/prod -n payments describe deployment payments-worker
+5. for p in payments-worker-6d4f8a2b7c-3mfk8 payments-worker-6d4f8a2b7c-q7c2z payments-worker-6d4f8a2b7c-vn5tr; do kubectl --context arn:aws:eks:us-east-1:111122223333:cluster/prod -n payments describe pod "$p"; done
+6. for p in payments-worker-6d4f8a2b7c-3mfk8 payments-worker-6d4f8a2b7c-q7c2z payments-worker-6d4f8a2b7c-vn5tr; do kubectl --context arn:aws:eks:us-east-1:111122223333:cluster/prod -n payments logs "$p" --previous --tail=50; done
+7. Queue depth, three windows (incident 09:28-11:28, previous 07:28-09:28, same span seven days back), both queues:
+   for w in "2026-10-24T09:28:00Z 2026-10-24T11:28:00Z" "2026-10-24T07:28:00Z 2026-10-24T09:28:00Z" "2026-10-17T09:28:00Z 2026-10-17T11:28:00Z"; do set -- $w; aws cloudwatch get-metric-data --profile prod-ops --region us-east-1 --start-time "$1" --end-time "$2" --metric-data-queries '[{"Id":"jobs","MetricStat":{"Metric":{"Namespace":"AWS/SQS","MetricName":"ApproximateNumberOfMessagesVisible","Dimensions":[{"Name":"QueueName","Value":"payments-jobs"}]},"Period":300,"Stat":"Maximum"}},{"Id":"dlq","MetricStat":{"Metric":{"Namespace":"AWS/SQS","MetricName":"ApproximateNumberOfMessagesVisible","Dimensions":[{"Name":"QueueName","Value":"payments-jobs-dlq"}]},"Period":300,"Stat":"Maximum"}}]' --output json; done
+8. Recurrence, 14 days at one hour ending at the assumed window start, Maximum (a saturation-type gauge):
+   aws cloudwatch get-metric-data --profile prod-ops --region us-east-1 --start-time 2026-10-10T09:28:00Z --end-time 2026-10-24T09:28:00Z --metric-data-queries '[{"Id":"jobs","MetricStat":{"Metric":{"Namespace":"AWS/SQS","MetricName":"ApproximateNumberOfMessagesVisible","Dimensions":[{"Name":"QueueName","Value":"payments-jobs"}]},"Period":3600,"Stat":"Maximum"}},{"Id":"dlq","MetricStat":{"Metric":{"Namespace":"AWS/SQS","MetricName":"ApproximateNumberOfMessagesVisible","Dimensions":[{"Name":"QueueName","Value":"payments-jobs-dlq"}]},"Period":3600,"Stat":"Maximum"}}]' --output json
+
+I print `describe` output for the deployment and pods but record environment variables by name only, never values. The IaC history read (git log) already ran in the profile step. CloudTrail, the app/values diff at the deployed ref, and the schedule listings go in wave 2.
 ```
 
-Prompt-injection check on wave 1: previous-container logs, events and describe output contain no instruction-like text. Ledger Untrusted text: "none seen".
+## Wave 1 (change events, golden signals, recurrence)
 
-## Phase 2 and 3: change list and hypotheses
+Commands exactly as in Message 3 (printed in full before running). Start time: `date -u` returned nothing in the simulation; recorded as 11:29 (clock assumed).
 
-Change list (ledger Timeline): commit 27c4e91 and Helm revision 30 (2026-10-13); commit d81e4b7 at 10:41:41; Helm revision 31 at 10:52:20 with identical chart and app versions (so a values-only change); rollout at 10:52:21 to 10:52:33. Recurrence class unclassified, so no schedule outranks the change; schedules came back empty anyway. A deploy near the onset is a candidate, not yet a cause: it must touch the failing path. The failing path (a missing environment variable fed by envFrom from payments-worker-config) is the file values-prod.yaml, which d81e4b7 touches.
-
-Hypotheses ranked (ledger Hypotheses table; falsification query first): H1 key rename via revision 31; H2 broken image or app version; H3 retry-budget argument from revision 30; H4 OOM or limits; H5 probes; H6 image pull or scheduling; H7 ledger API outage or credential; H8 schedule; H9 node churn. H2 to H9 already had their falsification evidence from wave 1 (see ledger). H1's disproof queries (diff does not touch the key; live ConfigMap still has the old key) run first in wave 2. No incidents/ or lessons.md exists, so no history lookup; no wiki access listed, so no docs lookup.
-
-## Phase 4: wave 2
-
-### Message 8 (ranked hypotheses and wave 2 commands, verbatim)
-
-```text
-Ranked hypotheses (each with the query that would disprove it):
-H1  Helm revision 31 applied the values change from d81e4b7 (#377) that renamed a ConfigMap key; the app still wants the old name and exits at startup. Disproof: the live ConfigMap still has LEDGER_API_BASE_URL, or the diff does not touch the key, or the failures began before 10:52 (W2-Q1, W2-Q2, W1-Q1).
-H2  A broken image or app version. Disproof: chart and app versions are equal at revisions 30 and 31, and no image line changed (W1-Q3, W2-Q1).
-H3  The retry-budget argument from revision 30. Disproof: that revision ran 11 days healthy (W1-Q2, W1-Q3).
-H4  Memory or limits. Disproof: last state is exit code 1, not 137 (W1-Q4).
-H5  Probe failures. Disproof: no Unhealthy events (W1-Q1).
-H6  Image pull or scheduling. Disproof: pods scheduled and started (W1-Q1).
-H7  Ledger API outage or credential. Disproof: the process dies at config load before any network call (W1-Q5).
-H8  A schedule. Disproof: no CronJobs or scheduled rules (W1-Q9).
-H9  Node or eviction churn. Disproof: only the rollout's own Killing event, all replicas fail alike (W1-Q1, W1-Q4).
-
-Wave 2: the slower change sources and the disproof of H1, 3 calls, run now. Same windows as wave 1.
-
-W2-Q1, IaC diff between the two releases, restricted to the chart (names and structure only are recorded, no config values):
-date -u +%H:%M:%S
-git -C ~/src/payments-deploy diff 27c4e91^ d81e4b7 -- charts/payments-worker
-
-W2-Q2, live ConfigMap, key NAMES and field-manager times only (the filter never prints a value):
-kubectl --context arn:aws:eks:us-east-1:111122223333:cluster/prod -n payments get configmap payments-worker-config -o json | jq '{keys: (.data | keys), managed_fields: [.metadata.managedFields[]? | {manager, operation, time}]}'
-
-W2-Q3, CloudTrail write events naming payments resources, onset minus 2h to onset plus 15 minutes:
-TZ=UTC aws cloudtrail lookup-events --profile prod-ops --region us-east-1 --lookup-attributes AttributeKey=ReadOnly,AttributeValue=false --start-time 2026-10-24T08:52:00Z --end-time 2026-10-24T11:07:00Z --query "Events[?Resources[?contains(ResourceName || '', 'payments')]].[EventTime, EventSource, EventName, Username, EventId]" --output text
-```
-
-| ID | Command | World file | Key facts |
+| ID | Command (short) | World file | Key facts |
 |---|---|---|---|
-| W2-Q1 | `date -u +%H:%M:%S` | `_empty.txt` | nothing printed |
-| W2-Q1 | `git -C ~/src/payments-deploy diff 27c4e91^ d81e4b7 -- charts/payments-worker` | `git-03.txt` then `git-02.txt` (oldest first) | 27c4e91 adds an `args` entry (ledger retry budget) to templates/deployment.yaml, envFrom unchanged. d81e4b7 renames the values-prod.yaml key LEDGER_API_BASE_URL to LEDGER_BASE_URL; the value on both lines is identical. No image, tag, resources or chart-version line |
-| W2-Q2 | `kubectl ... get configmap payments-worker-config -o json \| jq ...` | `k8s-09.yaml` (ConfigMap row, "-o json gets the same content") | keys: LEDGER_BASE_URL, PAYMENTS_CURRENCY_DEFAULT, PAYMENTS_QUEUE_URL, PAYMENTS_WORKER_CONCURRENCY. LEDGER_API_BASE_URL absent. managedFields not present. Values not recorded anywhere |
-| W2-Q3 | `aws cloudtrail lookup-events ...` | `_default.txt` | `{}`: no write events naming payments resources |
+| W1-Q1 | `rollout history deployment/payments-worker`; `get rs --sort-by=...creationTimestamp -o custom-columns=...` | `k8s-10.txt`, `k8s-11.txt` | Deployment revisions 14, 15. RS 84c1e9d3f5 desired 0, age 11d. RS 6d4f8a2b7c desired 3, ready 0, age 35m |
+| W1-Q2 | `get events --sort-by=.lastTimestamp -o json \| jq ...` | `k8s-06.json` | 10:52:21 old RS scaled to 0, old pod killed; 10:52:33 new RS scaled to 3; 10:52:36 first Started; BackOff first seen 10:53:02/03/05 on the three new pods (x151/149/150); no Unhealthy/OOM/Evicted/FailedScheduling/image-pull events; no Warning for old-hash pods |
+| W1-Q3 | `helm history payments-worker ... --max 10` | `helm-01.txt` | rev 30 Oct 13 15:40:02 superseded, rev 31 Oct 24 10:52:20 deployed, same chart 2.3.1 / app 5.2.0 |
+| W1-Q4 | `describe deployment payments-worker` | `k8s-14.txt` | Recreate strategy, 0/3 available, image :5.2.0, config via envFrom ConfigMap payments-worker-config, no probes |
+| W1-Q5 | `describe pod` for each of the 3 pods | `k8s-07.txt` (same content for each, name differs) | Exit Code 1 Reason Error, last run 11:25:56, restart count 11, limits 256Mi, env var LEDGER_API_TOKEN from a Secret reference (name only recorded). Oddity: label pod-template-hash 5c8d7b9f4c vs RS hash 6d4f8a2b7c |
+| W1-Q6 | `logs <pod> --previous --tail=50` for each pod | `k8s-08.txt` | fatal "config: required environment variable LEDGER_API_BASE_URL is not set" (config/load.go:58), 19 ms after "starting" |
+| W1-Q7 | `get-metric-data` x3 windows, payments-jobs + payments-jobs-dlq, Period 300 Maximum | `cw-01.json` (payments-jobs), `cw-02.json` (DLQ) for the incident window; previous and -7d windows: no overlap with any row, `_default.txt` `{}` | backlog 10-30 at 10:30-10:50, 74 at 10:55, 1060 at 11:00, then +~986 per 5 min to 5989 at 11:25; DLQ 0 throughout; no points before 10:30; previous and -7d empty |
+| W1-Q8 | `get-metric-data` 14 days ending 09:28, Period 3600 Maximum | no overlap, `_default.txt` `{}` | empty reply, no recurrence data |
 
-Wave 2 written to the ledger before use. Result: H1 `Confirmed` (change = diff + Helm revision + live key set; mechanism = the container's own fatal line; timing = revision 31 at 10:52:20, pods started 10:52:36, first BackOff 10:53:02 to 10:53:05). H2 to H9 `Ruled out` with their queries shown. Stop-early rule met (one hypothesis Confirmed, all other plausible ones Ruled out), so wave 3 was not run. Budget at the end: 17 of 20 calls, 0 of 2 GB of logs, 8 of 100 CloudWatch metric requests.
+Files written: `ledger.md` (Impact, Windows, Recurrence provisional, Timeline, Hypotheses, Code repos, Query log W1, Gaps, Lesson candidates) before wave results were used in chat. Mapping notes: `cw-01.json` was read for the `payments-jobs` request, `cw-02.json` for `payments-jobs-dlq`; the world has no rows for other windows.
+
+### Message 4 (verbatim, after wave 1: impact block, change list, hypotheses, wave 2 printed)
+
+```text
+Wave 1 is in the ledger. No instruction-like text was found in any output.
+
+Impact as of 11:29 UTC (13:29 local, Europe/Paris)
+Symptom:   payments-worker pods exit at startup (exit code 1) and sit in CrashLoopBackOff; the Deployment shows 0/3 available; the payments-jobs queue backlog grows with nothing consuming it.
+Affected:  prod, namespace payments, all 3 replicas. payments-jobs visible messages: 5,989 at 11:25 UTC against 10-30 between 10:30 and 10:50 (about +197 per minute since 10:55); dead-letter queue 0. Payment capture and refunds are the core flows served by this worker (environment.md): delayed rather than failed. Customer-facing: Assumed, because the queue-to-flow link is inferred from the name only.
+Since:     10:52 UTC (12:52 Europe/Paris), first crash within a minute of the Helm upgrade · ongoing: yes
+Severity:  SEV1 (suggested) because a core flow's only worker has 0 of 3 replicas available and its queue is growing (default scale: customer-facing core flow down). The incident owner decides.
+Basis:     request/error metrics do not exist for this service (no SLO, no load balancer, no APM); queue depth and pod state are the only signals · W1-Q7, W1-Q4, W0-Q5 · measurements Confirmed, impact on payments Assumed; baseline is only 20 minutes
+Third party in the path: none known
+
+What wave 1 shows, with labels:
+- Onset: Helm revision 31 was applied at 10:52:20 UTC, the old ReplicaSet was scaled to 0 at 10:52:21 (Recreate strategy), the new pods started at 10:52:36 and the first BackOff is at 10:53:02 (W0-Q7, W1-Q2, W1-Q3). Confirmed.
+- Mechanism: every new pod's previous container logged, at its latest restart, `config: required environment variable LEDGER_API_BASE_URL is not set` and exited 1 about 19 ms after starting (W1-Q5, W1-Q6). Confirmed for the latest restart of each pod. There is no log store, so the first crash's line cannot be read.
+- Ruled out so far: probe failures, image pull or scheduling, OOM (exit 1, Error), a ledger outage or timeout (the process dies before any network call), evictions (W1-Q2, W1-Q4, W1-Q5, W1-Q6). A Secret-related failure behind the first error cannot be excluded without reading Secrets, which this run does not do.
+- Old against new: new ReplicaSet 6d4f8a2b7c, 3/3 pods crash-looping with the mechanism in each pod's own previous log. Old ReplicaSet 84c1e9d3f5 (revision 14, 11 days): 0/3 pods with BackOff or other Warning events in the retained events before it was scaled down, and the queue backlog stayed at 10-30 until 10:50 (the consumer link is unverified). The old pods' own logs are gone.
+- Window: the true onset (10:52) is 84 minutes after the start of my default two-hour window (09:28). Wave 2 re-anchors to 10:22-11:28 UTC (12:22-13:28 Europe/Paris), and moves the previous and -7d windows and the recurrence pull with it. The queue-depth pulls for the previous window, the -7d window and the 14 days before returned empty replies (no points before 10:30 UTC today), so recurrence has no signal yet; I am not reading empty as zero.
+- Recurrence: provisionally `unclassified` (no alarm, no usable 14-day signal).
+
+Ranked hypotheses (each with its falsification query; the first one runs first):
+H1 (top). The config change in Helm revision 31 (commit d81e4b7, "rename ledger endpoint key to match the shared ledger client") left LEDGER_API_BASE_URL unset in the new pods. Falsified if the live ConfigMap payments-worker-config does contain that key, or if the commit does not touch it.
+H8. sched: a schedule (CronJob, EventBridge rule, Scheduler schedule) or an automated apply caused the 10:52 change. Falsified if no schedule exists or fires near 10:52. Recurrence is unclassified, so schedules are listed before blaming the commit.
+H2-H7 are ruled out above (probes, image/scheduling, OOM, ledger outage, credentials as the observed cause, evictions); H6 keeps the Secret caveat.
+
+Wave 2 (re-anchor, falsification, slower change sources). Commands in full:
+
+1. date -u +%H:%M:%S; for w in "2026-10-24T09:16:00Z 2026-10-24T10:22:00Z 300" "2026-10-10T10:52:00Z 2026-10-24T10:52:00Z 3600"; do set -- $w; aws cloudwatch get-metric-data --profile prod-ops --region us-east-1 --start-time "$1" --end-time "$2" --metric-data-queries '[{"Id":"jobs","MetricStat":{"Metric":{"Namespace":"AWS/SQS","MetricName":"ApproximateNumberOfMessagesVisible","Dimensions":[{"Name":"QueueName","Value":"payments-jobs"}]},"Period":'"$3"',"Stat":"Maximum"}},{"Id":"dlq","MetricStat":{"Metric":{"Namespace":"AWS/SQS","MetricName":"ApproximateNumberOfMessagesVisible","Dimensions":[{"Name":"QueueName","Value":"payments-jobs-dlq"}]},"Period":'"$3"',"Stat":"Maximum"}}]' --output json; done
+   (the re-anchored -7d window 2026-10-17 10:22-11:28 lies inside the -7d window already queried in W1-Q7, so that result is reused, not re-run)
+2. git -C ~/src/payments-deploy show d81e4b7 -- charts/payments-worker
+3. kubectl --context arn:aws:eks:us-east-1:111122223333:cluster/prod -n payments get configmap payments-worker-config -o json | jq '{keys: (.data | keys), managedFields: [.metadata.managedFields[]? | {manager, operation, time}]}'
+4. kubectl --context arn:aws:eks:us-east-1:111122223333:cluster/prod -n payments get cronjob; aws events list-rules --profile prod-ops --region us-east-1 --name-prefix payments; aws scheduler list-schedules --profile prod-ops --region us-east-1 --name-prefix payments
+5. TZ=UTC aws cloudtrail lookup-events --profile prod-ops --region us-east-1 --lookup-attributes AttributeKey=ReadOnly,AttributeValue=false --start-time 2026-10-24T08:52:00Z --end-time 2026-10-24T11:07:00Z --query "Events[?Resources[?contains(ResourceName || '', 'payments')]].[EventTime, EventSource, EventName, EventId]" --output text
+6. History lookup, now that the ranking exists (local file reads only): grep -ril -e payments-worker -e payments-jobs -e CrashLoopBackOff .culiops/sre-investigate/incidents/ ; grep -i failure-mode .culiops/sre-investigate/lessons.md
+
+The ConfigMap is read as key names only (values are not recorded). CloudTrail does not log in-cluster Helm or kubectl changes, so an empty result there cannot exonerate an in-cluster apply; the Helm record and the git log are the apply evidence.
+```
+
+## Wave 2 (re-anchor, falsification, slower change sources)
+
+Commands exactly as printed in Message 4. Start 11:31 (clock assumed). Ledger rows W2-Q1..Q5 written before the results were used.
+
+| ID | Command (short) | World file | Key facts |
+|---|---|---|---|
+| W2-Q1 | `get-metric-data` x2 (previous 09:16-10:22 Period 300; 14d ending 10:52 Period 3600), payments-jobs + DLQ | previous: no overlap, `_default.txt` `{}`; 14d: overlaps 10:30-10:52, `cw-01.json` / `cw-02.json` clipped to 10:30-10:50 and aggregated to one hourly point with Maximum | previous empty; 14d = one point (hour 10:00Z) jobs 30, DLQ 0. The re-anchored -7d window is inside W1-Q7's -7d window, so reused (empty), not re-run. Simulation note: the INDEX says to sum points for a coarser period; for a Maximum-statistic gauge I took the maximum |
+| W2-Q2 | `git -C ~/src/payments-deploy show d81e4b7 -- charts/payments-worker` | `git-02.txt` | values-prod.yaml, `config:`: key LEDGER_API_BASE_URL renamed to LEDGER_BASE_URL; other keys unchanged |
+| W2-Q3 | `get configmap payments-worker-config -o json \| jq` (keys and managedFields only) | `k8s-09.yaml` (table P1, `payments-worker-config`) | keys: PAYMENTS_CURRENCY_DEFAULT, PAYMENTS_QUEUE_URL, PAYMENTS_WORKER_CONCURRENCY, LEDGER_BASE_URL; no LEDGER_API_BASE_URL; no managedFields in reply; PAYMENTS_QUEUE_URL names payments-jobs. Values withheld from the ledger |
+| W2-Q4 | `get cronjob`; `aws events list-rules --name-prefix payments`; `aws scheduler list-schedules --name-prefix payments` | `_empty.txt`; `_default.txt` `{}`; `_default.txt` `{}` | no CronJobs, rules or schedules |
+| W2-Q5 | `aws cloudtrail lookup-events` ReadOnly=false 08:52-11:07 | `_default.txt` `{}` | no matching write events |
+| (local) | `grep -ril -e payments-worker -e payments-jobs -e CrashLoopBackOff .culiops/sre-investigate/incidents/`; `grep -i failure-mode .culiops/sre-investigate/lessons.md` | `_empty.txt` | no history, no lessons (ls-01 earlier showed neither exists) |
+
+Results: H1 supported, H8 ruled out within scope. Re-anchored recurrence: `unclassified`.
+Files written: `ledger.md` (Query log W2, Hypotheses, Recurrence, Memory, Gaps, Code repos), `profile.md` (queue link verified, ConfigMap keys by name, ledger downstream (unverified), schedules none).
+
+### Message 5 (verbatim, after wave 2; wave 3 printed)
+
+```text
+Wave 2 is in the ledger. Windows re-anchored to 10:22-11:28 UTC (12:22-13:28 Europe/Paris); the new -7d window is inside the one already queried, so that result was reused. Nothing instruction-like found.
+
+Falsification of H1 came back negative, i.e. the hypothesis survived:
+- The commit d81e4b7 changes charts/payments-worker/values-prod.yaml: under config:, the key LEDGER_API_BASE_URL is renamed to LEDGER_BASE_URL (W2-Q2). Confirmed.
+- The live ConfigMap payments-worker-config has the keys PAYMENTS_CURRENCY_DEFAULT, PAYMENTS_QUEUE_URL, PAYMENTS_WORKER_CONCURRENCY and LEDGER_BASE_URL, and no LEDGER_API_BASE_URL (W2-Q3). Confirmed (current state). The pods load that ConfigMap whole (envFrom, Optional: false), and the app logs that it requires LEDGER_API_BASE_URL (W1-Q6).
+- Old against new: new ReplicaSet 6d4f8a2b7c, 3/3 pods crash-looping with the mechanism in each pod's own previous log; old ReplicaSet 84c1e9d3f5, 0/3 pods with Warning events in the retained events before scale-down, backlog steady at 10-30 until 10:50, and the pre-change values file supplied the old key name. Not earlier than the rollout: apply 10:52:20, first BackOff 10:53:02.
+- Schedules (H8): no CronJob, EventBridge rule or Scheduler schedule named payments*, and no CloudTrail write events on payments resources (W2-Q4, W2-Q5). Ruled out within that scope; what triggered the Helm apply is not visible to me.
+- History: nothing in incidents/ or lessons.md.
+
+Cause so far: Confirmed for the crash loop (change, mechanism and timing all cited). One link is weaker: that the crash loop is why the backlog grows. The worker is configured for payments-jobs (PAYMENTS_QUEUE_URL), and growth starts between 10:50 and 10:55, but I have not shown that consumption stopped or that no other consumer exists. That link is Likely until wave 3 answers it.
+
+Recurrence: `unclassified` (no alarm; the queue metric has one hourly point in 14 days). Gap recorded.
+
+Wave 3 (last allowed wave in Fast mode): one query to try to disprove the backlog link. Command in full:
+
+1. date -u +%H:%M:%S; aws cloudwatch get-metric-data --profile prod-ops --region us-east-1 --start-time 2026-10-24T10:22:00Z --end-time 2026-10-24T11:28:00Z --metric-data-queries '[{"Id":"sent","MetricStat":{"Metric":{"Namespace":"AWS/SQS","MetricName":"NumberOfMessagesSent","Dimensions":[{"Name":"QueueName","Value":"payments-jobs"}]},"Period":300,"Stat":"Sum"}},{"Id":"received","MetricStat":{"Metric":{"Namespace":"AWS/SQS","MetricName":"NumberOfMessagesReceived","Dimensions":[{"Name":"QueueName","Value":"payments-jobs"}]},"Period":300,"Stat":"Sum"}},{"Id":"deleted","MetricStat":{"Metric":{"Namespace":"AWS/SQS","MetricName":"NumberOfMessagesDeleted","Dimensions":[{"Name":"QueueName","Value":"payments-jobs"}]},"Period":300,"Stat":"Sum"}}]' --output json
+```
+
+## Wave 3 (Fast mode's last allowed wave)
+
+Command exactly as printed in Message 5. Start 11:33 (clock assumed). Row W3-Q1 written to the ledger before the result was used.
+
+| ID | Command (short) | World file | Key facts |
+|---|---|---|---|
+| W3-Q1 | `get-metric-data` NumberOfMessagesSent / Received / Deleted (Sum, 300) for payments-jobs, 10:22-11:28 | no INDEX row for these metric names, so `_default.txt` `{}` | empty reply; consumption not shown to stop; backlog link stays Likely; gap recorded |
+
+Files written: `ledger.md` (W3 row, Gaps, Hypotheses note, Lesson candidates). Budget at end: 18/20 evidence queries (plus 4 access checks), 15/100 CloudWatch metric requests, 0 GB logs.
 
 ## Phase 5: conclude
 
-### Message 9 (end of Fast run, verbatim; the report is at `.culiops/sre-investigate/runs/payments-worker-prod-20261024-1128/report.md`, saved separately)
+Stop rule: Fast mode's third wave was used (waves 1, 2, 3 after wave 0 and the profile build). H1 reached Confirmed for the crash loop; H2 to H8 are Ruled out. `report.md` is at `out/runs/payments-worker-prod-20261024-1128/report.md` (report saved separately).
+
+### Message 6 (verbatim, TL;DR inline, then path, then cost)
 
 ```text
-TL;DR
+Investigation finished: payments-worker prod.
 
-Cause: Helm release revision 31 (10:52:20 UTC, 12:52:20 CEST) applied the values change from commit d81e4b7 (#377), which renamed the ledger endpoint key in the ConfigMap from LEDGER_API_BASE_URL to LEDGER_BASE_URL. payments-worker 5.2.0 still requires LEDGER_API_BASE_URL, so it logs "required environment variable LEDGER_API_BASE_URL is not set", exits 1 at startup, and all 3 pods crash-loop. Label: Confirmed.
-Weakest link: the tie between the commit and the cluster. It rests on Helm's revision time, the 11-minute lag after the merge and the live ConfigMap key names, not on a CI apply-run record, which the run could not read. Label: Confirmed. Outside the chain and only Assumed: what customers actually see, and whether a second problem sits behind this first fatal check.
-Impact: 0 of 3 payments-worker pods since 10:52:21 UTC, ongoing; payments-jobs backlog 5,989 at the 11:25 UTC sample, growing about 197 messages per minute; DLQ at 0. SEV1 suggested (core flow has no consumer); the incident owner decides.
-Recommended action: a human restores the setting the application expects, either by rolling the Helm release back to revision 30 or by re-adding LEDGER_API_BASE_URL next to the new key and releasing again; check it with pre-flight and hand it to a new session with iac-change-execution. Options and costs are in the report.
+TL;DR
+Cause:             Commit d81e4b7 renamed the config key LEDGER_API_BASE_URL to LEDGER_BASE_URL; Helm revision 31 applied it at 10:52:20 UTC (12:52:20 Europe/Paris). payments-worker 5.2.0 (image unchanged) still requires LEDGER_API_BASE_URL, so all 3 new pods exit with code 1 at startup and crash-loop. Label: Confirmed.
+Weakest link:      Step 3b, "the crash loop is why the payments-jobs backlog grows": Likely (consumption metrics returned no data; other consumers of the queue not excluded). It caps the claim about the backlog, not the crash-loop cause, whose change, mechanism and timing are each cited.
+Impact:            Prod, namespace payments: 0 of 3 workers available since 10:52 UTC, ongoing at 11:28 UTC (13:28 Europe/Paris). payments-jobs backlog 5,989 messages at 11:25 UTC against 10-30 before 10:50, about +197 per minute; dead-letter queue 0.
+Severity:          SEV1 (suggested): a core flow's only worker has no available replica and its queue is growing. The incident owner decides.
+Pattern:           unclassified (no alarm, no usable 14-day history) · Assumed.
+Recommended action: First, make the key the chart renders and the key the app reads agree again: roll the release back to revision 30 or revert the rename, through your normal deploy path after a pre-flight check. Then watch the backlog drain (about 6,000 messages and rising) and the ledger service while it does. Details in the report.
 
 Report: .culiops/sre-investigate/runs/payments-worker-prod-20261024-1128/report.md
-open items need your input
-Cost: 17 queries · 0 GB of logs · 8 CloudWatch metric requests · about $0.0001 in metered charges
-```
+Ledger: .culiops/sre-investigate/runs/payments-worker-prod-20261024-1128/ledger.md
 
-Report written to the ledger-derived content; sections of the Fast mode only: TL;DR, Impact, Causal chain, Gaps, To confirm, Follow-ups, Cost. `report.md` itself was not created, per the simulation instructions.
+open items need your input (no consumption metrics, no log store, no app source repo, no apply record; see Gaps).
+
+Cost: 18 evidence queries (plus 4 access checks) · 0 GB of logs scanned · 15 CloudWatch metric requests · well under 0.01 USD in metered charges
+```
 
 ## Phase 6: record
 
-### Message 10 (record-phase diff, verbatim; then wait)
+### Message 7 (verbatim, diff proposal; nothing written)
 
 ```text
-Proposed record. Nothing is written until you reply; accept, edit or skip each item.
+Record phase: proposed additions under .culiops/sre-investigate/. Nothing is written until you reply; accept, edit or skip each item.
 
 1. NEW incidents/2026-10-24-payments-worker.md
 + ---
-+ id: 2026-10-24-payments-worker-prod-helm-config-key-rename
++ id: 2026-10-24-payments-worker-prod-config-key-rename
 + date: 2026-10-24
 + service: payments-worker
 + env: prod
 + siblings: [all]
-+ window_utc: 2026-10-24T10:52:21Z/ongoing
-+ symptoms: [crash-restart, queue-backlog, unavailable]
++ window_utc: 2026-10-24T10:22:00Z/2026-10-24T11:28:00Z
++ symptoms: [crash-restart, queue-backlog]
 + cause_category: config
-+ cause: Helm revision 31 applied a values rename of the ledger endpoint key (LEDGER_API_BASE_URL to LEDGER_BASE_URL); payments-worker 5.2.0 still requires the old name and exits 1 at startup
-+ deps: [ledger-api, payments-jobs]
++ cause: Helm values key LEDGER_API_BASE_URL renamed to LEDGER_BASE_URL (commit d81e4b7, Helm revision 31) while app 5.2.0 requires the old name; every pod exits 1 at startup
++ deps: [payments-jobs, ledger-service]
 + label: Confirmed
 + mode: fast
-+ time_to_cause_min: null
++ time_to_cause_min: 3
 + run: runs/payments-worker-prod-20261024-1128
 + ---
-+ What happened: a values-only Helm upgrade renamed a ConfigMap key; the app was not changed, so all 3 replicas exit at config load and the payments-jobs queue grows.
-+ Causal chain: trigger d81e4b7 via Helm revision 31, Confirmed; mechanism fatal "required environment variable ... is not set", exit 1, Confirmed; symptom 0 of 3 available, backlog growing, Confirmed.
-+ What found it: kubectl logs --previous (W1-Q5) plus the live ConfigMap key names (W2-Q2) against the git diff (W2-Q1).
-+ What did not help: the retry-budget change of 2026-10-13 (ran 11 days), probes, memory, schedules, node churn; the SQS 14-day and seven-day baselines returned nothing.
-+ Follow-ups raised: restore the expected key, accept both names during a rename, render-time check of required variables, alert on zero available replicas and on queue age.
++ What happened: a values-only Helm upgrade renamed a config key; the unchanged app could not find the key it requires and all 3 pods crash-looped from 10:52 UTC, so payments-jobs filled up.
++ Causal chain: trigger Confirmed (key rename applied in Helm revision 31) · mechanism Confirmed (fatal "required environment variable ... is not set", ConfigMap lacks the key) · symptom: pods crash-loop Confirmed, backlog Likely.
++ What found it: kubectl logs --previous on a crashing pod (W1-Q6), then the values diff and the live ConfigMap keys (W2-Q2, W2-Q3).
++ What did not help: queue-depth history (empty before 10:30), schedule and CloudTrail listings (empty).
++ Follow-ups raised: align key names or roll back; chart-pipeline check of required variables; queue age alarm; log store; read-only role for on-call.
 
-2. NEW lessons.md (4 lines, each from the ledger's Lesson candidates)
-+ - type: identifier | service: payments-worker | source: kubectl | statement: prod context arn:aws:eks:us-east-1:111122223333:cluster/prod, namespace payments, Deployment and Helm release payments-worker (strategy Recreate), queues payments-jobs and payments-jobs-dlq | run: payments-worker-prod-20261024-1128 | query_id: W0-Q3 | re-verify: no
-+ - type: process | service: any | source: kubectl | statement: kubectl logs --previous keeps only the last terminated container; for the first-occurrence timing leg use Pod events firstTimestamp, not the log | run: payments-worker-prod-20261024-1128 | query_id: W1-Q5 | re-verify: no
-+ - type: failure-mode | service: payments-worker | source: kubectl | statement: A Helm values key rename the app does not read leaves all replicas exiting 1 within a minute of the rollout, previous log says required environment variable X is not set, Recreate strategy leaves 0 available | run: payments-worker-prod-20261024-1128 | query_id: W2-Q2 | re-verify: no
-+ - type: process | service: payments-worker | source: cloudwatch | statement: AWS/SQS depth for payments-jobs returned no points before 10:30 UTC on 2026-10-24 and an empty reply for the 14-day and 7-day windows; treat as a coverage gap, not zero, and check the role's history access | run: payments-worker-prod-20261024-1128 | query_id: W1-Q8 | re-verify: yes
+2. NEW lessons.md (5 lines, each with its query ID; the time to cause above is from an assumed clock)
++ - type: failure-mode | service: payments-worker | source: kubectl | statement: a rename of a key under config in the Helm values file, with an unchanged app image, leaves a required env var unset; pods exit 1 within 20 ms and the previous-container log says required environment variable X is not set | run: payments-worker-prod-20261024-1128 | query_id: W1-Q6 | re-verify: no
++ - type: process | service: payments-worker | source: kubectl | statement: with no log store, kubectl logs --previous holds only the last terminated container of each pod, so read event firstTimestamp for the first occurrence of a crash | run: payments-worker-prod-20261024-1128 | query_id: W1-Q6 | re-verify: no
++ - type: identifier | service: payments-worker | source: kubectl | statement: pods carry label pod-template-hash=5c8d7b9f4c while the owning ReplicaSet and the pod names carry 6d4f8a2b7c; map pods to a ReplicaSet through Controlled By, not the label | run: payments-worker-prod-20261024-1128 | query_id: W1-Q5 | re-verify: yes
++ - type: process | service: any | source: aws | statement: the IAM simulation reply for the PlatformOperator role did not match the requested action list (3 requested actions missing, 3 unrequested rows); compare the reply rows with the fixed list | run: payments-worker-prod-20261024-1128 | query_id: W0-Q2 | re-verify: no
++ - type: process | service: payments-worker | source: cloudwatch | statement: payments-jobs queue-depth pulls return nothing before 10:30 UTC on 2026-10-24 and nothing for previous, -7d or 14-day windows, and NumberOfMessages Sent/Received/Deleted return empty replies; do not plan recurrence on queue depth | run: payments-worker-prod-20261024-1128 | query_id: W1-Q8 | re-verify: yes
 
-3. NEW profiles/payments-worker-prod.md
-+ the run's profile.md as it stands: identity, 3-replica sibling set, selector and strategy, ConfigMap key names (no values), Secret named only, queues, the Ledger API dependency with its two key names, baseline note (backlog 10 to 30 at 10:30-10:50 UTC), no schedules, default branch and DLQ pairing still (unverified).
+3. NEW profiles/payments-worker-prod.md = this run's profile.md (copy), with: Deployment payments-worker (strategy Recreate), ConfigMap payments-worker-config (key names only), Helm release payments-worker, queues payments-jobs and payments-jobs-dlq (the worker is configured for payments-jobs, verified), internal ledger service downstream (unverified), no Service/Ingress/HPA/CronJob/schedule found, no log, metric or trace backend.
 
-Lessons that may hold beyond this estate, to propose later in a normal session (not part of this diff): the changes playbook could note that a values-only Helm upgrade shows the same CHART and APP VERSION in helm history, so the values diff in git is the change evidence; and that kubectl logs --previous retains only the last crash.
+Candidate for the skill itself (not part of this diff, to be proposed in a normal session): check that an IAM simulation reply contains exactly the requested actions before reading it as a read-only or write result.
 ```
 
-No operator reply followed (the script has only line 1), so nothing from the record phase was written: no `incidents/`, `lessons.md` or `profiles/` files exist in `out/`.
+## Operator lines after the opening request
 
-## Files written (all under `out/`, same relative layout as the output root)
+None. The script has only line 1, so Phase 6 received no reply and **nothing was written** to `incidents/`, `lessons.md` or `profiles/`.
 
-- `runs/payments-worker-prod-20261024-1128/ledger.md`
-- `runs/payments-worker-prod-20261024-1128/profile.md`
-- `runs/payments-worker-prod-20261024-1128/raw/q-backlog-300.json`
-- `runs/payments-worker-prod-20261024-1128/raw/q-recur-3600.json`
-- `runs/payments-worker-prod-20261024-1128/raw/m-golden-incident.json`
-- `runs/payments-worker-prod-20261024-1128/raw/m-golden-previous.json` (`{}`)
-- `runs/payments-worker-prod-20261024-1128/raw/m-golden-minus7d.json` (`{}`)
-- `runs/payments-worker-prod-20261024-1128/raw/m-recur-14d-cw.json` (`{}`)
-- `runs/payments-worker-prod-20261024-1128/raw/c-k8s-events.tsv`
-- `runs/payments-worker-prod-20261024-1128/raw/c-previous-logs.txt`
-- `runs/payments-worker-prod-20261024-1128/raw/c-configmap-keys.txt` (key names only)
-- `runs/payments-worker-prod-20261024-1128/raw/c-iac-diff-summary.txt` (no config values)
+## Files written (all under `out/`)
+
+- `runs/payments-worker-prod-20261024-1128/ledger.md` (created in Phase 0, rewritten after wave 0, the profile step, and each wave)
+- `runs/payments-worker-prod-20261024-1128/profile.md` (run profile, written after the helper returned; updated after wave 2)
+- `runs/payments-worker-prod-20261024-1128/raw/` and `raw/helper/` (created, empty: no raw pull was saved; every result was small enough to read inline)
 - `run-log.md` (this file)
 - `report.md`: report saved separately.
-- Not written: `environment.md` (already existed), `incidents/`, `lessons.md`, `profiles/` (no reply to the Phase 6 diff).
+- NOT written: `environment.md` (already existed), `incidents/`, `lessons.md`, `profiles/` (Phase 6, no operator reply)
 
-World files opened, each because a command mapped to it: `environment.md`, `ls-01.txt`, `_empty.txt`, `_default.txt`, `sts-01.json`, `iam-01.json`, `iam-02.json`, `k8s-01.txt`, `k8s-02.txt`, `k8s-03.txt`, `k8s-04.txt`, `k8s-12.txt`, `k8s-13.txt`, `helm-03.txt`, `sqs-01.json`, `git-01.txt`, `k8s-06.json`, `k8s-10.txt`, `k8s-11.txt`, `helm-01.txt`, `k8s-07.txt`, `k8s-08.txt`, `k8s-14.txt`, `cw-01.json`, `cw-02.json`, `git-03.txt`, `git-02.txt`, `k8s-09.yaml` (plus `INDEX.md` and `operator-script.md`).
+## World files opened (each mapped by one of the commands above)
 
-## Notes for the skill author (friction met while following the skill)
+`environment.md`, `ls-01.txt`, `_empty.txt`, `_default.txt`, `sts-01.json`, `iam-01.json`, `iam-02.json`, `k8s-01.txt`, `k8s-02.txt`, `k8s-03.txt`, `k8s-12.txt`, `k8s-04.txt`, `k8s-13.txt`, `sqs-01.json`, `helm-03.txt`, `git-01.txt`, `k8s-10.txt`, `k8s-11.txt`, `k8s-06.json`, `helm-01.txt`, `k8s-14.txt`, `k8s-07.txt`, `k8s-08.txt`, `cw-01.json`, `cw-02.json`, `git-02.txt`, `k8s-09.yaml`.
+Not opened (no command of mine mapped to them): `iam-03.txt`, `k8s-05.txt`, `k8s-15.yaml`, `k8s-16.yaml`, `git-03.txt`, `helm-02.yaml`. In particular `helm get values` was not run (the changes playbook forbids it; the values file was read from git instead).
 
-1. Where the IaC history belongs: Build profile says to start it while the helper runs; Scheduling says it rides in wave 2. I followed Build profile (W0-Q5) and kept wave 2 for the diff, the live key names and CloudTrail.
-2. The recurrence pull "ending at the incident start" is anchored on the intake default window (09:28), not on the true onset (10:52). With a Fast two-hour default the pull ends before the incident and the previous and seven-day windows also fall before it; here all three came back empty. The skill has no rule for re-anchoring the pull once the onset is known and no waves are left.
-3. The IAM simulation reply did not match the fixed list (three actions missing, three extra). The skill says a missing action is a gap for that action; it does not say what to do with extra rows. I ignored them and said so.
-4. The default branch of the IaC clone is not discoverable by the allowed commands, and the playbook's `origin/<default-branch>` form needs it. I used `--all` rather than guess a name.
-5. Template says to end the printed summary with "open items need your input", SKILL.md says the cost line is last. I printed the open-items line before the cost line.
-6. `kubectl describe pod` prints literal env values if a manifest has them; the playbook only warns about the pod template and rollout history. Here every variable came from a ConfigMap or Secret reference, so no value was printed.
-7. `date -u +%H:%M:%S` printed nothing in the simulation, so the Start column carries the world clock and the "time to cause" is expressed in waves, not minutes.
+## Simulation notes
+
+- `date -u` has no INDEX row, so wave start times and "now" (11:28:00 UTC) come from the world's stated reference time, and times to cause are approximate.
+- Each wave's commands were printed in a message (Messages 3, 4, 5) before the world files they map to were read; results were written to the ledger before being used in chat.
+- Maximum was used to aggregate the clipped 5-minute SQS points into the hourly bucket of W2-Q1 (the INDEX says to sum for coarser periods; summing a gauge's maxima would be meaningless).

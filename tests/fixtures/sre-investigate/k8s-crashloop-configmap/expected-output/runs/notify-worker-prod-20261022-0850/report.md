@@ -1,83 +1,93 @@
-# Investigation: notify-worker prod: pods crash-looping at startup, email queue not consumed
+# Investigation: notify-worker prod: all workers crash-looping after a config key rename, outbound email queue not drained
 
-Run: notify-worker-prod-20261022-0850 · Mode: Fast · Window: 2026-10-22 06:50:00Z to 08:50:00Z (06:50 to 08:50 local, zone UTC per environment.md)
-Access: `prod-read`: read-only confirmed (simulation) for the 7 listed write actions the reply covered, none allowed; write capability unknown (gap) for ec2:AuthorizeSecurityGroupIngress, iam:CreateAccessKey and cloudformation:DeleteStack, which returned no row. `arn:aws:eks:us-east-1:111122223333:cluster/prod`: no write verbs in notify (note: the identity can read all resources, Secrets included; none was read).
+Run: notify-worker-prod-20261022-0850 · Mode: Fast · Window: 2026-10-22 07:44 to 08:50 UTC (07:44 to 08:50 local; zone is UTC) · Onset: 2026-10-22 08:14:21 UTC (08:14:21 local)
+Access: prod-read: read-only confirmed (simulation): none of the broad write actions came back allowed; only 7 of the 10 requested actions returned a row (all implicitDeny), and 3 returned no row (write capability only partly checked, gap) · arn:aws:eks:us-east-1:111122223333:cluster/prod: no write verbs in notify
 
 ## TL;DR
 
 | Field | Value |
 |---|---|
-| Cause | Commit `3f9a1c2` (08:03:41Z) renamed the Helm values key `NOTIFY_SMTP_RELAY_HOST` to `SMTP_RELAY_HOST`. Helm revision 12 (08:14:20Z) put the renamed key into ConfigMap `notify-worker-config`. notify-worker 3.8.1 still requires `NOTIFY_SMTP_RELAY_HOST`, so it exits with code 1 at startup on all 3 pods. The Deployment's `Recreate` strategy had already stopped the healthy pods. · label: Confirmed |
-| Weakest link | The mechanism is read from the latest restart (08:47:56Z), because `kubectl logs --previous` keeps only the newest container. The log of the first crash (08:14:36Z) is gone. The link stays Confirmed: the pod template and ConfigMap are unchanged since 08:14:20Z, all 3 pods show 11 identical exit-1 restarts, and event first-timestamps give the timing. Separately, "no email is delivered by any path" is Likely, not measured (no delivery-side metric is configured). |
-| Impact | prod, all 3 replicas unavailable since 08:14:21Z, ongoing. Queue `notify-outbound` backlog was 9,660 at 08:45 (7-27 before 08:15) and grows about 318 per minute. The dead-letter queue is 0. |
-| Severity | SEV1 (suggested) because a customer-facing core flow from environment.md (transactional email) is down: no worker consumes the queue. The incident owner decides. |
-| Pattern | `unclassified` · no alarm history, and the previous-window, -7d and 14-day pulls returned no data · Assumed. Shape: step in pod state at 08:14, ramp in the backlog from 08:15. |
-| Recommended action | A human should restore the config key name the running app expects, through the normal change path and assessed with `pre-flight` first. Either undo the rename for the prod release, or carry both key names until the app accepts the new one. Undoing it postpones the alignment with the shared SMTP chart. Carrying both leaves a duplicate key to remove later. When workers return they will face a backlog of roughly 10,000 messages and growing, so check the SMTP relay's limits first. |
-| Time to cause | Not measurable (simulated clock). First Likely after wave 1 (Helm revision 12 at 08:14:20Z against the first failing start at 08:14:36Z). Mechanism seen in wave 2, Confirmed in wave 3. |
-| Similar past incidents | no history yet (no `incidents/` directory exists) |
+| Cause | The prod values file renamed the config key `NOTIFY_SMTP_RELAY_HOST` to `SMTP_RELAY_HOST` (commit 3f9a1c2, #214). Helm revision 12 applied it at 08:14:20 UTC. notify-worker 3.8.1 still requires `NOTIFY_SMTP_RELAY_HOST`, so every new pod exits at startup and crash-loops. · label: Confirmed |
+| Weakest link | The old-revision side of the old-against-new split. There are no per-revision logs, so it rests on the absence of events and a flat queue. The mechanism does not depend on it, because the crash log names the missing variable and the live ConfigMap lacks it. Separately, "emails are not being delivered" is Likely: it is inferred from the unconsumed queue, with no sent-mail signal. |
+| Impact | All 3 workers have been down since 08:14:21 UTC and the outage is ongoing. The outbound queue held 9,660 messages at 08:45 and grows by about 318 per minute. The DLQ is at 0. |
+| Severity | SEV1 because a customer-facing core flow (transactional email) has no worker available. The incident owner decides. |
+| Pattern | unclassified · no alarm history, and the 14-day pull returned 2 of 336 hourly points · Assumed. Shape: step. |
+| Recommended action | A human should restore the variable name the running app expects. Either revert the rename in the prod values, or roll the release back to revision 11. Check it with `pre-flight` first, then decide what to do with the stale backlog (see Follow-ups). |
+| Time to cause | Likely after wave 1 (8 calls). Confirmed after wave 2 (5 calls). Wall-clock minutes were not measured in this simulation. |
+| Similar past incidents | no history yet (`incidents/` does not exist) |
 
 ## Impact
 
-Symptom: notify-worker pods crash-loop and never become ready, so nothing consumes queue `notify-outbound`. The reporter says emails are not going out. Affected: prod, namespace notify, all 3 replicas (0/3 available, 11 restarts each, same ReplicaSet `notify-worker-5c8d7b9f4c`) (W1-Q1, W1-Q4). Core flow: transactional email (order confirmations, password resets).
-
-The backlog was 7-27 messages between 07:50 and 08:10Z. It was 16 at 08:10, 120 at 08:15, then rose by about 1,590 every 5 minutes to 9,660 at 08:45. The dead-letter queue stayed at 0 throughout (W1-Q6). The last healthy pod stopped at 08:14:21Z and the first failing start was 08:14:36Z (W1-Q2). The incident is ongoing as of 08:50Z.
-
-Basis:
-- Confirmed: nothing consumes the queue (W1-Q1, W1-Q2, W1-Q6, W3-Q3).
-- Likely: no email leaves by any path. No sent-count or relay metric is configured, so this is inferred from the unconsumed queue.
-- Baselines for the previous window, the -7d window and 14 days returned no datapoints (W1-Q6, W1-Q7). That is a gap, not zero.
-
-Third party in the path: none identified. The SMTP relay is a downstream of the worker, but no query reached it, because the process dies before connecting. No contact route is recorded in the profile. The run cannot contact vendors.
+- **Symptom:** All 3 notify-worker pods are in CrashLoopBackOff (0/3 ready, 11 restarts each; W1-Q1). `notify-outbound` visible messages went 16 (08:10), 120 (08:15), 1,710 (08:20), 9,660 (08:45), about +318/min. The DLQ stayed at 0 (W1-Q8).
+- **Affected:** prod only, 3 of 3 replicas. The core flow is transactional email (order confirmations, password resets), which is customer-facing. That emails are not going out is Likely: the queue is not being consumed and no worker is available, but there is no sent-mail counter.
+- **Since / ongoing:** 08:14:21 UTC (08:14:21 local). The old pods were stopped then, and the first BackOff came at 08:15:02. Still ongoing at 08:50.
+- **How measured:** The magnitude is Assumed. environment.md names no SLO and no APM or load-balancer metrics, so queue depth and pod availability are the proxies. Pod availability of 0/3 is Confirmed.
+- **Third party in the path:** none identified for the failure. The SMTP relay is on the send path but is not involved in the crash. No contact route is recorded for it.
 
 ## Causal chain
 
-1. Trigger: commit `3f9a1c2` (2026-10-22 08:03:41Z, "align config key names with the shared SMTP chart (#214)") renamed one key in the `config:` block of `charts/notify-worker/values-prod.yaml`. Helm release `notify-worker` went to revision 12 at 08:14:20Z with the same chart (1.8.0) and app version (3.8.1) as revision 11. The live ConfigMap now holds `SMTP_RELAY_HOST` and not `NOTIFY_SMTP_RELAY_HOST` (current state). · Confirmed · W2-Q3, W3-Q1, W3-Q2, W0-Q10, W1-Q5. Merged is not applied: the pipeline apply record was not read; the Helm revision time and the live ConfigMap stand in.
-2. Mechanism: the app (tag 3.8.1, unchanged) loads its configuration from the environment. It logs fatal `config: required environment variable NOTIFY_SMTP_RELAY_HOST is not set` at config/load.go:58 and exits with code 1 in the same second it starts (08:47:56Z restart). Kubelet restarts it with back-off, giving CrashLoopBackOff on all 3 pods, 11 restarts each. Timing: Helm 08:14:20 → old pod killed 08:14:21 → new pods scheduled 08:14:33 → first container start 08:14:36 → first BackOff 08:15:02 to :05 → backlog steps up at 08:15. · Confirmed · W2-Q1, W2-Q2, W1-Q1, W1-Q2
-3. Symptom: with strategy `Recreate`, the old ReplicaSet went to 0 at 08:14:21, 12 seconds before the new pods existed. Since then the Deployment has 0 of 3 available, nothing consumes `notify-outbound`, and the backlog grows. · Confirmed · W3-Q3, W1-Q2, W1-Q6
+1. **Trigger:** The commit 3f9a1c2 "align config key names with the shared SMTP chart (#214)" (author date 08:03:41 UTC) removes the key `NOTIFY_SMTP_RELAY_HOST` from `charts/notify-worker/values-prod.yaml` and adds `SMTP_RELAY_HOST`. Other keys are unchanged. Helm revision 12 was deployed at 08:14:20 UTC with the same chart (1.8.0) and the same image (3.8.1) as revision 11. The live ConfigMap `notify-worker-config` holds `SMTP_RELAY_HOST` and lacks `NOTIFY_SMTP_RELAY_HOST`, which ties the commit to what actually ran. · Confirmed · W0-Q7, W2-Q4, W1-Q6, W2-Q3
+2. **Mechanism:** The Deployment uses the Recreate strategy. At 08:14:21 the old ReplicaSet went from 3 pods to 0, and the new one (`5c8d7b9f4c`) started at 08:14:33-08:14:36. Each new pod's previous-container log shows `config: required environment variable NOTIFY_SMTP_RELAY_HOST is not set` (config/load.go:58), 19 ms after start. The last state is Reason Error, exit code 1 (not OOMKilled). Kubelet back-off events started at 08:15:02-08:15:05 and reached 149-151 per pod by 08:49. · Confirmed · W2-Q2, W2-Q1, W1-Q2, W1-Q5
+   - **Old against new:** The new revision (RS `notify-worker-5c8d7b9f4c`, Deployment revision 7) has 3 of 3 pods crash-looping, each with the mechanism in its own previous-container log. The old revision (RS `notify-worker-7f6b8c5d2e`, Deployment revision 6, 15 days old) shows 0 BackOff or Unhealthy events in the retained events (about 07:50 to 08:14:21). Its only event is the normal Killing at 08:14:21, and the queue stayed at 7-27 messages from 07:50 to 08:10 (W1-Q2, W1-Q8). The onset is not earlier than the rollout: the backlog was 16 at 08:10 and the first BackOff came at 08:15:02. The deploy is therefore kept in, not cleared.
+3. **Symptom:** 0 of 3 pods are available. The queue is not drained: backlog 16 (08:10), 120 (08:15), 9,660 (08:45), DLQ 0. · Confirmed · W1-Q1, W1-Q4, W1-Q8. Email non-delivery follows from this and is Likely.
 
-Hypotheses ruled out in this run (each with the query that refuted it):
-- New image or code defect: chart and app version are identical in revisions 11 and 12, and the error is a config error (W1-Q5, W2-Q2). The old ReplicaSet's image itself was not read.
-- OOMKilled: last state is `Error`, exit code 1, not OOMKilled (W2-Q1).
-- Probe failures: no `Unhealthy` events and no probes configured (W1-Q2, W2-Q1).
-- Image pull or scheduling failure: pods were `Scheduled` and `Started` (W1-Q2).
-- Node or instance churn: ruled out at pod and namespace scope only; the process exits by itself (W1-Q2, W2-Q2). Node object events were not read.
-- SMTP relay or another dependency down: the process fails before any network use (W2-Q2). Relay health after startup stays Assumed.
-- Scheduled job: no CronJobs and no scheduled EventBridge rules returned (W2-Q4).
-- Change by an AWS-level write: no matching CloudTrail writes for EKS, SQS, Secrets Manager or SSM from 06:14 to 08:30Z (W2-Q5).
+Timeline (times are UTC; local time is identical):
+
+| UTC | Event | Query |
+|---|---|---|
+| 08:03:41 | Commit 3f9a1c2 (author date) | W0-Q7 |
+| 08:14:20 | Helm revision 12 deployed | W1-Q6 |
+| 08:14:21 | Old ReplicaSet scaled to 0, old pod killed | W1-Q2 |
+| 08:14:33-08:14:36 | New pods scheduled and first started | W1-Q2 |
+| 08:15:02-08:15:05 | First BackOff on each new pod | W1-Q2 |
+| 08:15 | Queue backlog 120, up from 16 at 08:10 | W1-Q8 |
+| 08:47:56 | Latest crash of one pod: the fatal config line | W2-Q2 |
+| 08:50 | Operator report | chat |
+
+Ruled out (each with the query that showed it):
+- **Image pull or scheduling:** the pods were Scheduled and Started, with no FailedScheduling or ErrImagePull events (W1-Q2, W2-Q1).
+- **OOM or resource kill:** the last state is Reason Error with exit code 1, not OOMKilled or 137, and there are no OOM events (W2-Q1, W1-Q2).
+- **Probe failures:** no probes are defined and there are no Unhealthy events (W1-Q5, W1-Q2).
+- **Dependency failing at startup (SMTP relay, SQS, `notify-smtp` secret):** the process dies at config load before any network call, and the secret reference resolved because the container started (W2-Q2, W1-Q2).
+- **Scheduled job or node churn:** no CronJob was listed and there are no node events. The onset is 1 s after the Helm upgrade (W1-Q7, W1-Q2, W1-Q6). The empty CronJob listing is unverified, so the Helm timing and the logged mechanism carry this ruling.
+
+No other hypothesis is still standing.
 
 ## Gaps
 
 | Gap | Impact on claims | How a human could fill it |
 |---|---|---|
-| Baselines: the previous window, -7d window and the 14-day 1-hour pull returned empty objects; no alarm history exists (W1-Q6, W1-Q7) | Recurrence is `unclassified`. "Normal backlog" rests on a 20-minute sample (07:50-08:10). No claim about earlier occurrences. The crash timing is not weakened (it comes from events). | Ask the queue's owner for the usual `notify-outbound` backlog, or check why the SQS metrics returned nothing for those days. |
-| No delivery-side signal: environment.md lists no email-sent counter, relay metric or provider backend | "Emails are not going out" is Likely, not measured. Another delivery path is Assumed absent. | Add a datasource for the sending counter or relay to environment.md, or have the owner check the mail provider's sent log. |
-| Logs: only `kubectl logs --previous`, which keeps the latest terminated container (08:47:56Z); no log backend is listed | The first crash (08:14:36Z) has no log in hand. Its cause is Assumed identical, supported by the unchanged template and ConfigMap. | If pod logs are shipped anywhere, query the first start after 08:14:33Z. |
-| Pipeline apply record for commit `3f9a1c2` (PR #214) not read; deploy clone freshness and default branch unknown (all refs searched, no fetch) | The apply is tied by the live ConfigMap keys and Helm revision 12, not by a CI run. | Open the deploy pipeline run for PR #214 and compare its time with 08:14:20Z. |
-| Node object events and the Kubernetes API audit log not read; CloudTrail does not log Kubernetes writes | Node churn is excluded at pod scope only. Who or what ran the Helm upgrade at 08:14:20Z is unknown. | Ask the team who or which pipeline ran the upgrade; read the EKS audit log if enabled. |
-| Application code at the deployed ref (example-org/notify-worker, 3.8.1) not read | Which names the 3.8.1 loader accepts is unchecked. This does not change the crash explanation, only the fix options. | Read config/load.go at the 3.8.1 tag with a read-only `gh` call. |
-| Write capability unknown (gap), prod-read: the simulation reply had no row for ec2:AuthorizeSecurityGroupIngress, iam:CreateAccessKey, cloudformation:DeleteStack, and had rows for three actions that were not asked | The Access line cannot say "none of the 10 broad write actions is allowed". It says 7 of 10 evaluated, none allowed. No effect on any cause. | Ask the account owner to confirm the role is read-only, or re-run the simulation from an identity that has `iam:SimulatePrincipalPolicy`. |
+| Write capability only partly checked: 3 of the 10 simulated actions (ec2:AuthorizeSecurityGroupIngress, iam:CreateAccessKey, cloudformation:DeleteStack) returned no row, and the reply held 3 unrequested rows (W0-Q2) | "Read-only" holds for 7 actions only. No claim about the cause changes. | Re-run the simulation by hand with the fixed list, or confirm with the IAM owner that the role is read-only. |
+| No log backend in environment.md; only the current and previous container logs | The first crash's log and the old pods' logs are gone. There are no log counts per revision, so the old side of the split rests on events and queue depth. | Add a log backend (a CloudWatch log group or a Loki instance) to environment.md. |
+| No CloudWatch datapoints outside 07:50-08:45 UTC today (W1-Q8, W2-Q5) | No baseline, no -7d comparison, no recurrence statistics. The class is `unclassified`. | Check in the console whether the SQS queue metrics exist for earlier ranges. Ask the metrics owner whether retention or queue activity explains it. |
+| No SLO, APM or load-balancer request metrics, and no sent-mail counter | Impact magnitude is Assumed. "Emails are not going out" is Likely. | Name an SLO or a sent-mail counter in environment.md, or look at the mail relay's own send log. |
+| ConfigMap write time not returned (W2-Q3) | The apply time rests on Helm revision 12 (08:14:20), not on the object's own history. | Read the object's managed-fields metadata with a binding that returns it. |
+| Producer send rate not pulled | The backlog growth cannot be split between producer volume and missing consumers. Drain time cannot be estimated. The crash cause is unaffected. | Pull the sent and deleted counts for `notify-outbound` over the last day. |
+| The pipeline run that applied commit 3f9a1c2 is not read (workflow name unknown, not guessed) | The commit is tied to the release by the ConfigMap keys and Helm timing, but the actor and run are unknown. | Ask the owner of PR #214 (platform-dev) for the pipeline run of about 08:14 UTC. |
+| App source `example-org/notify-worker` not read | The requirement for `NOTIFY_SMTP_RELAY_HOST` at 3.8.1 is shown by the crash log, not by code at the deployed ref. | Read `config/load.go` at the 3.8.1 tag. |
+
+Open items need your input.
 
 ## To confirm, a human would…
 
-1. Read the app's config loader (config/load.go at the 3.8.1 tag in example-org/notify-worker) and see whether it accepts only `NOTIFY_SMTP_RELAY_HOST` or both names. If only the old name, the rename in PR #214 explains the crash completely and the fix is a revert or a bridge. If both are accepted, something else on the failing path needs a second look.
-2. Open the deploy pipeline run for PR #214. Confirm it applied revision 12 at about 08:14:20Z, and find out who or what triggered it.
-3. Look at the mail provider's or SMTP relay's sent log and any sent counter for 08:00-08:50Z. This confirms whether any email left after 08:14. Right now non-delivery is inferred from the unconsumed queue.
-4. Read `ApproximateAgeOfOldestMessage` for `notify-outbound`. This shows how many minutes of mail are delayed. The run did not spend a wave on it.
-5. Read the old ReplicaSet `notify-worker-7f6b8c5d2e` (names only) and confirm its image tag equals 3.8.1. The run relied on the Helm app version for this.
-6. After the key is restored, watch the first pod start. Confirm it reaches the SMTP relay with the credentials from Secret `notify-smtp`, and that the draining backlog stays inside the relay's rate limits. The run could not test this, because the process dies before connecting.
+1. Look at the mail relay's own send log or dashboard and check that nothing has been sent since about 08:14 UTC. That would turn "emails are not going out" from Likely to Confirmed. Sends continuing through some other consumer would refute it.
+2. Open `config/load.go` around line 58 at the 3.8.1 tag and confirm it requires `NOTIFY_SMTP_RELAY_HOST` with no fallback to `SMTP_RELAY_HOST`. Also ask the owner of PR #214 which app version, if any, is meant to read the new name.
+3. Ask the owner of PR #214 which pipeline run applied the change at 08:14 UTC, to date the trigger by its own record.
+4. Check the queue's retention, visibility and DLQ redrive settings, and the sent rate. Together these tell whether the backlog can be drained safely once consumers return, or whether older messages (such as password resets) should be dropped.
 
 ## Follow-ups
 
 | Kind | Item |
 |---|---|
-| Fix | Restore the key name that notify-worker 3.8.1 reads for the prod release. Either revert the rename from PR #214 for prod, or carry both `NOTIFY_SMTP_RELAY_HOST` and `SMTP_RELAY_HOST` until the app is changed to accept the new name. The first postpones alignment with the shared SMTP chart. The second leaves a duplicate key to clean up later. Assess it with `pre-flight` first, then hand it to `iac-change-execution` in a new session with this report as context. |
-| Prevention | Add a check before merge that renders the chart and compares the ConfigMap key names with the environment variables the app requires. The cost is keeping that required-variable list current. |
-| Prevention | Replace the `Recreate` strategy with a rolling update plus a readiness probe, so a revision that crashes at startup never replaces the last healthy pods. The cost is that old and new pods consume the queue at the same time during a rollout (this only matters if the worker is not safe to run twice) and that extra capacity is needed. |
-| Prevention | Bind the on-call identity to a narrower role (the built-in `view` ClusterRole). The current group can read Secrets. |
-| Observability gap | No alarm or alert was named in the request, and none was found by this run. The incident was noticed by a person about 36 minutes after the onset (08:14 to about 08:50Z). Consider alerts on `pods available = 0` or CrashLoopBackOff and on queue backlog or oldest-message age. |
-| Observability gap | No delivery-side email counter and no pod-log backend exist in environment.md, so the first-crash log is lost on each restart. Consider adding both. |
-| Observability gap | No `service-discovery` catalog exists for notify-worker. Consider running `service-discovery` after the incident so the next run has a dependency map. |
+| Fix | Restore the variable name the running app expects. Revert the rename in the prod values so the chart again provides `NOTIFY_SMTP_RELAY_HOST`, or roll the release back to its previous revision (11). A rollback also reverts anything else released in revision 12; the diff shows only this key. Either route replaces all pods again. Check it with `pre-flight`, then hand it to `iac-change-execution` in a new session with this report as context. |
+| Fix | Plan the backlog. About 10,000 messages are waiting and the count grows by about 318 per minute. Once workers are back they will send everything queued. Decide up front whether time-sensitive mails (password resets, order confirmations) that are an hour or more old should still go out, and check that queue retention and DLQ settings do not drop or redrive them unexpectedly. |
+| Fix (longer term) | Align the app and the shared SMTP chart: ship an app version that reads the new key name, or both names, and test it before the chart renames the key. The cost is a release of the app before the chart change, and a time window where both names must be accepted. |
+| Prevention | Check in CI or on a staging rollout that every environment variable name the app requires exists in the rendered config, and have the rollout reach Ready in staging before prod. |
+| Prevention | The Recreate strategy removed every old pod before any new pod proved healthy. Consider a rolling update with a readiness probe, so a bad revision stalls while old pods keep consuming. The cost is two versions running together for a short time, which is only acceptable if the worker tolerates overlap. |
+| Observability gap | This was reported by a person. Consider alerts on queue depth or age and on replicas unavailable for more than a few minutes, and a sent-mail counter. |
+| Observability gap | There is no log backend, so a crash loop's first crash is not readable. Adding one would keep the early logs and allow per-revision counts. |
+| Access | The Kubernetes identity used can read all resources including Secrets. Consider the built-in `view` role for incident work. |
 
 ## Cost
 
-19 queries · 0 GB of logs · 8 CloudWatch metric requests · no other metered units · well under one cent in metered charges (GetMetricData only; rate per the CloudWatch pricing page, not re-read this session). The 6 free Phase 0 identity and write-check calls are not counted; counting them, the run made 25 calls.
+20 queries · 0 GB of logs · 14 CloudWatch metric requests · no other metered units · about $0 in metered charges

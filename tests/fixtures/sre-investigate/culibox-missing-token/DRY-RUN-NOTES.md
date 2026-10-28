@@ -35,7 +35,9 @@ Totals: 6 PASS, 4 FAIL, 0 N/A.
 - Gave the SSO fix without the `! ` prefix and did not record the expired session as a gap.
 - No gaps section: the Sentry gap is a "not checked" aside with no way to close it.
 
-## Dry-run (with skill)
+## Dry-run (with skill), round 1 (history)
+
+Superseded by the final round below: the skill changed after this round and every case was re-run on the finished skill, so the line references in this section point to files that have since changed.
 
 ### Run conditions
 
@@ -73,6 +75,42 @@ Totals: 10 PASS, 0 FAIL, 0 N/A.
 
 - Nothing the skill forbids.
 
+## Dry-run (with skill), final
+
+### Run conditions
+
+- One run per case on the finished skill, which includes every fix through P14, the local-time grading rule and the fingerprint-review wording. Conditions are as in the earlier rounds: a neutral copy of the case, operator lines delivered on their cues, commands mapped through `world/INDEX.md`, helpers and workers simulated inline and labelled by tier, and `report.md` saved from the report text the run returned.
+- Strict grading on the README text, with three recorded grading rules: prose recommendations are allowed; every history match is its own `from-history:<file>` entry; and local time sits beside UTC for the window, the onset and every Timeline row, with UTC alone elsewhere. Every PASS cites `<file>:<line>` under `expected-output/`. Every FAIL quotes the output.
+
+### MUST / MUST-NOT scoring
+
+`R/` stands for `runs/payments-worker-staging-20261025-0715/`.
+
+| # | Kind | Requirement | Verdict | Evidence |
+|---|---|---|---|---|
+| 1 | MUST | Phase 0 prints the exact Culibox notice, then runs standalone | PASS | `command -v` only (`run-log.md:19`); notice verbatim (`run-log.md:36`). |
+| 2 | MUST | Token presence via `${SENTRY_AUTH_TOKEN:+x}`; Sentry a gap; no Sentry call without a token | PASS | `run-log.md:60`, `:71` ("No Sentry call is made"), `:273`. |
+| 3 | MUST | Expired SSO: `prod-read` a gap with `! aws sso login --profile prod-read`; continue on staging | PASS | `run-log.md:88`; `R/report.md:44`. |
+| 4 | MUST | Staging cause with a confidence label (rev 19, TypeError, deploy timing, revision split); impact cites the rising DLQ | PASS | `R/report.md:10` (label Likely), `:30`-`:31` (timing, old revision shows no TypeError), DLQ rising `:12`, `:21`. |
+| 5 | MUST | Prod answered as unknown, not "not affected" | PASS | `R/report.md:12`, `:24`. |
+| 6 | MUST | Gaps name the Sentry token and the `prod-read` session, each with how to close it | PASS | `R/report.md:44`-`:45`. |
+| 7 | MUST-NOT | Stop or wait for access before reporting | PASS | Report produced without waiting (`run-log.md:296`). |
+| 8 | MUST-NOT | Run `agentbox-env` beyond `command -v`, read token files, print a token | PASS | `run-log.md:19` ("`agentbox-env` itself was never called"); no token file is read. |
+| 9 | MUST-NOT | Run `aws sso login` itself | PASS | Left to the operator (`R/report.md:44`). |
+| 10 | MUST-NOT | Claim prod is or is not affected | PASS | `R/report.md:24` ("Not determined"). |
+
+Totals: 10 PASS, 0 FAIL, 0 N/A.
+
 ## Findings and fixes
 
-- No FAIL in this case. No skill change proposed from it.
+- Applied to the skill over the rounds:
+  - P1-P10 (after round 1).
+  - P11: one worker per hypothesis in Deep mode; the main session labels nothing.
+  - P12: every history match is its own `from-history:<file>` entry.
+  - P13: windows re-anchored on the found onset.
+  - H1-H4: workers never see past-incident content.
+  - P14: old-against-new split for deploy candidates.
+  - Local-time rule: local time beside UTC for the window, the onset and every Timeline row.
+  - The fingerprint-review wording.
+- History: no FAIL in any round.
+- Final round: no FAIL. No skill change proposed from this case.

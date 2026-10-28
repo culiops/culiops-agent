@@ -1,312 +1,382 @@
-# Run log: sre-investigate, case-a (notify-worker prod), run `notify-worker-prod-20261022-0850`
+# Run log: sre-investigate, case-a (notify-worker, prod)
 
-Simulation notes that apply to the whole log:
+Run directory: `notify-worker-prod-20261022-0850`
+Output root used for writes (stands for `.culiops/sre-investigate/`): `out/`
 
-- Output root `.culiops/sre-investigate/` is mapped to `out/`; the run directory is `out/runs/notify-worker-prod-20261022-0850/`. `report.md`: report saved separately.
-- Clock: `date -u` has no row in `world/INDEX.md`, so it returned nothing. "Now" is taken as 2026-10-22 08:50:00Z from the INDEX note on `k8s-05.txt` ("Ages are relative to 08:50:00 UTC") and from the SQS note (data covers 2026-10-22 07:50-08:45). Every wave start is therefore 08:50:00 (frozen simulated clock); no wall-clock durations can be reported.
-- The Phase 0 helper (`TASK: PROFILE`, cheapest tier) was simulated inline by the main session; no helper was actually dispatched. Fast mode has no evidence workers.
-- Operator script: only line 1 exists. It was used as the opening request. No later line existed, so none was ever given and no cue was waited on.
+Simulation notes that apply to the whole run:
 
-## Operator lines received
+- Commands were not executed. Each command was matched against `world/INDEX.md` and only the mapped file was read. `_default.txt` / `_empty.txt` were used for unmatched commands, as the INDEX rules say.
+- `date -u` has no INDEX row, so it returned nothing. "Now" is 08:50:00 UTC on 2026-10-22, taken from the INDEX note that event ages are relative to 08:50:00 UTC (and consistent with pod age 35m since 08:14:33). All Start times in the ledger carry an asterisk for that reason.
+- World files read, and the command that mapped each one: sts-01 (W0-Q1, W0-Q2), iam-01 (W0-Q2), iam-02 (W0-Q2), k8s-01 (W0-Q3), k8s-02 (W0-Q3), k8s-03 (W0-Q4), ls-01 (pre-wave), environment.md (pre-wave), k8s-12 / k8s-13 (W0-Q5), sqs-01 (W0-Q6), git-01 (W0-Q7), k8s-04 (W1-Q1), k8s-06 (W1-Q2), k8s-10 (W1-Q3), k8s-11 (W1-Q4), k8s-14 (W1-Q5), helm-01 (W1-Q6), cw-01 and cw-02 (W1-Q8, incident window), k8s-07 (W2-Q1), k8s-08 (W2-Q2), k8s-09 (W2-Q3), git-02 (W2-Q4). `_empty.txt` and `_default.txt` for the unmatched calls listed below. No other world file was opened. The files k8s-05, k8s-15, k8s-16, git-03, helm-02, helm-03 were never read (no command of mine mapped to them; `helm get values` was deliberately not run).
+- Operator lines: only line 1 exists in `operator-script.md`. It was given as the opening request. No later line was received, because no later line has a cue that could happen in this run (the script has only one line).
 
-| # | When | Line |
-|---|---|---|
-| 1 | At the start (opening request) | `notify-worker pods in prod are crash-looping and emails aren't going out. Fast mode.` |
+## Operator line received
 
-No other operator line exists in `operator-script.md`; the Phase 6 diff was shown and no reply came (see Phase 6).
+1. (at the start) `notify-worker pods in prod are crash-looping and emails aren't going out. Fast mode.`
 
-## Phase 0: access, mode, intake
+## Phase 0, step 1-3: output root, environment, mode
 
-Skill files read before any query: `SKILL.md`, `access/standalone.md`, `environment.template.md`, `templates/ledger.md`, `templates/report.md`, `agents/helper.md`, `templates/profile.md`, `playbooks/changes.md`, `playbooks/infra-state.md`, `playbooks/metrics.md`, later `templates/incident.md` and `templates/lesson.md`. Playbooks not read (no use of their backends): logs, traces, errors, external, waf, other-backends.
+Commands (printed in the first message below, then run):
 
-### Setup calls (Phase 0 steps 1-2: output root, environment, mode detection)
-
-| # | Command | World row / file | Result |
+| # | Command | Mapped to | Key facts |
 |---|---|---|---|
-| S1 | `echo "${CULIOPS_HOME:-}"` | no row, text command -> `_empty.txt` | empty: CULIOPS_HOME unset, root is `.culiops/sre-investigate/` |
-| S2 | `git rev-parse --show-toplevel` | no row, text command -> `_empty.txt` | empty; the current directory is treated as the repo root (assumption 7 in the ledger) |
-| S3 | `git check-ignore -q .culiops/sre-investigate` | no row -> `_empty.txt` | no output, exit 0 = ignored |
-| S4 | `ls .culiops/sre-investigate` | `ls` + `.culiops/sre-investigate` -> `ls-01.txt` | `environment.md` only (no profiles, lessons, incidents or runs) |
-| S5 | `cat .culiops/sre-investigate/environment.md` | -> `environment.md` | timezone UTC; profile `prod-read` account 111122223333 us-east-1; context `arn:aws:eks:us-east-1:111122223333:cluster/prod`, namespace `notify`; backends kubectl/Helm and CloudWatch SQS depth; no token variables; app source `example-org/notify-deploy` (clone `~/src/notify-deploy`) and `example-org/notify-worker` via `gh`; Logs Insights ask above 10 GB; default severity scale; core flow = transactional email |
-| S6 | `command -v agentbox-env` | -> `_empty.txt` (INDEX: exit status 1) | not found: nothing about Culibox said, run is standalone |
+| a | `command -v agentbox-env` | `_empty.txt` (exit 1) | Culibox absent; nothing said about Culibox |
+| b | `echo "${CULIOPS_HOME:-}"` | `_empty.txt` | CULIOPS_HOME unset: root is `.culiops/sre-investigate/` at the repo root |
+| c | `git rev-parse --show-toplevel` | `_empty.txt` | printed nothing; the case directory is taken as the repo root (noted to the operator) |
+| d | `git check-ignore -q .culiops/sre-investigate` | `_empty.txt` (exit 0) | ignored by git |
+| e | `ls .culiops/sre-investigate` | `ls-01.txt` | only `environment.md`; no `profiles/`, `lessons.md`, `incidents/` |
+| f | `cat .culiops/sre-investigate/environment.md` | `environment.md` | timezone UTC; profile prod-read (111122223333, us-east-1); context `arn:aws:eks:us-east-1:111122223333:cluster/prod`, ns `notify`; kubectl/Helm + CloudWatch metrics only; no token env vars; no budgets (template Fast defaults apply); helm values repo `example-org/notify-deploy` clone `~/src/notify-deploy`; app code `example-org/notify-worker` via gh; core flow = transactional email |
+| g | `date -u +%Y%m%d-%H%M` | `_empty.txt` | no output; clock taken from the case reference time (see notes) |
 
-Run directory created as `runs/notify-worker-prod-20261022-0850/`, ledger copied from the template, `RUN=.culiops/sre-investigate/runs/notify-worker-prod-20261022-0850/raw`.
-
-### Message 1 to the operator (first message), verbatim
-
-```text
-Mode: Fast. You describe pods crash-looping in prod right now, so this is an ongoing incident: live triage with access checks, a profile build, then at most three evidence waves. No checkpoints; I only stop for a budget or window limit, or for something I cannot read.
-
-Output root: .culiops/sre-investigate/ at the repo root. Everything this run writes (ledger, run profile, report, raw pulls) goes there. It is local and is never committed; git check-ignore says .culiops/sre-investigate is ignored, so it cannot be committed by accident.
-Found environment.md there: timezone UTC, AWS profile prod-read (account 111122223333), cluster context arn:aws:eks:us-east-1:111122223333:cluster/prod, namespace notify, no token-based backends.
-
-Service and environment taken from your message: notify-worker, prod. Run directory: .culiops/sre-investigate/runs/notify-worker-prod-20261022-0850/
-Window: you gave no onset time, so the Fast default applies: the last two hours, 2026-10-22 06:50:00Z to 08:50:00Z (06:50 to 08:50 local; the zone in environment.md is UTC). The assumptions are recorded in the ledger.
-```
-
-### Wave 0 (access and intake): printed in full, then run
-
-Printed to the operator:
+### Message 1 (first message, verbatim)
 
 ```text
-Wave 0, commands:
-date -u +%H:%M:%S
-id=$(aws sts get-caller-identity --profile prod-read --region us-east-1); echo "$id" | jq -r '"account " + .Account'; arn=$(echo "$id" | jq -r .Arn); role=${arn#*:assumed-role/}; role=${role%%/*}; echo "role $role"; role_arn=$(aws iam get-role --profile prod-read --region us-east-1 --role-name "$role" --query Role.Arn --output text); aws iam simulate-principal-policy --profile prod-read --region us-east-1 --policy-source-arn "$role_arn" --action-names s3:PutObject s3:DeleteObject ec2:TerminateInstances ec2:AuthorizeSecurityGroupIngress ecs:UpdateService iam:PutRolePolicy iam:CreateAccessKey rds:ModifyDBInstance lambda:UpdateFunctionCode cloudformation:DeleteStack --query 'EvaluationResults[].[EvalActionName,EvalDecision]' --output text
-kubectl auth whoami --context arn:aws:eks:us-east-1:111122223333:cluster/prod
-kubectl config current-context
-kubectl auth can-i --list --context arn:aws:eks:us-east-1:111122223333:cluster/prod --namespace notify
+Mode: Fast. You said so, and the crash loop is ongoing.
+
+Phase 0 commands, run before wave 0:
+  command -v agentbox-env
+  echo "${CULIOPS_HOME:-}"
+  git rev-parse --show-toplevel
+  git check-ignore -q .culiops/sre-investigate
+  ls .culiops/sre-investigate
+  cat .culiops/sre-investigate/environment.md
+  date -u +%Y%m%d-%H%M
+
+Output root: .culiops/sre-investigate/ at the repo root. It is local and is never committed. `git check-ignore -q` exited 0, so git already ignores it. (`git rev-parse --show-toplevel` printed nothing here, so I took the current directory as the repo root.)
+
+I read .culiops/sre-investigate/environment.md: timezone UTC; AWS profile prod-read (account 111122223333, us-east-1); Kubernetes context arn:aws:eks:us-east-1:111122223333:cluster/prod, namespace notify; CloudWatch metrics and kubectl/Helm only (no log backend, no token-based backend); core flow = transactional email. Nothing else exists under the root yet (no profile, lessons or incident history), so the service profile is built from scratch.
+
+Window: you gave no onset, so the Fast default applies: the last two hours, 2026-10-22 06:50 to 08:50 UTC (local time is UTC per environment.md). The shell clock returned nothing here, so "now" (08:50:00 UTC) is taken from the case's reference time. If wave 1 shows a true onset far from this window I will re-anchor on it.
+
+Run directory: .culiops/sre-investigate/runs/notify-worker-prod-20261022-0850/ (ledger.md, profile.md, raw/).
 ```
 
-(The chained first call prints only the account and role name, never the session part of the ARN. The Kubernetes `whoami` output does carry the session name; it is not recorded.)
+## Phase 0, step 4-5: run directory, ledger, problem statement
 
-| Query | Command | World row / file | Key facts |
+Files written: `runs/notify-worker-prod-20261022-0850/ledger.md` (copy of the template, Problem filled in: what / where / when / who / trigger = chat report / mitigations "none known" / assumptions: default two-hour window, zone UTC from environment.md, now = 08:50:00 UTC, template Fast budgets), `raw/`.
+
+## Wave 0 (access and intake)
+
+Printed in full, then run (the same text as sent to the operator):
+
+```text
+Wave 0 (access and intake). RUN=.culiops/sre-investigate/runs/notify-worker-prod-20261022-0850/raw
+CTX=arn:aws:eks:us-east-1:111122223333:cluster/prod
+
+Call 1
+date -u +%H:%M:%S; aws sts get-caller-identity --profile prod-read --region us-east-1 --output json
+
+Call 2 (AWS write-check, fixed list of 10 actions)
+arn=$(aws sts get-caller-identity --profile prod-read --region us-east-1 --query Arn --output text)
+role=${arn#*:assumed-role/}; role=${role%%/*}
+role_arn=$(aws iam get-role --profile prod-read --region us-east-1 --role-name "$role" --query Role.Arn --output text)
+aws iam simulate-principal-policy --profile prod-read --region us-east-1 \
+  --policy-source-arn "$role_arn" \
+  --action-names s3:PutObject s3:DeleteObject ec2:TerminateInstances \
+    ec2:AuthorizeSecurityGroupIngress ecs:UpdateService iam:PutRolePolicy \
+    iam:CreateAccessKey rds:ModifyDBInstance lambda:UpdateFunctionCode \
+    cloudformation:DeleteStack \
+  --query 'EvaluationResults[].[EvalActionName,EvalDecision]' --output text
+
+Call 3
+kubectl auth whoami --context "$CTX"; kubectl config current-context
+
+Call 4 (Kubernetes write-check)
+kubectl auth can-i --list --context "$CTX" --namespace notify
+
+Not run in wave 0, and why: no token-based backend is listed (no token check); no log source is listed (no log probe); no stored profile or lessons exist; the trigger is a report, not an alarm (no alarm history); no error tracker, ticket, WAF symptom.
+```
+
+| ID | Command | Mapped to | Key facts |
 |---|---|---|---|
-| (stamp) | `date -u +%H:%M:%S` | no row -> `_empty.txt` | empty; clock taken as 08:50:00 (see simulation notes) |
-| W0-Q1 | `aws sts get-caller-identity --profile prod-read` | `sts-01.json` | Account 111122223333 (matches environment.md); assumed role `AWSReservedSSO_ReadOnly_0a1b2c3d4e5f6a7b`; session name not recorded |
-| W0-Q2 | `aws iam get-role --profile prod-read --role-name AWSReservedSSO_ReadOnly_0a1b2c3d4e5f6a7b` | `iam-01.json` | role path `/aws-reserved/sso.amazonaws.com/`, ARN resolved |
-| W0-Q3 | `aws iam simulate-principal-policy --profile prod-read ...` (the fixed 10) | `iam-02.json` | 10 rows, all `implicitDeny`. The rows cover s3:PutObject, s3:DeleteObject, ec2:TerminateInstances, ecs:UpdateService, iam:PutRolePolicy, rds:ModifyDBInstance, lambda:UpdateFunctionCode (7 of the asked actions) plus ec2:ModifyInstanceAttribute, ecs:StopTask, iam:AttachRolePolicy (not asked). No row for ec2:AuthorizeSecurityGroupIngress, iam:CreateAccessKey, cloudformation:DeleteStack: gap for those three. No action allowed, so no boxed warning |
-| W0-Q4 | `kubectl auth whoami --context arn:aws:eks:...:cluster/prod` | `k8s-02.txt` | group `eks-readonly`; same SSO read-only role; session name not recorded |
-| W0-Q5 | `kubectl config current-context` | `k8s-01.txt` | equals the environment.md context |
-| W0-Q6 | `kubectl auth can-i --list --context ... --namespace notify` | `k8s-03.txt` | `create` on the three selfsubject*review resources only (excluded by the rule), `get list watch` on `*.*` and on non-resource URLs: no write verbs. Note: `*.*` includes Secrets |
+| W0-Q1 | call 1 | `sts-01.json` (`date` unmatched, no output) | Account 111122223333 = environment.md; assumed-role AWSReservedSSO_ReadOnly_0a1b2c3d4e5f6a7b (session name not recorded) |
+| W0-Q2 | call 2 | `sts-01.json`, `iam-01.json`, `iam-02.json` | role path `/aws-reserved/sso.amazonaws.com/`; simulation rows: s3:PutObject, s3:DeleteObject, ec2:TerminateInstances, ecs:UpdateService, iam:PutRolePolicy, rds:ModifyDBInstance, lambda:UpdateFunctionCode = implicitDeny (7 of my 10); no row for ec2:AuthorizeSecurityGroupIngress, iam:CreateAccessKey, cloudformation:DeleteStack; three rows I did not ask for (ec2:ModifyInstanceAttribute, ecs:StopTask, iam:AttachRolePolicy) = implicitDeny. No `allowed` anywhere, so no boxed warning. The missing rows are recorded as a gap. |
+| W0-Q3 | call 3 | `k8s-02.txt`, `k8s-01.txt` | user = role ReadOnly, groups eks-readonly + system:authenticated; current context = the environment.md context |
+| W0-Q4 | call 4 | `k8s-03.txt` | rows: create on selfsubjectreviews / selfsubjectaccessreviews / selfsubjectrulesreviews (excluded by the skill's rule); `*.*` get list watch (read-only, includes Secrets); non-resource URLs get. No write verbs. No boxed warning. |
 
-Not run, and why: token presence checks (environment.md lists no token_env); the wave-0 log probe (no metered log backend listed; the only log source is `kubectl logs`, which has no size estimate); alarm history, Grafana alert history, error-tracker issues and ticket reads (none is the trigger or listed); lessons and stored profile (none exist per S4).
-
-### Message 2 to the operator (after wave 0), verbatim
+### Message 2 (after wave 0, verbatim)
 
 ```text
-Access results (wave 0)
-- prod-read: account 111122223333 matches environment.md; role AWSReservedSSO_ReadOnly_0a1b2c3d4e5f6a7b.
-  Write check, prod-read: read-only confirmed (simulation) for the 7 listed write actions the reply covered: none of them is allowed. This is not a full proof; resource-scoped writes are not covered.
-  Write capability unknown (gap), prod-read: the simulation reply had no row for 3 of the 10 requested actions (ec2:AuthorizeSecurityGroupIngress, iam:CreateAccessKey, cloudformation:DeleteStack) and had rows for 3 actions I did not ask for. This is not a finding that the credentials can write.
-- Kubernetes context arn:aws:eks:us-east-1:111122223333:cluster/prod: it is the current context; identity group eks-readonly. Write check, notify: no write verbs in notify. Note: this identity has get/list/watch on all resources, Secrets included. This run will not read any Secret.
-- Tokens: environment.md lists no token-based backend, nothing to check. Log probe: skipped, there is no metered log backend (logs come from kubectl logs). No stored profile, lessons or earlier runs exist.
-Gaps so far: the three missing write-check rows above (ledger Gaps).
-Starting the profile build, since this is the first run for notify-worker prod.
+Write check, prod-read: read-only confirmed (simulation): none of the broad write actions came back allowed. Limit: only 7 of the 10 requested actions returned a row (all implicitDeny). ec2:AuthorizeSecurityGroupIngress, iam:CreateAccessKey and cloudformation:DeleteStack returned no row, and the reply held three actions I did not ask for (ec2:ModifyInstanceAttribute, ecs:StopTask, iam:AttachRolePolicy; also implicitDeny). I recorded that as a gap. This is not a full proof; resource-scoped writes are not covered.
+
+Write check, arn:aws:eks:us-east-1:111122223333:cluster/prod / notify: no write verbs in notify (the only `create` rows are the three access-review APIs, which do not count). One thing to know: the binding allows get/list/watch on all resources, which includes Secrets. I will not read any Secret.
+
+Identity: prod-read = account 111122223333 (matches environment.md), role AWSReservedSSO_ReadOnly_*; the Kubernetes user is the same role, group eks-readonly.
+
+Gaps so far: (1) three simulation rows missing, above; (2) environment.md lists no log backend, so logs are limited to kubectl pod logs (current and previous container only).
 ```
 
-### Build profile (helper `TASK: PROFILE`, simulated inline, cheapest tier)
+Ledger: Access table, Gaps, Memory (no lessons, no incidents dir) written (ledger v1).
 
-Dispatch (as it would be sent): explicit `model` at the cheapest tier, first line `TASK: PROFILE`, Service notify-worker, Environment prod, profile template path, identifier lessons `none`. Simulated one wave; commands printed in full:
+## Build profile (helper, TASK: PROFILE, cheapest tier, simulated inline)
+
+Dispatch: `TASK: PROFILE`, Service notify-worker, Environment prod, identifier lessons "none", `model` at the cheapest tier (passed explicitly). The helper ran one wave of three calls (counted as W0-Q5..Q7, no wave cap used). While it ran, the IaC history call (W0-Q7) was the change-correlation query that needs no identifiers, so it was shared with wave 1.
+
+[helper, cheapest tier] Commands printed and run:
 
 ```text
-kubectl --context arn:aws:eks:us-east-1:111122223333:cluster/prod -n notify get deploy
-kubectl --context arn:aws:eks:us-east-1:111122223333:cluster/prod -n notify get configmap
-aws sqs list-queues --profile prod-read --region us-east-1 --queue-name-prefix notify
-helm list --kube-context arn:aws:eks:us-east-1:111122223333:cluster/prod -n notify
+kubectl --context "$CTX" -n notify get deploy; kubectl --context "$CTX" -n notify get svc,ingress,hpa; kubectl --context "$CTX" -n notify get configmap
+aws sqs list-queues --profile prod-read --region us-east-1
+git -C ~/src/notify-deploy log origin/HEAD -n 10 -- charts/notify-worker
 ```
 
-| Query | World file | Key facts |
+| ID | Mapped to | Key facts |
 |---|---|---|
-| W0-Q7 `get deploy` | `k8s-12.txt` | Deployment `notify-worker` READY 0/3, UP-TO-DATE 3, AVAILABLE 0, age 211d |
-| W0-Q8 `get configmap` | `k8s-13.txt` | `kube-root-ca.crt`, `notify-worker-config` (4 data keys) |
-| W0-Q9 `aws sqs list-queues` | `sqs-01.json` | `notify-outbound`, `notify-outbound-dlq` |
-| W0-Q10 `helm list` | `helm-03.txt` | release `notify-worker` namespace notify rev 12, updated 2026-10-22 08:14:20 +0000 UTC, deployed, chart notify-worker-1.8.0, app 3.8.1 |
+| W0-Q5 | `k8s-12.txt` (get deploy), `_empty.txt` (get svc,ingress,hpa: no INDEX row), `k8s-13.txt` (get configmap) | Deployment notify-worker READY 0/3, UP-TO-DATE 3, AVAILABLE 0, age 211d; svc/ingress/hpa: no output; ConfigMaps kube-root-ca.crt and notify-worker-config (4 keys) |
+| W0-Q6 | `sqs-01.json` | queues notify-outbound, notify-outbound-dlq |
+| W0-Q7 | `git-01.txt` | 3f9a1c2 (author date Thu Oct 22 08:03:41 2026 +0000) "notify-worker: align config key names with the shared SMTP chart (#214)"; 9e8d7c6 (Wed Oct 7 09:51:09 2026) "raise concurrency to 8 (#201)" |
 
-Helper return (summary): identifiers for Deployment, ConfigMaps, queues and Helm release verified (2026-10-22); log label via kubectl logs, code repo and data stores left `(unverified)`; no APM, Prometheus, Grafana, error tracker (none in environment.md). Main session wrote `runs/.../profile.md` and re-applied the tie rule (no log label differing from the service name was marked verified).
+Helper returned the profile (Status partly unverified; queue names (unverified) until a metric returned data; svc/ingress/hpa and every backend not in environment.md marked (unverified)). The main session re-applied Constraint 14 (no promotion without data) and wrote `profile.md` (v1). It was updated later as data arrived (log label, sidecar, compute, queues, code row, baseline) after wave 1 and wave 2.
 
-### Message 3 to the operator (profile shown, run continues), verbatim
-
-```text
-Run profile for notify-worker prod (draft; correct me if anything is wrong, I keep going):
-- Compute: namespace notify, Deployment notify-worker (0/3 ready), Helm release notify-worker rev 12 (deployed 2026-10-22 08:14:20Z), ConfigMaps notify-worker-config and kube-root-ca.crt. Verified by queries.
-- Queues: SQS notify-outbound and notify-outbound-dlq. Verified.
-- Logs: kubectl logs of the Deployment's pods only; no log aggregator. Marked (unverified) until a query returns lines.
-- Code: IaC in example-org/notify-deploy (clone ~/src/notify-deploy), app code example-org/notify-worker via gh. Both (unverified), default branches unknown.
-- No APM, Prometheus, dashboards or error tracker are configured. Core flow served: transactional email.
-Full file: .culiops/sre-investigate/runs/notify-worker-prod-20261022-0850/profile.md
-```
-
-Ledger written (Problem, Access, Windows, Query log W0-Q1..Q10, Gaps, Lesson candidates) before wave 1. Files: `ledger.md`, `profile.md`.
-
-## Wave 1 (change events, golden-signal deltas, recurrence): printed in full, then run
-
-Window used: incident 06:50-08:50Z, previous 04:50-06:50Z, -7d 2026-10-15 06:50-08:50Z, recurrence 2026-10-08 06:50 to 2026-10-22 06:50Z. Written first to `raw/q-sqs-300.json` and `raw/q-sqs-3600.json` (metric Ids `backlog` for notify-outbound, `m1` for the dead-letter queue).
-
-Printed to the operator:
+### Message 3 (profile shown, verbatim)
 
 ```text
-Wave 1, commands (7 calls, under the ten-call size; no latency or HTTP legs apply, this is a queue consumer):
-date -u +%H:%M:%S
-kubectl --context arn:aws:eks:us-east-1:111122223333:cluster/prod -n notify get pods
-kubectl --context arn:aws:eks:us-east-1:111122223333:cluster/prod -n notify get events --sort-by=.lastTimestamp -o json | jq -r '.items[] | [(.firstTimestamp // .eventTime), .lastTimestamp, (.count // .series.count // 1), .reason, (.involvedObject.kind + "/" + .involvedObject.name), (.message // "" | .[:300])] | @tsv' > "$RUN/c-events.tsv"
-kubectl --context arn:aws:eks:us-east-1:111122223333:cluster/prod -n notify rollout history deployment/notify-worker
-kubectl --context arn:aws:eks:us-east-1:111122223333:cluster/prod -n notify get rs
-helm history notify-worker --kube-context arn:aws:eks:us-east-1:111122223333:cluster/prod -n notify --max 10
-for w in "incident 2026-10-22T06:50:00Z 2026-10-22T08:50:00Z" "previous 2026-10-22T04:50:00Z 2026-10-22T06:50:00Z" "minus7d 2026-10-15T06:50:00Z 2026-10-15T08:50:00Z"; do read -r win ws we <<< "$w"; aws cloudwatch get-metric-data --profile prod-read --region us-east-1 --metric-data-queries "file://$RUN/q-sqs-300.json" --start-time "$ws" --end-time "$we" --output json > "$RUN/m-sqs-$win.json"; done
-aws cloudwatch get-metric-data --profile prod-read --region us-east-1 --metric-data-queries "file://$RUN/q-sqs-3600.json" --start-time 2026-10-08T06:50:00Z --end-time 2026-10-22T06:50:00Z --output json > "$RUN/m-recur-14d-cw.json"
+Service profile built (continuing without waiting; tell me if anything is wrong):
+- notify-worker, prod. Cluster context arn:aws:eks:us-east-1:111122223333:cluster/prod, namespace notify, profile prod-read, us-east-1.
+- Compute: Deployment notify-worker (0/3 ready, verified), ConfigMaps notify-worker-config (4 keys) and kube-root-ca.crt (verified). No Service, Ingress or HPA output (unverified).
+- Queues: notify-outbound and notify-outbound-dlq, listed by SQS (unverified until a metric returns data).
+- IaC: example-org/notify-deploy, clone ~/src/notify-deploy, path charts/notify-worker (verified by git log). App code example-org/notify-worker via gh (not queried yet).
+- Logs: no log backend; only kubectl logs. Traces, Prometheus, error tracker, dashboards: none listed.
+- Sibling set: the Deployment's replicas (pod-template-hash tells revisions apart).
+- Core flow: transactional email, critical.
 ```
 
-| Query | Command (short) | World row / file | Key facts |
-|---|---|---|---|
-| W1-Q1 | `kubectl ... -n notify get pods` | `k8s-04.txt` | 3 pods `notify-worker-5c8d7b9f4c-{8wq2d,jt6kz,x4p9n}` 0/1 CrashLoopBackOff, 11 restarts each, age 35m |
-| W1-Q2 | `kubectl ... get events -o json` (+jq) | `k8s-06.json` (JSON form of the notify events row) | old RS scaled 3 -> 0 at 08:14:21 and its pod killed; new RS scaled to 3 at 08:14:33; first Started 08:14:36; first BackOff 08:15:02 / :03 / :05 (counts 149-151, last at 08:49:20-:51); no Unhealthy, Evicted, FailedScheduling or image-pull events. Reduced rows saved to `raw/c-events.tsv` |
-| W1-Q3 | `rollout history deployment/notify-worker` | `k8s-10.txt` | revisions 6 and 7, CHANGE-CAUSE `<none>` |
-| W1-Q4 | `kubectl ... get rs` | `k8s-11.txt` | `5c8d7b9f4c` 3/3/0 ready age 35m; `7f6b8c5d2e` 0/0/0 age 15d |
-| W1-Q5 | `helm history notify-worker` | `helm-01.txt` | rev 11 (2026-10-07 10:02:18, superseded) and rev 12 (2026-10-22 08:14:20, deployed); both chart 1.8.0 / app 3.8.1 |
-| W1-Q6 | `get-metric-data` loop, 3 windows | incident window: `cw-01.json` + `cw-02.json` (INDEX table P3, one file per queue; the world's Ids `backlog` and `m1` match my query file Ids). previous and -7d windows overlap no row's window (07:50-08:45) -> `_default.txt` (`{}`) | incident: backlog 11, 13, 7, 27, 16 (07:50-08:10), then 120 (08:15), 1710, 3300, 4890, 6480, 8070, 9660 (08:45); DLQ 0 in all 12 points. Previous and -7d: empty |
-| W1-Q7 | `get-metric-data` 14d, Period 3600 | window ends 06:50, overlaps no covered window -> `_default.txt` (`{}`) | empty: recurrence baseline unavailable |
+## Wave 1
 
-Phase 1 reading: siblings (the 3 replicas) all moved together (identical restart counts, same ReplicaSet) -> shared cause, per-pod capacity checks skipped. Shape: step in pod state at 08:14, ramp in queue backlog from 08:15 (about +1,590 per 5 minutes, about 318 per minute). Recurrence class `unclassified` (no alarm history; 14-day and baseline pulls empty). Availability cross-check, latency legs and the business-counter comparison do not apply (no HTTP path; environment.md names the email flow but no counter). Ledger updated (Impact, Recurrence, Timeline, Hypotheses, Query log W1) before the next step.
-
-### Message 4 to the operator (impact block, before Phase 2), verbatim
+### Message 4 (commands printed in full, verbatim)
 
 ```text
-Impact as of 08:50 UTC (08:50 local, zone UTC per environment.md)
-Symptom:   notify-worker pods crash-loop and never become ready; nothing consumes queue notify-outbound, whose backlog is growing. Reporter: emails are not going out.
-Affected:  prod, namespace notify, all 3 replicas (0/3 available, 11 restarts each, same ReplicaSet). notify-outbound backlog 9,660 messages at 08:45 against 7-27 between 07:50 and 08:10; dead-letter queue flat at 0. Core flow: transactional email (order confirmations, password resets).
-Since:     08:14:21 UTC (last healthy pod stopped), first failing start 08:14:36 UTC · ongoing: yes
-Severity:  SEV1 (suggested) because a customer-facing core flow listed in environment.md (transactional email) is down: no worker consumes the queue. The incident owner decides.
-Basis:     pod and queue state (W1-Q1, W1-Q2, W1-Q6) · Confirmed that nothing consumes the queue; Likely that no email is delivered by any path (no delivery-side metric is configured). No request-error percentage applies (queue consumer, no HTTP path). Baselines for the previous window, -7d and 14d returned no data (gap).
-Third party in the path: none identified (the SMTP relay is a downstream of the worker, but no query has reached it; no contact route in the profile)
+Wave 1 (changes, golden signals, recurrence). RUN=.culiops/sre-investigate/runs/notify-worker-prod-20261022-0850/raw
+CTX=arn:aws:eks:us-east-1:111122223333:cluster/prod
+Eight calls, within the ten-call guide. Windows for this wave are the default ones: incident 2026-10-22T06:50:00Z-08:50:00Z, previous 04:50:00Z-06:50:00Z, minus 7 days 2026-10-15T06:50:00Z-08:50:00Z, recurrence 14 days ending 2026-10-22T06:50:00Z at one-hour resolution.
+
+Call 1
+date -u +%H:%M:%S; kubectl --context "$CTX" -n notify get pods -o wide | tee "$RUN/k-pods.txt"
+
+Call 2
+kubectl --context "$CTX" -n notify get events --sort-by=.lastTimestamp -o json | jq -r '.items[] | [(.firstTimestamp // .eventTime), .lastTimestamp, (.count // .series.count // 1), .reason, .involvedObject.name, (.message // "" | .[:300])] | @tsv' > "$RUN/k-events.tsv"
+
+Call 3
+kubectl --context "$CTX" -n notify rollout history deployment/notify-worker
+
+Call 4
+kubectl --context "$CTX" -n notify get rs --sort-by=.metadata.creationTimestamp
+
+Call 5
+kubectl --context "$CTX" -n notify describe deploy notify-worker
+
+Call 6
+helm history notify-worker --kube-context "$CTX" -n notify --max 10
+
+Call 7
+kubectl --context "$CTX" get cronjobs -A -o custom-columns='NAMESPACE:.metadata.namespace,NAME:.metadata.name,SCHEDULE:.spec.schedule,TZ:.spec.timeZone,SUSPEND:.spec.suspend,LAST:.status.lastScheduleTime'
+
+Call 8
+cat > "$RUN/q-sqs-300.json" <<'EOF'
+[ {"Id": "backlog", "MetricStat": {"Period": 300, "Stat": "Maximum", "Metric": {"Namespace": "AWS/SQS", "MetricName": "ApproximateNumberOfMessagesVisible", "Dimensions": [{"Name": "QueueName", "Value": "notify-outbound"}]}}},
+  {"Id": "dlq", "MetricStat": {"Period": 300, "Stat": "Maximum", "Metric": {"Namespace": "AWS/SQS", "MetricName": "ApproximateNumberOfMessagesVisible", "Dimensions": [{"Name": "QueueName", "Value": "notify-outbound-dlq"}]}}} ]
+EOF
+sed 's/"Period": 300/"Period": 3600/' "$RUN/q-sqs-300.json" > "$RUN/q-sqs-3600.json"
+for w in "incident 2026-10-22T06:50:00Z 2026-10-22T08:50:00Z q-sqs-300" "previous 2026-10-22T04:50:00Z 2026-10-22T06:50:00Z q-sqs-300" "minus7d 2026-10-15T06:50:00Z 2026-10-15T08:50:00Z q-sqs-300" "recur14d 2026-10-08T06:50:00Z 2026-10-22T06:50:00Z q-sqs-3600"; do
+  read -r win ws we q <<< "$w"
+  TZ=UTC aws cloudwatch get-metric-data --profile prod-read --region us-east-1 --metric-data-queries "file://$RUN/$q.json" --start-time "$ws" --end-time "$we" --output json > "$RUN/m-sqs-$win.json"
+done
+
+Notes: Period 300 because SQS publishes its queue metrics every five minutes. Call 8 requests 8 metric requests in total. The pod logs and `describe pod` wait for wave 2 because the pod names are only known after call 1. No Helm values or manifests are read (`helm get values` is not run).
 ```
 
-### Message 5 to the operator (Phase 2/3, ranked hypotheses; no checkpoint in Fast), verbatim
+### Wave 1 results (commands in order, mapped file, key facts)
 
-```text
-Pattern and changes so far: recurrence class unclassified (no alarm history, baseline pulls came back empty). Changes near the onset: Helm release notify-worker went to revision 12 at 08:14:20Z, the old ReplicaSet was scaled to 0 at 08:14:21Z and the new pods first started at 08:14:36Z; the same chart (1.8.0) and app version (3.8.1) as revision 11, so the change is most likely in values or config, not in the image. All three pods fail the same way, so the cause is shared.
-Hypotheses, ranked, each with the query that would disprove it (run first in wave 2):
-H1 config change delivered by Helm revision 12 makes the process exit at startup: disproved by previous-container logs or last-termination state showing a non-config error, or by crashes before 08:14:20.
-H2 code defect in a new image: disproved by identical chart/app versions in revisions 11 and 12 (already seen).
-H3 OOMKilled: disproved by a last-termination reason other than OOMKilled.
-H4 probe failures: disproved by no Unhealthy events and no probes.
-H5 image pull or scheduling failure: disproved by Scheduled and Started events (already seen).
-H6 node or instance churn: disproved by the process exiting by itself.
-H7 SMTP relay or other dependency down: disproved by a failure before any connection.
-H8 scheduled job or scaling action near 08:14: disproved by empty CronJob and EventBridge schedule listings.
-Wave 2 also reads the slower change sources (git history of the deploy repo, CloudTrail).
-```
-
-## Wave 2 (slower change sources and first falsification queries): printed in full, then run
-
-Printed to the operator:
-
-```text
-Wave 2, commands (5 calls):
-date -u +%H:%M:%S
-kubectl --context arn:aws:eks:us-east-1:111122223333:cluster/prod -n notify describe pod notify-worker-5c8d7b9f4c-8wq2d
-kubectl --context arn:aws:eks:us-east-1:111122223333:cluster/prod -n notify logs notify-worker-5c8d7b9f4c-8wq2d --previous --tail=20; kubectl --context arn:aws:eks:us-east-1:111122223333:cluster/prod -n notify logs notify-worker-5c8d7b9f4c-jt6kz --previous --tail=20; kubectl --context arn:aws:eks:us-east-1:111122223333:cluster/prod -n notify logs notify-worker-5c8d7b9f4c-x4p9n --previous --tail=20
-git -C ~/src/notify-deploy log --all --since=2026-10-19T08:14:00Z --until=2026-10-22T08:50:00Z --date=iso-strict --format='%h %cI %an %s' -- charts/notify-worker
-kubectl --context arn:aws:eks:us-east-1:111122223333:cluster/prod get cronjobs -A -o custom-columns='NAMESPACE:.metadata.namespace,NAME:.metadata.name,SCHEDULE:.spec.schedule,TZ:.spec.timeZone,SUSPEND:.spec.suspend,LAST:.status.lastScheduleTime' ; aws events list-rules --profile prod-read --region us-east-1 --query 'Rules[?ScheduleExpression].[Name, State, ScheduleExpression]' --output text
-TZ=UTC aws cloudtrail lookup-events --profile prod-read --region us-east-1 --lookup-attributes AttributeKey=ReadOnly,AttributeValue=false --start-time 2026-10-22T06:14:00Z --end-time 2026-10-22T08:30:00Z --query "Events[?contains(EventSource, 'eks.amazonaws.com') || contains(EventSource, 'sqs.amazonaws.com') || contains(EventSource, 'secretsmanager.amazonaws.com') || contains(EventSource, 'ssm.amazonaws.com')].[EventTime, EventSource, EventName, EventId]" --output text
-```
-
-| Query | World row / file | Key facts |
+| ID | Mapped to | Key facts |
 |---|---|---|
-| W2-Q1 describe pod | `kubectl describe pod ... notify-worker` -> `k8s-07.txt` | last state Terminated, reason `Error`, exit code 1, started and finished 08:47:56; restart count 11; memory limit 256Mi; no probe lines; envFrom ConfigMap `notify-worker-config`; env var `SMTP_PASSWORD` from Secret `notify-smtp` (names only); image tag 3.8.1; labels `app.kubernetes.io/name=notify-worker`, `app.kubernetes.io/instance=notify-worker`; `checksum/config` annotation present |
-| W2-Q2 logs --previous (3 pods, chained) | `kubectl logs ... --previous` -> `k8s-08.txt` (read once, the INDEX says any pod gives the same content; applied to each of the three) | "notify-worker 3.8.1 starting", "loading configuration from environment", fatal "config: required environment variable NOTIFY_SMTP_RELAY_HOST is not set" at config/load.go:58, 08:47:56Z. Saved to `raw/w2-logs-previous.txt` |
-| W2-Q3 git log | `git -C ~/src/notify-deploy log` -> `git-01.txt` | file holds two commits; only `3f9a1c2` (2026-10-22 08:03:41 +0000, "notify-worker: align config key names with the shared SMTP chart (#214)") is inside the requested range, the second (2026-10-07) is outside it and was ignored |
-| W2-Q4 cronjobs; list-rules | `kubectl get cronjobs` -> no row, text command -> `_empty.txt`; `aws events list-rules` -> no row, JSON API -> `_default.txt` (`{}`) | no CronJobs and no scheduled rules returned |
-| W2-Q5 cloudtrail | no row, JSON API -> `_default.txt` (`{}`) | no matching write events (EKS, SQS, Secrets Manager, SSM) 06:14-08:30Z |
+| W1-Q1 | `k8s-04.txt` | 3 pods `notify-worker-5c8d7b9f4c-{8wq2d,jt6kz,x4p9n}`, READY 0/1, CrashLoopBackOff, 11 restarts each, age 35m |
+| W1-Q2 | `k8s-06.json` | 08:14:21 scale-down of RS 7f6b8c5d2e (3 to 0) + Killing event; 08:14:33 scale-up RS 5c8d7b9f4c to 3, Scheduled; first Started 08:14:36 (12 starts by 08:47:56); first BackOff 08:15:02/03/05, counts 151/149/150, last 08:49:20/38/51. No FailedScheduling, ErrImagePull, Unhealthy, OOM, node events. Wrote `raw/k-events.tsv` (names, counts, times; no config values). |
+| W1-Q3 | `k8s-10.txt` | revisions 6 and 7 |
+| W1-Q4 | `k8s-11.txt` | RS 5c8d7b9f4c 3/3/0 ready 35m; RS 7f6b8c5d2e 0/0/0, 15d |
+| W1-Q5 | `k8s-14.txt` | strategy Recreate; image tag 3.8.1; env from ConfigMap notify-worker-config; selector `app.kubernetes.io/instance` + `app.kubernetes.io/name`; Helm-managed; 0 available; no probe lines |
+| W1-Q6 | `helm-01.txt` | rev 11 Oct 7 10:02:18 superseded; rev 12 Oct 22 08:14:20 deployed; chart notify-worker-1.8.0 and app 3.8.1 in both |
+| W1-Q7 | `_empty.txt` (no INDEX row for cronjobs) | no output; recorded as "no CronJob listed, unverified whether empty or filtered" |
+| W1-Q8 | incident: `cw-01.json` (notify-outbound), `cw-02.json` (notify-outbound-dlq); previous, minus7d, recur14d: `_default.txt` (`{}`) because the windows do not overlap the covered 07:50-08:45 | backlog 11, 13, 7, 27, 16, 120, 1710, 3300, 4890, 6480, 8070, 9660 (07:50 to 08:45, step 5 min); DLQ 0 on all 12 points; the other three windows returned no data. Wrote `raw/m-sqs-incident.tsv`. 8 metric requests. |
 
-Reading: H1 now Likely (config error at startup, after a config rollout); H3, H4, H5, H6, H7, H8 refuted by the cited queries; H2 refuted by W1-Q5 plus the nature of the error. The Secret `notify-smtp` was not read (only its name appeared in the pod description). No instruction-like text in any log, event or commit message. Ledger updated before wave 3.
+Phase 1 reading after wave 1:
+- Siblings: 3 of 3 replicas fail together, so a shared cause (config or image), not per-pod capacity. Shape: step (0 ready at one minute, from 08:14:21), then a ramp in the queue.
+- Re-anchor rule: the window came from the Fast default; the true onset 08:14:21 is 84 minutes after the window start and 36 minutes before now, so wave 2 re-anchors.
+- Recurrence: no alarm, and the 14-day pull returned nothing, so classification waits for the re-anchored pull in wave 2.
+- Ledger v2 written (query rows W1-Q1..Q8, Impact, Timeline, Recurrence pending, Windows note, Gaps): all rows are in `ledger.md` before the results are used below.
 
-### Message 6 to the operator (after wave 2), verbatim
-
-```text
-After wave 2: the three crash-looping pods all log the same fatal line from the previous container: "config: required environment variable NOTIFY_SMTP_RELAY_HOST is not set" (config/load.go:58), exit code 1, no OOM, no probes, nothing wrong with scheduling or nodes. The deploy repo has one commit on the chart in the last 3 days, 3f9a1c2 at 08:03:41Z ("align config key names with the shared SMTP chart (#214)"), 11 minutes before the Helm upgrade. No CronJobs, no scheduled EventBridge rules, no CloudTrail writes on EKS, SQS, Secrets Manager or SSM in the window. Suspect: a renamed config key. Wave 3 (the last Fast wave) reads the commit diff, the live ConfigMap key names (names only, no values) and the Deployment's rollout strategy.
-Not followed: no text in logs, events or commits looked like an instruction.
-```
-
-## Wave 3 (last Fast wave): printed in full, then run
-
-Printed to the operator:
+### Message 5 (verbatim)
 
 ```text
-Wave 3, commands (3 calls):
-date -u +%H:%M:%S
-git -C ~/src/notify-deploy show 3f9a1c2 -- charts/notify-worker/values-prod.yaml
-kubectl --context arn:aws:eks:us-east-1:111122223333:cluster/prod -n notify get configmap notify-worker-config -o json | jq '{keys: (.data | keys), managed: [.metadata.managedFields[]? | {manager, operation, time}]}'
-kubectl --context arn:aws:eks:us-east-1:111122223333:cluster/prod -n notify describe deploy notify-worker
+Wave 1 done (8 calls). What it shows:
+- All 3 notify-worker pods are CrashLoopBackOff (0/3 ready, 11 restarts each). The Deployment uses the Recreate strategy: at 08:14:21 UTC the old ReplicaSet was taken from 3 pods to 0, and the new ReplicaSet's pods (hash 5c8d7b9f4c) started at 08:14:33-08:14:36 and have crashed since (first BackOff 08:15:02).
+- Helm revision 12 was deployed at 08:14:20 UTC; chart version and image tag (3.8.1) are the same as revision 11, so the pod template changed through its config. The IaC repo has a commit from 08:03 UTC today touching charts/notify-worker ("align config key names with the shared SMTP chart (#214)").
+- The outbound queue notify-outbound went from 16 messages (08:10) to 120 (08:15) to 9,660 (08:45): about +318 per minute; the DLQ is at 0.
+- No CronJob listed; no scheduling, image-pull, probe or OOM events.
+- CloudWatch returned no datapoints for the earlier windows (previous, minus 7 days, 14 days); there is no baseline yet.
+The true onset is 08:14:21 UTC, 84 minutes after my default window starts, so I re-anchor the windows in the next wave.
+
+Impact as of 08:50 UTC (08:50 local, UTC per environment.md)
+Symptom:   All 3 notify-worker pods are CrashLoopBackOff (0/3 ready, 11 restarts each); the outbound email queue is not being drained: notify-outbound 16 messages at 08:10, 120 at 08:15, 9,660 at 08:45 (about +318/min); DLQ 0.
+Affected:  prod, 3 of 3 replicas; core flow transactional email (customer-facing). Emails not being sent is inferred from the unconsumed queue; there is no sent-mail counter.
+Since:     08:14:21 UTC (old pods stopped; first BackOff 08:15:02) · ongoing: yes
+Severity:  SEV1 (suggested) because a customer-facing core flow (transactional email) has no worker available. The incident owner decides.
+Basis:     Assumed (no SLO, no APM or load-balancer metrics in environment.md; queue depth and pod availability are the proxies) · W1-Q1, W1-Q8 · pod availability Confirmed, email non-delivery Likely
+Third party in the path: none identified for the failure; the SMTP relay is on the send path, no contact route is recorded in environment.md.
 ```
 
-| Query | World row / file | Key facts |
+## Phase 2 / Phase 3 (between wave 1 and wave 2)
+
+- Recurrence first: no class yet (wave 2 pull); no `scheduled` sign (W1-Q7 empty; onset 1 s after the Helm upgrade).
+- The Helm upgrade (08:14:20) and the 08:03 commit are the candidate change. Old-against-new split planned before any label: per-pod form (Recreate replaced every pod).
+- Hypotheses written with falsification queries and ranked H1..H6 (ledger Hypotheses table). History lookup after ranking: `incidents/` does not exist (seen in the pre-wave listing), so no grep ran and there are no `from-history:` entries. No docs search (known failure mode not unfamiliar; no wiki access listed). Fast mode: no checkpoints.
+
+### Message 6 (hypotheses and wave 2 commands, verbatim)
+
+```text
+Hypotheses, ranked (Fast mode: no checkpoint, so I go straight on). Each one carries the query that would disprove it.
+H1  The prod values change in commit 3f9a1c2 (config key NOTIFY_SMTP_RELAY_HOST renamed to SMTP_RELAY_HOST), applied by Helm revision 12 at 08:14:20, leaves the new pods without a variable that notify-worker 3.8.1 needs, so each exits at startup. Disproved by: old pods failing the same way, an onset before 08:14:20, a different error in the previous-container log, or the live ConfigMap still holding the old key.
+H2  Image pull or scheduling failure. Disproved by: pods Scheduled and Started (events).
+H3  OOM or resource-limit kill. Disproved by: a termination reason other than OOMKilled / exit 137.
+H4  Probe failures. Disproved by: no probes defined, no Unhealthy events.
+H5  A dependency (SMTP relay, SQS, the notify-smtp secret) failing at startup. Disproved by: the process dying before any network call.
+H6  A scheduled job or node churn. Disproved by: no CronJob, no node events, onset tied to the Helm upgrade.
+The deploy is only a candidate until the old-against-new split is done; wave 2 runs that split together with the first disproving queries.
+
+Wave 2 (disproving queries, change detail, re-anchored recurrence). RUN=.culiops/sre-investigate/runs/notify-worker-prod-20261022-0850/raw
+CTX=arn:aws:eks:us-east-1:111122223333:cluster/prod
+New windows (re-anchored on the onset 08:14:21 UTC; wave 1 keeps its old windows): incident 2026-10-22T07:44:00Z-08:50:00Z (inside wave 1's incident window, so it is reused, not re-run), previous 2026-10-22T06:38:00Z-07:44:00Z, minus 7 days 2026-10-15T07:44:00Z-08:50:00Z, recurrence 14 days 2026-10-08T08:14:21Z-2026-10-22T08:14:21Z.
+
+Call 1
+date -u +%H:%M:%S; for p in notify-worker-5c8d7b9f4c-8wq2d notify-worker-5c8d7b9f4c-jt6kz notify-worker-5c8d7b9f4c-x4p9n; do kubectl --context "$CTX" -n notify describe pod "$p"; done
+
+Call 2
+for p in notify-worker-5c8d7b9f4c-8wq2d notify-worker-5c8d7b9f4c-jt6kz notify-worker-5c8d7b9f4c-x4p9n; do kubectl --context "$CTX" -n notify logs "$p" -c notify-worker --previous --timestamps; done > "$RUN/k-previous-logs.txt"
+
+Call 3
+kubectl --context "$CTX" -n notify get configmap notify-worker-config -o json | jq -r '.data | keys[]' > "$RUN/c-configmap-keys.txt"; kubectl --context "$CTX" -n notify get configmap notify-worker-config -o jsonpath='{range .metadata.managedFields[*]}{.manager}{"\t"}{.operation}{"\t"}{.time}{"\n"}{end}'
+
+Call 4
+git -C ~/src/notify-deploy show 3f9a1c2 --format='%H %aI %s' -- charts/notify-worker/values-prod.yaml | sed -E 's/^([ +-][[:space:]]*[A-Za-z_][A-Za-z_0-9]*:)[[:space:]].*/\1 <value omitted>/' > "$RUN/c-iac-diff-names.txt"
+
+Call 5
+for w in "previous 2026-10-22T06:38:00Z 2026-10-22T07:44:00Z q-sqs-300" "minus7d 2026-10-15T07:44:00Z 2026-10-15T08:50:00Z q-sqs-300" "recur14d-reanchored 2026-10-08T08:14:21Z 2026-10-22T08:14:21Z q-sqs-3600"; do
+  read -r win ws we q <<< "$w"
+  TZ=UTC aws cloudwatch get-metric-data --profile prod-read --region us-east-1 --metric-data-queries "file://$RUN/$q.json" --start-time "$ws" --end-time "$we" --output json > "$RUN/m-sqs-$win.json"
+done
+
+Notes: config values are never stored: call 3 keeps key names only and call 4 strips the values from the diff. App code is not read: the image tag (3.8.1) is the same in both Helm revisions, so there is no app diff to read.
+```
+
+## Wave 2
+
+| ID | Mapped to | Key facts |
 |---|---|---|
-| W3-Q1 git show 3f9a1c2 | `git show <commit>` -> table P2 -> `git-02.txt` | in the `config:` block of `charts/notify-worker/values-prod.yaml`, key `NOTIFY_SMTP_RELAY_HOST` removed and `SMTP_RELAY_HOST` added with the same value (values not recorded); other keys untouched |
-| W3-Q2 get configmap notify-worker-config | `get configmap <name>` -> table P1 -> `k8s-09.yaml` (the reply carries values; jq reduces to key names; the file has no managedFields) | keys `NOTIFY_FROM_ADDRESS`, `NOTIFY_QUEUE_URL`, `NOTIFY_WORKER_CONCURRENCY`, `SMTP_RELAY_HOST`; `NOTIFY_SMTP_RELAY_HOST` absent; managedFields not present |
-| W3-Q3 describe deploy | `describe deploy ... notify-worker` -> `k8s-14.txt` | StrategyType `Recreate`; 3 desired, 3 updated, 0 available; Available False (MinimumReplicasUnavailable); old RS 0/0, new RS 3/3; image 3.8.1; Events none |
+| W2-Q1 | `k8s-07.txt` (describe pod, "same content for each pod apart from its name") | State Waiting CrashLoopBackOff; Last State Terminated, Reason Error, Exit Code 1, Started and Finished 08:47:56; Restart Count 11; memory limit 256Mi / request 128Mi, cpu limit 500m; env from ConfigMap notify-worker-config; SMTP_PASSWORD from key `password` of secret notify-smtp (reference only); annotation checksum/config; events Started x12 over 35m, BackOff x151 over 34m |
+| W2-Q2 | `k8s-08.txt` (logs `--previous`, any pod) | per pod: "notify-worker 3.8.1 starting" 08:47:56.102, "loading configuration from environment" .118, fatal "config: required environment variable NOTIFY_SMTP_RELAY_HOST is not set" at config/load.go:58, .121 (19 ms after start). Same lines for all 3 pods in the world. Only the latest crash is readable. Wrote `raw/k-previous-logs.txt`. |
+| W2-Q3 | `k8s-09.yaml` (configmap by name; the jsonpath call maps to the same file, which has no managedFields) | data keys NOTIFY_FROM_ADDRESS, NOTIFY_QUEUE_URL, NOTIFY_WORKER_CONCURRENCY, SMTP_RELAY_HOST; NOTIFY_SMTP_RELAY_HOST absent. Values deliberately not recorded or copied. managedFields: nothing returned. Wrote `raw/c-configmap-keys.txt`. |
+| W2-Q4 | `git-02.txt` (show 3f9a1c2) | values-prod.yaml `config:` block: key NOTIFY_SMTP_RELAY_HOST removed, key SMTP_RELAY_HOST added, other keys unchanged. The sed in my command strips values; only names were kept in `raw/c-iac-diff-names.txt`. |
+| W2-Q5 | `_default.txt` for previous and minus7d (`{}`: windows do not overlap 07:50-08:45); 14d re-anchored overlaps 07:50-08:14 and returns only the points inside it (`cw-01.json` / `cw-02.json` rows 07:50 to 08:10), rolled to hourly Maximum: 2 hourly points (07:00 bucket 13, 08:00 bucket 27; DLQ 0) of 336 | no baseline. 6 metric requests. |
 
-Not run on purpose: `helm get values` (forbidden by the changes and infra-state playbooks; `helm-02.yaml` was never opened); the commit `9e8d7c6` (2026-10-07, applied as Helm revision 11, 15 days stable, outside the window); `gh` reads of example-org/notify-worker (no query needed to explain the crash; listed as a gap); a text `get events` (the JSON form already answered).
+Phase 2/3/4 reading:
+- Old-against-new (per-pod form), before any label: new RS 5c8d7b9f4c: 3/3 pods crash-looping, mechanism in each pod's previous-container log; old RS 7f6b8c5d2e: 0 BackOff / Unhealthy events in the retained events (about 07:50-08:14:21; only Normal Killing at 08:14:21), queue flat at 7-27 until 08:10; onset not earlier than the rollout (backlog 16 at 08:10, first BackOff 08:15:02); no per-revision log counts (no log backend), which is recorded as a gap.
+- Change leg: diff on the failing path (W2-Q4), apply record (Helm revision 12, W1-Q6), live ConfigMap shows the post-state of the commit (W2-Q3). Mechanism leg: W2-Q2 (+ W2-Q1 exit code 1). Timing leg: first Started 08:14:36, first BackOff 08:15:02-05, first bad queue sample 08:15 (W1-Q2, W1-Q8), 42-45 s after the upgrade.
+- H2..H6 refuted (queries in the ledger); H1 supported. Stop-early rule met: one hypothesis Confirmed, all other plausible ones Ruled out. No wave 3 (2 of 3 Fast waves used). Query count 20 of 20, metric requests 14 of 100, 0 GB logs.
+- Recurrence class: `unclassified` (2 of 336 hourly points, no alarm history); recorded as a gap.
+- Untrusted text: none seen (the log lines are program output; none reads as an instruction).
+- Ledger v3 written: query rows W2-Q1..Q5, Hypotheses (labels), Code repos, Recurrence, Windows (re-anchored), Gaps, Memory, Lesson candidates. Profile updated (log label, sidecar, compute, queues verified; Code row; baseline).
 
-Reading: change (diff + live ConfigMap + Helm revision time), mechanism (fatal log, exit 1) and timing (Helm 08:14:20 -> first start 08:14:36 -> first BackOff 08:15:02 -> backlog step 08:15) are all cited: H1 Confirmed. Recreate strategy explains why zero pods were left (old pod stopped 08:14:21, new pods first scheduled 08:14:33). Ledger finalised.
+### Message 7 (after wave 2, verbatim)
 
-Late check (after wave 3, before the report; it should have been part of the profile build): `ls .culiops/service-discovery` -> no row, `ls` of an unnamed path -> `No such file or directory`, exit 1 (INDEX rule 7). So no service-discovery catalog exists; the report suggests running `service-discovery` after the incident. No world file was read for it.
+```text
+Wave 2 done (5 calls). Found it.
+- Each of the 3 crashing pods logs, in its previous container, a fatal error 19 ms after start: "config: required environment variable NOTIFY_SMTP_RELAY_HOST is not set" (config/load.go:58, notify-worker 3.8.1). Exit code 1, not OOMKilled.
+- The live ConfigMap notify-worker-config has the key SMTP_RELAY_HOST and no NOTIFY_SMTP_RELAY_HOST. Commit 3f9a1c2 (#214) renamed exactly that key in charts/notify-worker/values-prod.yaml, and Helm revision 12 applied it at 08:14:20 UTC. Same image tag 3.8.1 in both Helm revisions, so no app change.
+- Old against new: new ReplicaSet 5c8d7b9f4c has 3 of 3 pods crash-looping; the old ReplicaSet 7f6b8c5d2e shows 0 BackOff or Unhealthy events in the retained events (about 07:50 to 08:14:21) and the queue stayed at 7-27 messages until 08:10. The first BackOff (08:15:02) comes after the rollout, not before.
+- Ruled out: image pull and scheduling, OOM, probes, a dependency failing at startup (the process dies before any network call), a CronJob or node event.
+- Recurrence: unclassified. The earlier CloudWatch windows (previous, minus 7 days, 14 days) returned no data, so there is no baseline. That is recorded as a gap.
+I stop here: one cause is Confirmed and the others are Ruled out.
+```
 
 ## Phase 5: conclude
 
-Fast mode: TL;DR printed inline first, then the report (report saved separately).
+Report saved separately. Fast-mode headings used: TL;DR, Impact, Causal chain, Gaps, To confirm, Follow-ups, Cost. The ruled-out list and the timeline sit inside the Causal chain section.
 
-### Message 7 to the operator (Fast end), verbatim
+### Message 8 (TL;DR printed inline, verbatim)
 
 ```text
 TL;DR
-Cause: commit 3f9a1c2 (08:03:41Z) renamed the Helm values key NOTIFY_SMTP_RELAY_HOST to SMTP_RELAY_HOST. Helm revision 12 (08:14:20Z) put the renamed key into ConfigMap notify-worker-config; notify-worker 3.8.1 still requires NOTIFY_SMTP_RELAY_HOST, logs "required environment variable NOTIFY_SMTP_RELAY_HOST is not set" and exits 1 at startup on all 3 pods, and the Deployment's Recreate strategy had already stopped the healthy pods. Label: Confirmed.
-Weakest link: the mechanism is read from the latest restart (08:47:56), because kubectl logs --previous keeps only the newest container; the log of the first crash (08:14:36) is gone. It stays Confirmed because the pod template and ConfigMap are unchanged since 08:14:20, all 3 pods show 11 identical exit-1 restarts, and event first-timestamps give the timing. Separately, "no email is delivered by any path" is Likely, not measured (no delivery-side metric is configured).
-Impact: prod, all 3 replicas down since 08:14:21Z, notify-outbound backlog 9,660 at 08:45 (7-27 before 08:15), growing about 318 per minute, dead-letter queue 0; ongoing. Suggested SEV1 (transactional email down); the incident owner decides.
-Recommended action: a human should restore the config key name the running app expects (undo the rename for the prod release, or carry both names until the app accepts the new one) through the normal change path, assessed with pre-flight first. When workers return they will face a backlog of roughly 10,000 messages and growing; check the SMTP relay's limits first.
+Cause: the prod values change in commit 3f9a1c2 (#214) renamed the config key NOTIFY_SMTP_RELAY_HOST to SMTP_RELAY_HOST; Helm revision 12 applied it at 08:14:20 UTC, and notify-worker 3.8.1 exits at startup because it still requires NOTIFY_SMTP_RELAY_HOST. · Confirmed
+Weakest link: the old-revision side of the old-against-new split (no per-revision logs; it rests on the absence of events and a flat queue). The mechanism itself needs no old-side evidence: the crash log names the missing variable and the live ConfigMap lacks it. Separately, "emails are not being delivered" is Likely (inferred from the unconsumed queue; no sent-mail signal).
+Impact: all 3 workers down since 08:14:21 UTC, ongoing; outbound queue 9,660 messages at 08:45 and growing about 318 per minute; DLQ 0. SEV1 suggested (a core flow has no worker); the incident owner decides.
+Recommended action: a human restores the variable name the running app expects (revert the rename in the prod values, or roll the release back to revision 11), after checking it with pre-flight; then decide what to do with the stale backlog.
 Report: .culiops/sre-investigate/runs/notify-worker-prod-20261022-0850/report.md
-Cost: 19 queries · 0 GB of logs · 8 CloudWatch metric requests · well under one cent in metered charges
+Open items need your input (gaps are listed in the report).
+Cost: 20 queries · 0 GB of logs · 14 CloudWatch metric requests · no other metered units · about $0 in metered charges
 ```
 
 ## Phase 6: record
 
-### Message 8 to the operator (proposed record diff), verbatim
+### Message 9 (proposed diff, verbatim; nothing written because the operator never replied)
 
 ```text
-Proposed record (nothing is written until you reply; accept, edit or skip each item):
+Proposed record (nothing is written until you reply; you can accept, edit or skip each item):
 
-1) NEW incidents/2026-10-22-notify-worker.md
----
-id: 2026-10-22-notify-worker-prod-helm-key-rename
-date: 2026-10-22
-service: notify-worker
-env: prod
-siblings: [all]
-window_utc: 2026-10-22T06:50:00Z/2026-10-22T08:50:00Z
-symptoms: [crash-restart, queue-backlog, job-failure]
-cause_category: config
-cause: Helm values key rename NOTIFY_SMTP_RELAY_HOST to SMTP_RELAY_HOST; app 3.8.1 requires the old name and exits at startup; Recreate strategy left no healthy pod
-deps: [notify-outbound queue]
-label: Confirmed
-mode: fast
-time_to_cause_min: null
-run: runs/notify-worker-prod-20261022-0850
----
-Body: what happened, causal chain with labels, what found it (previous-container fatal log plus the commit diff), what did not help (baseline pulls came back empty), follow-ups.
+1. incidents/2026-10-22-notify-worker.md (new)
+   front matter:
+     id: 2026-10-22-notify-worker-prod-values-key-rename
+     date: 2026-10-22
+     service: notify-worker
+     env: prod
+     siblings: [all]
+     window_utc: 2026-10-22T08:14:21Z/ongoing
+     symptoms: [crash-restart, queue-backlog, unavailable]
+     cause_category: config
+     cause: prod Helm values renamed config key NOTIFY_SMTP_RELAY_HOST to SMTP_RELAY_HOST; notify-worker 3.8.1 requires the old name and exits at startup
+     deps: [sqs notify-outbound, smtp relay]
+     label: Confirmed
+     mode: fast
+     time_to_cause_min: null
+     run: runs/notify-worker-prod-20261022-0850
+   body: what happened, causal chain with labels, what found it (previous-container log + live ConfigMap keys), what did not help (CronJob and event checks), follow-ups.
 
-2) NEW lessons.md (6 lines, each backed by a ledger query)
-+ - type: process | service: any | source: aws | statement: The IAM simulation reply listed a different set of actions than the 10 requested; compare action names in the reply with the requested list and treat missing ones as gaps. | run: notify-worker-prod-20261022-0850 | query_id: W0-Q3 | re-verify: no
-+ - type: process | service: any | source: kubectl | statement: kubectl logs --previous keeps only the latest terminated container, so it shows the newest crash, not the first; date the onset from event first timestamps. | run: notify-worker-prod-20261022-0850 | query_id: W2-Q2 | re-verify: no
-+ - type: process | service: any | source: cloudwatch | statement: get-metric-data for SQS over windows with no published data returned empty objects; an empty object is not zero, record baselines as a gap and use in-window pre-incident points. | run: notify-worker-prod-20261022-0850 | query_id: W1-Q6 | re-verify: yes
-+ - type: process | service: any | source: kubectl | statement: The EKS read-only group has get/list/watch on all resources, Secrets included; the run must still never read a Secret object. | run: notify-worker-prod-20261022-0850 | query_id: W0-Q6 | re-verify: no
-+ - type: identifier | service: notify-worker | source: kubectl | statement: Pods carry labels app.kubernetes.io/name=notify-worker and app.kubernetes.io/instance=notify-worker in namespace notify; queues are notify-outbound and notify-outbound-dlq. | run: notify-worker-prod-20261022-0850 | query_id: W2-Q1 | re-verify: no
-+ - type: failure-mode | service: notify-worker | source: git | statement: A Helm values key rename renamed the ConfigMap key while the app still required the old name; with the Recreate strategy the queue lost all consumers and the backlog grew. | run: notify-worker-prod-20261022-0850 | query_id: W3-Q1 | re-verify: no
-(The budget-unit lesson, W0-Q1, is a candidate for the skill itself, not for lessons.md: it is unclear whether Phase 0 access calls count against budgets.fast.queries; this run counted 19 of 20 without them, 25 with them.)
+2. lessons.md (new file), one line each, built from the ledger's Lesson candidates:
+   - type: process | service: any | source: aws | statement: iam simulate-principal-policy reply can omit requested actions and add others; compare returned action names with the requested list before saying all 10 were evaluated | run: notify-worker-prod-20261022-0850 | query_id: W0-Q2 | re-verify: no
+   - type: process | service: any | source: kubectl | statement: kubectl logs --previous holds only the latest crash of a container; date a crash loop's onset from the event firstTimestamp, not from the readable log | run: notify-worker-prod-20261022-0850 | query_id: W2-Q2 | re-verify: no
+   - type: process | service: any | source: kubectl | statement: kubectl auth can-i --list showed *.* get/list/watch for the ReadOnly role, which includes Secrets; the view ClusterRole would not | run: notify-worker-prod-20261022-0850 | query_id: W0-Q4 | re-verify: no
+   - type: process | service: notify-worker | source: cloudwatch | statement: get-metric-data on the notify SQS queues returned datapoints only for 07:50-08:45 on the incident day; empty earlier ranges are a coverage gap, not zero traffic | run: notify-worker-prod-20261022-0850 | query_id: W1-Q8 | re-verify: yes
+   - type: identifier | service: notify-worker | source: kubectl | statement: namespace notify, Deployment, container and Helm release are all named notify-worker; selector app.kubernetes.io/name=notify-worker plus app.kubernetes.io/instance=notify-worker | run: notify-worker-prod-20261022-0850 | query_id: W1-Q5 | re-verify: no
+   - type: identifier | service: notify-worker | source: cloudwatch | statement: SQS queues notify-outbound and notify-outbound-dlq in us-east-1 (profile prod-read), QueueName dimension | run: notify-worker-prod-20261022-0850 | query_id: W1-Q8 | re-verify: no
+   - type: failure-mode | service: notify-worker | source: git | statement: notify-worker 3.8.1 exits at startup with "required environment variable <NAME> is not set" (config/load.go:58) when a chart values key is renamed; compare key names in values-prod.yaml with the live ConfigMap keys | run: notify-worker-prod-20261022-0850 | query_id: W2-Q2 | re-verify: no
+   No confirm/re-verify/contradict/drop updates: lessons.md did not exist.
 
-3) NEW profiles/notify-worker-prod.md: the run's profile.md, first-run copy (identifiers verified: Deployment, Helm release, ConfigMaps, queues, kubectl log source, image tag, deploy-repo path; unverified: example-org/notify-worker and its default branch, data stores).
+3. profiles/notify-worker-prod.md (new): the run's profile.md as it stands (identity, sibling set, identifiers with verified marks: log access via kubectl logs, compute, queues verified; Code row with the Helm-records-no-commit note; dependencies; baseline note).
+
+Candidates for the skill itself (noted, not part of this diff): the write-check should compare the simulation's returned action names with the requested list; the Kubernetes write-check could flag `*.*` read access as Secret-readable.
 ```
 
-Operator reply: none (the script has no further line). Per Phase 6 step 2, no reply means no write: `incidents/`, `lessons.md` and `profiles/` were not created. Run ends here.
+No operator reply arrived, so by Phase 6 step 2 nothing was written: no `incidents/`, no `lessons.md`, no `profiles/` file.
 
-## Files written (all under `out/`)
+## Files written (all under the case `out/` directory)
 
-- `runs/notify-worker-prod-20261022-0850/ledger.md` (created after wave 0 + profile build, edited after waves 1, 2, 3; see deviation 4)
-- `runs/notify-worker-prod-20261022-0850/profile.md` (created after profile build, rewritten after wave 2; see deviation 4)
-- `runs/notify-worker-prod-20261022-0850/raw/q-sqs-300.json`, `raw/q-sqs-3600.json` (CloudWatch query files, wave 1)
-- `runs/notify-worker-prod-20261022-0850/raw/c-events.tsv` (reduced events, wave 1)
-- `runs/notify-worker-prod-20261022-0850/raw/w2-logs-previous.txt` (previous-container logs, wave 2)
-- `run-log.md` (this file)
+- `out/runs/notify-worker-prod-20261022-0850/ledger.md` (written after wave 0, updated after wave 1, updated after wave 2)
+- `out/runs/notify-worker-prod-20261022-0850/profile.md` (written after the helper returned, updated after wave 2)
+- `out/runs/notify-worker-prod-20261022-0850/raw/k-pods.txt`
+- `out/runs/notify-worker-prod-20261022-0850/raw/k-events.tsv`
+- `out/runs/notify-worker-prod-20261022-0850/raw/m-sqs-incident.tsv`
+- `out/runs/notify-worker-prod-20261022-0850/raw/k-previous-logs.txt`
+- `out/runs/notify-worker-prod-20261022-0850/raw/c-configmap-keys.txt` (key names only)
+- `out/runs/notify-worker-prod-20261022-0850/raw/c-iac-diff-names.txt` (key names only)
+- `out/run-log.md` (this file)
 - `report.md`: report saved separately.
-- Not written: `incidents/`, `lessons.md`, `profiles/` (no Phase 6 reply), `environment.md` (already existed).
+- Not written, by rule: `environment.md` (already existed), `incidents/`, `lessons.md`, `profiles/` (Phase 6: no reply).
+- Outside the case directory: two throwaway Python helper scripts in the scratchpad were used only to apply text edits to the ledger and profile above.
 
-World files read, by query: `environment.md`, `ls-01.txt`, `_empty.txt`, `_default.txt`, `sts-01.json`, `iam-01.json`, `iam-02.json`, `k8s-01.txt`, `k8s-02.txt`, `k8s-03.txt`, `k8s-12.txt`, `k8s-13.txt`, `sqs-01.json`, `helm-03.txt`, `k8s-04.txt`, `k8s-06.json`, `k8s-10.txt`, `k8s-11.txt`, `helm-01.txt`, `cw-01.json`, `cw-02.json`, `k8s-07.txt`, `k8s-08.txt`, `git-01.txt`, `git-02.txt`, `k8s-09.yaml`, `k8s-14.txt`. Never opened: `k8s-05.txt`, `k8s-15.yaml`, `k8s-16.yaml`, `git-03.txt`, `helm-02.yaml`.
+## Deviations and notes worth a reviewer's attention
 
-## Deviations and honest notes on this run
-
-1. Before any command had mapped to it, `ls` of the `world/` directory was used once to see file names, and `_default.txt` and `_empty.txt` were opened during orientation. Their contents (`{}` and empty) were later mapped legitimately (W1-Q6 previous and -7d, W1-Q7, W2-Q4, W2-Q5, and several empty text results), but the first opening was not mapped by a command.
-2. The world files for waves 2 and 3 were read in a single pass after wave 1 was recorded, before the corresponding ledger edits. Each wave's commands were still derived only from earlier output (pod names from W1-Q1, commit hash from W2-Q3, ConfigMap name from W0-Q8).
-3. IAM write-check: the world's simulation reply does not match the fixed list of ten; reported as 7 evaluated (none allowed) and 3 missing (gap), not as "none of the 10".
-4. Ledger Hypotheses labels and `profile.md` already show the end-of-run state in the saved files, because they were edited in a few passes; the file header says so. The wave-2 profile rewrite already referenced W3 query IDs.
-5. The date/clock, `git rev-parse` and `git check-ignore` had no INDEX rows (empty outputs); assumptions are in the ledger.
-6. No world row mapped any evidence of who triggered the Helm upgrade; recorded as a gap.
-7. The service-discovery catalog check was done late (after wave 3), not during the profile build.
-8. Values: the SMTP relay host value and ConfigMap values appeared in tool output (W3-Q1, W3-Q2) but are not recorded anywhere; only key names are. The `oncall@` session name in sts/whoami output is not recorded.
+1. The clock: `date -u` is not in the INDEX, so Start times are indicative (08:50:00 UTC for every wave); the world is frozen at 08:50.
+2. The simulation reply did not match the skill's fixed list of 10 actions (3 missing, 3 unrequested). I stated "read-only confirmed" only with that limit and recorded a gap, instead of claiming all 10 were evaluated.
+3. `can-i --list` shows `*.*` get/list/watch, so the identity can read Secrets. No Secret was read; `describe pod` shows the secret reference by name only.
+4. `helm get values`, `helm get manifest` and Secret reads were never run. Config values (relay host, queue URL, from address) appear nowhere in my files: only key names.
+5. W1-Q7 (`get cronjobs -A`) had no INDEX row, so it returned empty output; I treated it as "no CronJob listed, unverified". The schedule hypothesis is ruled out mainly by the Helm timing and the logged mechanism.
+6. The world returned the same `--previous` log content (same timestamp) for each of the three pods; I recorded it as such.
+7. The budget counts every tool invocation as one query: 20 of 20, so a third wave would have needed a question to the operator.
