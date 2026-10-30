@@ -402,7 +402,8 @@ def test_real_run_end_to_end(env, cap, capsys):
     assert code == 0, (out, err)
     d = ds_dir()
     lines = out.splitlines()
-    assert lines[-2] == "fetched 10 files 0.0 MB verified; skipped 0 present; data: %s; sample: 1/1" % d
+    assert lines[-2] == ("fetched 10 files 0.0 MB verified; charged 0.0 MB; skipped 0 present; data: %s; "
+                         "sample: 1/1" % d)
     assert lines[-1] == "converted: rows 30; skipped lines 0; dropped columns none"
     assert fetched_keys(d) == keys
     assert count_rows(d) == 30
@@ -591,7 +592,7 @@ def test_already_fetched_everything_is_a_noop(env, cap, capsys):
     code, out, err = go(cap)
     assert code == 0, err
     assert len(s5_calls(env)) == n and len(ledger()) == 1
-    assert "fetched 0 files 0.0 MB verified; skipped 10 present" in out
+    assert "fetched 0 files 0.0 MB verified; charged 0.0 MB; skipped 10 present" in out
     assert mode(ds_dir()) == 0o555
 
 
@@ -1046,3 +1047,50 @@ def test_symlinked_dataset_dir_is_not_chmodded_through_the_link(env, cap, capsys
     (run_dir / "alb").symlink_to(elsewhere)
     assert go(cap)[0] == 2
     assert mode(elsewhere) == 0o750
+
+
+def test_signal_after_the_download_still_charges_and_stores_the_batch(env, cap, capsys, monkeypatch):
+    """R33: a first signal between s5.run and the charge is held until the batch is stored."""
+    keys = alb10(env, capsys)
+    real = cli_fetch._received
+    calls = []
+
+    def kill_then_look(batchdir, run_file):
+        if not calls:
+            calls.append(1)
+            os.kill(os.getpid(), signal.SIGTERM)
+            time.sleep(0.05)
+        return real(batchdir, run_file)
+
+    monkeypatch.setattr(cli_fetch, "_received", kill_then_look)
+    code, out, err = go(cap)
+    assert code == 143, (out, err)
+    assert [e["bytes"] for e in ledger()] == [sum(sizes(env, keys))]
+    assert fetched_keys(ds_dir()) == keys and count_rows(ds_dir()) == 30
+    assert staging_entries() == [] and mode(ds_dir()) == 0o555
+
+
+def test_summary_charged_matches_the_ledger_when_conversion_fails(env, cap, capsys, monkeypatch):
+    keys = alb10(env, capsys)
+
+    def boom(*a, **kw):
+        raise convert.ConvertError("cannot read x.gz")
+
+    monkeypatch.setattr(cli_fetch.convert, "to_parquet", boom)
+    code, out, err = go(cap)
+    assert code == 4
+    charged = ledger()[0]["bytes"]
+    assert charged == sum(sizes(env, keys))
+    assert "fetched 0 files 0.0 MB verified; charged %s MB; skipped 0 present" % ("%.1f" % (charged / MIB)) in out
+
+
+def test_final_line_has_true_verified_and_charged_totals(env, cap, capsys, monkeypatch):
+    # a truncated file is charged but not verified: the two figures differ by its size
+    keys = alb10(env, capsys)
+    monkeypatch.setenv("FAKE_S5CMD_TRUNCATE", keys[1])
+    code, out, err = go(cap)
+    assert code == 3
+    line = [l for l in out.splitlines() if l.startswith("fetched ")][0]
+    m = re.fullmatch(r"fetched 9 files (\d+\.\d) MB verified; charged (\d+\.\d) MB; skipped 0 present; data: \S+; sample: 1/1", line)
+    assert m, line
+    assert ledger()[0]["bytes"] == sum(sizes(env, keys)) - 1

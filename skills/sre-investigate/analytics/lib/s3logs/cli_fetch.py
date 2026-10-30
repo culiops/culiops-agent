@@ -489,7 +489,8 @@ def _clear_dir(d: Path) -> None:
 class _Totals:
     def __init__(self) -> None:
         self.files = 0
-        self.bytes = 0
+        self.verified = 0     # bytes of the files that were converted and recorded
+        self.charged = 0      # bytes charged to the ledger this run (everything that arrived)
         self.rows = 0
         self.skipped_lines = 0
         self.dropped = []   # type: List[str]
@@ -513,8 +514,8 @@ def _batches(entries: List[Entry]) -> List[List[Entry]]:
 
 def _summary(plan: Plan, d: Path, t: _Totals, skipped_present: int) -> List[str]:
     return [
-        "fetched %d files %s MB verified; skipped %d present; data: %s; sample: 1/%d" % (
-            t.files, _mb(t.bytes), skipped_present, d, plan.every),
+        "fetched %d files %s MB verified; charged %s MB; skipped %d present; data: %s; sample: 1/%d" % (
+            t.files, _mb(t.verified), _mb(t.charged), skipped_present, d, plan.every),
         "converted: rows %d; skipped lines %d; dropped columns %s" % (
             t.rows, t.skipped_lines, ",".join(t.dropped) if t.dropped else "none"),
     ]
@@ -644,33 +645,37 @@ def _fetch_batches(plan: Plan, todo: List[Entry], run_id: str, force: bool, sigs
                 got = sum(_received(batchdir, run_file).values())
                 if got:
                     budget.charge(run_id, ds.name, got, _now())
+                    totals.charged += got
             raise
 
-        received = _received(batchdir, run_file)
-        good = []  # type: List[Tuple[Entry, Path]]
-        bad = []   # type: List[Entry]
-        oversize = []  # type: List[Entry]
-        for n, e in enumerate(batch, 1):
-            name = "%06d.gz" % n
-            if name not in received:
-                if run_err is None:
-                    bad.append(e)          # s5cmd said ok but the file is not there
-                continue
-            if received[name] == e.size:
-                good.append((e, batchdir / name))
-            else:
-                bad.append(e)
-                if received[name] > e.size:
-                    oversize.append(e)
-        totals.bad.extend(bad)
-        arrived = sum(received.values())
-        verified = sum(e.size for e, _p in good)
         res = None
+        # From here until the batch is charged, converted and recorded nothing may be skipped by a
+        # first signal (it is held until this block ends): the ledger must never under-count.
         with sigs.critical():
+            received = _received(batchdir, run_file)
+            good = []  # type: List[Tuple[Entry, Path]]
+            bad = []   # type: List[Entry]
+            oversize = []  # type: List[Entry]
+            for n, e in enumerate(batch, 1):
+                name = "%06d.gz" % n
+                if name not in received:
+                    if run_err is None:
+                        bad.append(e)          # s5cmd said ok but the file is not there
+                    continue
+                if received[name] == e.size:
+                    good.append((e, batchdir / name))
+                else:
+                    bad.append(e)
+                    if received[name] > e.size:
+                        oversize.append(e)
+            totals.bad.extend(bad)
+            arrived = sum(received.values())
+            verified = sum(e.size for e, _p in good)
             # Every byte that arrived is charged, verified or not (verification only decides
             # what is converted and recorded), so a re-run can never re-download for free.
             if arrived:
                 budget.charge(run_id, ds.name, arrived, _now())
+                totals.charged += arrived
             if good:
                 with _writable(d):
                     part = "part-%06d.parquet" % _next_part(d)
@@ -692,14 +697,13 @@ def _fetch_batches(plan: Plan, todo: List[Entry], run_id: str, force: bool, sigs
                         meta["day_slices"].append(key)
                     meta.update({"sample_every": plan.every, "dataset": ds.name, "type": ds.type})
                     _write_meta(d, meta)
-        totals.bytes += arrived
-        if res is not None:
-            totals.files += len(good)
-            totals.rows += res.rows
-            totals.skipped_lines += res.skipped_lines
-            for name in res.dropped_columns:
-                if name not in totals.dropped:
-                    totals.dropped.append(name)
+                totals.files += len(good)
+                totals.verified += verified
+                totals.rows += res.rows
+                totals.skipped_lines += res.skipped_lines
+                for name in res.dropped_columns:
+                    if name not in totals.dropped:
+                        totals.dropped.append(name)
         _out("batch %d/%d: %d files %s MB verified, %s MB received; rows %d%s" % (
             bi, len(batches), len(good), _mb(verified), _mb(arrived), res.rows if res else 0,
             "; %d failed size verification" % len(bad) if bad else ""))
