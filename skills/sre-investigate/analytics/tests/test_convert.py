@@ -5,13 +5,14 @@ import csv
 import datetime as dt
 import gzip
 import io
+import json
 import os
 import stat
 from pathlib import Path
 
 import pytest
 
-from s3logs import convert, duck, paths
+from s3logs import convert, duck, paths, redact
 from s3logs.config import Config
 from s3logs.duck import DuckError
 from s3logs.validate import Refused
@@ -417,3 +418,54 @@ def test_uses_sensitive_names_incl_identity_cookies(work):
 def test_result_is_a_named_tuple_with_documented_fields():
     r = convert.ConvertResult(rows=3, dropped_columns=("x",), skipped_lines=1)
     assert (r.rows, r.dropped_columns, r.skipped_lines) == (3, ("x",), 1)
+
+
+# ---- fix round 1 ----------------------------------------------------------------------------
+
+REDIRECT = "https://www.example.com:443/home?token=SECRETRED"
+TRANSFORMED = "/b?password=SECRETPW"
+
+
+@pytest.mark.parametrize("ua", ['evil" "x', 'evil\\" x', 'a" "-" "-" "-', 'evil" '])
+def test_alb_quote_in_user_agent_cannot_shift_fields(work, ua):
+    res, out = alb_out(work, [alb_line(ua=ua, redirect=REDIRECT, transformed_uri=TRANSFORMED)])
+    assert (res.rows, res.skipped_lines) == (0, 1)
+    assert "SECRET" not in all_text(out)
+
+
+def test_alb_anchor_checks_pass_for_normal_and_http_listener_lines(work):
+    http = alb_line(typ="http").replace(" ECDHE-RSA-AES128-GCM-SHA256 TLSv1.2", " - -")
+    http = http.replace('"arn:aws:acm:us-east-1:111122223333:certificate/x"', '"-"')
+    res, out = alb_out(work, [alb_line(redirect=REDIRECT), http])
+    assert (res.rows, res.skipped_lines) == (2, 0)
+    assert "SECRETRED" not in all_text(out)
+
+
+def test_alb_second_layer_masks_urls_in_shifted_free_text_columns(work, monkeypatch):
+    # Even if the anchors were fooled, no later free-text column keeps a URL secret.
+    monkeypatch.setattr(convert, "_anchors_ok", lambda toks: True)
+    line = alb_line(ua='evil" "x', redirect=REDIRECT, transformed_uri=TRANSFORMED)
+    row = convert._alb_row(line, redact.sensitive_names(CFG))
+    assert row is not None
+    assert "SECRET" not in json.dumps(row)
+    assert row["error_reason"] == "https://www.example.com:443/home?token=***"
+
+
+def test_alb_second_layer_leaves_ordinary_free_text_alone(work):
+    line = alb_line()
+    row = convert._alb_row(line, redact.sensitive_names(CFG))
+    assert row["trace_id"] == "Root=1-abc-def" and row["target_port_list"] == "198.51.100.7:8080"
+    assert row["chosen_cert_arn"].startswith("arn:aws:acm:")
+
+
+def test_lone_surrogate_in_waf_record_does_not_lose_the_batch(work):
+    good = '{"timestamp": 1773057600123, "action": "ALLOW", "httpRequest": {"clientIp": "192.0.2.10"}}'
+    bad = ('{"timestamp": 1773057600124, "action": "BLOCK", "httpRequest": {"clientIp": "192.0.2.11", '
+           '"uri": "/a\\ud800b", "headers": [{"name": "User-Agent", "value": "x\\udfffy"}]}}')
+    f = gz_file(work / "in" / "w.gz", "\n".join([good, bad, good]) + "\n")
+    out = work / "out" / "w.parquet"
+    res = convert.to_parquet("waf", [f], out, CFG, SALT)
+    assert res.rows == 3
+    row = query(out, "SELECT uri, user_agent FROM read_parquet({t}) WHERE action = 'BLOCK'")[0]
+    assert row["uri"].startswith("/a") and row["uri"].endswith("b")
+    assert row["user_agent"].startswith("x") and row["user_agent"].endswith("y")

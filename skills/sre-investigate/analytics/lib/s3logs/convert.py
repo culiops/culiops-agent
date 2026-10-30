@@ -154,6 +154,20 @@ def _read_lines(path: Path) -> Iterator[Optional[str]]:
         raise ConvertError("cannot read %s: %s" % (Path(path).name, type(e).__name__))
 
 
+def _clean(v):
+    """Replace lone UTF-16 surrogates (a JSON ``"\\ud800"`` escape survives json.loads as one)
+    with U+FFFD in every string, recursively; DuckDB rejects the whole file otherwise."""
+    if isinstance(v, str):
+        if v.isascii():
+            return v
+        return v.encode("utf-8", "surrogatepass").decode("utf-8", "replace")
+    if isinstance(v, list):
+        return [_clean(x) for x in v]
+    if isinstance(v, dict):
+        return {k: _clean(x) for k, x in v.items()}
+    return v
+
+
 class _Writer:
     def __init__(self, path: Path):
         fd = os.open(str(path), os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW, 0o600)
@@ -161,7 +175,7 @@ class _Writer:
         self.rows = 0
 
     def write(self, row: dict) -> None:
-        self._f.write(json.dumps(row, ensure_ascii=True, separators=(",", ":")) + "\n")
+        self._f.write(json.dumps(_clean(row), ensure_ascii=True, separators=(",", ":")) + "\n")
         self.rows += 1
 
     def close(self) -> None:
@@ -268,6 +282,47 @@ def _tokenize(line: str, limit: int) -> Optional[List[str]]:
     return toks
 
 
+def _DASH_OR(pat: str):
+    return re.compile(r"-|" + pat)
+
+
+_ARN_RE = re.compile(r"-|arn:\S*")
+# Field index -> shape of a well-formed value. A quote in a client-controlled field (the user
+# agent) can close its quoted field early and shift every later field to the right; these
+# checks notice that. A row that fails any of them is skipped and counted.
+_ANCHORS = {
+    5: _DASH_OR(r"-?\d+(?:\.\d+)?"), 6: _DASH_OR(r"-?\d+(?:\.\d+)?"), 7: _DASH_OR(r"-?\d+(?:\.\d+)?"),
+    8: _DASH_OR(r"\d{3}"), 9: _DASH_OR(r"\d{3}"), 10: _DASH_OR(r"-?\d+"), 11: _DASH_OR(r"-?\d+"),
+    16: _ARN_RE,
+    19: _DASH_OR(r"session-reused|arn:\S*"),
+    20: _DASH_OR(r"-?\d+"),
+    21: _DASH_OR(_ALB_TIME_RE.pattern),
+    26: re.compile(r"[0-9 -]*"),
+    27: _DASH_OR(r"Acceptable|Ambiguous|Severe"),
+    32: _DASH_OR(r"Transform\w*"),
+    33: _DASH_OR(r"[0-9A-Fa-f:.]+"),
+    34: _DASH_OR(r"(?:0x)?[0-9A-Fa-f]+"),
+    35: _DASH_OR(r"(?:0x)?[0-9A-Fa-f]+"),
+}
+# Second layer: free-text columns after the user agent get URL masking even if the anchors
+# were fooled, so a redirect or rewritten URL that landed in the wrong column still loses its
+# query secrets. (``url``, ``redirect_url`` and ``transformed_uri`` are masked on their own.)
+_ALB_FREE_AFTER_UA = (
+    "ssl_cipher", "ssl_protocol", "target_group_arn", "trace_id", "domain_name", "chosen_cert_arn",
+    "actions_executed", "error_reason", "target_port_list", "target_status_code_list",
+    "classification", "classification_reason", "conn_trace_id", "transformed_host",
+    "request_transform_status", "lb_ip", "target_error_code", "elb_error_code",
+)
+_URLISH_RE = re.compile(r"[?;#@\\]|%3[Bb]")
+
+
+def _anchors_ok(toks: List[str]) -> bool:
+    for i, rx in _ANCHORS.items():
+        if i < len(toks) and not rx.fullmatch(toks[i]):
+            return False
+    return True
+
+
 def _split_addr(value: str) -> Tuple[str, Optional[str]]:
     host, sep, port = value.rpartition(":")
     if sep and port.isascii() and port.isdigit() and len(port) <= 5:
@@ -282,7 +337,7 @@ def _alb_row(line: str, names: frozenset) -> Optional[dict]:
     if toks[0] not in _ALB_TYPES or not _ALB_TIME_RE.fullmatch(toks[1]):
         return None
     m = _ALB_REQUEST_RE.fullmatch(toks[12])
-    if not m:
+    if not m or not _anchors_ok(toks):
         return None
     toks = toks + [""] * (len(_ALB_FIELDS) - len(toks))
     f = dict(zip(_ALB_FIELDS, toks))
@@ -295,6 +350,10 @@ def _alb_row(line: str, names: frozenset) -> Optional[dict]:
     row["redirect_url"] = redact.mask_url(f["redirect_url"], names)
     row["transformed_uri"] = redact.mask_url(f["transformed_uri"], names)
     row["request_creation_ts"] = row.pop("request_creation_time")
+    for k in _ALB_FREE_AFTER_UA:
+        v = row[k]
+        if _URLISH_RE.search(v):
+            row[k] = redact.mask_url(v, names)
     # Absent trailing fields (older or shorter entries) are NULL, not an empty string.
     for k, v in row.items():
         if v == "":

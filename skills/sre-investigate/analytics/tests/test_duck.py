@@ -52,12 +52,14 @@ def test_config_locked(data):
         duck.run([], "SET lock_configuration=false", [data])
 
 
-def test_extensions_cannot_be_installed_or_loaded(data):
-    for sql in ("INSTALL httpfs", "LOAD httpfs", "ATTACH '/tmp/x-not-created.db' AS x",
-                "COPY (SELECT 1) TO '/tmp/x-not-created.csv'"):
+def test_extensions_cannot_be_installed_or_loaded(data, tmp_path):
+    db, csv_out = tmp_path / "x-not-created.db", tmp_path / "x-not-created.csv"
+    for sql in ("INSTALL httpfs", "LOAD httpfs",
+                "ATTACH %s AS x" % duck.quote_literal(str(db)),
+                "COPY (SELECT 1) TO %s" % duck.quote_literal(str(csv_out))):
         with pytest.raises(DuckError):
             duck.run([], sql, [data])
-    assert not os.path.exists("/tmp/x-not-created.db") and not os.path.exists("/tmp/x-not-created.csv")
+    assert not db.exists() and not csv_out.exists()
 
 
 def test_env_minimal(data, monkeypatch):
@@ -77,14 +79,15 @@ def test_env_minimal(data, monkeypatch):
 def test_child_env_has_exactly_four_keys(data, monkeypatch):
     seen = {}
 
-    real_run = duck.subprocess.run
+    real_popen = duck.subprocess.Popen
 
     def spy(*a, **kw):
         seen["env"] = dict(kw["env"])
         seen["cwd"] = kw["cwd"]
-        return real_run(*a, **kw)
+        seen["home_listing_at_start"] = sorted(os.listdir(kw["cwd"]))
+        return real_popen(*a, **kw)
 
-    monkeypatch.setattr(duck.subprocess, "run", spy)
+    monkeypatch.setattr(duck.subprocess, "Popen", spy)
     monkeypatch.setenv("AI_AGENT", "1")
     out = duck.run([], "SELECT 1 AS x", [data])
     assert out == "x\n1\n"  # no agent-mode output change
@@ -92,6 +95,7 @@ def test_child_env_has_exactly_four_keys(data, monkeypatch):
     assert seen["env"]["TZ"] == "UTC" and seen["env"]["LC_ALL"] == "C"
     assert seen["env"]["PATH"].endswith(":/usr/bin:/bin")
     assert seen["env"]["HOME"] == seen["cwd"]
+    assert seen["home_listing_at_start"] == []  # HOME really is empty
     assert not os.path.exists(seen["env"]["HOME"])  # the tmp HOME is removed afterwards
 
 
@@ -112,25 +116,27 @@ def test_stderr_scrubbed(data):
     assert str(data) not in msg and str(data.resolve()) not in msg
 
 
-@pytest.mark.parametrize("sql", [
-    ".shell touch DOTPWNED",
-    "   .shell touch DOTPWNED",
-    "\t.system touch DOTPWNED",
-    "SELECT 1;\n.shell touch DOTPWNED",
-    "SELECT 1;\r.shell touch DOTPWNED",
-    "SELECT 1;\x0b.shell touch DOTPWNED",
-    "SELECT 1;\x85.shell touch DOTPWNED",
-    "SELECT 1; .shell touch DOTPWNED",
-    "SELECT '\n.shell touch DOTPWNED\n'",
-    ".open /tmp/DOTPWNED.db",
+@pytest.mark.parametrize("template", [
+    ".shell touch {m}",
+    "   .shell touch {m}",
+    "\t.system touch {m}",
+    "SELECT 1;\n.shell touch {m}",
+    "SELECT 1;\r.shell touch {m}",
+    "SELECT 1;\x0b.shell touch {m}",
+    "SELECT 1;\x85.shell touch {m}",
+    "SELECT 1;\u2028.shell touch {m}",
+    "SELECT '\n.shell touch {m}\n'",
+    ".open {m}.db",
 ])
-def test_dot_command_lines_refused_before_duckdb_runs(data, tmp_path, monkeypatch, sql):
-    monkeypatch.chdir(tmp_path)
+def test_dot_command_lines_refused_before_duckdb_runs(data, tmp_path, template):
+    marker = tmp_path / "DOTPWNED"
+    sql = template.format(m=marker)
     with pytest.raises(Refused):
         duck.run([], sql, [data])
     with pytest.raises(Refused):
         duck.run([sql], "SELECT 1", [data])
-    assert not (tmp_path / "DOTPWNED").exists()
+    assert not marker.exists() and not Path(str(marker) + ".db").exists()
+    assert sorted(os.listdir(str(tmp_path))) == ["data"]
 
 
 def test_dot_inside_a_line_is_fine(data):
@@ -237,3 +243,25 @@ def test_hostile_path_cannot_inject_a_dot_command(tmp_path):
     d.mkdir()
     # The quote is doubled, so the path stays one literal; the run simply works.
     assert duck.run([], "SELECT 1 AS x", [d]) == "x\n1\n"
+
+
+def test_output_cap_kills_the_process_and_says_to_aggregate(data, monkeypatch):
+    monkeypatch.setattr(duck, "MAX_OUTPUT_BYTES", 200_000)
+    with pytest.raises(DuckError, match="output too large; aggregate in SQL"):
+        duck.run([], "SELECT repeat('x', 1000) AS s FROM range(20000)", [data], timeout_s=60)
+
+
+def test_output_cap_default_and_small_outputs_unaffected(data):
+    assert duck.MAX_OUTPUT_BYTES == 64 * 1024 * 1024
+    out = duck.run([], "SELECT repeat('x', 1000) AS s FROM range(1000)", [data])
+    assert len(out) > 1_000_000
+
+
+def test_resource_limits_are_set_and_locked(data):
+    out = duck.run([], "SELECT current_setting('threads') AS t, current_setting('memory_limit') AS m", [data])
+    t, m = out.split("\n")[1].split(",")
+    assert t == "4"
+    assert m.endswith("GiB") and m.startswith("1.")  # 2GB; the default is a share of the machine's RAM
+    for sql in ("SET memory_limit='100GB'", "SET threads=64"):
+        with pytest.raises(DuckError):
+            duck.run([], sql, [data])

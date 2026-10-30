@@ -37,6 +37,7 @@ import shutil
 import stat
 import subprocess
 import tempfile
+import time
 from pathlib import Path
 from typing import Dict, List, Tuple
 
@@ -54,6 +55,9 @@ class DuckError(Exception):
         return self.msg
 
 
+MAX_OUTPUT_BYTES = 64 * 1024 * 1024   # stdout cap; the process is killed when it is exceeded
+_MAX_ERR_BYTES = 1 << 20
+_POLL_S = 0.02
 _MAX_ERR_CHARS = 2000
 # Anything the CLI could treat as a line break, plus NUL. A dot-command is looked for after
 # splitting on all of these (wider than the CLI's own "\n", which only makes us stricter).
@@ -158,6 +162,9 @@ def run(script_sql: List[str], user_sql: str, allowed_dirs: List[Path], timeout_
     head = [
         "SET autoinstall_known_extensions=false;",
         "SET autoload_known_extensions=false;",
+        # Cheap resource caps; the lock below makes them permanent.
+        "SET memory_limit='2GB';",
+        "SET threads=4;",
         # Must run before external access is disabled: duckdb_extensions() fails afterwards.
         "SET VARIABLE ext_ok = (SELECT CASE WHEN count(*) = 2 THEN 1 ELSE error('json and parquet must be loaded') END"
         " FROM duckdb_extensions() WHERE loaded AND extension_name IN ('json', 'parquet'));",
@@ -170,7 +177,8 @@ def run(script_sql: List[str], user_sql: str, allowed_dirs: List[Path], timeout_
     before = [_walk_allowed(d) for d in real_dirs]
     exe = _find_duckdb()
 
-    home = tempfile.mkdtemp(prefix="duck-home-")
+    home = tempfile.mkdtemp(prefix="duck-home-")   # the child's HOME and cwd: stays empty
+    ctl = tempfile.mkdtemp(prefix="duck-ctl-")     # our stdin/stdout/stderr files
     try:
         env = {
             "PATH": "%s:/usr/bin:/bin" % os.path.dirname(exe),
@@ -184,23 +192,54 @@ def run(script_sql: List[str], user_sql: str, allowed_dirs: List[Path], timeout_
                 subs.append((form, "<staging>"))
         subs.append((home, "<home>"))
         subs.sort(key=lambda t: -len(t[0]))
+        # stdin, stdout and stderr are files (no pipes, so no deadlock and no unbounded
+        # buffering); stdout is polled against MAX_OUTPUT_BYTES while the child runs.
+        script_f, out_f, err_f = (os.path.join(ctl, n) for n in ("in.sql", "out", "err"))
+        with open(script_f, "wb") as f:
+            f.write(script.encode("utf-8", "surrogateescape"))
+        deadline = time.monotonic() + timeout_s
+        too_big = timed_out = False
         try:
-            r = subprocess.run([exe, "-bail", "-csv", "-init", "/dev/null", ":memory:"],
-                               input=script.encode("utf-8", "surrogateescape"),
-                               stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-                               env=env, cwd=home, timeout=timeout_s)
-        except subprocess.TimeoutExpired:
-            raise DuckError("duckdb timed out after %d s" % timeout_s)
+            with open(script_f, "rb") as fin, open(out_f, "wb") as fout, open(err_f, "wb") as ferr:
+                proc = subprocess.Popen([exe, "-bail", "-csv", "-init", "/dev/null", ":memory:"],
+                                        stdin=fin, stdout=fout, stderr=ferr, env=env, cwd=home)
+                try:
+                    while True:
+                        try:
+                            proc.wait(timeout=_POLL_S)
+                            break
+                        except subprocess.TimeoutExpired:
+                            pass
+                        if os.path.getsize(out_f) > MAX_OUTPUT_BYTES:
+                            too_big = True
+                        elif time.monotonic() > deadline:
+                            timed_out = True
+                        if too_big or timed_out:
+                            proc.kill()
+                            proc.wait()
+                            break
+                finally:
+                    if proc.poll() is None:
+                        proc.kill()
+                        proc.wait()
         except OSError as e:
             raise DuckError("cannot run duckdb: %s" % (e.strerror or "error"))
-        if r.returncode != 0:
-            err = _scrub(r.stderr.decode("utf-8", "replace"), subs).strip()
+        if timed_out:
+            raise DuckError("duckdb timed out after %d s" % timeout_s)
+        if too_big or os.path.getsize(out_f) > MAX_OUTPUT_BYTES:
+            raise DuckError("output too large; aggregate in SQL")
+        if proc.returncode != 0:
+            with open(err_f, "rb") as f:
+                raw_err = f.read(_MAX_ERR_BYTES)
+            err = _scrub(raw_err.decode("utf-8", "replace"), subs).strip()
             if len(err) > _MAX_ERR_CHARS:
                 err = err[:_MAX_ERR_CHARS] + " ..."
-            raise DuckError("duckdb failed (exit %d): %s" % (r.returncode, err or "no message"))
-        out = r.stdout.decode("utf-8", "replace")
+            raise DuckError("duckdb failed (exit %d): %s" % (proc.returncode, err or "no message"))
+        with open(out_f, "rb") as f:
+            out = f.read(MAX_OUTPUT_BYTES + 1).decode("utf-8", "replace")
     finally:
         shutil.rmtree(home, ignore_errors=True)
+        shutil.rmtree(ctl, ignore_errors=True)
 
     if not allow_writes:
         after = [_walk_allowed(d) for d in real_dirs]

@@ -713,3 +713,24 @@ def test_mask_url_unparseable_and_passthrough():
     assert redact.mask_url("", names) == ""
     assert redact.mask_url(None, names) is None
     assert redact.mask_url(5, names) == "***"
+
+
+# ---- fix round 1: userinfo inside a fragment, backslash spellings -------------------------
+
+@pytest.mark.parametrize("qs", [
+    "r=%2Fx%23https%3A%2F%2Fu%3Apw%40h.example.com",
+    "r=%2Fx%23%2F%2Fu%3Apw%40h",
+    "r=https%3A%5C%5Cu%3Apw%40h.example.com%2Fp",
+    "r=%2F%2Fu%3Apw%40h",
+    "r=%5C%5Cu%3Apw%40h",
+    "r=%2Fx%23https%3A%5C%5Cu%3Apw%40h",
+])
+def test_userinfo_in_fragment_or_backslash_form_masked(qs):
+    out = redact.mask_query(qs, redact.sensitive_names(Config()))
+    assert out == "r=***"
+
+
+def test_mask_url_backslash_userinfo_dropped():
+    names = redact.sensitive_names(Config())
+    out = redact.mask_url("https:\\\\u:SECRETPW@h.example.com/p?token=T", names)
+    assert "SECRETPW" not in out and out.endswith("?token=***")

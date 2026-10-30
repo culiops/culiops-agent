@@ -83,6 +83,13 @@ def mask_query(qs: str, sensitive: "frozenset") -> str:
     return _mask_query(qs, frozenset(str(x).lower() for x in sensitive), False)
 
 
+def _has_userinfo(text: str) -> bool:
+    """Does ``text`` start like a URL with ``user[:pw]@``? Browsers read ``\\`` as ``/`` in
+    special schemes, so it is normalised first. Same parser as ``mask_url``. May raise
+    ValueError."""
+    return "@" in urlsplit(text.replace("\\", "/")).netloc
+
+
 def _nested_leaks(text: str, names: "frozenset") -> bool:
     """Would the query part (after the first ``?``, else the whole text) or the path part of
     ``text`` change under masking? One level: the inner run is ``nested``."""
@@ -98,12 +105,12 @@ def _value_leaks(raw_value: str, names: "frozenset", nested: bool) -> bool:
     dec = unquote_plus(raw_value, errors="strict")
     if not any(c in dec for c in "?&;=#@"):
         return False
-    if "@" in urlsplit(dec).netloc:  # userinfo, same parsing as mask_url
+    before, hash_, frag = dec.partition("#")
+    if _has_userinfo(dec) or (hash_ and _has_userinfo(frag)):
         return True
     if nested:
         # Third level: do not look deeper, just refuse anything that still looks like a URL.
         return "?" in dec or "#" in dec
-    before, hash_, frag = dec.partition("#")
     if hash_ and _nested_leaks(frag, names):
         return True
     return any(c in before for c in "?&;=") and _nested_leaks(before, names)
@@ -221,7 +228,7 @@ def mask_url(url: str, sensitive: "frozenset") -> str:
         return url
     if not isinstance(url, str):
         return MASK
-    value = url
+    value = url.replace("\\", "/")  # browsers read a backslash as a slash in http(s) URLs
     try:
         sp = urlsplit(value)
         netloc = sp.netloc.rsplit("@", 1)[-1]
