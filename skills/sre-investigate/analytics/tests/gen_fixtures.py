@@ -198,3 +198,199 @@ def make(root, kind: str, day: dt.date, **opts) -> List[str]:
                     put(waf_key(end, prefix=opts.get("prefix", ""), rand=_rand_id(rng)),
                         _waf_body(rng, end, records, bool(opts.get("secrets"))))
     return written
+
+
+# ---- query fixtures ---------------------------------------------------------------------------
+# make_queries() writes a small, fixed data set per type so that every named query returns rows
+# and the value tests can pin exact numbers. All numbers are in QUERY_FACTS.
+
+BOT_UA = "ExampleBot/1.0 (crawler)"
+WEB_UA = "Mozilla/5.0 (X11; Linux x86_64)"
+SQLI_VALUE = "SECRETMATCH"            # a matched value; only its salted hash may reach a query
+
+QUERY_FACTS = {
+    "cloudfront": {"rows": 32, "hit": 24, "miss": 8, "bot_rows": 6, "top_client": IPS[0],
+                   "top_client_rows": 11, "clients": 6, "big_object": "/media/big.bin",
+                   "big_rows": 10, "big_clients": 2, "big_size": 1000000, "big_bytes": 8800000,
+                   "aborted": 2, "range_object": "/media/part.bin", "range_rows": 4,
+                   "status": {"200": 25, "206": 4, "404": 2, "502": 1}},
+    "waf": {"rows": 100, "top_ip": IPS[0], "top_rows": 40, "top_keys": 25, "clients": 6,
+            "day_a_offset": 0, "day_b_offset": 1,
+            "rules_a": {"Default_Action": 25, "example-rate-limit": 10, "example-geo-block": 5},
+            "rules_b": {"Default_Action": 25, "example-rate-limit": 25, "example-geo-block": 5,
+                        "example-bot-control": 5}},
+    "alb": {"rows": 34, "lb_502": 5, "target_502": 3, "ok": 22, "not_found": 4},
+}
+
+
+def _cf_query_rows(day: dt.date):
+    rows = []
+
+    def add(**kw):
+        rows.append(kw)
+
+    for k in range(8):                                             # one client downloads the same file again
+        aborted = k < 2
+        add(stem="/media/big.bin", client=IPS[0], status=200, bytes=400000 if aborted else 1000000,
+            ua="curl/8.0", length=1000000, detail="ClientCommError" if aborted else "Hit")
+    for k in range(2):
+        add(stem="/media/big.bin", client=IPS[2], status=200, bytes=1000000, ua=WEB_UA, length=1000000)
+    for k in range(4):
+        add(stem="/media/part.bin", client=IPS[4], status=206, bytes=100000, ua=WEB_UA, length=1000000,
+            rng=(k * 100000, k * 100000 + 99999))
+    for j in range(18):
+        status = 404 if j % 9 == 8 else (502 if j == 5 else 200)
+        add(stem="/static/app.js", client=IPS[j % 6], status=status, bytes=5000,
+            ua=BOT_UA if j % 3 == 0 else WEB_UA, length=5000,
+            referer=("https://www.example.com/blog/post-1?utm=x" if j < 6 else
+                     "https://news.example.com/item/9?id=4" if j < 9 else "-"))
+    return rows
+
+
+def _cf_query_files(day: dt.date):
+    fields = ("date time x-edge-location sc-bytes c-ip cs-method cs(Host) cs-uri-stem sc-status "
+              "cs(Referer) cs(User-Agent) cs-uri-query x-edge-result-type x-edge-request-id "
+              "x-host-header cs-protocol cs-bytes time-taken x-edge-detailed-result-type "
+              "sc-content-len sc-range-start sc-range-end")
+    by_hour = {0: [], 1: [], 2: []}
+    for g, r in enumerate(_cf_query_rows(day)):
+        rng = r.get("rng")
+        by_hour[g % 3].append("\t".join([
+            day.isoformat(), "%02d:%02d:00" % (g % 3, g), "IAD89-C1" if g % 2 else "FRA56-P2",
+            str(r["bytes"]), r["client"], "GET", "d111111abcdef8.cloudfront.net", r["stem"],
+            str(r["status"]), r.get("referer", "-"), r["ua"].replace(" ", "%20"), "-",
+            "Miss" if g % 4 == 3 else "Hit", "req%05d" % g, "www.example.com", "https", "300", "0.050",
+            r.get("detail", "Hit" if g % 4 != 3 else "Miss"), str(r["length"]),
+            str(rng[0]) if rng else "-", str(rng[1]) if rng else "-"]))
+    return fields, by_hour
+
+
+def _alb_query_line(ts: dt.datetime, client: str, target: str, elb_status: int, target_status: str,
+                    path: str, tproc: float) -> str:
+    t = ts.strftime("%Y-%m-%dT%H:%M:%S") + ".000000Z"
+    lb_made = target == "-"
+    times = "-1 -1 -1" if lb_made else "0.001 %.3f 0.000" % tproc
+    return (
+        'https %s app/%s/%s %s:40000 %s %s %d %s 300 500 "GET https://www.example.com:443%s HTTP/1.1" '
+        '"%s" ECDHE-RSA-AES128-GCM-SHA256 TLSv1.2 '
+        'arn:aws:elasticloadbalancing:%s:%s:targetgroup/example-tg/0123456789abcdef '
+        '"Root=1-q-%s" "www.example.com" "arn:aws:acm:%s:%s:certificate/12345678-1234-1234-1234-123456789012" '
+        '0 %s "forward" "-" "-" "%s" "%s" "-" "-"'
+        % (t, LB_NAME, LB_ID, client, "-" if lb_made else target + ":8080", times, elb_status,
+           target_status, path, WEB_UA, REGION, ACCOUNT, "%024d" % int(ts.timestamp() % 10**9), REGION,
+           ACCOUNT, t, "-" if lb_made else target + ":8080", target_status))
+
+
+def _alb_query_body(day: dt.date) -> str:
+    base = dt.datetime(day.year, day.month, day.day)
+    specs = []
+    for i in range(5):
+        specs.append((IPS[0], "-", 502, "-", "/api/orders", 0.0))                 # produced by the LB
+    for i in range(3):
+        specs.append((IPS[1], "198.51.100.10", 502, "502", "/api/orders", 0.9))   # produced by a target
+    for i in range(22):
+        specs.append((IPS[i % 6], "198.51.100.%d" % (10 + i % 2), 200, "200",
+                      "/api/catalog" if i % 2 else "/", 0.01 * (i + 1)))
+    for i in range(4):
+        specs.append((IPS[3], "198.51.100.11", 404, "404", "/missing", 0.005))
+    return "\n".join(_alb_query_line(base + dt.timedelta(seconds=10 * i), *spec)
+                     for i, spec in enumerate(specs)) + "\n"
+
+
+def _waf_query_records(day: dt.date):
+    """100 records: 40 from IPS[0] (25 distinct session cookies), 60 spread over five other IPs.
+    The first 40 are on `day` and the other 60 on the next day."""
+    def day_rules(counts):
+        out = []
+        for rule, n in counts.items():
+            out += [rule] * n
+        return out
+    rules = (day_rules(QUERY_FACTS["waf"]["rules_a"]) + day_rules(QUERY_FACTS["waf"]["rules_b"]))
+    recs = []
+    top = other = 0
+    for j, rule in enumerate(rules):
+        a_day = j < 40
+        if j % 5 < 2:
+            ip, cookie = IPS[0], "sessionid=sid%02d" % (top % 25)
+            top += 1
+        else:
+            ip, cookie = IPS[1 + other % 5], None
+            other += 1
+        recs.append((j, a_day, rule, ip, cookie))
+    return recs
+
+
+def _waf_query_files(day: dt.date):
+    out = {}
+    for j, a_day, rule, ip, cookie in _waf_query_records(day):
+        d = day if a_day else day + dt.timedelta(days=1)
+        t = dt.datetime(d.year, d.month, d.day, 1, 0, 0) + dt.timedelta(seconds=j)
+        bot = j % 10 == 9
+        headers = [{"name": "Host", "value": "www.example.com"},
+                   {"name": "User-Agent", "value": "ExampleBot/2.0 (spider)" if bot else WEB_UA}]
+        if not bot:
+            headers.append({"name": "Accept", "value": "*/*"})
+        if cookie:
+            headers.append({"name": "Cookie", "value": cookie})
+        rec = {
+            "timestamp": int(t.replace(tzinfo=dt.timezone.utc).timestamp() * 1000),
+            "formatVersion": 1,
+            "webaclId": "arn:aws:wafv2:%s:%s:regional/webacl/%s/0123abcd" % (REGION, ACCOUNT, ACL),
+            "terminatingRuleId": rule,
+            "terminatingRuleType": "REGULAR",
+            "action": "ALLOW" if rule == "Default_Action" else "BLOCK",
+            "httpSourceName": "ALB",
+            "httpSourceId": "%s-app/%s/%s" % (ACCOUNT, LB_NAME, LB_ID),
+            "ruleGroupList": [],
+            "nonTerminatingMatchingRules": ([{"ruleId": "example-count-rule", "action": "COUNT"}]
+                                            if j % 7 == 0 else []),
+            "labels": [{"name": "example:rate:limited"}] if rule == "example-rate-limit" else [],
+            "ja3Fingerprint": ("a" * 32) if ip == IPS[0] else ("b" * 32),
+            "ja4Fingerprint": "t13d1516h2_example_" + ("a" if ip == IPS[0] else "b"),
+            "httpRequest": {
+                "clientIp": ip,
+                "country": "US" if ip == IPS[0] else ["DE", "FR", "US"][j % 3],
+                "clientAsn": "64500" if ip == IPS[0] else "64501",
+                "headers": headers,
+                "uri": ["/", "/api/orders", "/login"][j % 3],
+                "args": "q=%d" % (j % 5),
+                "httpVersion": "HTTP/1.1",
+                "httpMethod": "GET",
+                "requestId": "req-%04d" % j,
+            },
+        }
+        if rule == "example-bot-control":
+            rec["terminatingRuleMatchDetails"] = [{"conditionType": "SQL_INJECTION",
+                                                   "location": "QUERY_STRING",
+                                                   "matchedData": [SQLI_VALUE]}]
+        out.setdefault(t.replace(second=0), []).append(json.dumps(rec, sort_keys=True))
+    return out
+
+
+def make_queries(root, kind: str, day: dt.date, bucket: str = BUCKET) -> List[str]:
+    """Write the fixed query data set for one type under root/<bucket>/ and return its keys.
+    WAF writes records onto `day` and `day`+1 (see QUERY_FACTS)."""
+    if kind not in QUERY_FACTS:
+        raise ValueError("unknown kind %r" % (kind,))
+    root = Path(root)
+    written: List[str] = []
+
+    def put(key: str, text: str) -> None:
+        p = root / bucket / key
+        p.parent.mkdir(parents=True, exist_ok=True)
+        p.write_bytes(_gz(text))
+        written.append(key)
+
+    if kind == "cloudfront":
+        fields, by_hour = _cf_query_files(day)
+        for hh, lines in by_hour.items():
+            put(cf_key(day, hh, unique="Q%010d" % hh),
+                "\n".join(["#Version: 1.0", "#Fields: " + fields] + lines) + "\n")
+    elif kind == "alb":
+        end = dt.datetime(day.year, day.month, day.day, 0, 5)
+        put(alb_key(day, end, rand="queries0"), _alb_query_body(day))
+    else:
+        for n, (minute, lines) in enumerate(sorted(_waf_query_files(day).items())):
+            end = minute + dt.timedelta(minutes=1)
+            put(waf_key(end, rand="q%07d" % n), "\n".join(lines) + "\n")
+    return written

@@ -33,3 +33,18 @@ def test_cloudfront_legacy_has_fields_header_and_json_variant(tmp_path):
     assert gzip.decompress((tmp_path / gf.BUCKET / key).read_bytes()).decode().startswith("#Version: 1.0\n#Fields: ")
     (jkey,) = gf.make(tmp_path, "cloudfront", DAY, hours=[3], fmt="json")
     assert jkey.endswith(".json.gz")
+
+
+@pytest.mark.parametrize("kind", ["cloudfront", "alb", "waf"])
+def test_query_fixtures_deterministic_and_placeholder_only(tmp_path, kind):
+    a = gf.make_queries(tmp_path / "a", kind, DAY)
+    b = gf.make_queries(tmp_path / "b", kind, DAY)
+    assert a == b and a
+    for key in a:
+        pa = (tmp_path / "a" / gf.BUCKET / key).read_bytes()
+        assert pa == (tmp_path / "b" / gf.BUCKET / key).read_bytes()
+        text = gzip.decompress(pa).decode()
+        for ip in ANY_IP.findall(text):
+            assert DOC_IP.fullmatch(ip), ip
+    with pytest.raises(ValueError):
+        gf.make_queries(tmp_path, "nope", DAY)

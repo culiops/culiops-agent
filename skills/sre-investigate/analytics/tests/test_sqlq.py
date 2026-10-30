@@ -596,8 +596,10 @@ def test_list_shows_columns_and_queries(home, waf):
     assert lines[1:5] == ["column ts TIMESTAMP", "column action VARCHAR", "column client_ip VARCHAR",
                           "column uri VARCHAR"]
     q = [ln for ln in lines if ln.startswith("query ")]
-    assert len(q) == 1 and q[0].startswith("query by_minute — Requests per minute and WAF action")
-    assert "\n" not in q[0]
+    on_disk = sorted(p.stem for p in (cli_sqlq.SQL_DIR / "waf").glob("*.sql"))
+    assert [ln.split(" ")[1] for ln in q] == on_disk and "by_minute" in on_disk
+    assert any(ln.startswith("query by_minute — Requests per minute and WAF action") for ln in q)
+    assert all("\n" not in ln for ln in q)
 
 
 def test_list_matches_every_named_file_of_the_type(home, cdn):
