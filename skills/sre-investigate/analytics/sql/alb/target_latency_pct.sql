@@ -1,4 +1,4 @@
--- Target processing time percentiles (seconds) per target and overall (row ALL), over requests that have a target time; no_target_time_requests counts the failed or timed-out ones left out, so read the percentiles together with it. If sampled: requests, timed_requests and no_target_time_requests scale by the factor; the percentiles and max_s do not scale.
+-- Target processing time percentiles (seconds) per target and overall (row ALL), over requests that have a target time; no_target_time_requests counts the failed or timed-out ones left out, so read the percentiles together with it. If sampled: requests, timed_requests and no_target_time_requests scale by the factor; the percentiles do not scale; max_s is a lower bound on the true max.
 SELECT CASE WHEN grouping(target_ip) = 1 THEN 'ALL' ELSE coalesce(target_ip, '-') END AS target_ip,
        count(*) AS requests,
        count(*) FILTER (WHERE target_processing_time >= 0) AS timed_requests,

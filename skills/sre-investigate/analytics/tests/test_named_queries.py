@@ -453,19 +453,47 @@ def test_required_param_missing_is_an_error_not_an_empty_result(env, kind, name,
     assert cp.returncode == 4 and "is required" in cp.stderr
 
 
+def _sampling_clauses(first):
+    """The clauses of the "If sampled:" section of a purpose line (whole section, split on ';')."""
+    assert first.count("If sampled:") == 1, first
+    section = first.split("If sampled:", 1)[1].strip()
+    assert section.endswith("."), first
+    return [c.strip() for c in section[:-1].split(";")]
+
+
+CLAUSE_SCALE = re.compile(r"^.+ scales? by the factor$")
+CLAUSE_LOWER = re.compile(r"^.+ (?:are lower bounds|is a lower bound on the true max)$")
+CLAUSE_KEEP = re.compile(r"^.+ (?:do|does) not scale$")
+
+
 def test_sampling_notes_are_per_query_not_blanket():
     for kind, name in ALL:
         first = (SQL_DIR / kind / (name + ".sql")).read_text().split("\n", 1)[0]
         assert "multiply counts by the factor sqlq prints" not in first, (kind, name)
-        assert "If sampled:" in first or "UNRELIABLE if sampled" in first, (kind, name)
-    bpv = (SQL_DIR / "cloudfront" / "bytes_per_viewer.sql").read_text().split("\n", 1)[0]
-    assert "UNRELIABLE if sampled" in bpv and "do not use" in bpv
-    for kind, name in ALL:
-        first = (SQL_DIR / kind / (name + ".sql")).read_text().split("\n", 1)[0]
-        if "share" in first.split("If sampled:")[-1] and name != "bytes_per_viewer":
-            assert "do not scale" in first, (kind, name)
-        if "distinct_" in first.split("If sampled:")[-1]:
-            assert "lower bound" in first, (kind, name)
+        if name == "bytes_per_viewer":
+            assert "UNRELIABLE if sampled" in first and "do not use" in first and "If sampled:" not in first
+            continue
+        assert "UNRELIABLE" not in first, (kind, name)
+        for clause in _sampling_clauses(first):
+            words = set(re.findall(r"[A-Za-z0-9_*]+", clause))
+            assert any(r.match(clause) for r in (CLAUSE_SCALE, CLAUSE_LOWER, CLAUSE_KEEP)), (kind, name, clause)
+            if any(w.startswith("distinct_") for w in words) or "top1_client_keys" in words:
+                assert CLAUSE_LOWER.match(clause), (kind, name, clause)
+            if words & {"share", "shares", "hit_ratio", "top1_share", "top10_share", "aborted_share",
+                        "avg_range_bytes", "p95_target_seconds", "percentiles"}:
+                assert CLAUSE_KEEP.match(clause), (kind, name, clause)
+            if words & {"requests", "bytes", "blocked", "allowed", "delta"} and not CLAUSE_KEEP.match(clause):
+                assert CLAUSE_SCALE.match(clause), (kind, name, clause)
+        # singular/plural agreement in the keep clauses
+        for clause in _sampling_clauses(first):
+            if CLAUSE_KEEP.match(clause):
+                subject = clause.rsplit(" ", 3)[0]
+                plural = " and " in subject or subject in ("shares", "the percentiles")
+                assert clause.endswith("do not scale" if plural else "does not scale"), (kind, name, clause)
+            if CLAUSE_SCALE.match(clause) and clause.startswith("every count"):
+                assert clause == "every count scales by the factor"
+    lat = (SQL_DIR / "alb" / "target_latency_pct.sql").read_text().split("\n", 1)[0]
+    assert "max_s is a lower bound on the true max" in lat
 
 
 def test_purpose_lines_say_what_the_numbers_do_not_cover():

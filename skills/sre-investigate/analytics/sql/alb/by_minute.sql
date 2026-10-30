@@ -1,4 +1,4 @@
--- Requests per minute with 4xx/5xx, 5xx with no target response (timeouts and refused connections included) and p95 target time over requests that have one. If sampled: requests, status_*, no_target_5xx and no_target_time_requests scale by the factor; p95_target_seconds do not scale.
+-- Requests per minute with 4xx/5xx, 5xx with no target response (timeouts and refused connections included) and p95 target time over requests that have one. If sampled: requests, status_*, no_target_5xx and no_target_time_requests scale by the factor; p95_target_seconds does not scale.
 SELECT date_trunc('minute', ts) AS minute, count(*) AS requests,
        count(*) FILTER (WHERE elb_status_code BETWEEN 400 AND 499) AS status_4xx,
        count(*) FILTER (WHERE elb_status_code BETWEEN 500 AND 599) AS status_5xx,

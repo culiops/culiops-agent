@@ -225,6 +225,29 @@ def _list_named(ds_type: str) -> List[Tuple[str, str]]:
     return out
 
 
+_SQL_SAMPLED_NOTE = ("counts and bytes scale by %d; distinct counts are lower bounds; "
+                     "ratios, shares, percentiles and maxima do not scale")
+
+
+def _sampled_note(ds_type: str, name: str, n: int) -> str:
+    """The query's own sampling note: the part of its purpose line after "If sampled:" (or its
+    "UNRELIABLE if sampled" warning), with the factor filled in. Falls back to the generic text
+    when a file has none."""
+    try:
+        first = _purpose(_read_sql_file(SQL_DIR / ds_type / (name + ".sql")))
+    except Refused:
+        first = ""
+    i = first.find("UNRELIABLE if sampled")
+    if i >= 0:
+        note = first[i:]
+    else:
+        j = first.find("If sampled:")
+        note = first[j + len("If sampled:"):].strip() if j >= 0 else ""
+    if not note:
+        return _SQL_SAMPLED_NOTE % n
+    return _printable(note.replace("by the factor", "by %d" % n))[:600]
+
+
 def _load_named(ds_type: str, name: str) -> str:
     if not _QUERY_NAME_RE.fullmatch(name):
         raise Refused("invalid query name %r (a-z, 0-9 and _, 1-64 chars)" % _printable(name))
@@ -396,12 +419,12 @@ def run_cli(argv: Optional[List[str]]) -> int:
         _write(sys.stdout, _list_output(src))
         return 0
 
-    if src.sample_every > 1:
-        _write(sys.stderr, "-- sampled 1/%d: multiply counts by %d\n" % (src.sample_every, src.sample_every))
-
     if args.query is not None:
         assert src.ds_type is not None
         sql = _load_named(src.ds_type, args.query)
+        if src.sample_every > 1:
+            _write(sys.stderr, "-- sampled 1/%d: %s\n" % (src.sample_every, _sampled_note(
+                src.ds_type, args.query, src.sample_every)))
         for k, _v in params:
             if not re.search(r"getvariable\s*\(\s*'%s'\s*\)" % re.escape(k), sql, re.IGNORECASE):
                 _write(sys.stderr, "-- param %s is not used by query %s\n" % (k, args.query))
@@ -409,6 +432,8 @@ def run_cli(argv: Optional[List[str]]) -> int:
         _write(sys.stdout, _with_header(out, script, sql, src.allowed))
         return 0
 
+    if src.sample_every > 1:
+        _write(sys.stderr, "-- sampled 1/%d: %s\n" % (src.sample_every, _SQL_SAMPLED_NOTE % src.sample_every))
     stmt = sqlguard.check(args.sql)
     wrapped = "SELECT * FROM (\n%s\n) AS q LIMIT %d" % (stmt, ROW_LIMIT + 1)
     out = duck.run(script, wrapped, [src.allowed], allow_writes=False)

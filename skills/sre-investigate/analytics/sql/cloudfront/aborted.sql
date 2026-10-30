@@ -1,4 +1,4 @@
--- Top 50 objects with aborted downloads: GET 200 with edge result Error (CloudFront's did-not-finish definition), ClientCommError, or a non-HEAD 200 that sent fewer bytes than sc_content_len (sc_bytes includes headers, so very short truncations are missed); 206 partials are not covered. If sampled: aborted_requests and requests scale by the factor; distinct_clients are lower bounds; aborted_share do not scale.
+-- Top 50 objects with aborted downloads: GET 200 with edge result Error (CloudFront's did-not-finish definition), ClientCommError, or a non-HEAD 200 that sent fewer bytes than sc_content_len (sc_bytes includes headers, so very short truncations are missed); 206 partials are not covered. If sampled: aborted_requests and requests scale by the factor; distinct_clients are lower bounds; aborted_share does not scale.
 WITH a AS (
   SELECT cs_uri_stem, c_ip,
          coalesce(x_edge_detailed_result_type = 'ClientCommError', false)

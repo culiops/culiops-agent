@@ -492,9 +492,32 @@ def test_non_ascii_survives(home, cfg):
 def test_sampled_dataset_notice(home, cfg):
     make_dataset(home, "waf1", WAF_ROWS % 10, sample_every=4)
     cp = sqlq(home, "waf1", "--run", RUN, "--sql", "SELECT count(*) AS n FROM logs")
-    assert "-- sampled 1/4: multiply counts by 4" in cp.stderr and rows(cp) == [["n"], ["10"]]
+    assert rows(cp) == [["n"], ["10"]]
+    assert ("-- sampled 1/4: counts and bytes scale by 4; distinct counts are lower bounds; "
+            "ratios, shares, percentiles and maxima do not scale\n") in cp.stderr
+    assert [ln for ln in cp.stderr.splitlines() if ln.startswith("-- sampled")] == [
+        "-- sampled 1/4: counts and bytes scale by 4; distinct counts are lower bounds; "
+        "ratios, shares, percentiles and maxima do not scale"]
+    assert "multiply counts" not in cp.stderr
+
+
+def test_sampled_named_query_prints_its_own_note(home, cfg):
+    make_dataset(home, "waf1", WAF_ROWS % 10, sample_every=4)
     cp = sqlq(home, "waf1", "--run", RUN, "by_minute")
-    assert "-- sampled 1/4: multiply counts by 4" in cp.stderr
+    assert cp.returncode == 0, cp.stderr
+    assert [ln for ln in cp.stderr.splitlines() if ln.startswith("-- sampled")] == [
+        "-- sampled 1/4: requests scale by 4."]
+    cdn = ("SELECT '/o' AS cs_uri_stem, '192.0.2.1' AS c_ip, 10::BIGINT AS sc_bytes, 200 AS sc_status, "
+           "10::BIGINT AS sc_content_len, NULL::BIGINT AS sc_range_end")
+    make_dataset(home, "cdn1", cdn, sample_every=4)
+    cp = sqlq(home, "cdn1", "--run", RUN, "bytes_per_viewer")
+    assert cp.returncode == 0, cp.stderr
+    notes = [ln for ln in cp.stderr.splitlines() if ln.startswith("-- sampled")]
+    assert len(notes) == 1 and notes[0].startswith("-- sampled 1/4: UNRELIABLE if sampled: distinct_clients is a lower bound")
+    assert "do not use on sampled data" in notes[0]
+    cp = sqlq(home, "cdn1", "--run", RUN, "top_clients")
+    assert [ln for ln in cp.stderr.splitlines() if ln.startswith("-- sampled")] == [
+        "-- sampled 1/4: requests and bytes scale by 4; shares do not scale."]
 
 
 def test_unsampled_dataset_has_no_notice(home, waf):

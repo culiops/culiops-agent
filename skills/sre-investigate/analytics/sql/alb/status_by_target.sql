@@ -1,4 +1,4 @@
--- Top 50 targets (ip and port) by requests with the status classes they returned; target_ip - means no target responded (LB answer, timeout, refused connection). If sampled: every count scale by the factor.
+-- Top 50 targets (ip and port) by requests with the status classes they returned; target_ip - means no target responded (LB answer, timeout, refused connection). If sampled: every count scales by the factor.
 SELECT coalesce(target_ip, '-') AS target_ip, target_port, count(*) AS requests,
        count(*) FILTER (WHERE target_status_code BETWEEN 200 AND 299) AS target_2xx,
        count(*) FILTER (WHERE target_status_code BETWEEN 300 AND 399) AS target_3xx,
