@@ -45,3 +45,15 @@ def ensure_private_dirs() -> None:
     for name in ("budgets", "manifests", "data"):
         _private_dir(root / name, 0o700)
     _private_dir(root / "staging", 0o300)
+
+
+def manifest_path(dataset: str, day_from: str, day_to: str) -> Path:
+    """manifests/<dataset>/<from>_<to>.json under the state root (arguments pre-validated)."""
+    return state_root() / "manifests" / dataset / ("%s_%s.json" % (day_from, day_to))
+
+
+def private_subdir(parent: Path, name: str) -> Path:
+    """Create parent/name (0700) if missing, refusing a symlink or non-directory there."""
+    p = parent / name
+    _private_dir(p, 0o700)
+    return p

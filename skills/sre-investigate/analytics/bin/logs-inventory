@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+# List an S3 log dataset for a day range, estimate size and cost, write a manifest.
+here=$(cd -P -- "$(dirname -- "$0")" && pwd)
+exec python3 -I "$here/../lib/s3logs/cli_inventory.py" "$@"

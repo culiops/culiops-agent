@@ -22,3 +22,7 @@ node_modules/
 # Triage / inspiration scratch
 inspo/
 triage/
+
+# Python
+__pycache__/
+.pytest_cache/

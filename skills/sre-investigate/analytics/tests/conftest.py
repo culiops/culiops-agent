@@ -21,6 +21,11 @@ BIN = ANALYTICS / "bin"
 if str(LIB) not in sys.path:
     sys.path.insert(0, str(LIB))
 
+# Captured at import time, before any fixture re-points HOME or PATH at a tmp dir.
+_REAL_HOME = os.path.expanduser("~")
+_ORIGINAL_PATH = os.environ.get("PATH", "")
+STUBS = ANALYTICS / "tests" / "stubs"
+
 
 @pytest.fixture
 def home(tmp_path, monkeypatch):
@@ -67,7 +72,47 @@ def stub_path(tmp_path, monkeypatch):
 @pytest.fixture
 def duckdb_bin():
     """Path to the real duckdb CLI; skip when it is not installed."""
-    found = shutil.which("duckdb") or str(Path.home() / ".local/bin/duckdb")
-    if not found or not os.access(found, os.X_OK):
+    found = (shutil.which("duckdb", path=_ORIGINAL_PATH)
+             or os.path.join(_REAL_HOME, ".local", "bin", "duckdb"))
+    if not os.access(found, os.X_OK):
         pytest.skip("duckdb CLI not installed (expected on PATH or ~/.local/bin/duckdb)")
     return found
+
+
+class FakeS3:
+    """Stub `aws` (and any other stub in tests/stubs) on PATH over a fake bucket tree."""
+
+    def __init__(self, root: Path, argv_log: Path):
+        self.root = root
+        self.argv_log = argv_log
+
+    def bucket(self, name: str) -> Path:
+        """Create (if needed) and return the directory standing in for a bucket."""
+        p = self.root / name
+        p.mkdir(parents=True, exist_ok=True)
+        return p
+
+    def calls(self) -> list:
+        """Every logged stub invocation, as a list of argv lists."""
+        import json
+        if not self.argv_log.exists():
+            return []
+        return [json.loads(line) for line in self.argv_log.read_text().splitlines() if line.strip()]
+
+
+@pytest.fixture
+def fake_s3(tmp_path, monkeypatch, stub_path):
+    """Install the stubs from tests/stubs on PATH, backed by a tmp FAKE_S3_ROOT."""
+    for stub in sorted(STUBS.iterdir()):
+        if stub.is_file() and os.access(str(stub), os.X_OK):
+            target = stub_path.dir / stub.name
+            shutil.copyfile(str(stub), str(target))
+            target.chmod(0o755)
+    root = tmp_path / "fake-s3"
+    root.mkdir()
+    log = tmp_path / "argv.log"
+    monkeypatch.setenv("FAKE_S3_ROOT", str(root))
+    monkeypatch.setenv("FAKE_ARGV_LOG", str(log))
+    for var in ("FAKE_AWS_ERROR", "FAKE_EXTRA_KEYS_JSON"):
+        monkeypatch.delenv(var, raising=False)
+    return FakeS3(root, log)
