@@ -129,7 +129,7 @@ def test_run_copies_files_and_builds_argv(fake_s3, batch):
     (b / "k/a.gz").write_bytes(b"AAA")
     (b / "k/b.gz").write_bytes(b"BB")
     rf = write_run(batch, ["k/a.gz", "k/b.gz"])
-    s5.run(rf, "sre-read", "us-east-1", str(batch))
+    s5.run(rf, "sre-read", "us-east-1", str(batch), BUCKET)
     assert (batch / "000001.gz").read_bytes() == b"AAA"
     assert (batch / "000002.gz").read_bytes() == b"BB"
     calls = [c for c in fake_s3.calls() if c[:1] == ["s5cmd"]]
@@ -139,7 +139,7 @@ def test_run_copies_files_and_builds_argv(fake_s3, batch):
 def test_run_without_profile_has_no_profile_option(fake_s3, batch):
     b = fake_s3.bucket(BUCKET)
     (b / "a.gz").write_bytes(b"A")
-    s5.run(write_run(batch, ["a.gz"]), None, None, str(batch))
+    s5.run(write_run(batch, ["a.gz"]), None, None, str(batch), BUCKET)
     calls = [c for c in fake_s3.calls() if c[:1] == ["s5cmd"]]
     assert calls[0][1:3] == ["--log", "error"]
 
@@ -148,7 +148,7 @@ def test_run_refuses_a_run_file_outside_the_batch_dir(fake_s3, batch, tmp_path):
     other = tmp_path / "other.run"
     other.write_text(s5.build_run_file(BUCKET, ["a.gz"], str(batch)))
     with pytest.raises(Refused):
-        s5.run(other, None, None, str(batch))
+        s5.run(other, None, None, str(batch), BUCKET)
     assert [c for c in fake_s3.calls() if c[:1] == ["s5cmd"]] == []
 
 
@@ -157,13 +157,13 @@ def test_run_refuses_bad_profile(fake_s3, batch, profile):
     fake_s3.bucket(BUCKET)
     rf = write_run(batch, ["a.gz"])
     with pytest.raises(Refused):
-        s5.run(rf, profile, None, str(batch))
+        s5.run(rf, profile, None, str(batch), BUCKET)
 
 
 def test_run_refuses_bad_region(fake_s3, batch):
     fake_s3.bucket(BUCKET)
     with pytest.raises(Refused):
-        s5.run(write_run(batch, ["a.gz"]), None, "us-east-1; id", str(batch))
+        s5.run(write_run(batch, ["a.gz"]), None, "us-east-1; id", str(batch), BUCKET)
 
 
 def test_run_revalidates_the_run_file_content(fake_s3, batch):
@@ -171,7 +171,7 @@ def test_run_revalidates_the_run_file_content(fake_s3, batch):
     rf = batch / "batch.run"
     rf.write_text("cp -n --raw s3://%s/a.gz %s/000001.gz /tmp/x\n" % (BUCKET, batch))
     with pytest.raises(Refused):
-        s5.run(rf, None, None, str(batch))
+        s5.run(rf, None, None, str(batch), BUCKET)
     assert [c for c in fake_s3.calls() if c[:1] == ["s5cmd"]] == []
 
 
@@ -181,7 +181,7 @@ def test_expired_session_maps_to_aws_error_with_login_hint(fake_s3, batch, monke
     monkeypatch.setenv("FAKE_S5CMD_FAIL_ON_BATCH", "1")
     monkeypatch.setenv("FAKE_S5CMD_ERROR", "ERROR ExpiredToken: The provided token has expired.")
     with pytest.raises(AwsError) as ei:
-        s5.run(write_run(batch, ["a.gz"]), "sre-read", None, str(batch))
+        s5.run(write_run(batch, ["a.gz"]), "sre-read", None, str(batch), BUCKET)
     assert ei.value.hint == "! aws sso login --profile sre-read"
 
 
@@ -190,7 +190,7 @@ def test_expired_session_hint_without_profile(fake_s3, batch, monkeypatch):
     monkeypatch.setenv("FAKE_S5CMD_FAIL_ON_BATCH", "1")
     monkeypatch.setenv("FAKE_S5CMD_ERROR", "Token has expired and refresh failed")
     with pytest.raises(AwsError) as ei:
-        s5.run(write_run(batch, ["a.gz"]), None, None, str(batch))
+        s5.run(write_run(batch, ["a.gz"]), None, None, str(batch), BUCKET)
     assert ei.value.hint == "! aws sso login"
 
 
@@ -199,7 +199,7 @@ def test_other_failures_give_scrubbed_message_no_path_no_control_chars(fake_s3, 
     monkeypatch.setenv("FAKE_S5CMD_FAIL_ON_BATCH", "1")
     monkeypatch.setenv("FAKE_S5CMD_ERROR", "ERROR AccessDenied: denied writing %s/000001.gz\x1b[31m\x07café" % batch)
     with pytest.raises(AwsError) as ei:
-        s5.run(write_run(batch, ["a.gz"]), None, None, str(batch))
+        s5.run(write_run(batch, ["a.gz"]), None, None, str(batch), BUCKET)
     msg = ei.value.msg
     assert str(batch) not in msg and "<staging>" in msg
     assert "\x1b" not in msg and "\x07" not in msg and all(ord(c) < 128 for c in msg)
@@ -212,14 +212,14 @@ def test_partial_failure_message_does_not_leak_a_huge_stderr(fake_s3, batch, mon
     monkeypatch.setenv("FAKE_S5CMD_FAIL_ON_BATCH", "1")
     monkeypatch.setenv("FAKE_S5CMD_ERROR", "ERROR " + "x" * 100000)
     with pytest.raises(AwsError) as ei:
-        s5.run(write_run(batch, ["a.gz"]), None, None, str(batch))
+        s5.run(write_run(batch, ["a.gz"]), None, None, str(batch), BUCKET)
     assert len(ei.value.msg) < 700
 
 
 def test_missing_object_is_an_aws_error(fake_s3, batch):
     fake_s3.bucket(BUCKET)
     with pytest.raises(AwsError):
-        s5.run(write_run(batch, ["nope.gz"]), None, None, str(batch))
+        s5.run(write_run(batch, ["nope.gz"]), None, None, str(batch), BUCKET)
 
 
 def test_s5cmd_not_installed_is_refused(batch, stub_path):
@@ -227,7 +227,7 @@ def test_s5cmd_not_installed_is_refused(batch, stub_path):
     rf = batch / "batch.run"
     rf.write_text(s5.build_run_file(BUCKET, ["a.gz"], str(batch)))
     with pytest.raises(Refused):
-        s5.run(rf, None, None, str(batch))
+        s5.run(rf, None, None, str(batch), BUCKET)
 
 
 def test_endpoint_override_env_is_not_passed_on(fake_s3, batch, monkeypatch):
@@ -244,7 +244,7 @@ def test_endpoint_override_env_is_not_passed_on(fake_s3, batch, monkeypatch):
     monkeypatch.setenv("S5CMD_ENDPOINT_URL", "http://203.0.113.9")
     monkeypatch.setenv("S3_ENDPOINT_URL", "http://203.0.113.9")
     (fake_s3.bucket(BUCKET) / "a.gz").write_bytes(b"A")
-    s5.run(write_run(batch, ["a.gz"]), None, "eu-west-1", str(batch))
+    s5.run(write_run(batch, ["a.gz"]), None, "eu-west-1", str(batch), BUCKET)
     env = seen["env"]
     assert "S5CMD_ENDPOINT_URL" not in env and "S3_ENDPOINT_URL" not in env
     assert env["AWS_REGION"] == "eu-west-1"
@@ -257,6 +257,18 @@ def test_message_prefers_error_lines_over_warning_noise(fake_s3, batch, monkeypa
     monkeypatch.setenv("FAKE_S5CMD_ERROR", "2026/10/30 WARN: failed to get session token, falling back to IMDSv1\n"
                        "caused by: EC2MetadataError\nERROR session: fetching region failed: NoCredentialProviders: no valid providers")
     with pytest.raises(AwsError) as ei:
-        s5.run(write_run(batch, ["a.gz"]), "sre-read", None, str(batch))
+        s5.run(write_run(batch, ["a.gz"]), "sre-read", None, str(batch), BUCKET)
     assert ei.value.msg.startswith("s5cmd exited 1: ERROR session:") and "IMDSv1" not in ei.value.msg
     assert ei.value.hint == "! aws sso login --profile sre-read"
+
+
+def test_run_pins_the_configured_bucket(fake_s3, batch):
+    """A run file naming a different (valid) bucket than the configured one is refused."""
+    other = fake_s3.bucket("other-logs-bucket")
+    (other / "a.gz").write_bytes(b"A")
+    rf = batch / "batch.run"
+    rf.write_text(s5.build_run_file("other-logs-bucket", ["a.gz"], str(batch)))
+    with pytest.raises(Refused):
+        s5.run(rf, None, None, str(batch), BUCKET)
+    assert [c for c in fake_s3.calls() if c[:1] == ["s5cmd"]] == []
+    assert not (batch / "000001.gz").exists()

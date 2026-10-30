@@ -8,6 +8,7 @@ import io
 import json
 import os
 import re
+import shutil
 import signal
 import stat
 import subprocess
@@ -30,8 +31,16 @@ ASK = "ask the user; an override needs their marker file plus --force"
 
 
 @pytest.fixture(autouse=True)
-def _duck_on_path(duckdb_bin, monkeypatch):
-    monkeypatch.setenv("PATH", os.path.dirname(duckdb_bin) + os.pathsep + os.environ.get("PATH", ""))
+def _stub_tools_only(duckdb_bin, fake_s3, stub_path):
+    """duckdb is symlinked INTO the stub dir (which is first on PATH); ~/.local/bin, where the real
+    s5cmd lives, is never put on PATH. A test must never be able to run the real s5cmd or aws."""
+    link = stub_path.dir / "duckdb"
+    if not link.exists():
+        link.symlink_to(duckdb_bin)
+    for tool in ("s5cmd", "aws"):
+        found = shutil.which(tool)
+        assert found == str(stub_path.dir / tool), "%s on PATH is %s, not the stub" % (tool, found)
+        assert os.path.realpath(found) == str(stub_path.dir / tool)
 
 
 def write_config(home, extra=""):
@@ -204,7 +213,7 @@ def test_cloudfront_minute_slice_refused(env, cap, capsys):
 
 def test_slice_crossing_midnight_needs_next_day_manifest(env, cap, capsys):
     alb10(env, capsys, "2026-03-09", "2026-03-09")
-    for sl in ([], ["23"], ["22-23"], ["23:50-24:00"]):
+    for sl in ([], ["23"], ["22-23"], ["23:50-24:00"], ["23:50-23:52"], ["23:00-23:55"], ["23:51-23:52"]):
         code, out, err = cap("alb", "2026-03-09", *sl)
         assert code == 2, sl
         assert "run logs-inventory alb 2026-03-09 2026-03-10 first" in err
@@ -212,6 +221,28 @@ def test_slice_crossing_midnight_needs_next_day_manifest(env, cap, capsys):
     assert code == 0, err
     code, out, err = cap("alb", "2026-03-09", "10:00-11:00")
     assert code == 0, err
+    for sl in ("22", "22:00-23:50", "23:40-23:50"):       # the widen stays inside the day
+        code, out, err = cap("alb", "2026-03-09", sl)
+        assert code == 0, (sl, err)
+
+
+def test_waf_slice_crossing_midnight_needs_next_day_manifest(env, cap, capsys):
+    gf.make(env.root, "waf", DAY, hours=range(20, 24), minutes=(0, 30))
+    inventory(capsys, "waf", "2026-03-09", "2026-03-09")
+    for sl in ("23:50-23:52", "23:00-23:55", "23"):
+        code, out, err = cap("waf", "2026-03-09", sl)
+        assert code == 2, sl
+        assert "run logs-inventory waf 2026-03-09 2026-03-10 first" in err
+    assert cap("waf", "2026-03-09", "22:00-23:50")[0] == 0
+    inventory(capsys, "waf", "2026-03-10", "2026-03-10")
+    assert cap("waf", "2026-03-09", "23:50-23:52")[0] == 0
+
+
+def test_cloudfront_hour_22_does_not_need_next_day(env, cap, capsys):
+    gf.make(env.root, "cloudfront", DAY, hours=range(24), records=1)
+    inventory(capsys, "cf", "2026-03-09", "2026-03-09")
+    assert cap("cf", "2026-03-09", "22")[0] == 0
+    assert cap("cf", "2026-03-09", "23")[0] == 2
 
 
 def test_manifests_for_each_day_are_combined(env, cap, capsys):
@@ -393,10 +424,11 @@ def test_batch_dir_and_dataset_dir_modes_during_the_run(env, cap, capsys, monkey
     seen = {}
     real_run, real_conv = s5.run, convert.to_parquet
 
-    def spy_run(rf, profile, region, batchdir):
+    def spy_run(rf, profile, region, batchdir, bucket):
         seen["batch"] = (os.path.basename(batchdir), mode(batchdir), mode(os.path.dirname(batchdir)))
         seen["run_file"] = mode(rf)
-        return real_run(rf, profile, region, batchdir)
+        seen["bucket"] = bucket
+        return real_run(rf, profile, region, batchdir, bucket)
 
     def spy_conv(ds_type, raw, out, cfg, salt):
         seen["ds_during"] = mode(out.parent)
@@ -407,7 +439,7 @@ def test_batch_dir_and_dataset_dir_modes_during_the_run(env, cap, capsys, monkey
     assert go(cap)[0] == 0
     name, bmode, root_mode = seen["batch"]
     assert re.fullmatch(r"[0-9a-f]{32}", name) and bmode == 0o700 and root_mode == 0o300
-    assert seen["ds_during"] == 0o700
+    assert seen["ds_during"] == 0o700 and seen["bucket"] == BUCKET
     assert mode(ds_dir()) == 0o555
 
 
@@ -438,15 +470,20 @@ def test_one_oversized_file_is_its_own_batch(env, cap, capsys, monkeypatch):
     assert [len(l) for l in run_file_lines(env)] == [1] * 10
 
 
-def test_size_mismatch_not_charged(env, cap, capsys, monkeypatch):
+def sizes(env, keys):
+    return [os.path.getsize(str(env.root / BUCKET / k)) for k in keys]
+
+
+def test_size_mismatch_is_charged_but_not_converted(env, cap, capsys, monkeypatch):
+    """R31: every byte that arrived is charged; verification only decides conversion."""
     keys = alb10(env, capsys)
     bad = keys[3]
     monkeypatch.setenv("FAKE_S5CMD_TRUNCATE", bad)
     code, out, err = go(cap)
     assert code == 3, (out, err)
     assert bad in err and "size" in err
-    good_total = sum(os.path.getsize(str(env.root / BUCKET / k)) for k in keys if k != bad)
-    assert [e["bytes"] for e in ledger()] == [good_total]
+    arrived = sum(sizes(env, keys)) - 1                     # the truncated file is one byte short
+    assert [e["bytes"] for e in ledger()] == [arrived]
     d = ds_dir()
     assert bad not in fetched_keys(d) and len(fetched_keys(d)) == 9
     assert count_rows(d) == 27
@@ -458,6 +495,70 @@ def test_size_mismatch_not_charged(env, cap, capsys, monkeypatch):
     assert code == 0, err
     assert len(run_file_lines(env)[-1]) == 1 and run_file_lines(env)[-1][0].split()[3] == "s3://%s/%s" % (BUCKET, bad)
     assert count_rows(d) == 30
+    assert [e["bytes"] for e in ledger()] == [arrived, sizes(env, [bad])[0]]
+
+
+def test_partial_batch_is_charged_for_the_files_that_arrived(env, cap, capsys, monkeypatch):
+    keys = alb10(env, capsys)
+    monkeypatch.setenv("FAKE_S5CMD_MISSING", keys[2])
+    code, out, err = go(cap)
+    assert code == 3, (out, err)
+    assert "NoSuchKey" in err
+    others = [k for k in keys if k != keys[2]]
+    assert [e["bytes"] for e in ledger()] == [sum(sizes(env, others))]
+    d = ds_dir()
+    assert fetched_keys(d) == others and count_rows(d) == 27     # what arrived intact is kept
+    assert staging_entries() == [] and mode(d) == 0o555
+    assert "fetched 9 files" in out
+    monkeypatch.delenv("FAKE_S5CMD_MISSING")
+    assert go(cap)[0] == 0
+    assert [l.split()[3] for l in run_file_lines(env)[-1]] == ["s3://%s/%s" % (BUCKET, keys[2])]
+    assert count_rows(d) == 30
+
+
+def test_oversize_object_is_charged_and_stops_the_fetch(env, cap, capsys, monkeypatch):
+    monkeypatch.setattr(cli_fetch, "MAX_BATCH_FILES", 4)
+    keys = alb10(env, capsys)
+    monkeypatch.setenv("FAKE_S5CMD_OVERSIZE", keys[3])
+    code, out, err = go(cap)
+    assert code == 3, (out, err)
+    assert "objects changed since the listing" in err and "logs-inventory" in err
+    assert [e["bytes"] for e in ledger()] == [sum(sizes(env, keys[:4])) + 10]
+    assert len(run_file_lines(env)) == 1                       # batches 2 and 3 never started
+    assert fetched_keys(ds_dir()) == keys[:3] and count_rows(ds_dir()) == 9
+    assert staging_entries() == [] and mode(ds_dir()) == 0o555
+
+
+def test_doctored_size_zero_manifest_is_charged_for_what_arrived(env, cap, capsys):
+    keys = alb10(env, capsys)
+    mp = state() / "manifests" / "alb" / "2026-03-09_2026-03-10.json"
+    doc = json.loads(mp.read_text())
+    for f in doc["files"]:
+        f["size"] = 0
+    mp.write_text(json.dumps(doc))
+    code, out, err = cap("alb", "2026-03-09")
+    assert code == 0 and "files 10  MB 0.0" in out
+    code, out, err = go(cap)
+    assert code == 3 and "objects changed since the listing" in err
+    assert [e["bytes"] for e in ledger()] == [sum(sizes(env, keys))]     # charged what really came down
+    assert fetched_keys(ds_dir()) == [] and staging_entries() == []
+
+
+def test_run_that_dies_without_verifying_still_charges_what_is_on_disk(env, cap, capsys, monkeypatch):
+    """An interrupt/refusal inside s5.run: files already down are paid for, nothing is converted."""
+    alb10(env, capsys)
+
+    def half_then_die(rf, profile, region, batchdir, bucket):
+        for n in (1, 2):
+            with open(os.path.join(batchdir, "%06d.gz" % n), "wb") as f:
+                f.write(b"x" * 100)
+        raise cli_fetch._Interrupted(143)
+
+    monkeypatch.setattr(cli_fetch.s5, "run", half_then_die)
+    code, out, err = go(cap)
+    assert code == 143
+    assert [e["bytes"] for e in ledger()] == [200]
+    assert fetched_keys(ds_dir()) == [] and staging_entries() == [] and mode(ds_dir()) == 0o555
 
 
 def test_aws_error_mid_fetch_charges_only_verified_batches(env, cap, capsys, monkeypatch):
@@ -822,3 +923,126 @@ def test_non_ascii_terminal_does_not_crash_the_dry_run(env, capsys):
     r = subprocess.run([str(BIN / "logs-fetch"), "alb", "2026-03-09"], capture_output=True, text=True, env=e, timeout=60)
     assert r.returncode == 0, r.stderr
     assert r.stdout.startswith("DRY RUN")
+
+
+def test_forced_fetch_past_the_marker_ttl_survives_when_within_caps(home, env, cap, capsys, monkeypatch):
+    """The per-batch check only needs the marker when the batch is over a cap."""
+    monkeypatch.setattr(cli_fetch, "MAX_BATCH_FILES", 3)
+    write_config(home, "DAY_MAX_MB=1\n")
+    alb10(env, capsys)
+    fill_day_cap(home, cap_mb=0)           # nothing used yet: a plain ledger line of 0 bytes
+    marker = make_marker(home)
+    real = convert.to_parquet
+
+    def age_marker(*a, **kw):
+        old = time.time() - 7200
+        os.utime(str(marker), (old, old))      # the marker expires after the first batch
+        return real(*a, **kw)
+
+    monkeypatch.setattr(cli_fetch.convert, "to_parquet", age_marker)
+    code, out, err = go(cap, "--force")
+    assert code == 0, (out, err)
+    assert len(fetched_keys(ds_dir())) == 10
+
+
+def test_forced_fetch_over_a_cap_with_expired_marker_stops(home, env, cap, capsys, monkeypatch):
+    monkeypatch.setattr(cli_fetch, "MAX_BATCH_FILES", 3)
+    write_config(home, "DAY_MAX_MB=1\n")
+    alb10(env, capsys)
+    fill_day_cap(home)                      # already at the cap: every batch is over
+    marker = make_marker(home)
+    real = convert.to_parquet
+
+    def age_marker(*a, **kw):
+        old = time.time() - 7200
+        os.utime(str(marker), (old, old))
+        return real(*a, **kw)
+
+    monkeypatch.setattr(cli_fetch.convert, "to_parquet", age_marker)
+    code, out, err = go(cap, "--force")
+    assert code == 2 and "marker" in err
+    assert len(fetched_keys(ds_dir())) == 3
+
+
+def test_append_failure_removes_the_new_part(env, cap, capsys, monkeypatch):
+    alb10(env, capsys)
+
+    def boom(d, records):
+        raise OSError(28, "No space left on device")
+
+    monkeypatch.setattr(cli_fetch, "_append_fetched", boom)
+    code, out, err = go(cap)
+    assert code == 2 and "No space" in err
+    assert [p for p in os.listdir(str(ds_dir())) if p.endswith(".parquet")] == []
+    assert staging_entries() == [] and mode(ds_dir()) == 0o555
+    assert len(ledger()) == 1                                       # the bytes were still paid for
+
+
+def test_append_fetched_truncates_a_partial_write(home, tmp_path, monkeypatch):
+    d = tmp_path / "ds"
+    d.mkdir()
+    cli_fetch._append_fetched(d, [{"key": "a"}])
+    before = (d / "fetched.jsonl").read_bytes()
+    real_write = os.write
+
+    def short_then_fail(fd, data):
+        real_write(fd, bytes(data)[:5])
+        raise OSError(28, "No space left on device")
+
+    monkeypatch.setattr(cli_fetch.os, "write", short_then_fail)
+    with pytest.raises(OSError):
+        cli_fetch._append_fetched(d, [{"key": "bbbbbbbbbb"}])
+    assert (d / "fetched.jsonl").read_bytes() == before
+
+
+def test_dataset_dir_sealed_even_if_batch_dir_removal_fails(env, cap, capsys, monkeypatch):
+    alb10(env, capsys)
+    real = paths.rmtree_force
+
+    def boom(p):
+        raise OSError(13, "Permission denied")
+
+    monkeypatch.setattr(cli_fetch.paths, "rmtree_force", boom)
+    code, out, err = go(cap)
+    assert code == 2
+    assert mode(ds_dir()) == 0o555
+    monkeypatch.setattr(cli_fetch.paths, "rmtree_force", real)
+    real(state() / "staging" / staging_entries()[0])
+
+
+def test_dataset_dir_sealed_when_interrupted_right_after_creation(env, cap, capsys, monkeypatch):
+    alb10(env, capsys)
+
+    def stop(*a, **kw):
+        raise cli_fetch._Interrupted(143)
+
+    monkeypatch.setattr(cli_fetch.paths, "private_subdir", _after_first(cli_fetch.paths.private_subdir, 2, stop))
+    code, out, err = go(cap)
+    assert code == 143
+    assert mode(ds_dir()) == 0o555 and staging_entries() == []
+
+
+def _after_first(real, n, boom):
+    """private_subdir wrapper: the nth call creates the directory and then 'gets a signal'."""
+    calls = []
+
+    def wrapper(parent, name):
+        r = real(parent, name)
+        calls.append(name)
+        if len(calls) == n:
+            boom()
+        return r
+
+    return wrapper
+
+
+def test_symlinked_dataset_dir_is_not_chmodded_through_the_link(env, cap, capsys, tmp_path):
+    alb10(env, capsys)
+    paths.ensure_private_dirs()
+    elsewhere = tmp_path / "elsewhere"
+    elsewhere.mkdir(mode=0o750)
+    run_dir = state() / "data" / RUN
+    run_dir.mkdir(mode=0o700)
+    (run_dir / "alb").symlink_to(elsewhere)
+    assert go(cap)[0] == 2
+    assert mode(elsewhere) == 0o750

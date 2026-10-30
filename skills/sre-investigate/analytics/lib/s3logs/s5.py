@@ -145,19 +145,17 @@ def _child_env(region: Optional[str]) -> dict:
     return env
 
 
-def run(run_file: Path, profile: Optional[str], region: Optional[str], batchdir: str) -> None:
-    """Run `s5cmd [--profile P] --log error run <run_file>`. Raises Refused or AwsError."""
+def run(run_file: Path, profile: Optional[str], region: Optional[str], batchdir: str, bucket: str) -> None:
+    """Run `s5cmd [--profile P] --log error run <run_file>`. Raises Refused or AwsError.
+    `bucket` is the configured bucket: every line of the file must name exactly that one."""
+    validate.bucket(bucket)
     _check_batchdir(batchdir)
     if profile is not None and not _PROFILE_RE.fullmatch(profile):
         raise Refused("invalid AWS profile name")
     if region is not None and not _REGION_RE.fullmatch(region):
         raise Refused("invalid AWS region")
     text = _read_run_file(Path(run_file), batchdir)
-    # The bucket is whatever the file names; it must be one safe bucket for every line.
-    m = re.match(r"cp -n --raw s3://([^/ ]+)/", text)
-    if not m:
-        raise Refused("run file line 1 is not a plain `cp -n --raw`")
-    validate_run_file(text, m.group(1), batchdir)
+    validate_run_file(text, bucket, batchdir)
     exe = shutil.which("s5cmd")
     if not exe:
         raise Refused("s5cmd was not found on PATH (run logs-status)")

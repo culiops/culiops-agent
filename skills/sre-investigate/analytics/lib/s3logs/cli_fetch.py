@@ -11,9 +11,12 @@ hit. Only `--yes --run <run-id>` downloads, and that spends money, so every step
   part-way stops the fetch;
 * objects come down through `s5cmd run` over a validated run file into a private batch dir
   under staging/ (0700), at most MAX_BATCH_FILES files or MAX_BATCH_BYTES per batch;
-* only objects whose local size equals the manifest size are charged (budget.charge), converted
-  to redacted Parquet (convert.to_parquet, which deletes the raw files) and recorded in
-  fetched.jsonl. Failures charge nothing for the files concerned. A re-run skips recorded keys;
+* every byte that arrived in the batch dir is charged (budget.charge), whether or not s5cmd
+  succeeded and whether or not it matches the manifest: the ledger must never under-count. Only
+  objects whose local size equals the manifest size are then converted to redacted Parquet
+  (convert.to_parquet, which deletes the raw files) and recorded in fetched.jsonl. A file larger
+  than listed means the object changed since the inventory: the batch is charged and the whole
+  fetch stops (exit 3). A re-run skips recorded keys;
 * the dataset dir data/<run>/<dataset>/ is kept 0555 (Parquet 0444) and made 0700 only while a
   batch is written; SIGINT/SIGTERM/SIGHUP clean up like `finally` (staging batch dir removed,
   dataset dir back to 0555) and exit 130/143/129. A signal that arrives while a batch is being
@@ -173,7 +176,14 @@ class Plan(NamedTuple):
 
 def _needs_next_day(ds: config.Dataset, day: dt.date, hours, minutes) -> bool:
     """Does the widened slice reach into the next day's first unit (R4)?"""
-    width = dt.timedelta(hours=1) if ds.type == "cloudfront" else dt.timedelta(minutes=5)
+    # A file starting within one file-width after the window end is taken too (widen). For the
+    # 5-minute types the interval ending exactly at midnight sits in the NEXT day's directory
+    # and starts 5 minutes before it, so the reach is two widths: any end after 23:50 needs
+    # day+1. CloudFront files are hourly and start on the hour: one width.
+    if ds.type == "cloudfront":
+        reach = dt.timedelta(hours=1)
+    else:
+        reach = dt.timedelta(minutes=10)
     midnight = dt.datetime(day.year, day.month, day.day, tzinfo=_UTC)
     if hours is not None:
         end = midnight + dt.timedelta(hours=hours[1] + 1)
@@ -181,7 +191,7 @@ def _needs_next_day(ds: config.Dataset, day: dt.date, hours, minutes) -> bool:
         end = midnight + dt.timedelta(minutes=minutes[1])
     else:
         end = midnight + dt.timedelta(days=1)
-    return end + width > midnight + dt.timedelta(days=1)
+    return end + reach > midnight + dt.timedelta(days=1)
 
 
 def _read_manifest(path: Path, ds: config.Dataset, frm: dt.date, to: dt.date) -> Tuple[str, List[Entry]]:
@@ -406,10 +416,18 @@ def _append_fetched(d: Path, records: List[dict]) -> None:
     data = "".join(json.dumps(r, separators=(", ", ": ")) + "\n" for r in records).encode("utf-8")
     fd = os.open(str(d / "fetched.jsonl"), os.O_WRONLY | os.O_APPEND | os.O_CREAT | os.O_NOFOLLOW, 0o600)
     try:
-        view = memoryview(data)
-        while view:
-            view = view[os.write(fd, view):]
-        os.fsync(fd)
+        before = os.fstat(fd).st_size
+        try:
+            view = memoryview(data)
+            while view:
+                view = view[os.write(fd, view):]
+            os.fsync(fd)
+        except BaseException:
+            try:
+                os.ftruncate(fd, before)         # no half-written record is left behind
+            except OSError:
+                pass
+            raise
     finally:
         os.close(fd)
 
@@ -542,11 +560,14 @@ def _real(plan: Plan, run_id: str, force: bool, sigs: _Signals) -> int:
             raise Refused("over the cap (%s); nothing was downloaded" % ", ".join(caps.over))
 
         run_dir = paths.private_subdir(paths.state_root() / "data", run_id)
-        d = paths.private_subdir(run_dir, ds.name)       # created or re-opened 0700
-        os.chmod(str(d), 0o555)
-        batchdir = None  # type: Optional[Path]
+        d = run_dir / ds.name
+        batchdir = paths.state_root() / "staging" / secrets.token_hex(16)
         try:
-            batchdir = paths.private_subdir(paths.state_root() / "staging", secrets.token_hex(16))
+            # The paths are fixed before anything is created, so `finally` can always seal the
+            # dataset dir (0555) and remove the batch dir, whatever fails or interrupts below.
+            d = paths.private_subdir(run_dir, ds.name)       # created or re-opened 0700
+            os.chmod(str(d), 0o555)
+            paths.private_subdir(paths.state_root() / "staging", batchdir.name)
             try:
                 _fetch_batches(plan, todo, run_id, force, sigs, salt, d, batchdir, totals)
             except (Refused, AwsError, convert.ConvertError, duck.DuckError):
@@ -558,16 +579,39 @@ def _real(plan: Plan, run_id: str, force: bool, sigs: _Signals) -> int:
             if totals.bad:
                 shown = ", ".join(e.key for e in totals.bad[:10])
                 more = " (and %d more)" % (len(totals.bad) - 10) if len(totals.bad) > 10 else ""
-                raise AwsError("%d file(s) failed size verification and were not charged or converted: %s%s"
+                raise AwsError("%d file(s) failed size verification (charged, not converted): %s%s"
                                % (len(totals.bad), shown, more),
                                "re-run the same command to retry them; if the objects changed since the "
                                "listing, run logs-inventory again first")
             return 0
         finally:
             with sigs.critical():
-                if batchdir is not None:
+                try:
                     paths.rmtree_force(batchdir)
-                os.chmod(str(d), 0o555)
+                finally:
+                    _seal(d)
+
+
+def _seal(d: Path) -> None:
+    """Dataset dir back to 0555, never through a symlink and never failing if it was not created."""
+    try:
+        if stat.S_ISDIR(os.lstat(str(d)).st_mode):
+            os.chmod(str(d), 0o555)
+    except FileNotFoundError:
+        pass
+
+
+def _received(batchdir: Path, run_file: Path) -> Dict[str, int]:
+    """Every regular file now in the batch dir (except the run file) -> its size on disk.
+    This is what actually came down, whatever the manifest said and however s5cmd ended."""
+    out = {}  # type: Dict[str, int]
+    for name in os.listdir(str(batchdir)):
+        if name == run_file.name:
+            continue
+        st = os.lstat(str(batchdir / name))
+        if stat.S_ISREG(st.st_mode):
+            out[name] = st.st_size
+    return out
 
 
 def _fetch_batches(plan: Plan, todo: List[Entry], run_id: str, force: bool, sigs: _Signals, salt: bytes,
@@ -576,7 +620,9 @@ def _fetch_batches(plan: Plan, todo: List[Entry], run_id: str, force: bool, sigs
     batches = _batches(todo)
     for bi, batch in enumerate(batches, 1):
         planned = sum(e.size for e in batch)
-        verdict = budget.check(cfg, planned, run_id, force, _now())
+        verdict = budget.check(cfg, planned, run_id, False, _now())
+        if not verdict.ok and force:
+            verdict = budget.check(cfg, planned, run_id, True, _now())   # the marker is needed only now
         if not verdict.ok:
             raise Refused("a cap was reached before batch %d/%d (%s); stopped. Data fetched so far is "
                           "kept; ask the user before going on" % (bi, len(batches), ", ".join(verdict.over)))
@@ -587,32 +633,58 @@ def _fetch_batches(plan: Plan, todo: List[Entry], run_id: str, force: bool, sigs
         fd = os.open(str(run_file), os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW, 0o600)
         with os.fdopen(fd, "w") as f:
             f.write(text)
-        s5.run(run_file, cfg.aws_profile, cfg.aws_region, str(batchdir))
+        run_err = None  # type: Optional[AwsError]
+        try:
+            s5.run(run_file, cfg.aws_profile, cfg.aws_region, str(batchdir), ds.bucket)
+        except AwsError as e:
+            run_err = e                   # files that did arrive are still charged (and converted) below
+        except BaseException:
+            # A refusal or an interrupt: whatever came down is paid for, but nothing is converted.
+            with sigs.critical():
+                got = sum(_received(batchdir, run_file).values())
+                if got:
+                    budget.charge(run_id, ds.name, got, _now())
+            raise
 
+        received = _received(batchdir, run_file)
         good = []  # type: List[Tuple[Entry, Path]]
         bad = []   # type: List[Entry]
+        oversize = []  # type: List[Entry]
         for n, e in enumerate(batch, 1):
-            p = batchdir / ("%06d.gz" % n)
-            try:
-                st = os.lstat(str(p))
-            except OSError:
-                bad.append(e)
+            name = "%06d.gz" % n
+            if name not in received:
+                if run_err is None:
+                    bad.append(e)          # s5cmd said ok but the file is not there
                 continue
-            if stat.S_ISREG(st.st_mode) and st.st_size == e.size:
-                good.append((e, p))
+            if received[name] == e.size:
+                good.append((e, batchdir / name))
             else:
                 bad.append(e)
-                os.unlink(str(p))
+                if received[name] > e.size:
+                    oversize.append(e)
         totals.bad.extend(bad)
-        if good:
-            verified = sum(e.size for e, _p in good)
-            with sigs.critical():
-                budget.charge(run_id, ds.name, verified, _now())
+        arrived = sum(received.values())
+        verified = sum(e.size for e, _p in good)
+        res = None
+        with sigs.critical():
+            # Every byte that arrived is charged, verified or not (verification only decides
+            # what is converted and recorded), so a re-run can never re-download for free.
+            if arrived:
+                budget.charge(run_id, ds.name, arrived, _now())
+            if good:
                 with _writable(d):
                     part = "part-%06d.parquet" % _next_part(d)
                     res = convert.to_parquet(ds.type, [p for _e, p in good], d / part, cfg, salt)
                     ts = _iso(_now())
-                    _append_fetched(d, [{"key": e.key, "size": e.size, "part": part, "ts": ts} for e, _p in good])
+                    try:
+                        _append_fetched(d, [{"key": e.key, "size": e.size, "part": part, "ts": ts}
+                                            for e, _p in good])
+                    except BaseException:
+                        try:
+                            os.unlink(str(d / part))     # rows without recorded keys would be duplicated
+                        except OSError:
+                            pass
+                        raise
                     meta = _read_meta(d) or {"sample_every": plan.every, "dataset": ds.name, "type": ds.type,
                                              "day_slices": []}
                     key = _slice_key(plan)
@@ -620,19 +692,25 @@ def _fetch_batches(plan: Plan, todo: List[Entry], run_id: str, force: bool, sigs
                         meta["day_slices"].append(key)
                     meta.update({"sample_every": plan.every, "dataset": ds.name, "type": ds.type})
                     _write_meta(d, meta)
+        totals.bytes += arrived
+        if res is not None:
             totals.files += len(good)
-            totals.bytes += verified
             totals.rows += res.rows
             totals.skipped_lines += res.skipped_lines
             for name in res.dropped_columns:
                 if name not in totals.dropped:
                     totals.dropped.append(name)
-            _out("batch %d/%d: %d files %s MB verified; rows %d%s" % (
-                bi, len(batches), len(good), _mb(verified), res.rows,
-                "; %d failed size verification" % len(bad) if bad else ""))
-        else:
-            _out("batch %d/%d: 0 files verified; %d failed size verification" % (bi, len(batches), len(bad)))
+        _out("batch %d/%d: %d files %s MB verified, %s MB received; rows %d%s" % (
+            bi, len(batches), len(good), _mb(verified), _mb(arrived), res.rows if res else 0,
+            "; %d failed size verification" % len(bad) if bad else ""))
         _clear_dir(batchdir)
+        if oversize:
+            shown = ", ".join(e.key for e in oversize[:5])
+            raise AwsError("objects changed since the listing (%d larger than listed: %s); stopped after "
+                           "charging what arrived" % (len(oversize), shown),
+                           "run logs-inventory again, then re-run")
+        if run_err is not None:
+            raise run_err
 
 
 # ---- purge ------------------------------------------------------------------------------------
