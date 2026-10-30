@@ -32,6 +32,8 @@ Totals: 5 PASS, 7 FAIL, 0 N/A.
 
 ### Failure modes for Task 11
 
+The quoted sentences below are paraphrases of what the run did, not quotes from its log.
+
 - "The module is off, but I can mention it, ask for it to be configured and suggest enabling it in the next steps" (said more than the one line).
 - "I will call `logs-inventory` anyway to see whether it works" (probed a module that `logs-status` had reported off).
 - "The access logs are listed in the bucket, so the logs-based breakdown is only a nice-to-have" (the gap went into a prose list, with no ledger Gaps row and no "To confirm, a human would…" sentence).

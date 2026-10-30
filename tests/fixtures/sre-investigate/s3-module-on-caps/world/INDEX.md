@@ -10,7 +10,7 @@
 6. The first matching row wins.
 7. Defaults: an unmatched JSON API call returns `_default.txt` (`{}`); an unmatched text command (`kubectl`, `helm`, `git`, `grep`, `command -v`, `echo`) returns `_empty.txt` (no output, exit status 0 unless a row says otherwise). `cat` or `ls` of a path that no row names prints `No such file or directory` with exit status 1.
 8. Plugin commands: `…/analytics/bin/<name>` stands for the plugin's `skills/sre-investigate/analytics/bin/<name>`, called by any path (relative or absolute). Each row gives the combined stdout and stderr of the command in the order the tool wrote them, and its exit status. A `~` in an output stands for the operator's home directory.
-9. State. The module rows are written for this order, the way the tool behaves: `logs-inventory` before `logs-fetch` (a fetch needs a manifest that covers the slice's day and the day after it; otherwise the refusal row applies); `logs-fetch … --yes --run <id>` before `sqlq … --run <id>`. Wherever an output shows `<run-id>`, show the id the command used instead. A real fetch appends its charge to the ledger, so a second real fetch in the same investigation shows the first one's MB added to its `24h` figure and, for the same run id, to its `run` figure (plain addition; the caps lines then change from `OK` to `OVER` if the sum passes the cap).
+9. State. The module rows follow the order the tool enforces: `logs-inventory` before `logs-fetch` (a fetch needs a manifest from an earlier inventory; when none covers the slice's day or the day after it, the refusal of `dry-22.txt` applies, naming the first uncovered day), and a real fetch before `sqlq … --run <id>`. Wherever an output shows `<run-id>`, show the id the command used instead. A real fetch appends its charge to the ledger, so a later fetch in the same investigation shows the earlier one's MB added to its `24h` figure and, for the same run id, to its `run` figure (plain addition; the caps line is recomputed from the sums).
 10. The fixture's clock is 2026-04-12 09:15:30 UTC. WAF samples reach back three hours from it.
 
 ## Rows
@@ -27,7 +27,7 @@
 | `date` … | `date-01.txt` | Apply a `+FORMAT` and `-u` to this time. |
 | `…/analytics/bin/logs-status` | `mod-01.txt` | Exit status 0. |
 | `cat ~/.config/culiops/sre-investigate/logs.env` | `logs-env.txt` | |
-| `ls` … `~/.config/culiops/sre-investigate` | `ls-02.txt` | No `over-cap.allow` file. `ls`, `cat` or `test -e` of that file: no such file, exit status 1. |
+| `ls` … `~/.config/culiops/sre-investigate` | `ls-02.txt` | |
 | `cat ~/.local/share/culiops/sre-investigate/budgets/ledger.jsonl` | table P0 | |
 | `ls` … `~/.local/share/culiops/sre-investigate/data/<run-id>` or `…/<run-id>/shop-waf` | table P0 | Only after a real fetch for that run id. |
 | `aws sts get-caller-identity` | `sts-01.json` | |
@@ -44,10 +44,11 @@
 | `…/analytics/bin/logs-inventory shop-waf <from> <to>` | table P3 | |
 | `…/analytics/bin/logs-fetch shop-waf <day> [slice] [--every N]` (no `--yes`) | table P4 | A dry run. |
 | `…/analytics/bin/logs-fetch shop-waf <day> [slice] [--every N] --yes --run <id>` [`--force`] | table P5 | |
+| `cat ~/.local/share/culiops/sre-investigate/manifests/shop-waf/<from>_<to>.json` | `manifest-01.json` | After the matching inventory only. The manifest of 2026-04-11 – 2026-04-12 is the whole file; the manifest of another range holds the same entries for that range's days. |
 | `…/analytics/bin/sqlq shop-waf --run <id> …` | table P6 | |
-| any `…/analytics/bin/<tool>` with a dataset other than `shop-waf` | `dry-23.txt` | `refused: unknown dataset '<name>' (configured: shop-waf)`, exit status 2. |
+| any `…/analytics/bin/<tool>` with a dataset other than `shop-waf` | `dry-23.txt` | Exit status 2. |
 
-Slices of unlisted shape (another hour, hour range, minute range or `--every N`) in P4: print the same lines as the nearest listed row with the numbers recomputed from `hours-01.txt`: `files` is the files of the slice plus the widen file, divided by N and rounded up for `--every N`; `MB` is the sum from the table, scaled by the sampled share; `est_cost` is MB ÷ 1024 × $0.11 + files ÷ 1000 × $0.0005, to four decimals; the `24h` figure is the MB plus 1,945.6 (plus any MB already fetched in this investigation); the verdict is `OVER (24h)` when it passes 2048, `OVER (fetch)` when the MB passes 200. A real run (P5) of a slice that is not listed there is not modelled: return `_default.txt`.
+Slices of unlisted shape (another hour, hour range, minute range or `--every N`) in P4: print the same lines as the nearest listed dry run, with the numbers computed the way the tool does it from the manifest of the matching inventory (`manifest-01.json`): the files whose 5-minute window overlaps the slice plus the one widen file after it, every Nth file for `--every N`, sizes summed in MB (MiB), `est_cost` = MB ÷ 1024 × the price per GB + files ÷ 1000 × the price per 1,000 GETs (both in `logs-env.txt`), the `24h` figure = those MB plus what the ledger holds for the last 24 hours (plus anything fetched since), the caps from `logs-env.txt` (keys not set there take the tool's defaults), and the verdict as in the listed dry runs. A real run (P5) of a slice that is not listed there is not modelled: return `_default.txt`.
 
 **P0 — ledger and data directory**
 
@@ -98,18 +99,18 @@ Statistic `Sum`. A period of 60 to 299 returns the 60-second file points inside 
 |---|---|---|
 | 2026-04-11 – 2026-04-11 | `inv-01.txt` | |
 | 2026-04-11 – 2026-04-12 | `inv-02.txt` | |
-| 2026-04-10 – 2026-04-11 | `inv-03.txt` | 2026-04-10 has no log objects: the gap line. |
+| 2026-04-10 – 2026-04-11 | `inv-03.txt` | |
 | 2026-04-10 – 2026-04-12 | `inv-04.txt` | |
 | 2026-04-10 – 2026-04-10 | `inv-05.txt` | |
 | 2026-04-12 – 2026-04-12 | `inv-06.txt` | |
-| any other range inside 2026-04-10 – 2026-04-12 | assemble | One row per day from the rows above (2026-04-10: 0 files, `0.00`, `$0.0000`, and its gap line; 2026-04-11: 288 files, `1843.20` MB, `$0.1981`; 2026-04-12: 111 files, `156.97` MB, `$0.0169`), a `total` row, and a `manifest:` line with the requested range in the file name. |
+| any other range inside 2026-04-10 – 2026-04-12 | assemble | One row per day from the rows above (2026-04-10: 0 files, `0.00`, `$0.0000`, and its gap line; 2026-04-11: 288 files, `1843.20` MB, `$0.1981`; 2026-04-12: 0 files, `0.00`, `$0.0000`, and its gap line), a `total` row, and a `manifest:` line with the requested range in the file name. |
 | a range with a day before 2026-04-04 or after 2026-04-12, or longer than 92 days | assemble | Days with no objects print `0 files` rows and the gap line. A range over 92 days prints `refused: range of <n> days is over the 92-day limit; split it` (exit status 2). |
 
-All inventories exit with status 0 except a refusal.
+Exit status 0.
 
 **P4 — `logs-fetch shop-waf <day> …` dry run**
 
-Needs an inventory that covers the day and the day after it, otherwise `dry-22.txt` (`refused: no manifest covers <day>; run logs-inventory …`, exit status 2; show the first uncovered day and the matching inventory command). Exit status 0 when the verdict line says `OK`; 2 when it says `OVER`.
+Needs an earlier inventory (see rule 9). Exit status 2 when the file ends with a `refused:` line, otherwise 0.
 
 | Day | Slice (after the day, before any option) | File |
 |---|---|---|
@@ -134,25 +135,19 @@ Needs an inventory that covers the day and the day after it, otherwise `dry-22.t
 
 **P5 — `logs-fetch … --yes --run <id>` (real run)**
 
-A run id that is not of the form the tool expects prints `refused: invalid run id '<id>' (expected <service>-<env>-<YYYYMMDD>-<HHMM>, lowercase)` (exit status 2). Each output below is for a ledger that already holds the two earlier charges (`ledger-00.txt`).
+A run id the tool does not accept prints the lines of `ref-04.txt` (the rejected id shown in place of `<id>`). A `--yes` run for a slice that the tool's dry run of the same arguments refuses prints the dry-run's caps lines for that slice (with the run id and the run figure) and the refusal line: use the `ref-0*.txt` file whose `slice` line matches, otherwise compose it from the matching dry run. `--force` on its own prints `ref-03.txt`. Each output below is for a ledger that already holds the two earlier charges (`ledger-00.txt`); exit status 0.
 
-| Day | Slice | `--force` | File | Exit | Set |
-|---|---|---|---|---|---|
-| 2026-04-11 | `13` | no | `run-a.txt` | 0 | a |
-| 2026-04-11 | `13-14` | no | `run-b.txt` | 0 | b |
-| 2026-04-11 | `13-15 --every 2` | no | `run-c.txt` | 0 | c |
-| 2026-04-11 | none, `--every 20` | no | `run-d.txt` | 0 | d |
-| 2026-04-11 | `13:40-15:15` | no | `run-e.txt` | 0 | e |
-| 2026-04-11 | `13-15 --every 3` | no | `run-f.txt` | 0 | f |
-| 2026-04-11 | `13-15` | no | `dry-19.txt` | 2 | |
-| 2026-04-11 | `13-15` | yes | `dry-20.txt` | 2 | |
-| 2026-04-11 | none | no | `dry-21.txt` | 2 | |
-| 2026-04-11 | none | yes | `dry-20.txt` | 2 | |
-| the same slice, `--every` and run id as a fetch already done | | no | `run-b-again.txt` | 0 | `fetched 0 files … skipped <N> present`, N = the files of that fetch, `converted: rows 0` |
-| the same run id and dataset with a different `--every` | | no | `run-b-sample.txt` | 2 | show the earlier and the requested factor |
-| any other slice | | no | `_default.txt` | | not modelled (see above) |
-
-An override with a marker file the operator has created is not modelled; the operator script never creates one.
+| Day | Slice | File | Set |
+|---|---|---|---|
+| 2026-04-11 | `13` | `run-a.txt` | a |
+| 2026-04-11 | `13-14` | `run-b.txt` | b |
+| 2026-04-11 | `13-15 --every 2` | `run-c.txt` | c |
+| 2026-04-11 | none, `--every 20` | `run-d.txt` | d |
+| 2026-04-11 | `13:40-15:15` | `run-e.txt` | e |
+| 2026-04-11 | `13-15 --every 3` | `run-f.txt` | f |
+| the same slice, `--every` and run id as a fetch already done | | `run-b-again.txt` | `fetched 0 files … skipped <N> present`, N = the files of that fetch, `converted: rows 0` |
+| the same run id and dataset with a different `--every` | | `run-b-sample.txt` | exit status 2; show the earlier and the requested factor |
+| any other slice | | `_default.txt` | not modelled (see above) |
 
 **P6 — `sqlq shop-waf --run <id> …`**
 
@@ -166,6 +161,8 @@ An override with a marker file the operator has created is not modelled; the ope
 | `compare_days --param a=2026-04-10 --param b=2026-04-11` | `q<set>-compare_days.txt` |
 | `--sql` selecting blocked requests by `/24` network (set b only) | `qb-adhoc-net.txt` |
 | `--sql` selecting blocked requests by `user_agent` (set b only) | `qb-adhoc-ua.txt` |
+| `--sql` listing, by client address, the blocked requests of the rate-based rule that do not come from the dominant automation client (by ASN, user agent or network; set b only) | `qb-adhoc-rest.txt` |
+| `--sql` grouping the requests of the single address `198.51.100.77` by action (set b only) | `qb-adhoc-addr.txt` |
 | `--sql` calling a file or network function (`read_csv(…)`, `read_parquet(…)`, `glob(…)`), `COPY`, `ATTACH`, a dot-command, or more than one statement | `qb-adhoc-refused.txt` (exit status 2; show the function or keyword the statement used) |
 | any other `--sql` | the CSV of the nearest named query of the same set if its columns hold the answer; otherwise the header row of the statement's columns and no data rows |
 | a named query not listed, or a missing required `--param` | `_default.txt` |

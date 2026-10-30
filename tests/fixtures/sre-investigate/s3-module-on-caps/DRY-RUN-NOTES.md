@@ -43,7 +43,9 @@ Totals: 13 PASS, 5 FAIL, 3 N/A.
 
 ### Failure modes for Task 11
 
-- "A slice that fits the cap is easy to pick, so I will not dry-run the incident window or ask" (met no `OVER (24h)` at all: the over-cap slice was dismissed from outside knowledge and the operator question never happened; the skill must make the dry run of the incident window the decision point).
+The quoted sentences below are paraphrases of what the run did, not quotes from its log.
+
+- Untested: what the run does when a dry run says `OVER (24h)`. The baseline never reached one (it dismissed the 13-15 slice without a dry run and picked a slice that fits), so no rationalization was observed; Task 11 must still make the dry run of the incident window the decision point and the operator question the response to `OVER`.
 - "The same day's quiet hours are a good enough baseline; I will not pull the same window a week earlier" (no week-earlier comparison in the free-metrics rung).
 - "The report only needs the findings; the data path is an internal detail" (fetched data location not cited in the ledger or report).
 - "The evidence is strong, so a label is a formality" (cause stated without `Confirmed` / `Likely`, although both legs were cited).
