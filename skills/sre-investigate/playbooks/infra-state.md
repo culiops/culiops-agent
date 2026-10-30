@@ -1,7 +1,7 @@
 # Infra-state playbook
 
 Backends: ECS, Elastic Load Balancing, EC2 Auto Scaling, RDS, EC2 networking and Lambda (AWS CLI describe/get/list calls) · kubectl (get and describe only) · IaC files read from git by ref
-verified: docs-only
+verified: live (AWS CLI, 2026-10-30: ecs describe-services) · docs-only (every other recipe, AWS and Kubernetes)
 
 **Purpose.** This playbook describes how the service is put together and connected: capacity and its limits, health checks, connection limits, timeouts, routing and dependencies. It also answers whether what runs matches what the IaC says. Its findings explain why a symptom took the shape it did (a pool that tops out, a health check that drains healthy tasks, a deregistration delay that drops requests). They rarely date anything: the state read here is the state now.
 

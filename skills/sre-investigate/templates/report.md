@@ -100,6 +100,6 @@ Prose only, and never a runnable command that changes state. A new session with 
 
 ## Cost
 
-<queries run> queries · <log GB scanned> GB of logs · <CloudWatch metric requests> metric requests · <other metered units> · about <amount> in metered charges
+<data queries run> queries (plus <n> free control-plane reads) · <log GB scanned> GB of logs · <CloudWatch metric requests> metric requests · <other metered units> · about <amount> in metered charges
 
 This line is last in the report and is always printed.

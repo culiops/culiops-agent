@@ -40,7 +40,7 @@ Run the discovery checklist in one wave, using the playbooks for the backends li
 - sibling set: the parallel deployments and how to tell them apart
 - the NAME of any session cookie or client-ID header the service uses (name only, never a value)
 
-Return the profile filled in exactly per the template. Mark every identifier you did not confirm with a query as (unverified), and every confirmed one as (verified <today's date>). A log label or stream whose value differs from the service's name stays (unverified) even when it returns data, until a query ties it to the service: a pod or host name shared with the service's pods, or a trace or request ID found in both. Lines that merely look like the service's traffic do not count. Finish with a "Queries" list: source, query, one-line result.
+Return the profile filled in exactly per the template. Mark every identifier you did not confirm with a query as (unverified), and every confirmed one as (verified <today's date>). A log label or stream whose value differs from the service's name stays (unverified) even when it returns data, until a query ties it to the service: the ECS task definition's awslogs-group naming that log group, a pod or host name shared with the service's pods, or a trace or request ID found in both. Lines that merely look like the service's traffic do not count. Finish with a "Queries" list: source, query, one-line result.
 ```
 
 ## TASK: LOG-SUMMARY

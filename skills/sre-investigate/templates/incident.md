@@ -58,6 +58,7 @@ Choose exactly one.
 | `dependency` | A service of the same organisation that this one calls or consumes from. |
 | `third-party` | A vendor or external service outside the organisation. |
 | `capacity` | Load within expected bounds exceeded provisioned or configured capacity. |
+| `capacity-config` | Capacity was set or scheduled away by configuration, with no load involved: desired count at zero, a scale-to-zero or stop schedule that did its job, a minimum that blocked a start. |
 | `resource-exhaustion` | A finite resource ran out: memory, descriptors, connections, disk, quota. |
 | `infra-event` | The platform changed under the service: instance reclaim, zone impairment, host failure, node drain. |
 | `schedule` | A timed job, scheduled scaling action or maintenance window. |

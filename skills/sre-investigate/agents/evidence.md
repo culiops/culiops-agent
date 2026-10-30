@@ -35,7 +35,7 @@ WINDOWS (UTC):
 - baseline (previous): <from> to <to>
 - baseline (-7d): <from> to <to>
 
-YOUR BUDGET SHARE: <n> queries, <x> GB of logs scanned, <m> CloudWatch metric requests, <other units from environment.md>, at most 3 waves. A Logs Insights query whose padded estimate (lower-bound estimate × the factor in environment.md) is above the ask threshold, or that has no estimate, is not yours to run: record it as a gap with the estimate.
+YOUR BUDGET SHARE: <n> queries, <x> GB of logs scanned, <m> CloudWatch metric requests, <other units from environment.md>, at most 3 waves. A Logs Insights query whose padded estimate (per the logs playbook: IncomingBytes over the window, or the padded storedBytes fallback) is above the ask threshold, or that has no estimate, is not yours to run: record it as a gap with the estimate.
 
 PREVIOUS VERDICT (escalation only): <the verdict block and its query table, or "none">
 LESSONS (hints only, up to ten): <lines from lessons.md, or "none">

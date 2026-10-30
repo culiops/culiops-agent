@@ -1,7 +1,7 @@
 # Metrics playbook
 
 Backends: CloudWatch (metrics, metric math, alarm history) · Prometheus (its HTTP API, the Grafana datasource proxy, or a Grafana MCP server), including kube-state-metrics and cAdvisor series · Grafana annotations · kubectl
-verified: docs-only
+verified: live (AWS CLI, 2026-10-30: cloudwatch get-metric-data in the three-window loop and in the 14d × 1h recurrence pull with its statistics jq, ECS form; cloudwatch list-metrics; cloudwatch describe-alarm-history) · docs-only (the alarm-history jq and the GetMetricData table jq, which ran on empty results only; the ALB, FILL and cluster-peer recipes; Prometheus, kube-state-metrics and kubectl)
 
 **Purpose.** Metrics are the cheapest way to answer five questions: how much traffic, how many failures, how slow, how saturated, and since when. They give the true onset (often minutes before the alert), the shape of the change, and whether the incident level is unusual at all. They never give the mechanism; that comes from logs and traces.
 
@@ -38,7 +38,7 @@ curl -sG "$PROM/api/v1/query" -H "Authorization: Bearer $GRAFANA_SERVICE_ACCOUNT
 ```
 <!-- doc: https://prometheus.io/docs/prometheus/latest/querying/basics/ -->
 
-CloudWatch dimension values for one metric (only metrics that reported in the past two weeks are listed):
+CloudWatch dimension values for one metric. `list-metrics` lists only metrics that reported data in the past two weeks, so for an older incident an empty list does not mean the dimension is wrong: query the incident window with `get-metric-data` before marking the identifier `(unverified)`.
 
 ```bash
 aws cloudwatch list-metrics --profile <profile> --region <region> \
@@ -54,6 +54,7 @@ Write each confirmed identifier into the service profile. An identifier you expe
 - **Step.** `step = max(60, range_seconds / 300)`. It keeps every range near 300 points, so a 6h range gets a 72 s step and a 1h range stays at 60 s.
 - **Three windows, one wave.** The same query runs for the incident window, the equal-length window just before it, and the incident window shifted back 7 days. Run all three in the same wave; the comparison is the result, a single window is not.
 - **CloudWatch period follows retention.** One-minute data exists for 15 days, five-minute data for 63 days, hourly data for 455 days. A window that starts more than 15 days ago needs `Period` ≥ 300; more than 63 days ago, `Period` 3600. Check the number of datapoints returned against the number expected before trusting a flat line.
+- **Onsets older than about 60 days.** Only hourly points exist, so a short window returns one or two of them: widen the window to several hours and say so. The previous and −7d windows may then overlap the incident or come back empty; record them as degenerate instead of comparing against them. Other sources age out too (CloudTrail after 90 days, ECS stopped tasks and Kubernetes events within hours), and each one that cannot reach the onset is a gap.
 
 ```bash
 step=$(( (END_S - START_S) / 300 )); [ "$step" -lt 60 ] && step=60
@@ -354,7 +355,8 @@ Common AWS saturation and dependency metrics for the same rungs (CloudWatch name
 
 | Layer | Metrics |
 |---|---|
-| ECS [`AWS/ECS`, `ECS/ContainerInsights`] | `CPUUtilization`, `MemoryUtilization` (Maximum and Average); `RunningTaskCount` against `DesiredTaskCount` |
+| ECS [`AWS/ECS`] | `CPUUtilization`, `MemoryUtilization` (Maximum and Average), dimensions `ClusterName` and `ServiceName` |
+| ECS [`ECS/ContainerInsights`, only when Container Insights is on] | `RunningTaskCount` against `DesiredTaskCount`, `PendingTaskCount`, dimensions `ClusterName` and `ServiceName` |
 | RDS / Aurora [`AWS/RDS`] | `DatabaseConnections`, `CPUUtilization`, `FreeableMemory`, `ReadLatency`, `WriteLatency`, `Deadlocks`; on burstable classes `CPUCreditBalance` |
 | ElastiCache [`AWS/ElastiCache`] | `EngineCPUUtilization`, `CurrConnections`, `Evictions`, `DatabaseMemoryUsagePercentage` |
 | NAT gateway [`AWS/NATGateway`] | `ErrorPortAllocation`, `PacketsDropCount`, `BytesOutToDestination` |
@@ -366,6 +368,24 @@ Common AWS saturation and dependency metrics for the same rungs (CloudWatch name
 <!-- doc: https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/Container-Insights-metrics-ECS.html -->
 
 Connection pools and poolers: the "used" gauge is sampled and its ceiling is `used + free`. The real signal that a cap was hit is the failure or connect-timeout counter, not the gauge touching a line.
+
+## Cluster peers (ECS)
+
+When the service shares an ECS cluster with other services, compare them before digging into one: desired against running count per service, then each peer's newest log event. Both reads are free control-plane calls. `describe-services` takes at most ten services per call, so the list is fed in groups of ten.
+
+```bash
+svcs=$(aws ecs list-services --profile <profile> --region <region> --cluster <cluster> \
+  --query 'serviceArns' --output text | tr '\t' '\n' | grep -v '^None$' | grep .)
+if [ -n "$svcs" ]; then
+  printf '%s\n' "$svcs" | xargs -n 10 aws ecs describe-services --profile <profile> --region <region> \
+    --cluster <cluster> --query 'services[].[serviceName, desiredCount, runningCount, pendingCount]' \
+    --output text --services
+fi
+```
+<!-- doc: https://docs.aws.amazon.com/cli/latest/reference/ecs/list-services.html -->
+<!-- doc: https://docs.aws.amazon.com/cli/latest/reference/ecs/describe-services.html -->
+
+For each peer's log group (its task definition's `awslogs-group`), the newest event comes from the liveness read in the logs playbook (CloudWatch Logs Insights, step 2). Peers that all went to zero, or all stopped writing, at the same time point at the cluster, its capacity provider or a shared schedule, not at one service. The `if` keeps an empty cluster from ending the chain with an error.
 
 ## GetMetricData to a table (jq)
 
@@ -402,7 +422,7 @@ jq -r '.MetricDataResults[] | select(.StatusCode != "Complete") | "\(.Id) \(.Sta
 
 ## Gotchas
 
-- **Identifiers differ across backends.** The service can be `checkout-api` in Prometheus labels, `checkout` in a log group name and `checkout-api-prod` in a CloudWatch dimension. Discover label values, dimension values and log group names; never build one from another. An identifier you have not seen in a discovery result stays `(unverified)` in the profile, and a query against it that returns nothing proves nothing.
+- **Identifiers differ across backends.** The service can be `checkout-api` in Prometheus labels, `checkout` in a log group name and `checkout-api-prod` in a CloudWatch dimension. Discover label values, dimension values and log group names; never build one from another. An identifier you have not seen in a discovery result stays `(unverified)` in the profile, and a query against it that returns nothing proves nothing. `list-metrics` only shows the past two weeks, so an old identifier missing from it is checked with `get-metric-data` over the incident window first.
 - **No data is not zero.** Most empty results come from a mistyped label value, a wrong dimension or the wrong region. Check the identifier before concluding "no errors". The exception is a metric documented as reported only when non-zero (`HTTPCode_ELB_5XX_Count`): there, a gap in a count is zero. A gap in a latency metric such as `TargetResponseTime` means no requests, not zero latency. Read the metric's reporting criteria.
 - **Zero is not unused.** A queue with no traffic or a function with no invocations may still be wired to a consumer, an event source mapping or a subscription. Check what consumes it, and ask the owner, before calling it dead.
 - **Averages hide tails.** `TargetResponseTime` Average can stay flat while p99 doubles. Use p95/p99.

@@ -1,7 +1,7 @@
 # Logs playbook
 
 Backends: CloudWatch Logs Insights · Loki (its HTTP API, `logcli`, the Grafana datasource proxy, or a Grafana MCP server) · kubectl (pod logs and events)
-verified: docs-only
+verified: live (AWS CLI, 2026-10-30: logs describe-log-groups with the storedBytes estimate jq; logs start-query and get-query-results with the error-count and raw-lines query strings) · docs-only (the result-flattening jq, which ran on empty results only; the liveness read and the IncomingBytes estimate, added after the live run; the pattern and parse strings; Loki, logcli and kubectl)
 
 **Purpose.** Logs answer what metrics cannot: the mechanism, the exact message, which component emitted it, when to the second, how often, and whether the set of messages changed at onset. They are also the most expensive signal per question, so every log query follows the ladder below. Long-range trends (anything past the metric-query cap below) come from the metrics playbook, never from logs.
 
@@ -30,7 +30,7 @@ Cheapest first. Each rung narrows the next one.
 
 **Backoff.** A log backend that answers slowly (more than about 10 s) or errors is under stress. Never answer that with more retries. Cut the window in half, or give the query up, and log the gap in the ledger.
 
-**Budget.** Every bytes-scanned figure (estimated before, actual after) counts against `budgets.<mode>.log_gb_scanned`. One rule decides when to stop and ask, in both modes: an Insights query whose padded estimate (step 2 below) is still above `insights_ask_threshold_gb` after narrowing, or that has no estimate, a query that would pass the run's `budgets.<mode>` totals, or a window wider than its `budgets.windows` cap. `per_query_soft_limit_gb` is not a prompt: a query estimated above it is narrowed first (shorter window, one stream, fewer log groups) and then runs as narrowed unless one of those three conditions applies.
+**Budget.** Every bytes-scanned figure (estimated before, actual after) counts against `budgets.<mode>.log_gb_scanned`. One rule decides when to stop and ask, in both modes: an Insights query whose padded estimate (step 3 below) is still above `insights_ask_threshold_gb` after narrowing, or that has no estimate, a query that would pass the run's `budgets.<mode>` totals, or a window wider than its `budgets.windows` cap. `per_query_soft_limit_gb` is not a prompt: a query estimated above it is narrowed first (shorter window, one stream, fewer log groups) and then runs as narrowed unless one of those three conditions applies.
 
 **Variables.** Recipes use the ledger's fixed window: `START_S`/`END_S` (epoch seconds), `ONSET_S` (onset, epoch seconds), `ONSET_MINUS_10`/`ONSET_PLUS_10` (onset ∓10 min, RFC 3339 UTC), and `RUN`, the run's raw directory as set in SKILL.md, Terms. `$GRAFANA_SERVICE_ACCOUNT_TOKEN` stands in for the `token_env` named in `environment.md`.
 
@@ -38,9 +38,37 @@ Cheapest first. Each rung narrows the next one.
 
 Logs Insights is billed per GB scanned, so it always runs under the estimate rule. Teams whose logs live only in CloudWatch use it as their main log backend; the ladder is the same.
 
-**1. Find the log groups.** Never guess a log group name from the service name. List by prefix; `--log-group-name-pattern` would also find them, but its output omits `storedBytes` and `retentionInDays`, which the estimate needs.
+**1. Find the log groups.** Never guess a log group name from the service name. On ECS, the task definition's `awslogs-group` log option names the service's group directly. Otherwise list by prefix; `--log-group-name-pattern` would also find them, but its output omits `storedBytes` and `retentionInDays`, which the estimate needs.
 
-**2. Estimate the scan.** `bytes ≈ storedBytes × window ÷ retention`, where retention is the shorter of `retentionInDays` and the group's age (a group with no retention keeps everything, so its age is the divisor). It assumes an even ingest rate, and `storedBytes` can be a compressed size while Insights bills the data it scans, so treat the figure as a **lower bound** that can be low by an order of magnitude. The figure the rules compare is the **padded estimate**: the lower bound × `insights_estimate_factor` from `environment.md` (default 10), or × the largest `bytesScanned ÷ estimate` ratio measured earlier in this run or recorded in `lessons.md` for this log group, whichever is larger. When `storedBytes` is missing, zero or unreadable (a denied call, an unfamiliar log class), there is no estimate: the query asks. Record the lower bound, the factor used and, after the query, the reported `bytesScanned` and its ratio to the lower bound.
+**2. Is anything there? (free)** Before any Insights query, read the newest stream of each log group. `describe-log-streams` is a free read: it is logged but does not count against the query budget.
+
+```bash
+for g in <log-group> <log-group>; do
+  aws logs describe-log-streams --profile <profile> --region <region> --log-group-name "$g" \
+    --order-by LastEventTime --descending --max-items 1 \
+    --query 'logStreams[0].{stream: logStreamName, last: lastEventTimestamp}' --output json \
+  | jq -r --arg g "$g" '[$g, (.stream // "none"), (if .last then (.last / 1000 | floor | todate) else "none" end)] | @tsv'
+done
+```
+<!-- doc: https://docs.aws.amazon.com/cli/latest/reference/logs/describe-log-streams.html -->
+
+`lastEventTimestamp` is updated on an eventual-consistency basis, typically within an hour of ingestion. If the newest event of every stream is earlier than the window's start and the window ended more than an hour ago, the group holds no events in the window: record that as the result (`no events in window`) and do not run the Insights query. Inside the last hour the field can lag, so it proves nothing there. The same read answers "is this peer still writing?" for a set of sibling services.
+
+**3. Estimate the scan.** Prefer the log group's own ingestion metric: the sum of `IncomingBytes` in the `AWS/Logs` namespace (dimension `LogGroupName`, uncompressed bytes) over the query window. It is close to what Insights scans, and costs one metric request.
+
+```bash
+aws cloudwatch get-metric-statistics --profile <profile> --region <region> \
+  --namespace AWS/Logs --metric-name IncomingBytes \
+  --dimensions Name=LogGroupName,Value=<log-group> \
+  --start-time "$START" --end-time "$END" --period 300 --statistics Sum \
+  --query 'sum(Datapoints[].Sum)' --output text
+```
+<!-- doc: https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/CloudWatch-Logs-Monitoring-CloudWatch-Metrics.html -->
+<!-- doc: https://docs.aws.amazon.com/cli/latest/reference/cloudwatch/get-metric-statistics.html -->
+
+`IncomingBytes` counts bytes when they are ingested, not by event time, so late or backfilled events shift it; use `--period 3600` once the window is more than 63 days old. The **padded estimate** is that sum × the largest `bytesScanned ÷ estimate` ratio measured earlier in this run or recorded in `lessons.md` for this group (1 when there is none).
+
+Fallback, only when the metric is unavailable (denied, or no datapoints for a group that step 2 shows was writing): `bytes ≈ storedBytes × window ÷ retention`, where retention is the shorter of `retentionInDays` and the group's age (a group with no retention keeps everything, so its age is the divisor). It assumes an even ingest rate, and `storedBytes` can be a compressed size, so it is a **lower bound**. Small or bursty groups can be off by several orders of magnitude, not one. Its padded estimate is the lower bound × `insights_estimate_factor` from `environment.md` (default 10), or × a larger measured ratio. When neither the metric nor a usable `storedBytes` exists, there is no estimate: the query asks. Record the method used, the raw figure, the factor and, after the query, the reported `bytesScanned` and its ratio.
 
 ```bash
 aws logs describe-log-groups --profile <profile> --region <region> \
@@ -58,9 +86,9 @@ aws logs describe-log-groups --profile <profile> --region <region> \
 <!-- doc: https://docs.aws.amazon.com/cli/latest/reference/logs/describe-log-groups.html -->
 <!-- doc: https://jqlang.org/manual/ -->
 
-**3. Ask above the threshold, even in Fast mode.** Prefer the narrowest window and the fewest log groups from the start. Narrow further if the padded estimate is above `per_query_soft_limit_gb`. If the padded estimate is still above `insights_ask_threshold_gb` in `environment.md`, or no estimate exists, show the query, the log groups, the window, the lower bound and the factor, and wait for a yes. This holds in Fast mode too, where read-only waves otherwise run without waiting. A no is recorded as a gap, with the narrower query that would fit.
+**4. Ask above the threshold, even in Fast mode.** Prefer the narrowest window and the fewest log groups from the start. Narrow further if the padded estimate is above `per_query_soft_limit_gb`. If the padded estimate is still above `insights_ask_threshold_gb` in `environment.md`, or no estimate exists, show the query, the log groups, the window, the estimate method, the figure and the factor, and wait for a yes. This holds in Fast mode too, where read-only waves otherwise run without waiting. A no is recorded as a gap, with the narrower query that would fit.
 
-**4. Run, poll, stop.** Narrowest window, fewest log groups, `filter` as the first command. Poll `get-query-results`; if the query is still running after about 2 minutes, stop it and narrow. Run the poll loop as a background job. One Insights query at a time.
+**5. Run, poll, stop.** Narrowest window, fewest log groups, `filter` as the first command. Poll `get-query-results`; if the query is still running after about 2 minutes, stop it and narrow. Run the poll loop as a background job. One Insights query at a time.
 
 ```bash
 qid=$(aws logs start-query --profile <profile> --region <region> \
@@ -224,7 +252,7 @@ Check the field name in the first record (`head -1`) before trusting the count; 
 - **Identifiers differ across backends.** The log group, the Loki label value and the metrics label for one service rarely match (`/ecs/checkout`, `app="checkout-api"`, `service="checkout-api-prod"`). Discover log group names and label values; never build one from another. Mark an identifier `(unverified)` in the profile until a discovery call has returned it, and treat an empty result against an unverified identifier as "wrong identifier", not "no errors".
 - **Line filters reduce returned lines, not bytes read.** In both Loki and Logs Insights, the selector (or log groups) and the window set the cost. A tighter `|=` or `filter` makes the answer smaller, not the bill.
 - **Timestamps are ingest-side.** A log line's timestamp can sit a second or two away from the event and from other backends. Allow ±1–2 s when lining lines up with traces, metrics or another log source.
-- **The Insights estimate is a lower bound.** It assumes even ingest across the retention period. A group that ingests in bursts can scan far more than the estimate over a burst window, and if `storedBytes` counts compressed data every estimate runs low. That is why the rules use the padded estimate. Record `bytesScanned ÷ lower bound` in the ledger for each query; a measured ratio above the factor raises the factor for the rest of the run and is a lesson candidate, and the org tunes `insights_estimate_factor` from those ratios.
+- **The `storedBytes` estimate is a lower bound.** It assumes even ingest across the retention period. A small group, or one that ingests in bursts, can scan several orders of magnitude more than this estimate over a short window, and if `storedBytes` counts compressed data every such estimate runs low. That is why `IncomingBytes` comes first and the fallback is padded. Record `bytesScanned ÷ estimate` in the ledger for each query; a measured ratio above the one in use raises it for the rest of the run and is a lesson candidate, and the org tunes `insights_estimate_factor` from those ratios.
 - **Never point Insights at a whole account.** `SOURCE logGroups()` without a prefix, or a long list of log groups, scans everything. Name the groups.
 - **Log classes differ.** `pattern` is not available on Infrequent Access log groups, and the Delivery class does not support Insights at all. Fall back to the metric-query rung with `parse`.
 - **Loki `entries` is not a line count.** Use `count_over_time` for any number you quote.
@@ -237,7 +265,7 @@ One row per query:
 
 - query ID, backend, log groups or selector, and the exact query string;
 - window in UTC, and which rung of the ladder it was;
-- the estimate before and the actual bytes scanned after (Insights `bytesScanned`, Loki stats bytes), their ratio, and the total against the budget; for Insights, the lower bound, the factor used and the padded estimate;
+- the estimate before and the actual bytes scanned after (Insights `bytesScanned`, Loki stats bytes), their ratio, and the total against the budget; for Insights, the estimate method (`IncomingBytes` or the `storedBytes` fallback), the raw figure, the factor and the padded estimate; a group skipped by the liveness check, with its newest event time;
 - for an Insights query whose padded estimate is above `insights_ask_threshold_gb`, or that had no estimate: the question asked and the answer;
 - whether it completed, was stopped at about 2 minutes, or backed off, and the gap it left;
 - the result in one line, with its confidence label; quoted lines cut to 300 characters, with secrets removed;

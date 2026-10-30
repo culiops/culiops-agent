@@ -1,5 +1,7 @@
 # Access and credentials (standalone)
 
+verified: live (AWS CLI, 2026-10-30: sts get-caller-identity, iam get-role, iam simulate-principal-policy) · docs-only (the fallback order, the Kubernetes write-check, the token check)
+
 Phase 0 reads this file before any backend is queried. It has seven sections, in order: where `environment.md` lives, which mode the run is in, who the run is authenticated as, whether AWS credentials could change anything, the same question for Kubernetes, how each backend gets its token, and how a failing backend is recorded. The ledger and report it mentions are defined in SKILL.md (the ledger is `ledger.md` in the run directory); a person checking access by hand needs only the commands under Mode detection, Identity and the two write-check sections.
 
 Everything here is read-only. The only commands that touch IAM are simulations and describe/get/list calls. No write API is ever called to find out whether a write would work.

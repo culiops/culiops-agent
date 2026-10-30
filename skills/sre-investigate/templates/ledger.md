@@ -11,7 +11,7 @@ How to fill it in:
 - Delete the guidance lines when you copy the file; keep the headings exactly as written.
 
 Mode: <Fast | Deep>
-Budget used: <queries used / allowed> · <log GB scanned / allowed> · <CloudWatch metric requests / allowed> · <other metered units, if any>
+Budget used: <data queries used / allowed (free control-plane reads are logged, not counted)> · <log GB scanned / allowed> · <CloudWatch metric requests / allowed> · <other metered units, if any>
 
 ## Problem
 

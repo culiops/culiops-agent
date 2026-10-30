@@ -113,7 +113,7 @@ Neutral default scale. Replace it with your organisation's scale; the skill only
 
 ## Budgets
 
-How much one run may spend on queries, and how wide a single query may reach. These are neutral starting values, and your organisation should tune them.
+How much one run may spend on queries, and how wide a single query may reach. These are neutral starting values, and your organisation should tune them. `queries` counts data queries against observability backends (metric, log, trace and error-tracker queries, the metered or heavy ones). Free control-plane reads (AWS describe, list, get and lookup calls, `kubectl get`/`describe`, git and `gh` reads) are logged in the query log but do not count.
 
 ```yaml
 budgets:
@@ -136,16 +136,16 @@ budgets:
     prom_quantile_range: 12h     # histogram_quantile over raw buckets (recording rules are exempt)
 
 insights_ask_threshold_gb: 2     # a CloudWatch Logs Insights query whose padded estimate is above this always asks, in both modes
-insights_estimate_factor: 10     # the storedBytes estimate is a lower bound; it is multiplied by this (or by a larger ratio measured in the run or in lessons.md) before any comparison
+insights_estimate_factor: 10     # used only by the fallback estimate (storedBytes, a lower bound); the preferred estimate is the log group's IncomingBytes over the window
 ```
 
 When the skill asks, in either mode:
 
-- a Logs Insights query whose padded estimate (lower-bound estimate × `insights_estimate_factor`) is still above `insights_ask_threshold_gb` after narrowing, or that has no estimate because stored bytes are unavailable (this applies even in Fast mode, where read-only waves otherwise run without waiting);
+- a Logs Insights query whose padded estimate (the log group's `IncomingBytes` over the window, or, as a fallback, the `storedBytes` lower bound × `insights_estimate_factor`) is still above `insights_ask_threshold_gb` after narrowing, or that has no estimate at all (this applies even in Fast mode, where read-only waves otherwise run without waiting);
 - a query would take the run past its `budgets.<mode>` totals;
 - a query needs a window wider than its `budgets.windows` cap.
 
-`per_query_soft_limit_gb` never prompts by itself: a log query estimated above it is narrowed first, and runs as narrowed if none of the three conditions above applies. Keep `insights_ask_threshold_gb` at or above the soft limit, so narrowing always comes before asking. Lower `insights_estimate_factor` only after the ledgers of several runs show `bytesScanned` staying well under the padded estimate for your log groups.
+`per_query_soft_limit_gb` never prompts by itself: a log query estimated above it is narrowed first, and runs as narrowed if none of the three conditions above applies. Keep `insights_ask_threshold_gb` at or above the soft limit, so narrowing always comes before asking. Lower `insights_estimate_factor` only after the ledgers of several runs show `bytesScanned` staying well under the padded estimate for your log groups; small or bursty groups can exceed the `storedBytes` lower bound by several orders of magnitude, so the factor alone is not a safe cap for them.
 
 ## Notes
 

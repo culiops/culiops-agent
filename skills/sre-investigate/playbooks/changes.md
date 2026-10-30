@@ -1,7 +1,7 @@
 # Changes playbook
 
 Backends: ECS (AWS CLI) · EC2 Auto Scaling and Application Auto Scaling · EventBridge rules and EventBridge Scheduler · Systems Manager maintenance windows · RDS and ElastiCache events · CloudTrail (`lookup-events`) · kubectl and Helm (read verbs only) · Grafana annotations · git (a local clone, read by ref) and `gh` (read-only calls) · public vendor status pages
-verified: docs-only
+verified: live (AWS CLI, 2026-10-30: ecs describe-services, ecs describe-task-definition, the ecs list-tasks call, events list-rules, application-autoscaling describe-scheduled-actions, ssm describe-maintenance-windows, cloudtrail lookup-events with ReadOnly=false) · docs-only (EventBridge Scheduler, denied on the test role; ecs describe-tasks and the other schedule, scaling and event recipes, which had nothing to read; the old-against-new recipes; recipes added after the live run; kubectl, Helm, git, gh and Grafana)
 
 **Purpose.** This playbook builds the list of everything that changed around the onset: deploys, task and pod churn, scaling, schedules that fired, infrastructure applies, managed-service events, upstream deploys and vendor incidents. Each entry goes on the ledger timeline with its UTC time and source. The list is a set of candidates. A change becomes a suspect only when it touches the failing path, and a cause only when evidence from the other playbooks ties it to the symptom.
 
@@ -52,10 +52,13 @@ Stopped tasks, with their stop code, reason and container exit codes:
 arns=$(aws ecs list-tasks --profile <profile> --region <region> --cluster <cluster> \
   --service-name <service> --desired-status STOPPED --max-items 100 \
   --query 'taskArns' --output text)
-[ -n "$arns" ] && [ "$arns" != "None" ] && \
-aws ecs describe-tasks --profile <profile> --region <region> --cluster <cluster> --tasks $arns \
-  --query 'tasks[].{task: taskArn, taskDef: taskDefinitionArn, stoppedAt: stoppedAt, stopCode: stopCode, reason: stoppedReason, containers: containers[].{name: name, exit: exitCode, reason: reason}}' \
-  --output json > "$RUN/c-ecs-stopped.json"
+if [ -n "$arns" ] && [ "$arns" != "None" ]; then
+  TZ=UTC aws ecs describe-tasks --profile <profile> --region <region> --cluster <cluster> --tasks $arns \
+    --query 'tasks[].{task: taskArn, taskDef: taskDefinitionArn, stoppedAt: stoppedAt, stopCode: stopCode, reason: stoppedReason, containers: containers[].{name: name, exit: exitCode, reason: reason}}' \
+    --output json > "$RUN/c-ecs-stopped.json"
+else
+  echo "[]" > "$RUN/c-ecs-stopped.json"   # no stopped tasks listed
+fi
 ```
 <!-- doc: https://docs.aws.amazon.com/cli/latest/reference/ecs/list-tasks.html -->
 <!-- doc: https://docs.aws.amazon.com/cli/latest/reference/ecs/describe-tasks.html -->
@@ -135,9 +138,10 @@ The falsification of any deploy or rollout candidate: the new revision in the in
 for st in RUNNING STOPPED; do
   arns=$(TZ=UTC aws ecs list-tasks --profile <profile> --region <region> --cluster <cluster> \
     --service-name <service> --desired-status "$st" --max-items 100 --query 'taskArns' --output text)
-  [ -n "$arns" ] && [ "$arns" != "None" ] && \
-  TZ=UTC aws ecs describe-tasks --profile <profile> --region <region> --cluster <cluster> --tasks $arns \
-    --query 'tasks[].[taskArn, taskDefinitionArn, startedAt, stoppedAt]' --output text
+  if [ -n "$arns" ] && [ "$arns" != "None" ]; then
+    TZ=UTC aws ecs describe-tasks --profile <profile> --region <region> --cluster <cluster> --tasks $arns \
+      --query 'tasks[].[taskArn, taskDefinitionArn, startedAt, stoppedAt]' --output text
+  fi
 done > "$RUN/c-task-revisions.tsv"
 ```
 
@@ -194,6 +198,9 @@ aws scheduler list-schedules --profile <profile> --region <region> \
 aws scheduler get-schedule --profile <profile> --region <region> --group-name <group> --name <schedule> \
   --query '{expression: ScheduleExpression, timezone: ScheduleExpressionTimezone, state: State, target: Target.Arn, window: FlexibleTimeWindow}'
 ```
+
+A Scheduler target can be a universal target that calls an API directly, for example `arn:aws:scheduler:::aws-sdk:ecs:updateService`, which changes an ECS service's desired count or task definition on a timer with no deploy pipeline involved. When `list-schedules` is denied, record the gap and look for the effect instead: Application Auto Scaling activities (below) and CloudTrail `UpdateService` events (see CloudTrail).
+<!-- doc: https://docs.aws.amazon.com/scheduler/latest/UserGuide/managing-targets-universal.html -->
 <!-- doc: https://docs.aws.amazon.com/scheduler/latest/APIReference/API_ListSchedules.html -->
 <!-- doc: https://docs.aws.amazon.com/cli/latest/reference/scheduler/get-schedule.html -->
 
@@ -273,6 +280,21 @@ aws elasticache describe-events --profile <profile> --region <region> \
 <!-- doc: https://docs.aws.amazon.com/cli/latest/reference/rds/describe-events.html -->
 <!-- doc: https://docs.aws.amazon.com/cli/latest/reference/elasticache/describe-events.html -->
 
+ECS services, Fargate included, scale through Application Auto Scaling, not an Auto Scaling group. Their activities and policies:
+
+```bash
+TZ=UTC aws application-autoscaling describe-scaling-activities --profile <profile> --region <region> \
+  --service-namespace ecs --resource-id service/<cluster>/<service> --max-items 100 \
+  --query 'ScalingActivities[].[StartTime, StatusCode, Description, Cause]' --output text
+TZ=UTC aws application-autoscaling describe-scaling-policies --profile <profile> --region <region> \
+  --service-namespace ecs --resource-id service/<cluster>/<service> \
+  --query 'ScalingPolicies[].[PolicyName, PolicyType, CreationTime]' --output text
+```
+<!-- doc: https://docs.aws.amazon.com/cli/latest/reference/application-autoscaling/describe-scaling-activities.html -->
+<!-- doc: https://docs.aws.amazon.com/cli/latest/reference/application-autoscaling/describe-scaling-policies.html -->
+
+A `Cause` naming a scheduled action or an alarm-driven policy dates a desired-count change; a change with no activity at all came from somewhere else (a deploy, a direct `UpdateService` call).
+
 Scaling activities come back newest first with no time filter. If the oldest `StartTime` printed is still later than `<onset-2h>`, raise `--max-items` and run it again; if the window still is not reached, record the shortfall as a coverage gap. The scheduled-action listing above shows only actions that have not run yet or have not ended, so a one-time action that fired at the onset of a past incident appears only here, with the action's name in `Cause`.
 
 Repeat the RDS call with `--source-type db-instance` for each instance: failovers and reboots are often reported per instance. Without `--start-time`, both event APIs return only the last hour.
@@ -315,6 +337,22 @@ TZ=UTC aws cloudtrail lookup-events --profile <profile> --region <region> \
 - **Two requests per second,** per account and Region, and 90 days of history. A busy account can have thousands of writes in the window, and each page is one request: keep the window short rather than adding a cap. Never loop over resources; never turn to CloudTrail Lake (it is billed per query) unless the operator asks.
 - **The right Region.** Look up the Region where the resource lives. IAM, STS and CloudFront calls are logged in `us-east-1`.
 <!-- doc: https://docs.aws.amazon.com/awscloudtrail/latest/userguide/cloudtrail-concepts.html -->
+- **ECS service changes carry no resources.** `UpdateService` events often list no `Resources`, so the resource filter above misses them. Look them up by event name and filter locally on the request; the full record passes through `jq` and is never saved:
+
+  ```bash
+  TZ=UTC aws cloudtrail lookup-events --profile <profile> --region <region> \
+    --lookup-attributes AttributeKey=EventName,AttributeValue=UpdateService \
+    --start-time <onset-2h> --end-time <onset+15m> --output json \
+  | jq -r '.Events[] | .CloudTrailEvent | fromjson
+      | select((.requestParameters.service // "") | contains("<service>"))
+      | [.eventTime, (.userIdentity.sessionContext.sessionIssuer.userName // .userIdentity.type),
+         (.requestParameters.cluster // "-"), .requestParameters.service,
+         (.requestParameters.desiredCount // "-"), (.requestParameters.taskDefinition // "-")] | @tsv'
+  ```
+  <!-- doc: https://docs.aws.amazon.com/awscloudtrail/latest/userguide/view-cloudtrail-events-cli.html -->
+
+  The issuer is the role, not the person behind it. A desired count set to zero with no deploy is a configuration change, often a schedule's.
+- **Older than 90 days.** `lookup-events` reaches back 90 days. For an older onset, CloudTrail is a gap unless the account keeps a trail in S3 that the operator can query.
 - **People.** Events carry user names and source addresses. Leave `CloudTrailEvent` (the full record) out of the output, and put a person's name in the report only if who made the change is itself the finding; otherwise the role is enough.
 
 ## IaC history
