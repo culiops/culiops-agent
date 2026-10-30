@@ -7,6 +7,11 @@ Money depends on this module, so it fails closed:
   or deletes the marker;
 - caps come from the Config object (logs.env or defaults), never from the environment.
 
+Known limitation (accepted): the marker is only a file, so an agent running as the same user
+can create the marker itself. Nothing in this module can tell the user's file from the agent's.
+The boundary is the instruction (the skill tells the agent never to create it and never to pass
+--force unless the user says they made it) plus the user's own credentials, not code.
+
 Units: caps and `Headroom` values are MiB (1024*1024 bytes), `planned_bytes` and ledger
 `bytes` are integer bytes. The ledger is JSON lines:
     {"ts": "<ISO-8601 UTC, Z>", "run": "<run-id>", "dataset": "<name>", "bytes": <int >= 0>}
@@ -220,6 +225,11 @@ def charge(run_id: str, dataset: str, verified_bytes: int, now: datetime.datetim
             while view:
                 view = view[os.write(fd, view):]
             os.fsync(fd)
+        except OSError as e:
+            # The bytes were already downloaded, so a failed ledger write must stop the run
+            # loudly. A short write can leave a partial last line, which later reads refuse.
+            raise Refused("cannot write budget ledger %s: %s; remove only the last partial line "
+                          "(if there is one) and re-run" % (_ledger_path(), e.strerror or "error"))
         finally:
             os.close(fd)
     finally:

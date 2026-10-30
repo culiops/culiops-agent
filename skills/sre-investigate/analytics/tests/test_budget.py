@@ -344,3 +344,36 @@ def test_concurrent_charges_not_lost(home):
     assert len(recs) == 100
     assert all(r == {"ts": "2026-03-09T12:00:00Z", "run": RUN, "dataset": "ds", "bytes": 7} for r in recs)
     assert budget.headroom(Config(), RUN, NOW).run_mb_used == pytest.approx(700 / MIB)
+
+
+# ---- write failures and the documented limitation (Task 7, R21/R22) --------------------------
+
+def test_charge_write_failure_is_refused_naming_the_ledger(home, monkeypatch):
+    import errno
+
+    def boom(fd, data):
+        raise OSError(errno.ENOSPC, "No space left on device")
+
+    monkeypatch.setattr(budget.os, "write", boom)
+    with pytest.raises(Refused) as ei:
+        budget.charge(RUN, "ds", 10, NOW)
+    msg = str(ei.value)
+    assert "ledger.jsonl" in msg and "remove only the last partial line" in msg
+
+
+def test_charge_fsync_failure_is_refused_naming_the_ledger(home, monkeypatch):
+    import errno
+
+    def boom(fd):
+        raise OSError(errno.EIO, "Input/output error")
+
+    monkeypatch.setattr(budget.os, "fsync", boom)
+    with pytest.raises(Refused) as ei:
+        budget.charge(RUN, "ds", 10, NOW)
+    assert "ledger.jsonl" in str(ei.value) and "remove only the last partial line" in str(ei.value)
+
+
+def test_module_docstring_states_the_marker_limitation():
+    doc = " ".join(budget.__doc__.split())
+    assert "same user" in doc and "can create the marker" in doc
+    assert "the instruction" in doc and "credentials" in doc

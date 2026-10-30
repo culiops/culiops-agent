@@ -1,0 +1,94 @@
+#!/usr/bin/env python3
+"""Test stub for s5cmd. Supports `version` and `[--profile P] [--log L] run <file>`.
+
+Each `run` line must be exactly `cp -n --raw s3://<bucket>/<key> <dest>`; the object is the file
+$FAKE_S3_ROOT/<bucket>/<key> and is copied to <dest>. Every call appends two JSON lines to
+$FAKE_ARGV_LOG: ["s5cmd", <argv>...] and ["s5cmd-run-file", <line>...].
+
+Knobs (environment):
+  FAKE_S5CMD_TRUNCATE=<key>        write that object one byte short
+  FAKE_S5CMD_FAIL_ON_BATCH=<n>     the nth `run` invocation (counted across calls) writes
+                                   $FAKE_S5CMD_ERROR to stderr and exits 1 without copying
+  FAKE_S5CMD_SLEEP=<seconds>       sleep after logging, before copying (for signal tests)
+"""
+import json
+import os
+import shlex
+import shutil
+import sys
+import time
+
+
+def die(msg, code=2):
+    sys.stderr.write("stub s5cmd: %s\n" % msg)
+    sys.exit(code)
+
+
+def main():
+    argv = sys.argv[1:]
+    if argv == ["version"]:
+        print("v2.3.0-test")
+        return
+    log = os.environ.get("FAKE_ARGV_LOG")
+    rest = list(argv)
+    while rest and rest[0].startswith("-"):
+        if rest[0] == "--profile" and len(rest) > 1:
+            rest = rest[2:]
+        elif rest[0] == "--log" and len(rest) > 1:
+            rest = rest[2:]
+        else:
+            die("unexpected option %r" % rest[0])
+    if len(rest) != 2 or rest[0] != "run":
+        die("only `run <file>` is supported")
+    with open(rest[1]) as fh:
+        text = fh.read()
+    lines = text.split("\n")
+    if lines and lines[-1] == "":
+        lines.pop()
+    if log:
+        with open(log, "a") as f:
+            f.write(json.dumps(["s5cmd"] + argv) + "\n")
+            f.write(json.dumps(["s5cmd-run-file"] + lines) + "\n")
+    count = 1
+    if log:
+        cpath = log + ".s5count"
+        if os.path.exists(cpath):
+            with open(cpath) as f:
+                count = int(f.read().strip() or "0") + 1
+        with open(cpath, "w") as f:
+            f.write(str(count))
+    fail_on = os.environ.get("FAKE_S5CMD_FAIL_ON_BATCH")
+    if fail_on and int(fail_on) == count:
+        sys.stderr.write(os.environ.get("FAKE_S5CMD_ERROR", "ERROR stub failure") + "\n")
+        sys.exit(1)
+    pause = os.environ.get("FAKE_S5CMD_SLEEP")
+    if pause:
+        time.sleep(float(pause))
+    root = os.environ.get("FAKE_S3_ROOT")
+    if not root:
+        die("FAKE_S3_ROOT is not set")
+    truncate = os.environ.get("FAKE_S5CMD_TRUNCATE")
+    failed = False
+    for line in lines:
+        parts = shlex.split(line)
+        if len(parts) != 5 or parts[:3] != ["cp", "-n", "--raw"] or not parts[3].startswith("s3://"):
+            die("unsupported run line %r" % line)
+        bucket, _, key = parts[3][len("s3://"):].partition("/")
+        dest = parts[4]
+        src = os.path.join(root, bucket, key)
+        if not os.path.isfile(src):
+            sys.stderr.write('ERROR "%s": NoSuchKey: The specified key does not exist.\n' % line)
+            failed = True
+            continue
+        if os.path.exists(dest):
+            continue                      # -n: no clobber
+        if truncate and key == truncate:
+            with open(src, "rb") as s, open(dest, "wb") as d:
+                d.write(s.read()[:-1])
+        else:
+            shutil.copyfile(src, dest)
+    if failed:
+        sys.exit(1)
+
+
+main()

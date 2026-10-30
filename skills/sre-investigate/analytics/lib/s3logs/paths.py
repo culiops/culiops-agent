@@ -2,7 +2,11 @@
 from __future__ import annotations
 
 import os
+import re
+import stat
+import time
 from pathlib import Path
+from typing import List, Optional
 
 from s3logs.validate import Refused
 
@@ -62,3 +66,82 @@ def private_subdir(parent: Path, name: str) -> Path:
     p = parent / name
     _private_dir(p, 0o700)
     return p
+
+
+# ---- removal helpers (staging sweep, purge) --------------------------------------------------
+
+STAGING_STALE_S = 24 * 60 * 60
+# What logs-fetch itself creates under staging/: its batch dir and convert's private dirs.
+_STAGING_NAME_RE = re.compile(r"(?:[0-9a-f]{32}|conv-[0-9a-f]{16})")
+
+
+def _empty_dir(fd: int) -> None:
+    """Delete everything inside the open directory `fd`, never following a symlink."""
+    for name in os.listdir(fd):
+        st = os.lstat(name, dir_fd=fd)
+        if stat.S_ISDIR(st.st_mode):
+            child = os.open(name, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW, dir_fd=fd)
+            try:
+                os.fchmod(child, 0o700)
+                _empty_dir(child)
+            finally:
+                os.close(child)
+            os.rmdir(name, dir_fd=fd)
+        else:
+            os.unlink(name, dir_fd=fd)
+
+
+def rmtree_force(path: Path) -> None:
+    """Remove a directory tree even when parts of it are read-only (dataset dirs are 0555).
+
+    Every directory is opened with O_NOFOLLOW and made writable before it is emptied, and
+    entries are removed relative to the open directory, so a symlink anywhere in the tree is
+    unlinked, never followed. A symlink at `path` itself is unlinked and its target left alone.
+    """
+    p = str(path)
+    try:
+        st = os.lstat(p)
+    except FileNotFoundError:
+        return
+    if not stat.S_ISDIR(st.st_mode):
+        os.unlink(p)
+        return
+    fd = os.open(p, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW)
+    try:
+        os.fchmod(fd, 0o700)
+        _empty_dir(fd)
+    finally:
+        os.close(fd)
+    os.rmdir(p)
+
+
+def sweep_staging(max_age_s: int = STAGING_STALE_S, now: Optional[float] = None) -> List[str]:
+    """Remove batch dirs in staging/ not touched for `max_age_s` (default one day).
+
+    staging/ is mode 0300 (no listing), so it is made 0700 only for the listing and removals
+    and put back to 0300 in `finally`. Only directories named like the ones logging creates are
+    removed; symlinks and anything else are left alone. Returns the removed names.
+    """
+    root = state_root() / "staging"
+    try:
+        st = os.lstat(str(root))
+    except FileNotFoundError:
+        return []
+    if stat.S_ISLNK(st.st_mode) or not stat.S_ISDIR(st.st_mode):
+        raise Refused("%s is not a private directory" % (root,))
+    cutoff = (time.time() if now is None else now) - max_age_s
+    removed = []  # type: List[str]
+    os.chmod(str(root), 0o700)
+    try:
+        for name in sorted(os.listdir(str(root))):
+            if not _STAGING_NAME_RE.fullmatch(name):
+                continue
+            child = root / name
+            cst = os.lstat(str(child))
+            if not stat.S_ISDIR(cst.st_mode) or cst.st_mtime > cutoff:
+                continue
+            rmtree_force(child)
+            removed.append(name)
+    finally:
+        os.chmod(str(root), 0o300)
+    return removed

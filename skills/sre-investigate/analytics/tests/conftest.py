@@ -33,7 +33,13 @@ def home(tmp_path, monkeypatch):
     h = tmp_path / "home"
     h.mkdir()
     monkeypatch.setenv("HOME", str(h))
-    return h
+    yield h
+    # staging/ is mode 0300 and dataset dirs 0555; make everything removable so pytest can clean up.
+    for dirpath, dirnames, _files in os.walk(str(h)):
+        for d in dirnames:
+            full = os.path.join(dirpath, d)
+            if not os.path.islink(full):
+                os.chmod(full, 0o700)
 
 
 class StubPath:
