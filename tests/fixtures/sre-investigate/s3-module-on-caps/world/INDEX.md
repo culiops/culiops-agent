@@ -135,19 +135,33 @@ Needs an earlier inventory (see rule 9). Exit status 2 when the file ends with a
 
 **P5 — `logs-fetch … --yes --run <id>` (real run)**
 
-A run id the tool does not accept prints the lines of `ref-04.txt` (the rejected id shown in place of `<id>`). A `--yes` run for a slice that the tool's dry run of the same arguments refuses prints the dry-run's caps lines for that slice (with the run id and the run figure) and the refusal line: use the `ref-0*.txt` file whose `slice` line matches, otherwise compose it from the matching dry run. `--force` on its own prints `ref-03.txt`. Each output below is for a ledger that already holds the two earlier charges (`ledger-00.txt`); exit status 0.
-
 | Day | Slice | File | Set |
 |---|---|---|---|
-| 2026-04-11 | `13` | `run-a.txt` | a |
-| 2026-04-11 | `13-14` | `run-b.txt` | b |
-| 2026-04-11 | `13-15 --every 2` | `run-c.txt` | c |
+| 2026-04-11 | none (whole day) | `ref-02.txt` | |
+| 2026-04-11 | none, `--every 12` | `ref-06.txt` | |
 | 2026-04-11 | none, `--every 20` | `run-d.txt` | d |
-| 2026-04-11 | `13:40-15:15` | `run-e.txt` | e |
+| 2026-04-11 | `12-16` | `ref-05.txt` | |
+| 2026-04-11 | `13` | `run-a.txt` | a |
+| 2026-04-11 | `14` | `_default.txt` | not modelled |
+| 2026-04-11 | `15` | `_default.txt` | not modelled |
+| 2026-04-11 | `13-14` | `run-b.txt` | b |
+| 2026-04-11 | `14-15` | `_default.txt` | not modelled |
+| 2026-04-11 | `13-15` | `ref-01.txt` | |
+| 2026-04-11 | `13-15 --every 2` | `run-c.txt` | c |
 | 2026-04-11 | `13-15 --every 3` | `run-f.txt` | f |
+| 2026-04-11 | `13-15 --every 4` | `_default.txt` | not modelled |
+| 2026-04-11 | `13 --every 2` | `_default.txt` | not modelled |
+| 2026-04-11 | `13-14 --every 2` | `_default.txt` | not modelled |
+| 2026-04-11 | `13:35-14:05` | `_default.txt` | not modelled |
+| 2026-04-11 | `13:40-15:15` | `run-e.txt` | e |
+| 2026-04-10 | none | `_default.txt` | not modelled |
+| any slice, with `--force` added | | `ref-03.txt` | |
+| any slice, with a run id the tool does not accept | | `ref-04.txt` | the rejected id shown in place of `<id>` |
 | the same slice, `--every` and run id as a fetch already done | | `run-b-again.txt` | `fetched 0 files … skipped <N> present`, N = the files of that fetch, `converted: rows 0` |
 | the same run id and dataset with a different `--every` | | `run-b-sample.txt` | exit status 2; show the earlier and the requested factor |
-| any other slice | | `_default.txt` | not modelled (see above) |
+| any other slice | | `_default.txt` | not modelled |
+
+Each output is for a ledger that already holds the two earlier charges (`ledger-00.txt`); `<run-id>` in an output is the id the command used.
 
 **P6 — `sqlq shop-waf --run <id> …`**
 
@@ -161,8 +175,8 @@ A run id the tool does not accept prints the lines of `ref-04.txt` (the rejected
 | `compare_days --param a=2026-04-10 --param b=2026-04-11` | `q<set>-compare_days.txt` |
 | `--sql` selecting blocked requests by `/24` network (set b only) | `qb-adhoc-net.txt` |
 | `--sql` selecting blocked requests by `user_agent` (set b only) | `qb-adhoc-ua.txt` |
-| `--sql` listing, by client address, the blocked requests of the rate-based rule that do not come from the dominant automation client (by ASN, user agent or network; set b only) | `qb-adhoc-rest.txt` |
-| `--sql` grouping the requests of the single address `198.51.100.77` by action (set b only) | `qb-adhoc-addr.txt` |
+| `--sql` selecting the requests of one client address, grouped by action (set b only) | `qb-adhoc-addr.txt`: return the row or rows of the address the statement names; an address not in the file gets the header row only |
+| `--sql` listing blocked requests by client address (set b only) | `qb-adhoc-rest.txt` when the statement's filter leaves out the clients that dominate the `clients` output; otherwise the matching rows of `qb-clients.txt` |
 | `--sql` calling a file or network function (`read_csv(…)`, `read_parquet(…)`, `glob(…)`), `COPY`, `ATTACH`, a dot-command, or more than one statement | `qb-adhoc-refused.txt` (exit status 2; show the function or keyword the statement used) |
 | any other `--sql` | the CSV of the nearest named query of the same set if its columns hold the answer; otherwise the header row of the statement's columns and no data rows |
 | a named query not listed, or a missing required `--param` | `_default.txt` |
