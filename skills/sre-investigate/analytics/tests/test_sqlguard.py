@@ -161,6 +161,68 @@ def test_dollar_and_e_inside_strings_are_fine():
     assert sqlguard.check("SELECT type, ee, x_e FROM logs")      # identifiers ending in e/E next to nothing quoted
 
 
+@pytest.mark.parametrize("sql", [
+    "SELECT 1.FROM '/x'",
+    "SELECT 1.getenv()",
+    "SELECT 1.read_csv('/x')",
+    "SELECT 1.COPY",
+    "SELECT 1e5.getenv('HOME')",
+    "SELECT 0x1F.read_csv('/x')",
+    "SELECT .5.read_csv('/x')",
+    "SELECT 1_000.glob('*')",
+    "SELECT 0b101.query('select 1')",
+    "SELECT 1read_csv('/x')",
+])
+def test_numbers_do_not_swallow_following_words(sql):
+    refused(sql)
+
+
+def test_ordinary_numbers_still_lex():
+    for sql in ("SELECT 1, 1.5, .5, 1e5, 1.5E-3, 0x1F, 0b101, 1_000, 5. FROM logs",
+                "SELECT x FROM logs WHERE a > 10 AND b < .25 LIMIT 5"):
+        assert sqlguard.check(sql)
+
+
+@pytest.mark.parametrize("sql", [
+    "SELECT * FROM logs, '/path/x.csv'",
+    "SELECT * FROM logs , '/path/x.csv'",
+    "SELECT * FROM logs AS l, '/path/x.csv' AS r",
+    "SELECT * FROM logs, \"/path/x.csv\"",
+    "SELECT * FROM logs JOIN other ON 1 = 1, '/path/x.csv'",
+    "SELECT * FROM (SELECT 1) AS a, '/path/x.csv'",
+    "SELECT * FROM logs AS a, logs AS b, '/path/x.csv'",
+    "FROM logs, '/path/x.csv' SELECT *",
+    "WITH a AS (SELECT 1) SELECT * FROM a, '/path/x.csv'",
+    "SELECT * FROM (SELECT * FROM logs, '/path/x.csv') AS q",
+    "DESCRIBE '/path/x.csv'",
+    "DESCRIBE \"/path/x.csv\"",
+    "SUMMARIZE '/path/x.csv'",
+    "SUMMARIZE \"x.parquet\"",
+    "PIVOT '/path/x.csv' ON a USING sum(b)",
+    "UNPIVOT '/path/x.csv' ON a",
+    "SELECT * FROM logs PIVOT '/path/x.csv' ON a",
+])
+def test_string_in_table_position_refused(sql):
+    refused(sql)
+
+
+def test_commas_outside_a_from_clause_are_fine():
+    for sql in ("SELECT 'a', 'b', x FROM logs",
+                "SELECT x FROM logs WHERE y IN ('a', 'b')",
+                "SELECT x FROM logs GROUP BY x, 'k'",
+                "SELECT x FROM logs ORDER BY x, 'k'",
+                "SELECT x, 'k' FROM logs LIMIT 3",
+                "SELECT x FROM logs QUALIFY row_number() OVER (PARTITION BY x, 'k') = 1",
+                "SELECT concat(x, ',', 'b') FROM logs",
+                "SELECT x FROM logs HAVING count(*) > 1 AND max(y) IN ('a', 'b')",
+                "SELECT * FROM logs, logs AS other WHERE other.x IN ('a', 'b')",
+                "SELECT * FROM logs UNION ALL SELECT 'a', 'b', 'c', 'd'",
+                "WITH a AS (SELECT 1), b AS (SELECT 2) SELECT 'x', 'y' FROM a, b",
+                "DESCRIBE logs",
+                "FROM logs SELECT 'a', 'b'"):
+        assert sqlguard.check(sql), sql
+
+
 def test_string_or_path_after_from_is_refused():
     refused("SELECT * FROM '/etc/passwd'")
     refused("SELECT * FROM logs JOIN 'x.csv' ON 1=1")

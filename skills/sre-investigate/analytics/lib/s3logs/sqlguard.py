@@ -23,8 +23,8 @@ Where this is deliberately stricter than the plain rules, because the lexer must
 DuckDB's about where a string or comment ends (any disagreement could hide a keyword):
 ``$`` outside a string, ``E'...'`` and ``U&'...'`` strings, nested ``/* /* */ */`` comments,
 control characters, unbalanced parentheses (the CLI wraps the statement in ``( ... )``) and a
-string literal or a path-like quoted name directly after FROM/JOIN (DuckDB would read it as a
-file) are refused.
+string literal or a path-like quoted name in table position (after FROM, JOIN, DESCRIBE, SUMMARIZE,
+PIVOT, UNPIVOT, or after a comma inside a FROM clause; DuckDB would read it as a file) are refused.
 
 Extra denied function names beyond the brief: ``parquet_*``, ``duckdb_*``, ``pragma_*``,
 ``current_setting``, ``which_secret``, ``json_execute_serialized_sql`` (runs serialized SQL).
@@ -51,14 +51,23 @@ DENY_FUNCTION_SUFFIXES = ("_scan",)
 MAX_SQL_CHARS = 64 * 1024
 
 # Same set duck.py uses: anything the CLI could treat as a line break.
-_LINE_BREAKS = "\n\r\x0b\x0c\x1c\x1d\x1e\x85  "
+_LINE_BREAKS = "\n\r\x0b\x0c\x1c\x1d\x1e\x85\u2028\u2029"
 _LINE_BREAKS_RE = re.compile("[%s]" % _LINE_BREAKS)
 _WS = " \t\n\r\f\v"
 _WORD_START_RE = re.compile(r"[A-Za-z_\u0080-\U0010ffff]")
 _WORD_RE = re.compile(r"[A-Za-z0-9_\u0080-\U0010ffff]*")
-_NUM_RE = re.compile(r"[0-9][A-Za-z0-9_.]*")
+# Numbers the way DuckDB lexes them. Letters after a number start a new word token, so
+# "1.FROM" is the number "1." then the word FROM, never one blob that hides a keyword.
+_NUM_RE = re.compile(r"0[xX][0-9A-Fa-f_]+|0[bB][01_]+"
+                     r"|[0-9][0-9_]*(?:\.[0-9_]*)?(?:[eE][+-]?[0-9]+)?"
+                     r"|\.[0-9][0-9_]*(?:[eE][+-]?[0-9]+)?")
 _PUNCT = set("(),.+-*/%=<>!~^&|:?@#[]{}\\`")
 _PLAIN_NAME_RE = re.compile(r"[A-Za-z0-9_]*")
+# Words after which a table (or a file DuckDB would read as one) may follow directly.
+_TABLE_INTRODUCERS = frozenset({"FROM", "JOIN", "DESCRIBE", "SUMMARIZE", "PIVOT", "UNPIVOT"})
+# Words that end the table list of a FROM clause at the same parenthesis depth.
+_FROM_ENDERS = frozenset({"SELECT", "WHERE", "GROUP", "ORDER", "HAVING", "LIMIT", "OFFSET", "UNION",
+                          "EXCEPT", "INTERSECT", "QUALIFY", "WINDOW", "SAMPLE", "FETCH", "RETURNING"})
 
 
 class _Tok(NamedTuple):
@@ -148,7 +157,7 @@ def _tokenize(sql: str):
             pieces.append(";")
             semi_piece = len(pieces) - 1
             i += 1
-        elif c.isdigit() and c.isascii():
+        elif (c.isdigit() and c.isascii()) or (c == "." and sql[i + 1:i + 2].isdigit() and sql[i + 1].isascii()):
             m = _NUM_RE.match(sql, i)
             toks.append(_Tok("num", m.group(0), i))
             pieces.append(m.group(0))
@@ -211,6 +220,7 @@ def check(sql: str) -> str:
     Refused."""
     toks, normalized = _structure(sql)
     _first_keyword(toks, ALLOWED_FIRST, "SELECT, WITH, DESCRIBE, SUMMARIZE or FROM")
+    in_from = [False]    # per parenthesis depth: inside the table list of a FROM clause
     for k, t in enumerate(toks):
         if t.kind == "word" and t.text.upper() in DENY_KEYWORDS:
             raise Refused("keyword %s is not allowed" % t.text.upper())
@@ -219,13 +229,26 @@ def check(sql: str) -> str:
             if _denied_function(t.text):
                 raise Refused("function %s() is not allowed" % t.text.lower())
         prev = toks[k - 1] if k > 0 else None
-        if prev is not None and prev.kind == "word" and prev.text.upper() in ("FROM", "JOIN"):
+        table_position = prev is not None and (
+            (prev.kind == "word" and prev.text.upper() in _TABLE_INTRODUCERS)
+            or (prev.kind == "punct" and prev.text == "," and in_from[-1]))
+        if table_position:
             if t.kind == "string":
-                raise Refused("a string literal directly after FROM/JOIN reads a file; "
+                raise Refused("a string literal in table position reads a file; "
                               "query the view 'logs' (or one of the listed views) instead")
             if t.kind == "qident" and not _PLAIN_NAME_RE.fullmatch(t.text):
-                raise Refused("a path-like quoted name after FROM/JOIN reads a file; "
+                raise Refused("a path-like quoted name in table position reads a file; "
                               "query the view 'logs' (or one of the listed views) instead")
+        if t.kind == "punct" and t.text == "(":
+            in_from.append(False)
+        elif t.kind == "punct" and t.text == ")":
+            in_from.pop()
+        elif t.kind == "word":
+            up = t.text.upper()
+            if up in ("FROM", "JOIN"):
+                in_from[-1] = True
+            elif up in _FROM_ENDERS:
+                in_from[-1] = False
     return normalized
 
 

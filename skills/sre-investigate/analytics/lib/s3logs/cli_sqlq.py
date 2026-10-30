@@ -25,7 +25,7 @@ import re
 import stat
 import sys
 from pathlib import Path
-from typing import List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple
 
 if __name__ == "__main__":
     # python3 -I drops the script dir from sys.path; add the lib dir that holds this package.
@@ -51,8 +51,10 @@ _RUN_FILE_KINDS = {
     ".csv": ("csv", "csv"),
     ".tsv": ("csv", "tsv"),
 }
-_HINT_LINE_RE = re.compile(r"-agent|renders errors as json", re.IGNORECASE)
-_CTRL_RE = re.compile(r"[\x00-\x1f\x7f-\x9f  ]")
+# Exactly DuckDB 2.0's appended line: "hint: -agent renders errors as JSON and results ...".
+# Anchored, so a real error line that mentions a "user-agent" column is never dropped.
+_HINT_LINE_RE = re.compile(r"\s*hint:\s*-agent\b", re.IGNORECASE)
+_CTRL_RE = re.compile(r"[\x00-\x1f\x7f-\x9f\u2028\u2029]")
 _CSV_SPECIAL_RE = re.compile(r'["\n]')
 
 
@@ -95,7 +97,7 @@ def _regular_files(d: Path) -> List[Tuple[str, int]]:
 
 def strip_hint(msg: str) -> str:
     """DuckDB 2.0 appends a 'hint: -agent renders errors as JSON ...' line to every error."""
-    return "\n".join(ln for ln in msg.split("\n") if not _HINT_LINE_RE.search(ln)).rstrip()
+    return "\n".join(ln for ln in msg.split("\n") if not _HINT_LINE_RE.match(ln)).rstrip()
 
 
 def _cap_csv_rows(text: str, max_rows: int) -> Tuple[str, bool]:
@@ -247,7 +249,8 @@ class _Source:
     """The views a query sees, as SQL to run before the lock, plus where it may read."""
 
     def __init__(self, allowed: Path, script: List[str], views: List[str],
-                 ds_type: Optional[str], sample_every: int):
+                 ds_type: Optional[str], sample_every: int, files: Optional[Dict[str, str]] = None):
+        self.files = files or {}    # view -> source file name (run directories only)
         self.allowed = allowed
         self.script = script
         self.views = views
@@ -289,6 +292,7 @@ def _run_dir_source(arg: str, notices: List[str]) -> _Source:
     d = _resolve_run_dir(arg)
     script = []  # type: List[str]
     views = []  # type: List[str]
+    files = {}  # type: Dict[str, str]
     for name, _size in _regular_files(d):
         stem, dot, ext = name.rpartition(".")
         kind = _RUN_FILE_KINDS.get("." + ext.lower()) if dot else None
@@ -315,9 +319,10 @@ def _run_dir_source(arg: str, notices: List[str]) -> _Source:
             src = "read_csv(%s, delim = chr(9), header = true, auto_detect = true)" % lit
         script.append("CREATE VIEW %s AS SELECT * FROM %s;" % (view, src))
         views.append(view)
+        files[view] = name
     if not views:
         raise Refused("no .json, .jsonl, .ndjson, .csv or .tsv files at the top level of the run directory")
-    return _Source(d, script, views, None, 1)
+    return _Source(d, script, views, None, 1, files)
 
 
 # ---- main flow ------------------------------------------------------------------------------
@@ -340,7 +345,8 @@ def _list_output(src: _Source) -> str:
             continue
         if row[0] != current:
             current = row[0]
-            lines.append("view %s" % _printable(current))
+            origin = src.files.get(current)
+            lines.append("view %s" % _printable(current) + (" (%s)" % _printable(origin) if origin else ""))
         lines.append("column %s %s" % (_printable(row[1]), _printable(row[2])))
     if src.ds_type is not None:
         for qname, purpose in _list_named(src.ds_type):
