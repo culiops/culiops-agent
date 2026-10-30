@@ -571,3 +571,82 @@ def test_salt_created_readable_under_restrictive_umask(home):
         os.umask(old)
     assert len(s) == 32
     assert redact.load_or_create_salt() == s
+
+
+# ---- fix round 2 ------------------------------------------------------------------------
+
+@pytest.mark.parametrize("qs,expected", [
+    ("redirect=%2Fx%3Ftoken%3Dabc", "redirect=***"),
+    ("next=https%3A%2F%2Fh.example.com%2Fp%3Fsession%3DZZ&a=1", "next=***&a=1"),
+    ("redirect=/x?token=abc&a=1", "redirect=***&a=1"),
+    ("r=%2Fx%3Fa%3D1%26password%3DZZ", "r=***"),
+    ("r=%2Fx%3Fa%3D1%3Bsid%3DZZ", "r=***"),
+    ("r=%2Fp%3Bjsessionid%3DZZ", "r=***"),
+    ("r=%2Fp%3Bjsessionid%3DZZ%3Fa%3D1", "r=***"),
+    ("r=%2Fx%3Fa%3Db%3Ftoken%3Dabc", "r=***"),
+    ("r=%2Fx%3Ftoken%3Dabc%00", "r=***"),
+])
+def test_nested_query_in_value_masked(qs, expected):
+    names = redact.sensitive_names(Config())
+    assert redact.mask_query(qs, names) == expected
+    assert "abc" not in redact.mask_query(qs, names) and "ZZ" not in redact.mask_query(qs, names)
+
+
+@pytest.mark.parametrize("qs", [
+    "redirect=%2Fhome",
+    "q=a%3Db",
+    "q=a%3Db&x=1",
+    "redirect=%2Fx%3Fpage%3D2",
+    "u=https%3A%2F%2Fh.example.com%2Fp%3Fa%3D1%26b%3D2",
+    "state=xyz==",
+    "q=what%3F",
+    "p=%2Fa%3Bv%3D1",
+])
+def test_benign_nested_value_kept(qs):
+    assert redact.mask_query(qs, redact.sensitive_names(Config())) == qs
+
+
+def test_nested_check_does_not_recurse_on_deep_values():
+    qs = "r=" + "a%3D" * 5000 + "b"
+    assert redact.mask_query(qs, SENSITIVE) == qs
+    qs2 = "r=" + "%3F" * 5000 + "token%3Dabc"
+    assert "abc" not in redact.mask_query(qs2, SENSITIVE)
+
+
+def test_nested_query_masked_in_waf_record_args_and_referer():
+    rec = make_record(headers=[{"name": "Referer", "value": "https://x.example.com/p?next=%2Fy%3Ftoken%3DREFZZ"}])
+    rec["httpRequest"]["args"] = "redirect=%2Fx%3Ftoken%3DARGZZ&a=1"
+    out = redact.waf_record(rec, Config(), SALT)
+    assert out["query_masked"] == "redirect=***&a=1"
+    assert out["referer_masked"] == "https://x.example.com/p?next=***"
+    assert "ZZ" not in json.dumps(out)
+
+
+@pytest.mark.parametrize("path,expected", [
+    ("/a%3Bjsessionid=ZZ", "/a%3B***"),
+    ("/a%3bjsessionid=ZZ", "/a%3B***"),
+    ("/a%3Bx=1%3Btoken=ZZ", "/a%3B***"),
+    ("/a;token=ZZ%3Bfoo=1", "/a;token=***%3B***"),
+    ("/a%3B%ff", "/a%3B***"),
+    ("/a%3Bx=%2541", "/a%3B***"),
+    ("/a%3Bjsessionid%3DZZ", "/a%3B***"),
+    ("/s/a%3Bjsessionid=ZZ/b;x=1", "/s/a%3B***/b;x=1"),
+])
+def test_mask_path_encoded_semicolon(path, expected):
+    out = redact.mask_path(path, redact.sensitive_names(Config()))
+    assert out == expected
+    assert "ZZ" not in out
+
+
+@pytest.mark.parametrize("path", ["/a%3Bx=1", "/a%3Bflag", "/a%3Bv%3D1", "/a%2Fb", "/a%3B"])
+def test_mask_path_benign_encoded_semicolon_kept(path):
+    assert redact.mask_path(path, redact.sensitive_names(Config())) == path
+
+
+def test_uri_and_referer_encoded_semicolon_in_waf_record():
+    rec = make_record(headers=[{"name": "Referer", "value": "https://x.example.com/a%3Bjsessionid=REFZZ?a=1"}])
+    rec["httpRequest"]["uri"] = "/a%3Bjsessionid=URIZZ?a=1"
+    out = redact.waf_record(rec, Config(), SALT)
+    assert out["uri"] == "/a%3B***?a=1"
+    assert out["referer_masked"] == "https://x.example.com/a%3B***?a=1"
+    assert "ZZ" not in json.dumps(out)

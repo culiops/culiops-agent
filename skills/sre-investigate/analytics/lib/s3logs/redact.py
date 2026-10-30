@@ -68,11 +68,35 @@ def mask_query(qs: str, sensitive: "frozenset") -> str:
     ``_name_candidates``). ``&`` and ``;`` both separate pairs. A piece with no ``=`` that
     decodes to something containing ``=`` is masked whole. If decoding fails, or the decoded
     text still holds a ``%XX`` escape (double encoding), the whole string becomes ``***``.
+
+    Nested queries, one level: the value of a non-sensitive pair is decoded once; if it holds
+    any of ``? & ; =``, its query part (after the first ``?``, else the whole value) is run
+    through the same masking and its path part through ``mask_path``. If either changes
+    anything the whole value becomes ``***`` (name kept). So ``redirect=%2Fx%3Ftoken%3Dabc``
+    is masked while ``q=a%3Db`` is kept. Inside that nested check a value that itself holds
+    a ``?`` (a third level) is masked too; nothing recurses further.
     """
     if qs is None or qs == "" or qs == "-":
         return qs
     if not isinstance(qs, str):
         return MASK
+    return _mask_query(qs, frozenset(str(x).lower() for x in sensitive), False)
+
+
+def _value_leaks(raw_value: str, names: "frozenset", nested: bool) -> bool:
+    """Does the (non-sensitive) parameter value hide a sensitive nested query or path param?
+    May raise UnicodeError/ValueError, which callers turn into a whole-string mask."""
+    dec = unquote_plus(raw_value, errors="strict")
+    if not any(c in dec for c in "?&;="):
+        return False
+    if nested:
+        return "?" in dec
+    path, sep, q = dec.partition("?")
+    qpart = q if sep else dec
+    return _mask_query(qpart, names, True) != qpart or mask_path(path, names) != path
+
+
+def _mask_query(qs: str, names: "frozenset", nested: bool) -> str:
     n = len(qs) - len(qs.lstrip("?"))
     prefix, qs = qs[:n], qs[n:]
     if qs == "":
@@ -83,7 +107,6 @@ def mask_query(qs: str, sensitive: "frozenset") -> str:
         return MASK
     if _ENCODED_RE.search(decoded):
         return MASK
-    names = frozenset(str(x).lower() for x in sensitive)
     parts = _SEP_RE.split(qs)
     out = []  # type: List[str]
     for i, piece in enumerate(parts):
@@ -94,11 +117,44 @@ def mask_query(qs: str, sensitive: "frozenset") -> str:
             if "=" not in piece:
                 out.append(MASK if "=" in unquote_plus(piece, errors="strict") else piece)
                 continue
-            raw_name, _, _value = piece.partition("=")
-            out.append(raw_name + "=" + MASK if _is_sensitive(raw_name, names) else piece)
+            raw_name, _, raw_value = piece.partition("=")
+            if _is_sensitive(raw_name, names) or _value_leaks(raw_value, names, nested):
+                out.append(raw_name + "=" + MASK)
+            else:
+                out.append(piece)
         except (UnicodeError, ValueError):
             return MASK
     return prefix + "".join(out)
+
+
+_ENC_SEMI_RE = re.compile(r"%3b", re.IGNORECASE)
+
+
+def _mask_param(piece: str, names: "frozenset") -> str:
+    """One ``;``-separated path piece: unchanged, ``name=***`` (sensitive name), or ``***``
+    (does not decode strictly, residual ``%XX`` after decoding, or no ``=`` but decodes to a
+    pair)."""
+    try:
+        decoded = unquote_plus(piece, errors="strict")
+        if _ENCODED_RE.search(decoded):
+            return MASK
+        if "=" not in piece:
+            return MASK if "=" in decoded else piece
+        raw_name = piece.partition("=")[0]
+        return raw_name + "=" + MASK if _is_sensitive(raw_name, names) else piece
+    except (UnicodeError, ValueError):
+        return MASK
+
+
+def _mask_segment(seg: str, names: "frozenset") -> str:
+    """Mask raw ``;`` matrix parameters in one path segment."""
+    if ";" not in seg:
+        return seg
+    pieces = seg.split(";")
+    for i in range(1, len(pieces)):
+        if pieces[i] != "":
+            pieces[i] = _mask_param(pieces[i], names)
+    return ";".join(pieces)
 
 
 def mask_path(path: str, sensitive: "frozenset") -> str:
@@ -107,35 +163,33 @@ def mask_path(path: str, sensitive: "frozenset") -> str:
     Names compare like query names. A parameter that does not strictly decode, still holds a
     ``%XX`` escape after decoding, or has no ``=`` but decodes to something with one, is
     replaced by ``***``. Raw spelling of everything else is kept.
+
+    Encoded delimiter: a segment holding ``%3B``/``%3b`` is decoded once. If any ``;`` param of
+    the decoded segment would be masked (or the segment does not decode), everything from the
+    first encoded ``%3B`` on is replaced by the literal ``%3B***`` (so ``/a%3Bjsessionid=ZZ``
+    becomes ``/a%3B***``); the text before it still gets the normal raw ``;`` masking.
     """
-    if path is None or path == "" or ";" not in path:
+    if path is None or path == "":
         return path
     if not isinstance(path, str):
         return MASK
+    if ";" not in path and not _ENC_SEMI_RE.search(path):
+        return path
     names = frozenset(str(x).lower() for x in sensitive)
     segments = path.split("/")
     for si, seg in enumerate(segments):
-        if ";" not in seg:
-            continue
-        pieces = seg.split(";")
-        for pi in range(1, len(pieces)):
-            piece = pieces[pi]
-            if piece == "":
-                continue
+        m = _ENC_SEMI_RE.search(seg)
+        if m:
             try:
-                decoded = unquote_plus(piece, errors="strict")
-                if _ENCODED_RE.search(decoded):
-                    pieces[pi] = MASK
-                elif "=" not in piece:
-                    if "=" in decoded:
-                        pieces[pi] = MASK
-                else:
-                    raw_name = piece.partition("=")[0]
-                    if _is_sensitive(raw_name, names):
-                        pieces[pi] = raw_name + "=" + MASK
+                decoded = unquote_plus(seg, errors="strict")
+                flagged = bool(_ENCODED_RE.search(decoded)) or any(
+                    _mask_param(p, names) != p for p in decoded.split(";")[1:] if p)
             except (UnicodeError, ValueError):
-                pieces[pi] = MASK
-        segments[si] = ";".join(pieces)
+                flagged = True
+            if flagged:
+                segments[si] = _mask_segment(seg[:m.start()], names) + "%3B" + MASK
+                continue
+        segments[si] = _mask_segment(seg, names)
     return "/".join(segments)
 
 
