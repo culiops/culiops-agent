@@ -1,0 +1,14 @@
+{
+    "Metrics": [
+        {"Namespace": "AWS/CloudFront", "MetricName": "Requests", "Dimensions": [{"Name": "DistributionId", "Value": "E3EXAMPLEDIST"}, {"Name": "Region", "Value": "Global"}]},
+        {"Namespace": "AWS/CloudFront", "MetricName": "BytesDownloaded", "Dimensions": [{"Name": "DistributionId", "Value": "E3EXAMPLEDIST"}, {"Name": "Region", "Value": "Global"}]},
+        {"Namespace": "AWS/CloudFront", "MetricName": "4xxErrorRate", "Dimensions": [{"Name": "DistributionId", "Value": "E3EXAMPLEDIST"}, {"Name": "Region", "Value": "Global"}]},
+        {"Namespace": "AWS/CloudFront", "MetricName": "5xxErrorRate", "Dimensions": [{"Name": "DistributionId", "Value": "E3EXAMPLEDIST"}, {"Name": "Region", "Value": "Global"}]},
+        {"Namespace": "AWS/CloudFront", "MetricName": "TotalErrorRate", "Dimensions": [{"Name": "DistributionId", "Value": "E3EXAMPLEDIST"}, {"Name": "Region", "Value": "Global"}]},
+        {"Namespace": "AWS/CloudFront", "MetricName": "502ErrorRate", "Dimensions": [{"Name": "DistributionId", "Value": "E3EXAMPLEDIST"}, {"Name": "Region", "Value": "Global"}]},
+        {"Namespace": "AWS/CloudFront", "MetricName": "503ErrorRate", "Dimensions": [{"Name": "DistributionId", "Value": "E3EXAMPLEDIST"}, {"Name": "Region", "Value": "Global"}]},
+        {"Namespace": "AWS/CloudFront", "MetricName": "504ErrorRate", "Dimensions": [{"Name": "DistributionId", "Value": "E3EXAMPLEDIST"}, {"Name": "Region", "Value": "Global"}]},
+        {"Namespace": "AWS/CloudFront", "MetricName": "OriginLatency", "Dimensions": [{"Name": "DistributionId", "Value": "E3EXAMPLEDIST"}, {"Name": "Region", "Value": "Global"}]},
+        {"Namespace": "AWS/CloudFront", "MetricName": "CacheHitRate", "Dimensions": [{"Name": "DistributionId", "Value": "E3EXAMPLEDIST"}, {"Name": "Region", "Value": "Global"}]}
+    ]
+}

@@ -1,0 +1,85 @@
+{
+    "ETag": "E2EXAMPLEETAG01",
+    "Distribution": {
+        "Id": "E3EXAMPLEDIST",
+        "ARN": "arn:aws:cloudfront::111122223333:distribution/E3EXAMPLEDIST",
+        "Status": "Deployed",
+        "LastModifiedTime": "2026-02-18T09:41:12.504000+00:00",
+        "InProgressInvalidationBatches": 0,
+        "DomainName": "d3examplestatic.cloudfront.net",
+        "DistributionConfig": {
+            "CallerReference": "static-example-2025-11",
+            "Aliases": {
+                "Quantity": 1,
+                "Items": [
+                    "static.example.com"
+                ]
+            },
+            "DefaultRootObject": "",
+            "Origins": {
+                "Quantity": 1,
+                "Items": [
+                    {
+                        "Id": "origin-static",
+                        "DomainName": "origin-static.example.com",
+                        "OriginPath": "",
+                        "CustomHeaders": {
+                            "Quantity": 0
+                        },
+                        "CustomOriginConfig": {
+                            "HTTPPort": 80,
+                            "HTTPSPort": 443,
+                            "OriginProtocolPolicy": "https-only",
+                            "OriginSslProtocols": {
+                                "Quantity": 1,
+                                "Items": [
+                                    "TLSv1.2"
+                                ]
+                            },
+                            "OriginReadTimeout": 30,
+                            "OriginKeepaliveTimeout": 5
+                        },
+                        "ConnectionAttempts": 3,
+                        "ConnectionTimeout": 10
+                    }
+                ]
+            },
+            "DefaultCacheBehavior": {
+                "TargetOriginId": "origin-static",
+                "ViewerProtocolPolicy": "redirect-to-https",
+                "AllowedMethods": {
+                    "Quantity": 2,
+                    "Items": [
+                        "HEAD",
+                        "GET"
+                    ]
+                },
+                "Compress": true,
+                "CachePolicyId": "658327ea-f89d-4fab-a63d-7e88639e58f6"
+            },
+            "CacheBehaviors": {
+                "Quantity": 0
+            },
+            "CustomErrorResponses": {
+                "Quantity": 1,
+                "Items": [
+                    {
+                        "ErrorCode": 504,
+                        "ErrorCachingMinTTL": 10
+                    }
+                ]
+            },
+            "Comment": "static assets for shop.example.com",
+            "Logging": {
+                "Enabled": true,
+                "IncludeCookies": false,
+                "Bucket": "example-edge-logs.s3.amazonaws.com",
+                "Prefix": "cf/static/"
+            },
+            "PriceClass": "PriceClass_100",
+            "Enabled": true,
+            "HttpVersion": "http2and3",
+            "IsIPV6Enabled": true
+        }
+    }
+}

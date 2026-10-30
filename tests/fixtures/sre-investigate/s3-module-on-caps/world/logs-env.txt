@@ -1,0 +1,5 @@
+AWS_PROFILE=prod-read
+AWS_REGION=us-east-1
+DATASET_shop-waf=waf:s3://aws-waf-logs-example-shop/AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/{yyyy}/{MM}/{dd}/{HH}/
+PRICE_PER_GB=0.11
+PRICE_PER_1K_GET=0.0005

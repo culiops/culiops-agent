@@ -1,0 +1,8 @@
+~/.local/share/culiops/sre-investigate/data/RUNID:
+shop-waf
+
+~/.local/share/culiops/sre-investigate/data/RUNID/shop-waf:
+fetched.jsonl
+meta.json
+part-000001.parquet
+part-000002.parquet

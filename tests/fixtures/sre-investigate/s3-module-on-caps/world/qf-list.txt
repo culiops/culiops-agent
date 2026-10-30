@@ -1,0 +1,46 @@
+view logs
+column ts TIMESTAMP
+column action VARCHAR
+column terminating_rule_id VARCHAR
+column terminating_rule_type VARCHAR
+column rule_group_matches VARCHAR[]
+column non_terminating_rules VARCHAR[]
+column labels VARCHAR[]
+column client_ip VARCHAR
+column country VARCHAR
+column asn VARCHAR
+column host VARCHAR
+column uri VARCHAR
+column query_masked VARCHAR
+column http_method VARCHAR
+column http_version VARCHAR
+column request_id VARCHAR
+column ja3 VARCHAR
+column ja4 VARCHAR
+column header_names VARCHAR[]
+column user_agent VARCHAR
+column referer_masked VARCHAR
+column client_key VARCHAR
+column identity_hashes VARCHAR[]
+column response_code_sent BIGINT
+column matched_field VARCHAR
+column match_type VARCHAR
+column matched_hash VARCHAR
+query asns — Top 50 client ASNs with requests, blocked and distinct clients. If sampled: requests and blocked scale by the factor; distinct_clients are lower bounds.
+query by_day — Requests per UTC day with allowed/blocked split and distinct clients. If sampled: requests, allowed and blocked scale by the factor; distinct_clients are lower bounds.
+query by_minute — Requests per minute and WAF action; optional param: action (exact, e.g. BLOCK). If sampled: requests scale by the factor.
+query client_keys — Top 50 client keys (salted hashes of the configured identity cookie or header, never the value) by requests. If sampled: requests and blocked scale by the factor; distinct_ips are lower bounds.
+query clients — Top 50 client IPs with request count, share of all requests, blocked and distinct client keys (aggregated; never more than 50). If sampled: requests and blocked scale by the factor; distinct_client_keys are lower bounds; shares do not scale.
+query compare_days — Per terminating rule: requests on day a vs day b and the delta (b - a), top 50 by absolute change; required params: a, b (YYYY-MM-DD), a missing param is an error. If sampled: requests_a, requests_b and delta (same rate on both days) scale by the factor.
+query concentration — One row: top-1 client IP share of requests, distinct clients and distinct client keys behind the top IP. If sampled: requests and top1_requests scale by the factor; distinct_*, top1_client_keys are lower bounds; top1_share does not scale.
+query count_rules — Top 50 top-level non-terminating (count-mode) rule matches by rule and action; rule-group count matches are not here, they live in rule_group_matches. If sampled: requests scale by the factor; distinct_clients are lower bounds.
+query countries — Top 50 source countries with requests, blocked and distinct clients. If sampled: requests and blocked scale by the factor; distinct_clients are lower bounds.
+query fingerprints — Top 50 TLS fingerprints (JA3, JA4 hashes) with requests, distinct clients and distinct client keys. If sampled: requests scale by the factor; distinct_* are lower bounds.
+query header_shape — Top 50 header-name shapes (names and order only, no values) with requests and distinct clients. If sampled: requests scale by the factor; distinct_clients are lower bounds.
+query labels — Top 50 labels attached to requests, with requests and distinct clients. If sampled: requests scale by the factor; distinct_clients are lower bounds.
+query matched_data — Top 50 matches by rule, location and match type; counts distinct matched values via salted hash, never shows a value. If sampled: requests scale by the factor; distinct_* are lower bounds.
+query rules_by_minute — Requests per minute for the 10 busiest terminating rules (time series, one row per minute and rule). If sampled: requests scale by the factor.
+query summary — One-row overview of the WAF dataset: window, requests per action, clients, client keys and rules. If sampled: requests, allowed, blocked, counted and other_actions scale by the factor; distinct_* are lower bounds.
+query top_rules — Top 50 terminating rules (with type and action) by requests and share. If sampled: requests scale by the factor; shares do not scale.
+query uris — Top 50 request paths (masked, no query string) by method with requests and blocked. If sampled: requests and blocked scale by the factor; distinct_clients are lower bounds.
+query user_agents — Top 50 user agents with a generic bot/crawler/spider bucket (substring match only). If sampled: requests and blocked scale by the factor; distinct_clients are lower bounds.

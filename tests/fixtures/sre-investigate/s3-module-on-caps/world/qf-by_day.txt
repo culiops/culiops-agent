@@ -1,0 +1,3 @@
+-- sampled 1/3: requests, allowed and blocked scale by 3; distinct_clients are lower bounds.
+day,requests,allowed,blocked,distinct_clients
+2026-04-11,51352,44531,6821,570

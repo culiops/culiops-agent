@@ -1,0 +1,14 @@
+-- sampled 1/2: requests and blocked scale by 2; distinct_clients are lower bounds.
+country,requests,blocked,distinct_clients
+US,24238,153,193
+AU,8038,39,63
+FR,8022,26,63
+GB,8014,36,63
+DE,7984,28,63
+CA,7920,40,63
+VN,2642,2378,16
+BR,2603,2333,16
+ID,2498,2212,15
+RO,2491,2229,15
+IR,69,69,66
+KP,65,65,59

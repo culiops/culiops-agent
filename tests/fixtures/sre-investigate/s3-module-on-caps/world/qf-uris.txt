@@ -1,0 +1,15 @@
+-- sampled 1/3: requests and blocked scale by 3; distinct_clients are lower bounds.
+uri,http_method,requests,blocked,distinct_clients
+/,GET,9522,72,507
+/search,GET,7992,46,507
+/api/cart/coupon,POST,7251,6539,63
+/products,GET,6202,39,507
+/static/app.js,GET,5290,32,507
+/api/cart,POST,3261,22,507
+/account,GET,3045,16,505
+/checkout,POST,2138,8,499
+/api/cart,GET,2134,16,503
+/login,POST,1659,10,485
+/checkout,GET,1351,7,476
+/login,GET,1052,8,438
+/api/cart/coupon,GET,455,6,298

@@ -1,0 +1,1 @@
+terminating_rule_id,matched_field,match_type,requests,distinct_matched_values,distinct_clients

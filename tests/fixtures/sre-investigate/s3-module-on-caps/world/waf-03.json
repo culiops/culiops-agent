@@ -1,0 +1,10 @@
+{
+    "LoggingConfiguration": {
+        "ResourceArn": "arn:aws:wafv2:us-east-1:111122223333:regional/webacl/example-shop-acl/5b0c7a1e-3d42-4f6a-9e8b-2c1d0a9f7e64",
+        "LogDestinationConfigs": [
+            "arn:aws:s3:::aws-waf-logs-example-shop"
+        ],
+        "RedactedFields": [],
+        "ManagedByFirewallManager": false
+    }
+}

@@ -1,0 +1,5 @@
+header_shape,header_count,requests,distinct_clients
+"host,user-agent,accept,accept-language,accept-encoding,referer,x-amzn-trace-id,cookie",8,53780,507
+"host,user-agent,accept,accept-encoding,connection",5,20811,62
+"host,user-agent,accept,accept-language,accept-encoding,referer,x-amzn-trace-id",7,13648,507
+"host,user-agent,accept,accept-language,accept-encoding,referer,cookie",7,124,1

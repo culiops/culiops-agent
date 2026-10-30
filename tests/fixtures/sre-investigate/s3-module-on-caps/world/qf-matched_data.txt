@@ -1,0 +1,2 @@
+-- sampled 1/3: requests scale by 3; distinct_* are lower bounds.
+terminating_rule_id,matched_field,match_type,requests,distinct_matched_values,distinct_clients

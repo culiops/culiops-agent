@@ -1,0 +1,171 @@
+{
+    "SampledRequests": [
+        {
+            "Request": {
+                "ClientIP": "192.0.2.14",
+                "Country": "US",
+                "URI": "/",
+                "Method": "GET",
+                "HTTPVersion": "HTTP/2.0",
+                "Headers": [
+                    {
+                        "Name": "Host",
+                        "Value": "shop.example.com"
+                    },
+                    {
+                        "Name": "User-Agent",
+                        "Value": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36"
+                    },
+                    {
+                        "Name": "Accept-Language",
+                        "Value": "en-US,en;q=0.9"
+                    }
+                ]
+            },
+            "Weight": 1,
+            "Timestamp": "2026-04-12T09:11:42+00:00",
+            "Action": "ALLOW",
+            "RuleNameWithinRuleGroup": "Default_Action"
+        },
+        {
+            "Request": {
+                "ClientIP": "198.51.100.52",
+                "Country": "GB",
+                "URI": "/search",
+                "Method": "GET",
+                "HTTPVersion": "HTTP/2.0",
+                "Headers": [
+                    {
+                        "Name": "Host",
+                        "Value": "shop.example.com"
+                    },
+                    {
+                        "Name": "User-Agent",
+                        "Value": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36"
+                    },
+                    {
+                        "Name": "Accept-Language",
+                        "Value": "en-US,en;q=0.9"
+                    }
+                ]
+            },
+            "Weight": 1,
+            "Timestamp": "2026-04-12T09:09:03+00:00",
+            "Action": "ALLOW",
+            "RuleNameWithinRuleGroup": "Default_Action"
+        },
+        {
+            "Request": {
+                "ClientIP": "192.0.2.201",
+                "Country": "CA",
+                "URI": "/products",
+                "Method": "GET",
+                "HTTPVersion": "HTTP/2.0",
+                "Headers": [
+                    {
+                        "Name": "Host",
+                        "Value": "shop.example.com"
+                    },
+                    {
+                        "Name": "User-Agent",
+                        "Value": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36"
+                    },
+                    {
+                        "Name": "Accept-Language",
+                        "Value": "en-US,en;q=0.9"
+                    }
+                ]
+            },
+            "Weight": 1,
+            "Timestamp": "2026-04-12T09:04:55+00:00",
+            "Action": "ALLOW",
+            "RuleNameWithinRuleGroup": "Default_Action"
+        },
+        {
+            "Request": {
+                "ClientIP": "198.51.100.9",
+                "Country": "US",
+                "URI": "/api/cart",
+                "Method": "POST",
+                "HTTPVersion": "HTTP/2.0",
+                "Headers": [
+                    {
+                        "Name": "Host",
+                        "Value": "shop.example.com"
+                    },
+                    {
+                        "Name": "User-Agent",
+                        "Value": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36"
+                    },
+                    {
+                        "Name": "Accept-Language",
+                        "Value": "en-US,en;q=0.9"
+                    }
+                ]
+            },
+            "Weight": 1,
+            "Timestamp": "2026-04-12T08:57:18+00:00",
+            "Action": "ALLOW",
+            "RuleNameWithinRuleGroup": "Default_Action"
+        },
+        {
+            "Request": {
+                "ClientIP": "192.0.2.88",
+                "Country": "DE",
+                "URI": "/static/app.js",
+                "Method": "GET",
+                "HTTPVersion": "HTTP/2.0",
+                "Headers": [
+                    {
+                        "Name": "Host",
+                        "Value": "shop.example.com"
+                    },
+                    {
+                        "Name": "User-Agent",
+                        "Value": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36"
+                    },
+                    {
+                        "Name": "Accept-Language",
+                        "Value": "en-US,en;q=0.9"
+                    }
+                ]
+            },
+            "Weight": 1,
+            "Timestamp": "2026-04-12T08:41:30+00:00",
+            "Action": "ALLOW",
+            "RuleNameWithinRuleGroup": "Default_Action"
+        },
+        {
+            "Request": {
+                "ClientIP": "198.51.100.140",
+                "Country": "AU",
+                "URI": "/checkout",
+                "Method": "POST",
+                "HTTPVersion": "HTTP/2.0",
+                "Headers": [
+                    {
+                        "Name": "Host",
+                        "Value": "shop.example.com"
+                    },
+                    {
+                        "Name": "User-Agent",
+                        "Value": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36"
+                    },
+                    {
+                        "Name": "Accept-Language",
+                        "Value": "en-US,en;q=0.9"
+                    }
+                ]
+            },
+            "Weight": 1,
+            "Timestamp": "2026-04-12T08:22:07+00:00",
+            "Action": "ALLOW",
+            "RuleNameWithinRuleGroup": "Default_Action"
+        }
+    ],
+    "PopulationSize": 6,
+    "TimeWindow": {
+        "StartTime": "2026-04-12T06:15:00+00:00",
+        "EndTime": "2026-04-12T09:15:00+00:00"
+    }
+}

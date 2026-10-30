@@ -1,0 +1,5 @@
+rule,requests_a,requests_b,delta
+Default_Action,0,85638,85638
+rate-limit-coupon,0,18575,18575
+AWS-AWSManagedRulesAmazonIpReputationList,0,341,341
+geo-block-embargo,0,160,160

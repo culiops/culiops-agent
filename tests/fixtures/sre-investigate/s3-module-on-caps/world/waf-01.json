@@ -1,0 +1,12 @@
+{
+    "NextMarker": "example-shop-acl",
+    "WebACLs": [
+        {
+            "Name": "example-shop-acl",
+            "Id": "5b0c7a1e-3d42-4f6a-9e8b-2c1d0a9f7e64",
+            "Description": "Web ACL for shop.example.com",
+            "LockToken": "a1b2c3d4-0000-4000-8000-0123456789ab",
+            "ARN": "arn:aws:wafv2:us-east-1:111122223333:regional/webacl/example-shop-acl/5b0c7a1e-3d42-4f6a-9e8b-2c1d0a9f7e64"
+        }
+    ]
+}

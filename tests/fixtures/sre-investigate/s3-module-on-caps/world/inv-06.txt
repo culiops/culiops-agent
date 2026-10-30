@@ -1,0 +1,4 @@
+day            files          MB   est_cost
+2026-04-12       111      156.97    $0.0169
+total            111      156.97    $0.0169
+manifest: ~/.local/share/culiops/sre-investigate/manifests/shop-waf/2026-04-12_2026-04-12.json

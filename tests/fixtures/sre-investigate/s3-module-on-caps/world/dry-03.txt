@@ -1,0 +1,5 @@
+DRY RUN — nothing downloaded
+dataset shop-waf (waf)  slice 2026-04-11 all (+1 widen)  every 20
+files 15  MB 90.2  est_cost $0.0097
+caps: fetch 90.2/200 MB  run - 90.2/1024 MB  24h 2035.8/2048 MB  → OK
+to run: logs-fetch shop-waf 2026-04-11 --every 20 --yes --run <run-id>

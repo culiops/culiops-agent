@@ -1,0 +1,7 @@
+{
+    "MonitoringSubscription": {
+        "RealtimeMetricsSubscriptionConfig": {
+            "RealtimeMetricsSubscriptionStatus": "Enabled"
+        }
+    }
+}

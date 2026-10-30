@@ -1,0 +1,8 @@
+-- sampled 1/2: requests and blocked scale by 2; distinct_clients are lower bounds.
+asn,requests,blocked,distinct_clients
+64499,13014,78,101
+64500,12945,117,102
+64496,12930,85,102
+64497,12815,88,102
+64498,12646,88,101
+64511,10234,9152,62

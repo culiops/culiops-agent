@@ -1,0 +1,2 @@
+fetched 0 files 0.0 MB verified; charged 0.0 MB; skipped 25 present; data: ~/.local/share/culiops/sre-investigate/data/shop-web-prod-20260412-0915/shop-waf; sample: 1/1
+converted: rows 0; skipped lines 0; dropped columns none
