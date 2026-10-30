@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+# Run a named or ad-hoc read-only SQL query over fetched request logs (locked-down DuckDB).
+here=$(cd -P -- "$(dirname -- "$0")" && pwd)
+exec python3 -I "$here/../lib/s3logs/cli_sqlq.py" "$@"
