@@ -1,0 +1,17 @@
+{
+    "DBInstances": [
+        {
+            "DBInstanceIdentifier": "orders-db",
+            "DBInstanceClass": "db.r6g.xlarge",
+            "Engine": "postgres",
+            "EngineVersion": "16.6",
+            "DBInstanceStatus": "available",
+            "MultiAZ": true,
+            "AvailabilityZone": "eu-west-1b",
+            "SecondaryAvailabilityZone": "eu-west-1a",
+            "Endpoint": {"Address": "orders-db.c9xexample.eu-west-1.rds.amazonaws.com", "Port": 5432},
+            "PendingModifiedValues": {},
+            "PreferredMaintenanceWindow": "sun:02:00-sun:03:00"
+        }
+    ]
+}

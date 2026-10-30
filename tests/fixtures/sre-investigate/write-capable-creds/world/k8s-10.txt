@@ -1,0 +1,4 @@
+deployment.apps/payments-worker
+REVISION  CHANGE-CAUSE
+14        <none>
+15        <none>

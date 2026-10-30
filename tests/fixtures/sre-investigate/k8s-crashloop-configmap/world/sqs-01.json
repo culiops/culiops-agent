@@ -1,0 +1,6 @@
+{
+    "QueueUrls": [
+        "https://sqs.us-east-1.amazonaws.com/111122223333/notify-outbound",
+        "https://sqs.us-east-1.amazonaws.com/111122223333/notify-outbound-dlq"
+    ]
+}

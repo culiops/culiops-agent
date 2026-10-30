@@ -1,0 +1,93 @@
+{
+ "batches": [
+  {
+   "resource": {
+    "attributes": [
+     {
+      "key": "service.name",
+      "value": {
+       "stringValue": "orders-api"
+      }
+     },
+     {
+      "key": "k8s.namespace.name",
+      "value": {
+       "stringValue": "orders"
+      }
+     }
+    ]
+   },
+   "scopeSpans": [
+    {
+     "scope": {
+      "name": "orders_api"
+     },
+     "spans": [
+      {
+       "traceId": "65345f5f8176033524bc88af3bd43f6f",
+       "spanId": "f0ce583505c6af07",
+       "name": "GET /orders",
+       "kind": "SPAN_KIND_SERVER",
+       "startTimeUnixNano": "1792494009000000000",
+       "endTimeUnixNano": "1792494009109000000",
+       "attributes": [
+        {
+         "key": "http.route",
+         "value": {
+          "stringValue": "/orders"
+         }
+        },
+        {
+         "key": "http.request.method",
+         "value": {
+          "stringValue": "GET"
+         }
+        },
+        {
+         "key": "http.response.status_code",
+         "value": {
+          "intValue": "200"
+         }
+        }
+       ]
+      },
+      {
+       "traceId": "65345f5f8176033524bc88af3bd43f6f",
+       "spanId": "2b0537e65affb229",
+       "parentSpanId": "f0ce583505c6af07",
+       "name": "GET auth-api /verify",
+       "kind": "SPAN_KIND_CLIENT",
+       "startTimeUnixNano": "1792494009001500000",
+       "endTimeUnixNano": "1792494009005268245",
+       "attributes": [
+        {
+         "key": "server.address",
+         "value": {
+          "stringValue": "auth-api.auth.svc.cluster.local"
+         }
+        }
+       ]
+      },
+      {
+       "traceId": "65345f5f8176033524bc88af3bd43f6f",
+       "spanId": "0f17a3007e62aa0a",
+       "parentSpanId": "f0ce583505c6af07",
+       "name": "SELECT orders JOIN order_items",
+       "kind": "SPAN_KIND_CLIENT",
+       "startTimeUnixNano": "1792494009006808840",
+       "endTimeUnixNano": "1792494009009854407",
+       "attributes": [
+        {
+         "key": "db.system",
+         "value": {
+          "stringValue": "postgresql"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  }
+ ]
+}

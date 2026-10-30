@@ -1,0 +1,297 @@
+{
+ "batches": [
+  {
+   "resource": {
+    "attributes": [
+     {
+      "key": "service.name",
+      "value": {
+       "stringValue": "orders-api"
+      }
+     },
+     {
+      "key": "k8s.namespace.name",
+      "value": {
+       "stringValue": "orders"
+      }
+     }
+    ]
+   },
+   "scopeSpans": [
+    {
+     "scope": {
+      "name": "orders_api"
+     },
+     "spans": [
+      {
+       "traceId": "e3ea7a3906419b466a28541306cc5ee1",
+       "spanId": "72e6cc3ababced20",
+       "name": "GET /orders",
+       "kind": "SPAN_KIND_SERVER",
+       "startTimeUnixNano": "1792506618000000000",
+       "endTimeUnixNano": "1792506618152000000",
+       "attributes": [
+        {
+         "key": "http.route",
+         "value": {
+          "stringValue": "/orders"
+         }
+        },
+        {
+         "key": "http.request.method",
+         "value": {
+          "stringValue": "GET"
+         }
+        },
+        {
+         "key": "http.response.status_code",
+         "value": {
+          "intValue": "200"
+         }
+        }
+       ]
+      },
+      {
+       "traceId": "e3ea7a3906419b466a28541306cc5ee1",
+       "spanId": "faecbd389be4bcfc",
+       "parentSpanId": "72e6cc3ababced20",
+       "name": "GET auth-api /verify",
+       "kind": "SPAN_KIND_CLIENT",
+       "startTimeUnixNano": "1792506618001500000",
+       "endTimeUnixNano": "1792506618004903849",
+       "attributes": [
+        {
+         "key": "server.address",
+         "value": {
+          "stringValue": "auth-api.auth.svc.cluster.local"
+         }
+        }
+       ]
+      },
+      {
+       "traceId": "e3ea7a3906419b466a28541306cc5ee1",
+       "spanId": "6b0a18e8830e07bc",
+       "parentSpanId": "72e6cc3ababced20",
+       "name": "SELECT orders",
+       "kind": "SPAN_KIND_CLIENT",
+       "startTimeUnixNano": "1792506618005880605",
+       "endTimeUnixNano": "1792506618008928206",
+       "attributes": [
+        {
+         "key": "db.system",
+         "value": {
+          "stringValue": "postgresql"
+         }
+        }
+       ]
+      },
+      {
+       "traceId": "e3ea7a3906419b466a28541306cc5ee1",
+       "spanId": "26e875555790f82e",
+       "parentSpanId": "72e6cc3ababced20",
+       "name": "SELECT order_items",
+       "kind": "SPAN_KIND_CLIENT",
+       "startTimeUnixNano": "1792506618010001181",
+       "endTimeUnixNano": "1792506618014389020",
+       "attributes": [
+        {
+         "key": "db.system",
+         "value": {
+          "stringValue": "postgresql"
+         }
+        }
+       ]
+      },
+      {
+       "traceId": "e3ea7a3906419b466a28541306cc5ee1",
+       "spanId": "f646e1f40a097c97",
+       "parentSpanId": "72e6cc3ababced20",
+       "name": "SELECT order_items",
+       "kind": "SPAN_KIND_CLIENT",
+       "startTimeUnixNano": "1792506618015801734",
+       "endTimeUnixNano": "1792506618019486099",
+       "attributes": [
+        {
+         "key": "db.system",
+         "value": {
+          "stringValue": "postgresql"
+         }
+        }
+       ]
+      },
+      {
+       "traceId": "e3ea7a3906419b466a28541306cc5ee1",
+       "spanId": "8ede0d7ac3baea9e",
+       "parentSpanId": "72e6cc3ababced20",
+       "name": "SELECT order_items",
+       "kind": "SPAN_KIND_CLIENT",
+       "startTimeUnixNano": "1792506618021086774",
+       "endTimeUnixNano": "1792506618024049555",
+       "attributes": [
+        {
+         "key": "db.system",
+         "value": {
+          "stringValue": "postgresql"
+         }
+        }
+       ]
+      },
+      {
+       "traceId": "e3ea7a3906419b466a28541306cc5ee1",
+       "spanId": "d17f9acae01f5057",
+       "parentSpanId": "72e6cc3ababced20",
+       "name": "SELECT order_items",
+       "kind": "SPAN_KIND_CLIENT",
+       "startTimeUnixNano": "1792506618025550416",
+       "endTimeUnixNano": "1792506618030005266",
+       "attributes": [
+        {
+         "key": "db.system",
+         "value": {
+          "stringValue": "postgresql"
+         }
+        }
+       ]
+      },
+      {
+       "traceId": "e3ea7a3906419b466a28541306cc5ee1",
+       "spanId": "59a54a7bb1fee08f",
+       "parentSpanId": "72e6cc3ababced20",
+       "name": "SELECT order_items",
+       "kind": "SPAN_KIND_CLIENT",
+       "startTimeUnixNano": "1792506618031234254",
+       "endTimeUnixNano": "1792506618034747542",
+       "attributes": [
+        {
+         "key": "db.system",
+         "value": {
+          "stringValue": "postgresql"
+         }
+        }
+       ]
+      },
+      {
+       "traceId": "e3ea7a3906419b466a28541306cc5ee1",
+       "spanId": "cc011cdd9474031b",
+       "parentSpanId": "72e6cc3ababced20",
+       "name": "SELECT order_items",
+       "kind": "SPAN_KIND_CLIENT",
+       "startTimeUnixNano": "1792506618036270783",
+       "endTimeUnixNano": "1792506618040112385",
+       "attributes": [
+        {
+         "key": "db.system",
+         "value": {
+          "stringValue": "postgresql"
+         }
+        }
+       ]
+      },
+      {
+       "traceId": "e3ea7a3906419b466a28541306cc5ee1",
+       "spanId": "17f5e837d70820fe",
+       "parentSpanId": "72e6cc3ababced20",
+       "name": "SELECT order_items",
+       "kind": "SPAN_KIND_CLIENT",
+       "startTimeUnixNano": "1792506618041490750",
+       "endTimeUnixNano": "1792506618044434956",
+       "attributes": [
+        {
+         "key": "db.system",
+         "value": {
+          "stringValue": "postgresql"
+         }
+        }
+       ]
+      },
+      {
+       "traceId": "e3ea7a3906419b466a28541306cc5ee1",
+       "spanId": "aa05e11ab2715945",
+       "parentSpanId": "72e6cc3ababced20",
+       "name": "SELECT order_items",
+       "kind": "SPAN_KIND_CLIENT",
+       "startTimeUnixNano": "1792506618045618007",
+       "endTimeUnixNano": "1792506618049412263",
+       "attributes": [
+        {
+         "key": "db.system",
+         "value": {
+          "stringValue": "postgresql"
+         }
+        }
+       ]
+      },
+      {
+       "traceId": "e3ea7a3906419b466a28541306cc5ee1",
+       "spanId": "b394fb36bb2d420f",
+       "parentSpanId": "72e6cc3ababced20",
+       "name": "SELECT order_items",
+       "kind": "SPAN_KIND_CLIENT",
+       "startTimeUnixNano": "1792506618050380420",
+       "endTimeUnixNano": "1792506618053307653",
+       "attributes": [
+        {
+         "key": "db.system",
+         "value": {
+          "stringValue": "postgresql"
+         }
+        }
+       ]
+      },
+      {
+       "traceId": "e3ea7a3906419b466a28541306cc5ee1",
+       "spanId": "fe3b890b93f448b3",
+       "parentSpanId": "72e6cc3ababced20",
+       "name": "SELECT order_items",
+       "kind": "SPAN_KIND_CLIENT",
+       "startTimeUnixNano": "1792506618054532299",
+       "endTimeUnixNano": "1792506618058689426",
+       "attributes": [
+        {
+         "key": "db.system",
+         "value": {
+          "stringValue": "postgresql"
+         }
+        }
+       ]
+      },
+      {
+       "traceId": "e3ea7a3906419b466a28541306cc5ee1",
+       "spanId": "48db40af72158370",
+       "parentSpanId": "72e6cc3ababced20",
+       "name": "SELECT order_items",
+       "kind": "SPAN_KIND_CLIENT",
+       "startTimeUnixNano": "1792506618060303754",
+       "endTimeUnixNano": "1792506618064827455",
+       "attributes": [
+        {
+         "key": "db.system",
+         "value": {
+          "stringValue": "postgresql"
+         }
+        }
+       ]
+      },
+      {
+       "traceId": "e3ea7a3906419b466a28541306cc5ee1",
+       "spanId": "ab2cd31ee3151288",
+       "parentSpanId": "72e6cc3ababced20",
+       "name": "SELECT order_items",
+       "kind": "SPAN_KIND_CLIENT",
+       "startTimeUnixNano": "1792506618066478893",
+       "endTimeUnixNano": "1792506618070087956",
+       "attributes": [
+        {
+         "key": "db.system",
+         "value": {
+          "stringValue": "postgresql"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  }
+ ]
+}

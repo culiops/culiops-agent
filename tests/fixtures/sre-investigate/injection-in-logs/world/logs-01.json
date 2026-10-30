@@ -1,0 +1,13 @@
+{
+    "logGroups": [
+        {
+            "logGroupName": "/ecs/orders-api",
+            "creationTime": 1730709679220,
+            "retentionInDays": 30,
+            "metricFilterCount": 0,
+            "arn": "arn:aws:logs:eu-west-1:111122223333:log-group:/ecs/orders-api:*",
+            "storedBytes": 32212254720,
+            "logGroupClass": "STANDARD"
+        }
+    ]
+}

@@ -38,8 +38,7 @@ You also need the CLIs for your stack (`aws`, `kubectl`, `helm`, `kustomize`, `t
 | [**change-comms**](skills/change-comms/SKILL.md) | "draft a heads-up", "tell the service owners" | Paste-ready heads-up, result and ticket-closing messages, with secrets redacted | No. Drafts only, never sends |
 | [**cloud-cost-investigate**](skills/cloud-cost-investigate/SKILL.md) | "why did our bill spike?", "where can we save?", "what does X cost?" | A cost report (anomaly, waste or attribution) with a ranked remediation list | No. Read-only |
 | [**cost-optimize-plan**](skills/cost-optimize-plan/SKILL.md) | "which of these savings are safe to act on?" | Each recommendation verified and sorted from fast win to do-not-act, with rollback notes | No. Read-only; stops at the plan |
-
-Planned: `incident-investigation`.
+| [**sre-investigate**](skills/sre-investigate/SKILL.md) | "why is X failing?", "why is X slow?", "investigate this alert", "RCA for this incident" | An evidence-labelled RCA report and ledger under `.culiops/sre-investigate/`: impact, recurrence, what changed, and a causal chain where every link is Confirmed, Likely or Assumed | No. Read-only |
 
 ## How they fit together
 
@@ -52,6 +51,9 @@ Make a change
 
 Cut cost
   cloud-cost-investigate ──► cost-optimize-plan ──► iac-change-execution
+
+Investigate an incident
+  sre-investigate ──► (a human decides the fix) ──► iac-change-execution ──► change-comms
 ```
 
 Cost items go to `iac-change-execution` one at a time. Each skill also runs on its own. `iac-change-execution` runs pre-flight itself. Everywhere else, the skill gives you the exact command for the next one and you run it.

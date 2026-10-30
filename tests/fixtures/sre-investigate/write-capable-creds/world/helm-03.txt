@@ -1,0 +1,2 @@
+NAME           	NAMESPACE	REVISION	UPDATED                                	STATUS  	CHART                	APP VERSION
+payments-worker	payments 	31      	2026-10-24 10:52:20.540113 +0000 UTC	deployed	payments-worker-2.3.1	5.2.0

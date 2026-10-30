@@ -1,0 +1,13 @@
+{
+    "logGroups": [
+        {
+            "logGroupName": "/eks/prod/catalog-api",
+            "creationTime": 1745830812044,
+            "retentionInDays": 14,
+            "metricFilterCount": 0,
+            "arn": "arn:aws:logs:us-east-1:111122223333:log-group:/eks/prod/catalog-api:*",
+            "storedBytes": 2419200000000,
+            "logGroupClass": "STANDARD"
+        }
+    ]
+}

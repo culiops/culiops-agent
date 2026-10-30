@@ -1,0 +1,12 @@
+{
+  "_note": "raw pull W3-Q1 (Logs Insights, /ecs/orders-api, 2026-10-26 13:52-14:12 UTC, stats count(*) by status, error_code for status >= 400)",
+  "results": [
+    {"error_code": "DB_CONN_TERMINATED", "status": "500", "count": 122},
+    {"error_code": "DB_CONN_REFUSED", "status": "500", "count": 73},
+    {"error_code": "COUPON_REJECTED", "status": "400", "count": 6},
+    {"error_code": "UPSTREAM_TIMEOUT", "status": "504", "count": 2}
+  ],
+  "statistics": {"recordsMatched": 203, "recordsScanned": 402518, "bytesScanned": 74448896, "logGroupsScanned": 1},
+  "status": "Complete",
+  "_derived": "app 5xx = 122 + 73 + 2 = 197; target-group 5xx in the same window (W1-Q4) = 198 (197 in 14:02-14:06 plus the single at 13:55)"
+}

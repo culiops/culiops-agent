@@ -1,0 +1,27 @@
+apiVersion: v1
+kind: List
+items:
+- apiVersion: v1
+  kind: ConfigMap
+  metadata:
+    name: kube-root-ca.crt
+    namespace: notify
+  data:
+    ca.crt: |
+      <certificate omitted>
+- apiVersion: v1
+  kind: ConfigMap
+  metadata:
+    name: notify-worker-config
+    namespace: notify
+    labels:
+      app.kubernetes.io/instance: notify-worker
+      app.kubernetes.io/managed-by: Helm
+    annotations:
+      meta.helm.sh/release-name: notify-worker
+      meta.helm.sh/release-namespace: notify
+  data:
+    NOTIFY_FROM_ADDRESS: noreply@example.org
+    NOTIFY_QUEUE_URL: https://sqs.us-east-1.amazonaws.com/111122223333/notify-outbound
+    NOTIFY_WORKER_CONCURRENCY: "8"
+    SMTP_RELAY_HOST: relay-01.mail.example.org:2525

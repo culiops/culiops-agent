@@ -1,0 +1,3 @@
+NAME               DATA   AGE
+kube-root-ca.crt   1      211d
+notify-worker-config   4      211d

@@ -1,0 +1,18 @@
+{
+  "AlarmHistoryItems": [
+    {
+      "AlarmName": "orders-api-5xx-high",
+      "AlarmType": "MetricAlarm",
+      "Timestamp": "2026-10-26T14:07:00.291000+00:00",
+      "HistoryItemType": "StateUpdate",
+      "HistorySummary": "Alarm updated from ALARM to OK"
+    },
+    {
+      "AlarmName": "orders-api-5xx-high",
+      "AlarmType": "MetricAlarm",
+      "Timestamp": "2026-10-26T14:04:00.488000+00:00",
+      "HistoryItemType": "StateUpdate",
+      "HistorySummary": "Alarm updated from OK to ALARM"
+    }
+  ]
+}

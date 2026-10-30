@@ -1,0 +1,123 @@
+{
+    "results": [
+        [
+            {
+                "field": "@timestamp",
+                "value": "2026-10-19 02:00:11.319"
+            },
+            {
+                "field": "@message",
+                "value": "reconcile: start run_id=20261019-0200 window=previous_day batch_size=5000 mode=SELECT ... FOR UPDATE"
+            }
+        ],
+        [
+            {
+                "field": "@timestamp",
+                "value": "2026-10-19 02:18:52.119"
+            },
+            {
+                "field": "@message",
+                "value": "reconcile: committed 1171044 rows, 29 mismatches written to recon_exceptions"
+            }
+        ],
+        [
+            {
+                "field": "@timestamp",
+                "value": "2026-10-19 02:18:52.419"
+            },
+            {
+                "field": "@message",
+                "value": "reconcile: done in 1121.4s"
+            }
+        ],
+        [
+            {
+                "field": "@timestamp",
+                "value": "2026-10-20 02:00:11.320"
+            },
+            {
+                "field": "@message",
+                "value": "reconcile: start run_id=20261020-0200 window=previous_day batch_size=5000 mode=SELECT ... FOR UPDATE"
+            }
+        ],
+        [
+            {
+                "field": "@timestamp",
+                "value": "2026-10-20 02:17:24.120"
+            },
+            {
+                "field": "@message",
+                "value": "reconcile: committed 1102387 rows, 41 mismatches written to recon_exceptions"
+            }
+        ],
+        [
+            {
+                "field": "@timestamp",
+                "value": "2026-10-20 02:17:24.420"
+            },
+            {
+                "field": "@message",
+                "value": "reconcile: done in 1033.8s"
+            }
+        ],
+        [
+            {
+                "field": "@timestamp",
+                "value": "2026-10-21 02:00:11.902"
+            },
+            {
+                "field": "@message",
+                "value": "reconcile: start run_id=20261021-0200 window=previous_day batch_size=5000 mode=SELECT ... FOR UPDATE"
+            }
+        ],
+        [
+            {
+                "field": "@timestamp",
+                "value": "2026-10-21 02:00:12.448"
+            },
+            {
+                "field": "@message",
+                "value": "reconcile: locking orders rows created 2026-10-20 (estimated 1,184,000 rows)"
+            }
+        ],
+        [
+            {
+                "field": "@timestamp",
+                "value": "2026-10-21 02:09:37.215"
+            },
+            {
+                "field": "@message",
+                "value": "reconcile: progress 600000/1184212 rows"
+            }
+        ],
+        [
+            {
+                "field": "@timestamp",
+                "value": "2026-10-21 02:19:48.630"
+            },
+            {
+                "field": "@message",
+                "value": "reconcile: committed 1184212 rows, 37 mismatches written to recon_exceptions"
+            }
+        ],
+        [
+            {
+                "field": "@timestamp",
+                "value": "2026-10-21 02:19:51.877"
+            },
+            {
+                "field": "@message",
+                "value": "reconcile: done in 1179.9s"
+            }
+        ]
+    ],
+    "statistics": {
+        "recordsMatched": 11.0,
+        "recordsScanned": 412.0,
+        "estimatedRecordsSkipped": 0.0,
+        "bytesScanned": 61440.0,
+        "estimatedBytesSkipped": 0.0,
+        "logGroupsScanned": 1.0
+    },
+    "status": "Complete"
+}

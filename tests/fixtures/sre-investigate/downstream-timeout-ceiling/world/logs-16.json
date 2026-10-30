@@ -1,0 +1,9 @@
+{
+  "results": [
+    [{"field": "msg", "value": "pricing lookup failed: context deadline exceeded (Client.Timeout exceeded while awaiting headers) after 5000ms; serving cached price"}, {"field": "count(*)", "value": "52033"}],
+    [{"field": "msg", "value": "pricing cache miss; product shown without price"}, {"field": "count(*)", "value": "1196"}],
+    [{"field": "msg", "value": "reviews-api returned 503; reviews block hidden"}, {"field": "count(*)", "value": "9"}]
+  ],
+  "statistics": {"recordsMatched": 53238.0, "recordsScanned": 0.0, "estimatedRecordsSkipped": 0.0, "bytesScanned": 3600000000.0, "estimatedBytesSkipped": 0.0, "logGroupsScanned": 1.0},
+  "status": "Complete"
+}

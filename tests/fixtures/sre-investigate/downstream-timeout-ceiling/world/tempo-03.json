@@ -1,0 +1,131 @@
+{
+  "traces": [
+    {
+      "traceID": "f3700bb19e11f60a7471a4c4eef93d59",
+      "rootServiceName": "catalog-api",
+      "rootTraceName": "GET /products/{id}",
+      "startTimeUnixNano": "1792749744000000000",
+      "durationMs": 5026,
+      "spanSets": [
+        {
+          "spans": [
+            {
+              "spanID": "701cc13fd6b6514e",
+              "name": "GET",
+              "startTimeUnixNano": "1792749744002100000",
+              "durationNanos": "5000410299",
+              "attributes": [
+                {"key": "server.address", "value": {"stringValue": "api.pricing.example.com"}},
+                {"key": "status", "value": {"stringValue": "error"}}
+              ]
+            }
+          ],
+          "matched": 1
+        }
+      ]
+    },
+    {
+      "traceID": "27e48b964ad178a28945fcb8cf4507a2",
+      "rootServiceName": "catalog-api",
+      "rootTraceName": "GET /products/{id}",
+      "startTimeUnixNano": "1792749904000000000",
+      "durationMs": 5030,
+      "spanSets": [
+        {
+          "spans": [
+            {
+              "spanID": "571989194a9c0d4e",
+              "name": "GET",
+              "startTimeUnixNano": "1792749904002100000",
+              "durationNanos": "5000455113",
+              "attributes": [
+                {"key": "server.address", "value": {"stringValue": "api.pricing.example.com"}},
+                {"key": "status", "value": {"stringValue": "error"}}
+              ]
+            }
+          ],
+          "matched": 1
+        }
+      ]
+    },
+    {
+      "traceID": "a57877d78ac5fedd08c00f3c78c97722",
+      "rootServiceName": "catalog-api",
+      "rootTraceName": "GET /products/{id}",
+      "startTimeUnixNano": "1792750091000000000",
+      "durationMs": 5004,
+      "spanSets": [
+        {
+          "spans": [
+            {
+              "spanID": "624f7fb885b20f80",
+              "name": "GET",
+              "startTimeUnixNano": "1792750091002100000",
+              "durationNanos": "5000316315",
+              "attributes": [
+                {"key": "server.address", "value": {"stringValue": "api.pricing.example.com"}},
+                {"key": "status", "value": {"stringValue": "error"}}
+              ]
+            }
+          ],
+          "matched": 1
+        }
+      ]
+    },
+    {
+      "traceID": "3ee1774a5fd326afdc99d2dcb93631c5",
+      "rootServiceName": "catalog-api",
+      "rootTraceName": "GET /products/{id}",
+      "startTimeUnixNano": "1792750307000000000",
+      "durationMs": 5012,
+      "spanSets": [
+        {
+          "spans": [
+            {
+              "spanID": "ff69aea115ad07a6",
+              "name": "GET",
+              "startTimeUnixNano": "1792750307002100000",
+              "durationNanos": "5000290091",
+              "attributes": [
+                {"key": "server.address", "value": {"stringValue": "api.pricing.example.com"}},
+                {"key": "status", "value": {"stringValue": "error"}}
+              ]
+            }
+          ],
+          "matched": 1
+        }
+      ]
+    },
+    {
+      "traceID": "dda0515a50c86de82af62c88a890dd07",
+      "rootServiceName": "catalog-api",
+      "rootTraceName": "GET /products/{id}",
+      "startTimeUnixNano": "1792750467000000000",
+      "durationMs": 5027,
+      "spanSets": [
+        {
+          "spans": [
+            {
+              "spanID": "e4f3534cbd58025d",
+              "name": "GET",
+              "startTimeUnixNano": "1792750467002100000",
+              "durationNanos": "5000458879",
+              "attributes": [
+                {"key": "server.address", "value": {"stringValue": "api.pricing.example.com"}},
+                {"key": "status", "value": {"stringValue": "error"}}
+              ]
+            }
+          ],
+          "matched": 1
+        }
+      ]
+    }
+  ],
+  "metrics": {
+    "inspectedTraces": 48211,
+    "inspectedBytes": "9821114880",
+    "totalBlocks": 11,
+    "completedJobs": 32,
+    "totalJobs": 32
+  }
+}

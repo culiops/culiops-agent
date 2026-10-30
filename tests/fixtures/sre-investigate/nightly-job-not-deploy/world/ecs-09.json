@@ -1,0 +1,5 @@
+{
+    "serviceArns": [
+        "arn:aws:ecs:us-east-1:111122223333:service/prod/orders-api"
+    ]
+}

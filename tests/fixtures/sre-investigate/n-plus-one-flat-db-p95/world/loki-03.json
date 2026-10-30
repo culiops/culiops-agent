@@ -1,0 +1,4 @@
+{
+  "status": "success",
+  "data": ["catalog", "notify", "orders", "payments"]
+}

@@ -1,0 +1,9 @@
+{
+    "Name": "orders-reconcile-nightly",
+    "Arn": "arn:aws:events:us-east-1:111122223333:rule/orders-reconcile-nightly",
+    "ScheduleExpression": "cron(0 2 * * ? *)",
+    "State": "ENABLED",
+    "Description": "Nightly ledger reconciliation of the orders table",
+    "EventBusName": "default",
+    "CreatedBy": "111122223333"
+}

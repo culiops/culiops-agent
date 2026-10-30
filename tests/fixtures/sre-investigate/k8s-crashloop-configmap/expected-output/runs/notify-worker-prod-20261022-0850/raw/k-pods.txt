@@ -1,0 +1,5 @@
+# W1-Q1  kubectl get pods -n notify -o wide  (08:50 UTC)
+NAME                             READY   STATUS             RESTARTS        AGE
+notify-worker-5c8d7b9f4c-8wq2d   0/1     CrashLoopBackOff   11 (2m4s ago)   35m
+notify-worker-5c8d7b9f4c-jt6kz   0/1     CrashLoopBackOff   11 (98s ago)    35m
+notify-worker-5c8d7b9f4c-x4p9n   0/1     CrashLoopBackOff   11 (2m31s ago)  35m

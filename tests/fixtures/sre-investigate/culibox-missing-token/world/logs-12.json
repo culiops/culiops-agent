@@ -1,0 +1,49 @@
+{
+    "results": [
+        [
+            {
+                "field": "task_def_revision",
+                "value": "19"
+            },
+            {
+                "field": "error",
+                "value": "TypeError: refund_amount() missing 1 required positional argument: 'currency'"
+            },
+            {
+                "field": "count(*)",
+                "value": "738"
+            },
+            {
+                "field": "first",
+                "value": "2026-10-25 06:24:51.204"
+            }
+        ],
+        [
+            {
+                "field": "task_def_revision",
+                "value": "18"
+            },
+            {
+                "field": "error",
+                "value": "SQS ReceiveMessage throttled, retrying"
+            },
+            {
+                "field": "count(*)",
+                "value": "2"
+            },
+            {
+                "field": "first",
+                "value": "2026-10-25 03:12:07.660"
+            }
+        ]
+    ],
+    "statistics": {
+        "recordsMatched": 740.0,
+        "recordsScanned": 288104.0,
+        "estimatedRecordsSkipped": 0.0,
+        "bytesScanned": 109051904.0,
+        "estimatedBytesSkipped": 0.0,
+        "logGroupsScanned": 1.0
+    },
+    "status": "Complete"
+}

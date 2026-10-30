@@ -1,0 +1,2 @@
+NAME            READY   UP-TO-DATE   AVAILABLE   AGE
+notify-worker   0/3     3            0           211d

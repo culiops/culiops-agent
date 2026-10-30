@@ -1,0 +1,12 @@
+diff --git a/charts/payments-worker/templates/deployment.yaml b/charts/payments-worker/templates/deployment.yaml
+index 2c9e1f4..8d0a7b3 100644
+--- a/charts/payments-worker/templates/deployment.yaml
++++ b/charts/payments-worker/templates/deployment.yaml
+@@ -31,6 +31,8 @@ spec:
+           envFrom:
+             - configMapRef:
+                 name: {{ include "payments-worker.fullname" . }}-config
++          args:
++            - --ledger-retry-budget=3
+           resources:
+             {{- toYaml .Values.resources | nindent 12 }}

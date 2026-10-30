@@ -1,0 +1,16 @@
+# W1-Q4: HTTPCode_Target_5XX_Count (Id m5xx), Sum, Period 60, 2026-10-26 12:20 to 14:40 UTC. Reply held ONLY m5xx; Ids req, elb5xx, unhealthy, p95 were absent from the reply (not zero: no result).
+# Minutes without a datapoint = 0 (metric is reported only when non-zero). StatusCode Complete, no NextToken, Messages empty.
+utc	m5xx	window
+12:36	1	previous
+12:58	1	previous
+13:10	1	previous
+13:14	1	previous
+13:28	1	previous
+13:55	1	incident
+14:02	17	incident
+14:03	94	incident
+14:04	71	incident
+14:05	12	incident
+14:06	3	incident
+14:21	1	incident
+# previous window 12:20-13:30: 5 datapoints, sum 5. incident window 13:30-14:40: 7 datapoints, sum 199 (197 in 14:02-14:06).

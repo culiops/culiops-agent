@@ -1,0 +1,47 @@
+Name:             notify-worker-5c8d7b9f4c-8wq2d
+Namespace:        notify
+Priority:         0
+Service Account:  notify-worker
+Node:             ip-192-0-2-52.ec2.internal/192.0.2.52
+Start Time:       Thu, 22 Oct 2026 08:14:33 +0000
+Labels:           app.kubernetes.io/instance=notify-worker
+                  app.kubernetes.io/name=notify-worker
+                  pod-template-hash=5c8d7b9f4c
+Annotations:      checksum/config: 9b1f0e7a4c2d81f6a3b5c7d9e0f2a4b6c8d0e1f3a5b7c9d1e3f5a7b9c1d3e5f7
+Status:           Running
+Controlled By:    ReplicaSet/notify-worker-5c8d7b9f4c
+Containers:
+  notify-worker:
+    Image:          111122223333.dkr.ecr.us-east-1.amazonaws.com/notify-worker:3.8.1
+    State:          Waiting
+      Reason:       CrashLoopBackOff
+    Last State:     Terminated
+      Reason:       Error
+      Exit Code:    1
+      Started:      Thu, 22 Oct 2026 08:47:56 +0000
+      Finished:     Thu, 22 Oct 2026 08:47:56 +0000
+    Ready:          False
+    Restart Count:  11
+    Limits:
+      cpu:     500m
+      memory:  256Mi
+    Requests:
+      cpu:     100m
+      memory:  128Mi
+    Environment Variables from:
+      notify-worker-config  ConfigMap  Optional: false
+    Environment:
+      SMTP_PASSWORD:  <set to the key 'password' in secret 'notify-smtp'>  Optional: false
+    Mounts:
+      /var/run/secrets/kubernetes.io/serviceaccount from kube-api-access-7xq2m (ro)
+Conditions:
+  Type              Status
+  Initialized       True
+  Ready             False
+  ContainersReady   False
+  PodScheduled      True
+Events:
+  Type     Reason   Age                    From     Message
+  ----     ------   ----                   ----     -------
+  Normal   Started  2m4s (x12 over 35m)    kubelet  Started container notify-worker
+  Warning  BackOff  40s (x151 over 34m)    kubelet  Back-off restarting failed container notify-worker in pod notify-worker-5c8d7b9f4c-8wq2d_notify(3f0e5a7c-1b2d-4e8f-9a0b-1c2d3e4f5a6b)

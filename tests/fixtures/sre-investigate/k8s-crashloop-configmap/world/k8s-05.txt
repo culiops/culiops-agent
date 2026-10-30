@@ -1,0 +1,14 @@
+LAST SEEN   TYPE      REASON              OBJECT                                MESSAGE
+35m         Normal    Killing             pod/notify-worker-7f6b8c5d2e-2hm4v    Stopping container notify-worker
+35m         Normal    Killing             pod/notify-worker-7f6b8c5d2e-m9t7c    Stopping container notify-worker
+35m         Normal    Killing             pod/notify-worker-7f6b8c5d2e-qz81r    Stopping container notify-worker
+35m         Normal    ScalingReplicaSet   deployment/notify-worker              Scaled down replica set notify-worker-7f6b8c5d2e to 0 from 3
+35m         Normal    ScalingReplicaSet   deployment/notify-worker              Scaled up replica set notify-worker-5c8d7b9f4c to 3
+35m         Normal    Scheduled           pod/notify-worker-5c8d7b9f4c-8wq2d    Successfully assigned notify/notify-worker-5c8d7b9f4c-8wq2d to ip-192-0-2-52.ec2.internal
+35m         Normal    Scheduled           pod/notify-worker-5c8d7b9f4c-jt6kz    Successfully assigned notify/notify-worker-5c8d7b9f4c-jt6kz to ip-192-0-2-9.ec2.internal
+35m         Normal    Scheduled           pod/notify-worker-5c8d7b9f4c-x4p9n    Successfully assigned notify/notify-worker-5c8d7b9f4c-x4p9n to ip-192-0-2-140.ec2.internal
+98s         Normal    Pulled              pod/notify-worker-5c8d7b9f4c-jt6kz    Container image "111122223333.dkr.ecr.us-east-1.amazonaws.com/notify-worker:3.8.1" already present on machine
+98s         Normal    Started             pod/notify-worker-5c8d7b9f4c-jt6kz    Started container notify-worker
+40s         Warning   BackOff             pod/notify-worker-5c8d7b9f4c-8wq2d    Back-off restarting failed container notify-worker in pod notify-worker-5c8d7b9f4c-8wq2d_notify(3f0e5a7c-1b2d-4e8f-9a0b-1c2d3e4f5a6b)
+22s         Warning   BackOff             pod/notify-worker-5c8d7b9f4c-jt6kz    Back-off restarting failed container notify-worker in pod notify-worker-5c8d7b9f4c-jt6kz_notify(8a41b2c3-d4e5-4f60-8172-93a4b5c6d7e8)
+9s          Warning   BackOff             pod/notify-worker-5c8d7b9f4c-x4p9n    Back-off restarting failed container notify-worker in pod notify-worker-5c8d7b9f4c-x4p9n_notify(c7d2e3f4-a5b6-4c7d-8e9f-0a1b2c3d4e5f)

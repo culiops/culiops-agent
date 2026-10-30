@@ -1,0 +1,30 @@
+{
+    "MetricAlarms": [
+        {
+            "AlarmName": "orders-api-5xx-high",
+            "AlarmArn": "arn:aws:cloudwatch:eu-west-1:111122223333:alarm:orders-api-5xx-high",
+            "StateValue": "OK",
+            "StateUpdatedTimestamp": "2026-10-26T14:07:00.291000+00:00",
+            "MetricName": "HTTPCode_Target_5XX_Count",
+            "Namespace": "AWS/ApplicationELB",
+            "Statistic": "Sum",
+            "Dimensions": [
+                {
+                    "Name": "TargetGroup",
+                    "Value": "targetgroup/orders-api/6a1f0c2e9b8d7e54"
+                },
+                {
+                    "Name": "LoadBalancer",
+                    "Value": "app/prod-public/1c2d3e4f5a6b7c8d"
+                }
+            ],
+            "Period": 60,
+            "EvaluationPeriods": 2,
+            "DatapointsToAlarm": 2,
+            "Threshold": 25.0,
+            "ComparisonOperator": "GreaterThanThreshold",
+            "TreatMissingData": "notBreaching"
+        }
+    ],
+    "CompositeAlarms": []
+}

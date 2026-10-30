@@ -1,0 +1,46 @@
+{
+    "services": [
+        {
+            "serviceArn": "arn:aws:ecs:us-east-1:111122223333:service/prod/orders-api",
+            "serviceName": "orders-api",
+            "clusterArn": "arn:aws:ecs:us-east-1:111122223333:cluster/prod",
+            "status": "ACTIVE",
+            "desiredCount": 6,
+            "runningCount": 6,
+            "pendingCount": 0,
+            "launchType": "FARGATE",
+            "taskDefinition": "arn:aws:ecs:us-east-1:111122223333:task-definition/orders-api:42",
+            "deploymentConfiguration": {
+                "deploymentCircuitBreaker": {"enable": true, "rollback": true},
+                "maximumPercent": 200,
+                "minimumHealthyPercent": 100
+            },
+            "deployments": [
+                {
+                    "id": "ecs-svc/4417203958112934411",
+                    "status": "PRIMARY",
+                    "taskDefinition": "arn:aws:ecs:us-east-1:111122223333:task-definition/orders-api:42",
+                    "desiredCount": 6,
+                    "pendingCount": 0,
+                    "runningCount": 6,
+                    "failedTasks": 0,
+                    "createdAt": "2026-10-21T01:22:07.418000+00:00",
+                    "updatedAt": "2026-10-21T01:31:40.902000+00:00",
+                    "launchType": "FARGATE",
+                    "rolloutState": "COMPLETED",
+                    "rolloutStateReason": "ECS deployment ecs-svc/4417203958112934411 completed."
+                }
+            ],
+            "events": [
+                {"id": "c1a0e7f2-0001", "createdAt": "2026-10-21T01:31:40.902000+00:00", "message": "(service orders-api) has reached a steady state."},
+                {"id": "c1a0e7f2-0002", "createdAt": "2026-10-21T01:31:40.881000+00:00", "message": "(service orders-api) (deployment ecs-svc/4417203958112934411) deployment completed."},
+                {"id": "c1a0e7f2-0003", "createdAt": "2026-10-21T01:29:12.330000+00:00", "message": "(service orders-api) has stopped 3 running tasks: (task 5b0e3f1a9c2d4e6f8a1b2c3d4e5f6071), (task 9c2d7e4b1a0f4c3d9e8f7a6b5c4d3e21), (task e81f0a2b3c4d4e5f9a8b7c6d5e4f3a12)."},
+                {"id": "c1a0e7f2-0004", "createdAt": "2026-10-21T01:25:48.017000+00:00", "message": "(service orders-api) has stopped 3 running tasks: (task 0a9b1c2d3e4f4a5b8c7d6e5f4a3b2c10), (task 7d3c2b1a0f9e4d8c7b6a5f4e3d2c1b09), (task f4e2d1c0b9a84f7e6d5c4b3a29180f7e)."},
+                {"id": "c1a0e7f2-0005", "createdAt": "2026-10-21T01:22:31.640000+00:00", "message": "(service orders-api) has started 6 tasks: (task 1f2e3d4c5b6a47980a1b2c3d4e5f6a7b) (task 2a3b4c5d6e7f48190b2c3d4e5f6a7b8c) (task 3c4d5e6f7a8b49201c3d4e5f6a7b8c9d) (task 4e5f6a7b8c9d40312d4e5f6a7b8c9d0e) (task 5a6b7c8d9e0f41423e5f6a7b8c9d0e1f) (task 6c7d8e9f0a1b42534f6a7b8c9d0e1f2a)."},
+                {"id": "c1a0e7f2-0006", "createdAt": "2026-10-20T19:02:10.115000+00:00", "message": "(service orders-api) has reached a steady state."}
+            ],
+            "createdAt": "2025-11-04T08:41:19.220000+00:00"
+        }
+    ],
+    "failures": []
+}

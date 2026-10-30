@@ -1,0 +1,10 @@
+{
+    "Role": {
+        "Path": "/aws-reserved/sso.amazonaws.com/",
+        "RoleName": "AWSReservedSSO_ReadOnly_9f8e7d6c5b4a3921",
+        "RoleId": "AROAEXAMPLESTAGING01",
+        "Arn": "arn:aws:iam::444455556666:role/aws-reserved/sso.amazonaws.com/AWSReservedSSO_ReadOnly_9f8e7d6c5b4a3921",
+        "CreateDate": "2026-03-02T10:14:55+00:00",
+        "MaxSessionDuration": 43200
+    }
+}

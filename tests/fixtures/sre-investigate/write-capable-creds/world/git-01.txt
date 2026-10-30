@@ -1,0 +1,11 @@
+commit d81e4b7a2c9f4e05b6a7c8d9e0f1a2b3c4d5e6f7
+Author: platform-dev <platform-dev@example.com>
+Date:   Sat Oct 24 10:41:41 2026 +0000
+
+    payments-worker: rename ledger endpoint key to match the shared ledger client (#377)
+
+commit 27c4e91b0d8a4f3a9b6e5c1d7f2a8e04b3c96d51
+Author: platform-dev <platform-dev@example.com>
+Date:   Tue Oct 13 15:22:47 2026 +0000
+
+    payments-worker: add a retry budget for ledger calls (#361)

@@ -1,0 +1,27 @@
+{
+  "status": "success",
+  "data": {
+    "resultType": "streams",
+    "result": [
+      {
+        "stream": {
+          "app": "payments-worker",
+          "namespace": "payments",
+          "container": "worker",
+          "stream": "stdout"
+        },
+        "values": [
+          ["1792509480000000000", "level=info msg=\"captured\" provider_latency_ms=188"],
+          ["1792509521137000000", "level=info msg=\"refund processed\""],
+          ["1792509562274000000", "level=info msg=\"queue poll\" received=2"]
+        ]
+      }
+    ],
+    "stats": {
+      "summary": {
+        "totalBytesProcessed": 1048576,
+        "execTime": 0.12
+      }
+    }
+  }
+}

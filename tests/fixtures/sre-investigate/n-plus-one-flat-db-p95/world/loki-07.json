@@ -1,0 +1,13 @@
+{
+  "status": "success",
+  "data": {
+    "resultType": "streams",
+    "result": [],
+    "stats": {
+      "summary": {
+        "totalBytesProcessed": 0,
+        "execTime": 0.02
+      }
+    }
+  }
+}

@@ -1,0 +1,7 @@
+NAME                           CPU(cores)   MEMORY(bytes)
+catalog-api-6b9d7c5f48-2hxkq   212m         388Mi
+catalog-api-6b9d7c5f48-4tq8w   198m         391Mi
+catalog-api-6b9d7c5f48-7mzpl   224m         379Mi
+catalog-api-6b9d7c5f48-c2r5d   205m         384Mi
+catalog-api-6b9d7c5f48-kx9vn   187m         352Mi
+catalog-api-6b9d7c5f48-p6wfj   191m         349Mi

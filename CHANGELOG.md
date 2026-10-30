@@ -6,6 +6,21 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [0.16.0] — 2026-10-30
+
+### Added
+
+- **New skill: `sre-investigate`.** Read-only investigation of a failing, slow or stuck service on AWS and Kubernetes, or an RCA of an incident that already happened. It never changes what it investigates; fixes and "to confirm" checks are written as prose for a human.
+  - **Evidence labels.** Every cause and every link in a causal chain is `Confirmed`, `Likely`, `Assumed` or `Ruled out`, and cites the query, file and line, or document behind it. A cause is never labelled higher than the weakest link of its chain, and the summary names that link.
+  - **Fast and Deep modes.** Fast is live triage with no checkpoints. Deep is a full RCA with checkpoints after change correlation and after hypothesis ranking. In Deep mode each hypothesis gets its own evidence worker; the main session merges their verdicts and sets the labels.
+  - **Waves of commands.** Each wave's commands are shown in full, then run. A metered query over the configured threshold, a query past the run budget and a window wider than its cap always ask first.
+  - **Method.** Sizes the impact, classifies recurrence (scheduled, chronic, recurring, sudden) before blaming a deploy, splits changes into old and new, compares parallel deployments of the service (regions, shards, tenants, zones, replicas) first, and writes every hypothesis with a falsification query that runs before any confirming one. Identifiers (log groups, labels, dimensions, job names) are discovered, not guessed, and unverified names are marked as such.
+  - **Write-capable credentials.** Phase 0 checks whether the credentials can write. If they can, it prints a warning and continues; if the check is denied, it records "write capability unknown" as a gap.
+  - **Backends.** First-class: CloudWatch (metrics, alarms, Logs Insights), Prometheus, Loki, Tempo, X-Ray, Sentry and kubectl. Datadog, New Relic and Elastic APM are mapped with translated queries. Recipes are checked against official documentation. The core AWS CLI reads (identity and write-check, CloudWatch metrics, Logs Insights, ECS, scheduling and CloudTrail listings) also ran live in a read-only run against a sandbox account; each playbook header lists, per backend, what is `verified: live` and what is `docs-only`, and every non-AWS backend is docs-only.
+  - **Output.** An RCA report, a ledger with the full query log, and raw pulls under `.culiops/sre-investigate/` (or `$CULIOPS_HOME/<owner>/<repo>/sre-investigate/` when set). Blocked sources (denied access, expired sessions, missing tokens) are recorded as gaps with the exact fix.
+  - **Local memory.** Service profiles, lessons and past incidents are kept as local markdown and written only after you approve them. Past incidents are leads for hypotheses, never evidence.
+  - **Fixtures.** Dry-run scenarios under `tests/fixtures/sre-investigate/`.
+
 ## [0.15.0] — 2026-10-27
 
 ### Added

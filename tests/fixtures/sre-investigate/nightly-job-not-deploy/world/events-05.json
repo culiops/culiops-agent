@@ -1,0 +1,8 @@
+{
+    "Targets": [
+        {
+            "Id": "ops-feed",
+            "Arn": "arn:aws:sns:us-east-1:111122223333:ecs-task-state"
+        }
+    ]
+}

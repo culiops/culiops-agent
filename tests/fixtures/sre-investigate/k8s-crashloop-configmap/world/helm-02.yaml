@@ -1,0 +1,11 @@
+USER-SUPPLIED VALUES:
+config:
+  NOTIFY_FROM_ADDRESS: noreply@example.org
+  NOTIFY_QUEUE_URL: https://sqs.us-east-1.amazonaws.com/111122223333/notify-outbound
+  NOTIFY_WORKER_CONCURRENCY: "8"
+  SMTP_RELAY_HOST: relay-01.mail.example.org:2525
+image:
+  repository: 111122223333.dkr.ecr.us-east-1.amazonaws.com/notify-worker
+  tag: 3.8.1
+strategy:
+  type: Recreate

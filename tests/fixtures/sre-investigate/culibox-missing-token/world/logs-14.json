@@ -1,0 +1,63 @@
+{
+    "results": [
+        [
+            {
+                "field": "@timestamp",
+                "value": "2026-10-25 06:24:51.204"
+            },
+            {
+                "field": "@message",
+                "value": "{\"level\":\"error\",\"task_def_revision\":19,\"message_id\":\"msg-7c1d\",\"handler\":\"refund\",\"error\":\"TypeError: refund_amount() missing 1 required positional argument: 'currency'\",\"file\":\"payments_worker/handlers/refund.py\",\"line\":48}"
+            }
+        ],
+        [
+            {
+                "field": "@timestamp",
+                "value": "2026-10-25 06:25:03.882"
+            },
+            {
+                "field": "@message",
+                "value": "{\"level\":\"error\",\"task_def_revision\":19,\"message_id\":\"msg-91aa\",\"handler\":\"refund\",\"error\":\"TypeError: refund_amount() missing 1 required positional argument: 'currency'\",\"file\":\"payments_worker/handlers/refund.py\",\"line\":48}"
+            }
+        ],
+        [
+            {
+                "field": "@timestamp",
+                "value": "2026-10-25 06:31:40.017"
+            },
+            {
+                "field": "@message",
+                "value": "{\"level\":\"error\",\"task_def_revision\":19,\"message_id\":\"msg-0b3e\",\"handler\":\"refund\",\"error\":\"TypeError: refund_amount() missing 1 required positional argument: 'currency'\",\"file\":\"payments_worker/handlers/refund.py\",\"line\":48}"
+            }
+        ],
+        [
+            {
+                "field": "@timestamp",
+                "value": "2026-10-25 06:58:12.640"
+            },
+            {
+                "field": "@message",
+                "value": "{\"level\":\"error\",\"task_def_revision\":19,\"message_id\":\"msg-55f2\",\"handler\":\"refund\",\"error\":\"TypeError: refund_amount() missing 1 required positional argument: 'currency'\",\"file\":\"payments_worker/handlers/refund.py\",\"line\":48}"
+            }
+        ],
+        [
+            {
+                "field": "@timestamp",
+                "value": "2026-10-25 07:12:29.305"
+            },
+            {
+                "field": "@message",
+                "value": "{\"level\":\"error\",\"task_def_revision\":19,\"message_id\":\"msg-e810\",\"handler\":\"refund\",\"error\":\"TypeError: refund_amount() missing 1 required positional argument: 'currency'\",\"file\":\"payments_worker/handlers/refund.py\",\"line\":48}"
+            }
+        ]
+    ],
+    "statistics": {
+        "recordsMatched": 740.0,
+        "recordsScanned": 288104.0,
+        "estimatedRecordsSkipped": 0.0,
+        "bytesScanned": 109051904.0,
+        "estimatedBytesSkipped": 0.0,
+        "logGroupsScanned": 1.0
+    },
+    "status": "Complete"
+}

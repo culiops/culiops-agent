@@ -1,0 +1,27 @@
+{
+  "status": "success",
+  "data": {
+    "resultType": "streams",
+    "result": [
+      {
+        "stream": {
+          "app": "orders-reconcile",
+          "namespace": "orders",
+          "container": "worker",
+          "stream": "stdout"
+        },
+        "values": [
+          ["1792508400000000000", "level=info msg=\"outbox drained\" batch=20 pending=0"],
+          ["1792508537000000000", "level=info msg=\"outbox drained\" batch=21 pending=0"],
+          ["1792508674000000000", "level=info msg=\"outbox drained\" batch=22 pending=0"]
+        ]
+      }
+    ],
+    "stats": {
+      "summary": {
+        "totalBytesProcessed": 1048576,
+        "execTime": 0.12
+      }
+    }
+  }
+}

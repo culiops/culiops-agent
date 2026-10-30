@@ -1,0 +1,14 @@
+LAST SEEN   TYPE      REASON              OBJECT                                MESSAGE
+35m         Normal    Killing             pod/payments-worker-84c1e9d3f5-6dk2p    Stopping container payments-worker
+35m         Normal    Killing             pod/payments-worker-84c1e9d3f5-w8r4x    Stopping container payments-worker
+35m         Normal    Killing             pod/payments-worker-84c1e9d3f5-b5n7j    Stopping container payments-worker
+35m         Normal    ScalingReplicaSet   deployment/payments-worker              Scaled down replica set payments-worker-84c1e9d3f5 to 0 from 3
+35m         Normal    ScalingReplicaSet   deployment/payments-worker              Scaled up replica set payments-worker-6d4f8a2b7c to 3
+35m         Normal    Scheduled           pod/payments-worker-6d4f8a2b7c-3mfk8    Successfully assigned payments/payments-worker-6d4f8a2b7c-3mfk8 to ip-198-51-100-31.ec2.internal
+35m         Normal    Scheduled           pod/payments-worker-6d4f8a2b7c-q7c2z    Successfully assigned payments/payments-worker-6d4f8a2b7c-q7c2z to ip-198-51-100-77.ec2.internal
+35m         Normal    Scheduled           pod/payments-worker-6d4f8a2b7c-vn5tr    Successfully assigned payments/payments-worker-6d4f8a2b7c-vn5tr to ip-198-51-100-12.ec2.internal
+98s         Normal    Pulled              pod/payments-worker-6d4f8a2b7c-q7c2z    Container image "111122223333.dkr.ecr.us-east-1.amazonaws.com/payments-worker:5.2.0" already present on machine
+98s         Normal    Started             pod/payments-worker-6d4f8a2b7c-q7c2z    Started container payments-worker
+40s         Warning   BackOff             pod/payments-worker-6d4f8a2b7c-3mfk8    Back-off restarting failed container payments-worker in pod payments-worker-6d4f8a2b7c-3mfk8_payments(5d2c8e1a-7f4b-4a6c-9e3d-2b1f0a9c8d7e)
+22s         Warning   BackOff             pod/payments-worker-6d4f8a2b7c-q7c2z    Back-off restarting failed container payments-worker in pod payments-worker-6d4f8a2b7c-q7c2z_payments(a90b3c4d-1e2f-4a5b-8c6d-7e8f9a0b1c2d)
+9s          Warning   BackOff             pod/payments-worker-6d4f8a2b7c-vn5tr    Back-off restarting failed container payments-worker in pod payments-worker-6d4f8a2b7c-vn5tr_payments(e4f5a6b7-c8d9-4e0f-a1b2-c3d4e5f6a7b8)

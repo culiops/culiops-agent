@@ -1,0 +1,2 @@
+NAME         	NAMESPACE	REVISION	UPDATED                                	STATUS  	CHART              	APP VERSION
+notify-worker	notify   	12      	2026-10-22 08:14:20.118842 +0000 UTC	deployed	notify-worker-1.8.0	3.8.1

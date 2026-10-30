@@ -1,0 +1,9 @@
+{
+  "results": [
+    [{"field": "ecs_task_revision", "value": "40"}, {"field": "count(*)", "value": "1945"}],
+    [{"field": "ecs_task_revision", "value": "41"}, {"field": "count(*)", "value": "1546"}],
+    [{"field": "ecs_task_revision", "value": "42"}, {"field": "count(*)", "value": "439"}]
+  ],
+  "statistics": {"recordsMatched": 3930.0, "recordsScanned": 100771840.0, "estimatedRecordsSkipped": 0.0, "bytesScanned": 30204018688.0, "estimatedBytesSkipped": 0.0, "logGroupsScanned": 1.0},
+  "status": "Complete"
+}

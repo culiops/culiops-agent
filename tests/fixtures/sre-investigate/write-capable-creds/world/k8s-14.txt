@@ -1,0 +1,32 @@
+Name:               payments-worker
+Namespace:          payments
+CreationTimestamp:  Mon, 13 Apr 2026 14:02:11 +0000
+Labels:             app.kubernetes.io/instance=payments-worker
+                    app.kubernetes.io/managed-by=Helm
+                    app.kubernetes.io/name=payments-worker
+Annotations:        deployment.kubernetes.io/revision: 15
+                    meta.helm.sh/release-name: payments-worker
+                    meta.helm.sh/release-namespace: payments
+Selector:           app.kubernetes.io/instance=payments-worker,app.kubernetes.io/name=payments-worker
+Replicas:           3 desired | 3 updated | 3 total | 0 available | 3 unavailable
+StrategyType:       Recreate
+MinReadySeconds:    0
+Pod Template:
+  Labels:           app.kubernetes.io/instance=payments-worker
+                    app.kubernetes.io/name=payments-worker
+  Service Account:  payments-worker
+  Containers:
+   payments-worker:
+    Image:      111122223333.dkr.ecr.us-east-1.amazonaws.com/payments-worker:5.2.0
+    Port:       <none>
+    Host Port:  <none>
+    Environment Variables from:
+      payments-worker-config  ConfigMap  Optional: false
+Conditions:
+  Type           Status  Reason
+  ----           ------  ------
+  Progressing    True    NewReplicaSetAvailable
+  Available      False   MinimumReplicasUnavailable
+OldReplicaSets:  payments-worker-84c1e9d3f5 (0/0 replicas created)
+NewReplicaSet:   payments-worker-6d4f8a2b7c (3/3 replicas created)
+Events:          <none>

@@ -1,0 +1,13 @@
+{
+    "logGroups": [
+        {
+            "logGroupName": "/ecs/payments-worker",
+            "creationTime": 1741255210992,
+            "retentionInDays": 14,
+            "metricFilterCount": 0,
+            "arn": "arn:aws:logs:eu-west-1:444455556666:log-group:/ecs/payments-worker:*",
+            "storedBytes": 3758096384,
+            "logGroupClass": "STANDARD"
+        }
+    ]
+}

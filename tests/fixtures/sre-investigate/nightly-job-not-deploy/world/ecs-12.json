@@ -1,0 +1,10 @@
+{
+    "taskDefinitionArns": [
+        "arn:aws:ecs:us-east-1:111122223333:task-definition/orders-api:40",
+        "arn:aws:ecs:us-east-1:111122223333:task-definition/orders-api:41",
+        "arn:aws:ecs:us-east-1:111122223333:task-definition/orders-api:42",
+        "arn:aws:ecs:us-east-1:111122223333:task-definition/orders-migrate:3",
+        "arn:aws:ecs:us-east-1:111122223333:task-definition/orders-reconcile:6",
+        "arn:aws:ecs:us-east-1:111122223333:task-definition/orders-reconcile:7"
+    ]
+}

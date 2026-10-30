@@ -1,0 +1,69 @@
+{
+    "results": [
+        [
+            {
+                "field": "error_code",
+                "value": "DB_CONN_TERMINATED"
+            },
+            {
+                "field": "status",
+                "value": "500"
+            },
+            {
+                "field": "count(*)",
+                "value": "122"
+            }
+        ],
+        [
+            {
+                "field": "error_code",
+                "value": "DB_CONN_REFUSED"
+            },
+            {
+                "field": "status",
+                "value": "500"
+            },
+            {
+                "field": "count(*)",
+                "value": "73"
+            }
+        ],
+        [
+            {
+                "field": "error_code",
+                "value": "COUPON_REJECTED"
+            },
+            {
+                "field": "status",
+                "value": "400"
+            },
+            {
+                "field": "count(*)",
+                "value": "6"
+            }
+        ],
+        [
+            {
+                "field": "error_code",
+                "value": "UPSTREAM_TIMEOUT"
+            },
+            {
+                "field": "status",
+                "value": "504"
+            },
+            {
+                "field": "count(*)",
+                "value": "2"
+            }
+        ]
+    ],
+    "statistics": {
+        "recordsMatched": 203.0,
+        "recordsScanned": 402518.0,
+        "estimatedRecordsSkipped": 0.0,
+        "bytesScanned": 74448896.0,
+        "estimatedBytesSkipped": 0.0,
+        "logGroupsScanned": 1.0
+    },
+    "status": "Complete"
+}

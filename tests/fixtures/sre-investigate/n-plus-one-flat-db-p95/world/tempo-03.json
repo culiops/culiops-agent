@@ -1,0 +1,634 @@
+{
+  "traces": [
+    {
+      "traceID": "65345f5f8176033524bc88af3bd43f6f",
+      "rootServiceName": "orders-api",
+      "rootTraceName": "GET /orders",
+      "startTimeUnixNano": "1792494009000000000",
+      "durationMs": 109,
+      "spanSets": [
+        {
+          "spans": [
+            {
+              "spanID": "8ed4120ac9086b8f",
+              "name": "SELECT orders",
+              "startTimeUnixNano": "1792494009003100000",
+              "durationNanos": "4250523"
+            },
+            {
+              "spanID": "f17925a296884e16",
+              "name": "SELECT order_items",
+              "startTimeUnixNano": "1792494009006200000",
+              "durationNanos": "3161281"
+            }
+          ],
+          "matched": 2
+        }
+      ]
+    },
+    {
+      "traceID": "f3e66d282fffd2235fb124d860546233",
+      "rootServiceName": "orders-api",
+      "rootTraceName": "GET /orders",
+      "startTimeUnixNano": "1792494167000000000",
+      "durationMs": 103,
+      "spanSets": [
+        {
+          "spans": [
+            {
+              "spanID": "5a7871216764804c",
+              "name": "SELECT orders",
+              "startTimeUnixNano": "1792494167003100000",
+              "durationNanos": "4211319"
+            },
+            {
+              "spanID": "19ba878524600e60",
+              "name": "SELECT order_items",
+              "startTimeUnixNano": "1792494167006200000",
+              "durationNanos": "3814273"
+            }
+          ],
+          "matched": 3
+        }
+      ]
+    },
+    {
+      "traceID": "4034cf0c44862d04c21ab07fb6531bdf",
+      "rootServiceName": "orders-api",
+      "rootTraceName": "GET /orders",
+      "startTimeUnixNano": "1792494317000000000",
+      "durationMs": 81,
+      "spanSets": [
+        {
+          "spans": [
+            {
+              "spanID": "42541e4ef90fe2b1",
+              "name": "SELECT orders",
+              "startTimeUnixNano": "1792494317003100000",
+              "durationNanos": "3266315"
+            },
+            {
+              "spanID": "b8092971fece0b55",
+              "name": "SELECT order_items",
+              "startTimeUnixNano": "1792494317006200000",
+              "durationNanos": "4071337"
+            }
+          ],
+          "matched": 4
+        }
+      ]
+    },
+    {
+      "traceID": "12dc51e22d39e5064426d5def1ba3454",
+      "rootServiceName": "orders-api",
+      "rootTraceName": "GET /orders",
+      "startTimeUnixNano": "1792494464000000000",
+      "durationMs": 98,
+      "spanSets": [
+        {
+          "spans": [
+            {
+              "spanID": "619b589bd3e15640",
+              "name": "SELECT orders",
+              "startTimeUnixNano": "1792494464003100000",
+              "durationNanos": "3785620"
+            },
+            {
+              "spanID": "f1033f3ff992d520",
+              "name": "SELECT order_items",
+              "startTimeUnixNano": "1792494464006200000",
+              "durationNanos": "3800612"
+            }
+          ],
+          "matched": 3
+        }
+      ]
+    },
+    {
+      "traceID": "c06ec76ae4a2f44a1cc4d5563aed391c",
+      "rootServiceName": "orders-api",
+      "rootTraceName": "GET /orders",
+      "startTimeUnixNano": "1792494600000000000",
+      "durationMs": 101,
+      "spanSets": [
+        {
+          "spans": [
+            {
+              "spanID": "4f2642f8a9097ef7",
+              "name": "SELECT orders",
+              "startTimeUnixNano": "1792494600003100000",
+              "durationNanos": "3152341"
+            },
+            {
+              "spanID": "e05ddc6671f96114",
+              "name": "SELECT order_items",
+              "startTimeUnixNano": "1792494600006200000",
+              "durationNanos": "2907908"
+            }
+          ],
+          "matched": 3
+        }
+      ]
+    },
+    {
+      "traceID": "63e415273b896168bf2a18ca1a79a404",
+      "rootServiceName": "orders-api",
+      "rootTraceName": "GET /orders",
+      "startTimeUnixNano": "1792494764000000000",
+      "durationMs": 102,
+      "spanSets": [
+        {
+          "spans": [
+            {
+              "spanID": "3a6499a4d5bd7e74",
+              "name": "SELECT orders",
+              "startTimeUnixNano": "1792494764003100000",
+              "durationNanos": "4463740"
+            },
+            {
+              "spanID": "4fa69a2e10b35467",
+              "name": "SELECT order_items",
+              "startTimeUnixNano": "1792494764006200000",
+              "durationNanos": "3064532"
+            }
+          ],
+          "matched": 3
+        }
+      ]
+    },
+    {
+      "traceID": "2ccf49bc007f23eda840861b59a0bf41",
+      "rootServiceName": "orders-api",
+      "rootTraceName": "GET /orders",
+      "startTimeUnixNano": "1792494905000000000",
+      "durationMs": 95,
+      "spanSets": [
+        {
+          "spans": [
+            {
+              "spanID": "f8e11cb70bd52a81",
+              "name": "SELECT orders",
+              "startTimeUnixNano": "1792494905003100000",
+              "durationNanos": "2975125"
+            },
+            {
+              "spanID": "a57f2efde2e03e08",
+              "name": "SELECT order_items",
+              "startTimeUnixNano": "1792494905006200000",
+              "durationNanos": "4110301"
+            }
+          ],
+          "matched": 3
+        }
+      ]
+    },
+    {
+      "traceID": "ef937a157b28ca4f42b86fd1bc0a00e9",
+      "rootServiceName": "orders-api",
+      "rootTraceName": "GET /orders",
+      "startTimeUnixNano": "1792495053000000000",
+      "durationMs": 165,
+      "spanSets": [
+        {
+          "spans": [
+            {
+              "spanID": "5d0891d9242d17a3",
+              "name": "SELECT orders",
+              "startTimeUnixNano": "1792495053003100000",
+              "durationNanos": "3274390"
+            },
+            {
+              "spanID": "74e3e421764f7228",
+              "name": "SELECT order_items",
+              "startTimeUnixNano": "1792495053006200000",
+              "durationNanos": "4593830"
+            }
+          ],
+          "matched": 3
+        }
+      ]
+    },
+    {
+      "traceID": "cbd5caf20536885d81330c1fb0c0b21a",
+      "rootServiceName": "orders-api",
+      "rootTraceName": "GET /orders",
+      "startTimeUnixNano": "1792495217000000000",
+      "durationMs": 106,
+      "spanSets": [
+        {
+          "spans": [
+            {
+              "spanID": "a0dba324548b0fca",
+              "name": "SELECT orders",
+              "startTimeUnixNano": "1792495217003100000",
+              "durationNanos": "3547831"
+            },
+            {
+              "spanID": "6f6e4d78cb18c544",
+              "name": "SELECT order_items",
+              "startTimeUnixNano": "1792495217006200000",
+              "durationNanos": "3517596"
+            }
+          ],
+          "matched": 3
+        }
+      ]
+    },
+    {
+      "traceID": "19852a064bbd12431e071b450b07750f",
+      "rootServiceName": "orders-api",
+      "rootTraceName": "GET /orders",
+      "startTimeUnixNano": "1792495360000000000",
+      "durationMs": 157,
+      "spanSets": [
+        {
+          "spans": [
+            {
+              "spanID": "bfc44d365ca9dbdf",
+              "name": "SELECT orders",
+              "startTimeUnixNano": "1792495360003100000",
+              "durationNanos": "4085914"
+            },
+            {
+              "spanID": "ef772ebe9a0e8c7f",
+              "name": "SELECT order_items",
+              "startTimeUnixNano": "1792495360006200000",
+              "durationNanos": "3947302"
+            }
+          ],
+          "matched": 3
+        }
+      ]
+    },
+    {
+      "traceID": "60c56450c78f2e699fcf9f68a3a76bcb",
+      "rootServiceName": "orders-api",
+      "rootTraceName": "GET /orders",
+      "startTimeUnixNano": "1792495504000000000",
+      "durationMs": 147,
+      "spanSets": [
+        {
+          "spans": [
+            {
+              "spanID": "a5e7bfbd5ffdcef2",
+              "name": "SELECT orders",
+              "startTimeUnixNano": "1792495504003100000",
+              "durationNanos": "3656207"
+            },
+            {
+              "spanID": "df3c6d5fa08be82a",
+              "name": "SELECT order_items",
+              "startTimeUnixNano": "1792495504006200000",
+              "durationNanos": "3144295"
+            }
+          ],
+          "matched": 4
+        }
+      ]
+    },
+    {
+      "traceID": "ab5447e622ca719aaba345bd35bb5ec2",
+      "rootServiceName": "orders-api",
+      "rootTraceName": "GET /orders",
+      "startTimeUnixNano": "1792495652000000000",
+      "durationMs": 132,
+      "spanSets": [
+        {
+          "spans": [
+            {
+              "spanID": "7fc320fbbbc6258e",
+              "name": "SELECT orders",
+              "startTimeUnixNano": "1792495652003100000",
+              "durationNanos": "3400672"
+            },
+            {
+              "spanID": "93d770c936481575",
+              "name": "SELECT order_items",
+              "startTimeUnixNano": "1792495652006200000",
+              "durationNanos": "3701191"
+            }
+          ],
+          "matched": 3
+        }
+      ]
+    },
+    {
+      "traceID": "1cefd4016b9c83ec0f3a5f33742b6780",
+      "rootServiceName": "orders-api",
+      "rootTraceName": "GET /orders",
+      "startTimeUnixNano": "1792495800000000000",
+      "durationMs": 89,
+      "spanSets": [
+        {
+          "spans": [
+            {
+              "spanID": "9c5f76bf1b3b1954",
+              "name": "SELECT orders",
+              "startTimeUnixNano": "1792495800003100000",
+              "durationNanos": "3311395"
+            },
+            {
+              "spanID": "68944e33eaac8dfe",
+              "name": "SELECT order_items",
+              "startTimeUnixNano": "1792495800006200000",
+              "durationNanos": "3514550"
+            }
+          ],
+          "matched": 4
+        }
+      ]
+    },
+    {
+      "traceID": "b382ce6e9fee414f83c9dbb044ab6b91",
+      "rootServiceName": "orders-api",
+      "rootTraceName": "GET /orders",
+      "startTimeUnixNano": "1792495968000000000",
+      "durationMs": 152,
+      "spanSets": [
+        {
+          "spans": [
+            {
+              "spanID": "caa61db6ca67f299",
+              "name": "SELECT orders",
+              "startTimeUnixNano": "1792495968003100000",
+              "durationNanos": "3284936"
+            },
+            {
+              "spanID": "b39ab2ddbaa2afab",
+              "name": "SELECT order_items",
+              "startTimeUnixNano": "1792495968006200000",
+              "durationNanos": "2932725"
+            }
+          ],
+          "matched": 3
+        }
+      ]
+    },
+    {
+      "traceID": "82f04e911cec2f6803b1e7a2477cf1b5",
+      "rootServiceName": "orders-api",
+      "rootTraceName": "GET /orders",
+      "startTimeUnixNano": "1792496109000000000",
+      "durationMs": 110,
+      "spanSets": [
+        {
+          "spans": [
+            {
+              "spanID": "340aff2f24914a1c",
+              "name": "SELECT orders",
+              "startTimeUnixNano": "1792496109003100000",
+              "durationNanos": "3372820"
+            },
+            {
+              "spanID": "636dd17683c37540",
+              "name": "SELECT order_items",
+              "startTimeUnixNano": "1792496109006200000",
+              "durationNanos": "3030474"
+            }
+          ],
+          "matched": 3
+        }
+      ]
+    },
+    {
+      "traceID": "fc0bca4edcc9b0cabe20657ccb6e6e51",
+      "rootServiceName": "orders-api",
+      "rootTraceName": "GET /orders",
+      "startTimeUnixNano": "1792496263000000000",
+      "durationMs": 110,
+      "spanSets": [
+        {
+          "spans": [
+            {
+              "spanID": "87d41f113ae55c42",
+              "name": "SELECT orders",
+              "startTimeUnixNano": "1792496263003100000",
+              "durationNanos": "3708483"
+            },
+            {
+              "spanID": "00fbcc42fe530434",
+              "name": "SELECT order_items",
+              "startTimeUnixNano": "1792496263006200000",
+              "durationNanos": "3953414"
+            }
+          ],
+          "matched": 3
+        }
+      ]
+    },
+    {
+      "traceID": "b9311bd4624a38c7a00e9334f42e6c86",
+      "rootServiceName": "orders-api",
+      "rootTraceName": "GET /orders",
+      "startTimeUnixNano": "1792496409000000000",
+      "durationMs": 78,
+      "spanSets": [
+        {
+          "spans": [
+            {
+              "spanID": "e2b390e2b7452252",
+              "name": "SELECT orders",
+              "startTimeUnixNano": "1792496409003100000",
+              "durationNanos": "4459636"
+            },
+            {
+              "spanID": "389b0ad1fc29d41e",
+              "name": "SELECT order_items",
+              "startTimeUnixNano": "1792496409006200000",
+              "durationNanos": "4398886"
+            }
+          ],
+          "matched": 3
+        }
+      ]
+    },
+    {
+      "traceID": "50847872187c6619d98b8c64ab31838a",
+      "rootServiceName": "orders-api",
+      "rootTraceName": "GET /orders",
+      "startTimeUnixNano": "1792496551000000000",
+      "durationMs": 150,
+      "spanSets": [
+        {
+          "spans": [
+            {
+              "spanID": "5f28c1a54b88c13c",
+              "name": "SELECT orders",
+              "startTimeUnixNano": "1792496551003100000",
+              "durationNanos": "3056006"
+            },
+            {
+              "spanID": "fe79f6eec5ea68b2",
+              "name": "SELECT order_items",
+              "startTimeUnixNano": "1792496551006200000",
+              "durationNanos": "4446083"
+            }
+          ],
+          "matched": 3
+        }
+      ]
+    },
+    {
+      "traceID": "2f97e1148930af9bcafcd45bb57d24b5",
+      "rootServiceName": "orders-api",
+      "rootTraceName": "GET /orders",
+      "startTimeUnixNano": "1792496706000000000",
+      "durationMs": 99,
+      "spanSets": [
+        {
+          "spans": [
+            {
+              "spanID": "de9baa03c2d1bdc2",
+              "name": "SELECT orders",
+              "startTimeUnixNano": "1792496706003100000",
+              "durationNanos": "3652426"
+            },
+            {
+              "spanID": "bdba2a52b7e32860",
+              "name": "SELECT order_items",
+              "startTimeUnixNano": "1792496706006200000",
+              "durationNanos": "4510386"
+            }
+          ],
+          "matched": 3
+        }
+      ]
+    },
+    {
+      "traceID": "15d76f540d6182a19702d3774335bc91",
+      "rootServiceName": "orders-api",
+      "rootTraceName": "GET /orders",
+      "startTimeUnixNano": "1792496858000000000",
+      "durationMs": 145,
+      "spanSets": [
+        {
+          "spans": [
+            {
+              "spanID": "89fc174e339233c2",
+              "name": "SELECT orders",
+              "startTimeUnixNano": "1792496858003100000",
+              "durationNanos": "3150536"
+            },
+            {
+              "spanID": "a445a0bfa695a385",
+              "name": "SELECT order_items",
+              "startTimeUnixNano": "1792496858006200000",
+              "durationNanos": "4220730"
+            }
+          ],
+          "matched": 2
+        }
+      ]
+    },
+    {
+      "traceID": "77e74f7b783be7bd2ba3408c5e80e30d",
+      "rootServiceName": "orders-api",
+      "rootTraceName": "GET /orders",
+      "startTimeUnixNano": "1792497007000000000",
+      "durationMs": 165,
+      "spanSets": [
+        {
+          "spans": [
+            {
+              "spanID": "a86cca6f65deee67",
+              "name": "SELECT orders",
+              "startTimeUnixNano": "1792497007003100000",
+              "durationNanos": "3297263"
+            },
+            {
+              "spanID": "8a97cf3725ae4e88",
+              "name": "SELECT order_items",
+              "startTimeUnixNano": "1792497007006200000",
+              "durationNanos": "3030510"
+            }
+          ],
+          "matched": 3
+        }
+      ]
+    },
+    {
+      "traceID": "53add4a6fa92949f812994e94a02f35d",
+      "rootServiceName": "orders-api",
+      "rootTraceName": "GET /orders",
+      "startTimeUnixNano": "1792497151000000000",
+      "durationMs": 118,
+      "spanSets": [
+        {
+          "spans": [
+            {
+              "spanID": "d7d06d740b19cfa1",
+              "name": "SELECT orders",
+              "startTimeUnixNano": "1792497151003100000",
+              "durationNanos": "4490929"
+            },
+            {
+              "spanID": "f8850e13afab2460",
+              "name": "SELECT order_items",
+              "startTimeUnixNano": "1792497151006200000",
+              "durationNanos": "4356681"
+            }
+          ],
+          "matched": 3
+        }
+      ]
+    },
+    {
+      "traceID": "39723632faa3c820a75bfbf91db73ea8",
+      "rootServiceName": "orders-api",
+      "rootTraceName": "GET /orders",
+      "startTimeUnixNano": "1792497307000000000",
+      "durationMs": 110,
+      "spanSets": [
+        {
+          "spans": [
+            {
+              "spanID": "fc213bcadcf9b7ce",
+              "name": "SELECT orders",
+              "startTimeUnixNano": "1792497307003100000",
+              "durationNanos": "4156983"
+            },
+            {
+              "spanID": "6e1e79f2fea7bcb9",
+              "name": "SELECT order_items",
+              "startTimeUnixNano": "1792497307006200000",
+              "durationNanos": "2933457"
+            }
+          ],
+          "matched": 4
+        }
+      ]
+    },
+    {
+      "traceID": "4bca6a2d56bd6f945f710a67fcfc6444",
+      "rootServiceName": "orders-api",
+      "rootTraceName": "GET /orders",
+      "startTimeUnixNano": "1792497456000000000",
+      "durationMs": 151,
+      "spanSets": [
+        {
+          "spans": [
+            {
+              "spanID": "b26bdaa2dfca1f19",
+              "name": "SELECT orders",
+              "startTimeUnixNano": "1792497456003100000",
+              "durationNanos": "3803673"
+            },
+            {
+              "spanID": "7e50fd232e888a4a",
+              "name": "SELECT order_items",
+              "startTimeUnixNano": "1792497456006200000",
+              "durationNanos": "3166012"
+            }
+          ],
+          "matched": 3
+        }
+      ]
+    }
+  ],
+  "metrics": {
+    "inspectedTraces": 17905,
+    "inspectedBytes": "2351849472",
+    "completedJobs": 18,
+    "totalJobs": 18
+  }
+}

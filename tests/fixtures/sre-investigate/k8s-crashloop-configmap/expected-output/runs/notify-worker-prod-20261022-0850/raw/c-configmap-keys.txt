@@ -1,0 +1,6 @@
+# W2-Q3  ConfigMap notify-worker-config in namespace notify: KEY NAMES ONLY (values deliberately not stored)
+NOTIFY_FROM_ADDRESS
+NOTIFY_QUEUE_URL
+NOTIFY_WORKER_CONCURRENCY
+SMTP_RELAY_HOST
+# NOTIFY_SMTP_RELAY_HOST: absent

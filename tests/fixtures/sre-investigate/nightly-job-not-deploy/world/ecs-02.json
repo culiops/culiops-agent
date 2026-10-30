@@ -1,0 +1,68 @@
+{
+    "taskDefinition": {
+        "taskDefinitionArn": "arn:aws:ecs:us-east-1:111122223333:task-definition/orders-api:41",
+        "family": "orders-api",
+        "revision": 41,
+        "containerDefinitions": [
+            {
+                "name": "orders-api",
+                "image": "111122223333.dkr.ecr.us-east-1.amazonaws.com/orders-api:2026.10.14-2",
+                "cpu": 0,
+                "essential": true,
+                "portMappings": [
+                    {
+                        "containerPort": 8080,
+                        "hostPort": 8080,
+                        "protocol": "tcp"
+                    }
+                ],
+                "environment": [
+                    {
+                        "name": "APP_ENV",
+                        "value": "prod"
+                    },
+                    {
+                        "name": "DB_HOST",
+                        "value": "orders-db.cluster-c0abcdexample.us-east-1.rds.amazonaws.com"
+                    },
+                    {
+                        "name": "DB_POOL_SIZE",
+                        "value": "40"
+                    },
+                    {
+                        "name": "LOG_LEVEL",
+                        "value": "info"
+                    },
+                    {
+                        "name": "PAYMENTS_URL",
+                        "value": "https://payments.internal.example.com"
+                    }
+                ],
+                "secrets": [
+                    {
+                        "name": "DB_PASSWORD",
+                        "valueFrom": "arn:aws:secretsmanager:us-east-1:111122223333:secret:prod/orders-api/db-AbCdEf"
+                    }
+                ],
+                "logConfiguration": {
+                    "logDriver": "awslogs",
+                    "options": {
+                        "awslogs-group": "/ecs/orders-api",
+                        "awslogs-region": "us-east-1",
+                        "awslogs-stream-prefix": "orders-api"
+                    }
+                }
+            }
+        ],
+        "networkMode": "awsvpc",
+        "requiresCompatibilities": [
+            "FARGATE"
+        ],
+        "cpu": "1024",
+        "memory": "2048",
+        "status": "ACTIVE",
+        "registeredAt": "2026-10-14T03:10:44.512000+00:00",
+        "registeredBy": "arn:aws:sts::111122223333:assumed-role/deploy-pipeline/deploy-pipeline"
+    },
+    "tags": []
+}

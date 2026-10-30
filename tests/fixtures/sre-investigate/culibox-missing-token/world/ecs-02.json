@@ -1,0 +1,5 @@
+{
+    "clusterArns": [
+        "arn:aws:ecs:eu-west-1:444455556666:cluster/staging"
+    ]
+}

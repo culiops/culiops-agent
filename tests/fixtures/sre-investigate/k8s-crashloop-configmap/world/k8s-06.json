@@ -1,0 +1,182 @@
+{
+  "apiVersion": "v1",
+  "kind": "List",
+  "items": [
+    {
+      "apiVersion": "v1",
+      "kind": "Event",
+      "metadata": {
+        "name": "notify-worker.17f2a0c1",
+        "namespace": "notify"
+      },
+      "type": "Normal",
+      "reason": "ScalingReplicaSet",
+      "involvedObject": {
+        "kind": "Deployment",
+        "name": "notify-worker",
+        "namespace": "notify"
+      },
+      "message": "Scaled down replica set notify-worker-7f6b8c5d2e to 0 from 3",
+      "firstTimestamp": "2026-10-22T08:14:21Z",
+      "lastTimestamp": "2026-10-22T08:14:21Z",
+      "count": 1,
+      "source": {
+        "component": "deployment-controller"
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Event",
+      "metadata": {
+        "name": "notify-worker-7f6b8c5d2e-2hm4v.17f2a0c3",
+        "namespace": "notify"
+      },
+      "type": "Normal",
+      "reason": "Killing",
+      "involvedObject": {
+        "kind": "Pod",
+        "name": "notify-worker-7f6b8c5d2e-2hm4v",
+        "namespace": "notify"
+      },
+      "message": "Stopping container notify-worker",
+      "firstTimestamp": "2026-10-22T08:14:21Z",
+      "lastTimestamp": "2026-10-22T08:14:21Z",
+      "count": 1,
+      "source": {
+        "component": "kubelet"
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Event",
+      "metadata": {
+        "name": "notify-worker.17f2a0d9",
+        "namespace": "notify"
+      },
+      "type": "Normal",
+      "reason": "ScalingReplicaSet",
+      "involvedObject": {
+        "kind": "Deployment",
+        "name": "notify-worker",
+        "namespace": "notify"
+      },
+      "message": "Scaled up replica set notify-worker-5c8d7b9f4c to 3",
+      "firstTimestamp": "2026-10-22T08:14:33Z",
+      "lastTimestamp": "2026-10-22T08:14:33Z",
+      "count": 1,
+      "source": {
+        "component": "deployment-controller"
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Event",
+      "metadata": {
+        "name": "notify-worker-5c8d7b9f4c-8wq2d.17f2a0e0",
+        "namespace": "notify"
+      },
+      "type": "Normal",
+      "reason": "Scheduled",
+      "involvedObject": {
+        "kind": "Pod",
+        "name": "notify-worker-5c8d7b9f4c-8wq2d",
+        "namespace": "notify"
+      },
+      "message": "Successfully assigned notify/notify-worker-5c8d7b9f4c-8wq2d to ip-192-0-2-52.ec2.internal",
+      "firstTimestamp": "2026-10-22T08:14:33Z",
+      "lastTimestamp": "2026-10-22T08:14:33Z",
+      "count": 1,
+      "source": {
+        "component": "kubelet"
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Event",
+      "metadata": {
+        "name": "notify-worker-5c8d7b9f4c-8wq2d.17f2a0f4",
+        "namespace": "notify"
+      },
+      "type": "Normal",
+      "reason": "Started",
+      "involvedObject": {
+        "kind": "Pod",
+        "name": "notify-worker-5c8d7b9f4c-8wq2d",
+        "namespace": "notify"
+      },
+      "message": "Started container notify-worker",
+      "firstTimestamp": "2026-10-22T08:14:36Z",
+      "lastTimestamp": "2026-10-22T08:47:56Z",
+      "count": 12,
+      "source": {
+        "component": "kubelet"
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Event",
+      "metadata": {
+        "name": "notify-worker-5c8d7b9f4c-8wq2d.17f2a102",
+        "namespace": "notify"
+      },
+      "type": "Warning",
+      "reason": "BackOff",
+      "involvedObject": {
+        "kind": "Pod",
+        "name": "notify-worker-5c8d7b9f4c-8wq2d",
+        "namespace": "notify"
+      },
+      "message": "Back-off restarting failed container notify-worker in pod notify-worker-5c8d7b9f4c-8wq2d_notify(3f0e5a7c-1b2d-4e8f-9a0b-1c2d3e4f5a6b)",
+      "firstTimestamp": "2026-10-22T08:15:02Z",
+      "lastTimestamp": "2026-10-22T08:49:20Z",
+      "count": 151,
+      "source": {
+        "component": "kubelet"
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Event",
+      "metadata": {
+        "name": "notify-worker-5c8d7b9f4c-jt6kz.17f2a104",
+        "namespace": "notify"
+      },
+      "type": "Warning",
+      "reason": "BackOff",
+      "involvedObject": {
+        "kind": "Pod",
+        "name": "notify-worker-5c8d7b9f4c-jt6kz",
+        "namespace": "notify"
+      },
+      "message": "Back-off restarting failed container notify-worker in pod notify-worker-5c8d7b9f4c-jt6kz_notify(8a41b2c3-d4e5-4f60-8172-93a4b5c6d7e8)",
+      "firstTimestamp": "2026-10-22T08:15:03Z",
+      "lastTimestamp": "2026-10-22T08:49:38Z",
+      "count": 149,
+      "source": {
+        "component": "kubelet"
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Event",
+      "metadata": {
+        "name": "notify-worker-5c8d7b9f4c-x4p9n.17f2a107",
+        "namespace": "notify"
+      },
+      "type": "Warning",
+      "reason": "BackOff",
+      "involvedObject": {
+        "kind": "Pod",
+        "name": "notify-worker-5c8d7b9f4c-x4p9n",
+        "namespace": "notify"
+      },
+      "message": "Back-off restarting failed container notify-worker in pod notify-worker-5c8d7b9f4c-x4p9n_notify(c7d2e3f4-a5b6-4c7d-8e9f-0a1b2c3d4e5f)",
+      "firstTimestamp": "2026-10-22T08:15:05Z",
+      "lastTimestamp": "2026-10-22T08:49:51Z",
+      "count": 150,
+      "source": {
+        "component": "kubelet"
+      }
+    }
+  ]
+}

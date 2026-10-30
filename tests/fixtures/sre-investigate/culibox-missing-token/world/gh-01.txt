@@ -1,0 +1,6 @@
+showing 2 commits between v4.11.0 and v4.12.0 (example-org/payments-worker)
+6c1d0e2  refunds: support partial refunds (#902)
+b4a9f37  deps: bump boto3 to 1.40.61 (#899)
+
+ payments_worker/handlers/refund.py | 14 +++++++++-----
+ requirements.txt                   |  2 +-

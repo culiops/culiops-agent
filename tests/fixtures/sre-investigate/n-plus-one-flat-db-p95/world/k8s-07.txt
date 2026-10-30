@@ -1,0 +1,4 @@
+deployment.apps/orders-api
+REVISION  CHANGE-CAUSE
+23        helm upgrade orders-api (chart orders-api-4.2.0, image v2.14.0)
+24        helm upgrade orders-api (chart orders-api-4.2.0, image v2.15.0)

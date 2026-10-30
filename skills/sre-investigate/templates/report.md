@@ -1,0 +1,105 @@
+# Investigation: <service> <env>: <one-line symptom>
+
+The report is the reader-facing result of one run. It lives at `<output root>/runs/<service>-<env>-<YYYYMMDD-HHMM>/report.md`. Everything in it comes from the ledger; if a statement has no query ID or code reference behind it, it is `Assumed` and says so.
+
+How to fill it in:
+
+- Local time appears beside UTC (UTC first) for the incident window, the onset and every Timeline row, in the zone from `environment.md` or the one the user gave; everywhere else UTC alone is fine. If no zone is known, ask; do not guess. Use two columns, or `HH:MM UTC (HH:MM local)`.
+- Labels are `Confirmed`, `Likely`, `Assumed` and `Ruled out`. A cause is never labelled more strongly than its weakest causal link, and the TL;DR names that link.
+- Fast mode writes the TL;DR first (also printed inline), then Impact, Causal chain, Gaps, To confirm, Follow-ups and Cost. Deep mode fills every section.
+- The run changed nothing it investigated. Wherever a mutation would be needed, describe it in prose. Never paste a runnable command that changes state into `## To confirm, a human would…` or `## Follow-ups`. Only `## Gaps` may carry a command, and only a read-only one or a re-auth step the user runs themselves (see there). `## To confirm, a human would…` and `## Follow-ups` are prose only.
+- Delete the guidance lines when you copy the file; keep the headings exactly as written.
+
+Run: <run directory name> · Mode: <Fast | Deep> · Window: <incident window in UTC> (<same window in local zone>) · Onset: <UTC> (<local>)
+Access: <profile or context>: <write-check result in the check's own words, copied from the ledger's Access table: "write-capable: <action>, <action> allowed", "write-capable: <verb> on <resource>, <verb> on <resource>" (Kubernetes), "read-only confirmed (simulation): none of the 10 broad write actions is allowed", "partly checked (gap): no listed action is allowed, but <action>, <action> returned no usable result", "no write verbs in <namespace>" or "write capability unknown (gap)">, one entry per profile and context
+
+## TL;DR
+
+| Field | Value |
+|---|---|
+| Cause | <one sentence> · label: <label> |
+| Weakest link | <the least certain step of the causal chain and its label; this caps the cause's label> |
+| Impact | <who or what, for how long, current status> |
+| Severity | <suggested level> because <criterion met>. The incident owner decides. |
+| Pattern | <scheduled, chronic, recurring, sudden or unclassified> · <basis> · <label> |
+| Recommended action | <what a human should do first, in prose> |
+| Time to cause | <minutes from start to the first Likely, and to Confirmed if reached> |
+| Similar past incidents | <files from `incidents/` that matched, or "none", or "no history yet"> |
+
+If a similar incident has happened before, say which occurrence this is and over what period, and make a permanent fix the first follow-up.
+
+## Impact
+
+<Symptom, affected population or flows, start and end, how it was measured (SLO burn, request metrics against baseline, or Assumed), and the third party in the path if there is one, with the route to contact it. Cite query IDs.>
+
+## Recurrence
+
+| Source | Window | Occurrences | When (UTC) | Normal vs incident |
+|---|---|---|---|---|
+| <trigger alarm> | 30d | <count> | <times> | <not applicable> |
+| <sibling alarms> | 30d | <count> | <times> | <not applicable> |
+| <signal> | 14d at 1h | <hours above normal> | <times> | <median/p95/max vs incident value> |
+
+A recurring pattern names its count in the follow-ups. A chronic one adds an alert-tuning item.
+
+## Timeline
+
+| Time (UTC) | Time (local) | Event | Evidence |
+|---|---|---|---|
+| <UTC> | <local> | <change, signal, alarm or mitigation> | <query ID and deeplink for a human> |
+
+## Causal chain
+
+Trigger, then mechanism, then symptom. One line per step, each with its label and the query ID that supports it.
+
+1. Trigger: <what started it> · <label> · <query IDs>
+2. Mechanism: <how the trigger produced the failure> · <label> · <query IDs>
+3. Symptom: <what users or callers saw> · <label> · <query IDs>
+
+Deep mode adds why it became an incident: <what delayed detection, which limit or protection was missing, which capacity was short>. If several explanations are still standing, list them all in rank order and do not pick one for the sake of sounding decisive.
+
+## Evidence
+
+One entry per claim in the chain: what was observed, at what time and scope, the query ID, and a deeplink a human can open. Do not paste more than a few log lines; cut each to 300 characters and remove secrets.
+
+## Ruled out
+
+| Hypothesis | Why | Query |
+|---|---|---|
+| <statement> | <what the data showed instead> | <query ID> |
+
+## Open hypotheses
+
+| Hypothesis | Label | What would settle it |
+|---|---|---|
+| <statement> | <Likely or Assumed> | <the query or data that is missing, and why it could not be run> |
+
+## Gaps
+
+| Gap | Impact on claims | How a human could fill it |
+|---|---|---|
+| <source not read> | <which statements it weakens> | <a variable name, a person to ask, or a re-auth step the user runs themselves, written exactly as `! aws sso login --profile <p>` (a login is not a change to an investigated system)> |
+
+The last column never holds a command that changes an investigated system. If gaps exist, end the printed summary with: open items need your input.
+
+## To confirm, a human would…
+
+A numbered list of checks the run could not do because they would touch the system (reproducing the failure, calling an endpoint, opening a database session, looking at a vendor console, asking a vendor). The run never opens a database session; read-only database queries it handed to the operator and whose results came back are evidence, marked `operator-supplied`, not items here. Describe each check in prose with what result would confirm or refute the cause. The investigation runs none of these; a check that would change state is described in prose for its owner, never as a command to paste.
+
+1. <…>
+
+## Follow-ups
+
+Prose only, and never a runnable command that changes state. A new session with the right tool and approvals does any change.
+
+| Kind | Item |
+|---|---|
+| Fix | <what should change to remove the cause> |
+| Prevention | <the alert, limit, test or rollout step that would have stopped or shortened this> |
+| Observability gap | <the signal that was missing or too coarse> |
+
+## Cost
+
+<data queries run> queries (plus <n> free control-plane reads) · <log GB scanned> GB of logs · <CloudWatch metric requests> metric requests · <other metered units> · about <amount> in metered charges
+
+This line is last in the report and is always printed.

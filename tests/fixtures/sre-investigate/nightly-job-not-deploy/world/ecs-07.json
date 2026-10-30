@@ -1,0 +1,125 @@
+{
+    "tasks": [
+        {
+            "taskArn": "arn:aws:ecs:us-east-1:111122223333:task/prod/1f2e3d4c5b6a47980a1b2c3d4e5f6a7b",
+            "clusterArn": "arn:aws:ecs:us-east-1:111122223333:cluster/prod",
+            "taskDefinitionArn": "arn:aws:ecs:us-east-1:111122223333:task-definition/orders-api:42",
+            "group": "service:orders-api",
+            "startedBy": "ecs-svc/4417203958112934411",
+            "launchType": "FARGATE",
+            "lastStatus": "RUNNING",
+            "desiredStatus": "RUNNING",
+            "healthStatus": "HEALTHY",
+            "createdAt": "2026-10-21T01:22:31.000+00:00",
+            "startedAt": "2026-10-21T01:23:09.000+00:00",
+            "containers": [
+                {
+                    "name": "orders-api",
+                    "lastStatus": "RUNNING",
+                    "healthStatus": "HEALTHY"
+                }
+            ]
+        },
+        {
+            "taskArn": "arn:aws:ecs:us-east-1:111122223333:task/prod/2a3b4c5d6e7f48190b2c3d4e5f6a7b8c",
+            "clusterArn": "arn:aws:ecs:us-east-1:111122223333:cluster/prod",
+            "taskDefinitionArn": "arn:aws:ecs:us-east-1:111122223333:task-definition/orders-api:42",
+            "group": "service:orders-api",
+            "startedBy": "ecs-svc/4417203958112934411",
+            "launchType": "FARGATE",
+            "lastStatus": "RUNNING",
+            "desiredStatus": "RUNNING",
+            "healthStatus": "HEALTHY",
+            "createdAt": "2026-10-21T01:22:35.000+00:00",
+            "startedAt": "2026-10-21T01:23:13.000+00:00",
+            "containers": [
+                {
+                    "name": "orders-api",
+                    "lastStatus": "RUNNING",
+                    "healthStatus": "HEALTHY"
+                }
+            ]
+        },
+        {
+            "taskArn": "arn:aws:ecs:us-east-1:111122223333:task/prod/3c4d5e6f7a8b49201c3d4e5f6a7b8c9d",
+            "clusterArn": "arn:aws:ecs:us-east-1:111122223333:cluster/prod",
+            "taskDefinitionArn": "arn:aws:ecs:us-east-1:111122223333:task-definition/orders-api:42",
+            "group": "service:orders-api",
+            "startedBy": "ecs-svc/4417203958112934411",
+            "launchType": "FARGATE",
+            "lastStatus": "RUNNING",
+            "desiredStatus": "RUNNING",
+            "healthStatus": "HEALTHY",
+            "createdAt": "2026-10-21T01:22:39.000+00:00",
+            "startedAt": "2026-10-21T01:23:17.000+00:00",
+            "containers": [
+                {
+                    "name": "orders-api",
+                    "lastStatus": "RUNNING",
+                    "healthStatus": "HEALTHY"
+                }
+            ]
+        },
+        {
+            "taskArn": "arn:aws:ecs:us-east-1:111122223333:task/prod/4e5f6a7b8c9d40312d4e5f6a7b8c9d0e",
+            "clusterArn": "arn:aws:ecs:us-east-1:111122223333:cluster/prod",
+            "taskDefinitionArn": "arn:aws:ecs:us-east-1:111122223333:task-definition/orders-api:42",
+            "group": "service:orders-api",
+            "startedBy": "ecs-svc/4417203958112934411",
+            "launchType": "FARGATE",
+            "lastStatus": "RUNNING",
+            "desiredStatus": "RUNNING",
+            "healthStatus": "HEALTHY",
+            "createdAt": "2026-10-21T01:22:43.000+00:00",
+            "startedAt": "2026-10-21T01:23:21.000+00:00",
+            "containers": [
+                {
+                    "name": "orders-api",
+                    "lastStatus": "RUNNING",
+                    "healthStatus": "HEALTHY"
+                }
+            ]
+        },
+        {
+            "taskArn": "arn:aws:ecs:us-east-1:111122223333:task/prod/5a6b7c8d9e0f41423e5f6a7b8c9d0e1f",
+            "clusterArn": "arn:aws:ecs:us-east-1:111122223333:cluster/prod",
+            "taskDefinitionArn": "arn:aws:ecs:us-east-1:111122223333:task-definition/orders-api:42",
+            "group": "service:orders-api",
+            "startedBy": "ecs-svc/4417203958112934411",
+            "launchType": "FARGATE",
+            "lastStatus": "RUNNING",
+            "desiredStatus": "RUNNING",
+            "healthStatus": "HEALTHY",
+            "createdAt": "2026-10-21T01:22:47.000+00:00",
+            "startedAt": "2026-10-21T01:23:25.000+00:00",
+            "containers": [
+                {
+                    "name": "orders-api",
+                    "lastStatus": "RUNNING",
+                    "healthStatus": "HEALTHY"
+                }
+            ]
+        },
+        {
+            "taskArn": "arn:aws:ecs:us-east-1:111122223333:task/prod/6c7d8e9f0a1b42534f6a7b8c9d0e1f2a",
+            "clusterArn": "arn:aws:ecs:us-east-1:111122223333:cluster/prod",
+            "taskDefinitionArn": "arn:aws:ecs:us-east-1:111122223333:task-definition/orders-api:42",
+            "group": "service:orders-api",
+            "startedBy": "ecs-svc/4417203958112934411",
+            "launchType": "FARGATE",
+            "lastStatus": "RUNNING",
+            "desiredStatus": "RUNNING",
+            "healthStatus": "HEALTHY",
+            "createdAt": "2026-10-21T01:22:51.000+00:00",
+            "startedAt": "2026-10-21T01:23:29.000+00:00",
+            "containers": [
+                {
+                    "name": "orders-api",
+                    "lastStatus": "RUNNING",
+                    "healthStatus": "HEALTHY"
+                }
+            ]
+        }
+    ],
+    "failures": []
+}
