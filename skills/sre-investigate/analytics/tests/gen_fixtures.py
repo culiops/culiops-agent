@@ -66,7 +66,12 @@ def _gz(text: str) -> bytes:
     return buf.getvalue()
 
 
-def _cf_body(rng: random.Random, day: dt.date, hour: int, records: int, json_fmt: bool) -> str:
+SECRET_TOKEN = "SECRETTOKEN"      # appears only where redaction must remove it
+SECRET_COOKIE = "SECRETCOOKIE"
+
+
+def _cf_body(rng: random.Random, day: dt.date, hour: int, records: int, json_fmt: bool,
+             secrets: bool = False) -> str:
     fields = ("date time x-edge-location sc-bytes c-ip cs-method cs(Host) cs-uri-stem sc-status "
               "cs(Referer) cs(User-Agent) cs-uri-query cs(Cookie) x-edge-result-type "
               "x-edge-request-id x-host-header cs-protocol cs-bytes time-taken")
@@ -78,6 +83,10 @@ def _cf_body(rng: random.Random, day: dt.date, hour: int, records: int, json_fmt
                 rng.choice(IPS), "GET", "d111111abcdef8.cloudfront.net", rng.choice(PATHS), str(status),
                 "-", rng.choice(AGENTS).replace(" ", "%20"), "-", "-", "Hit", _rand_id(rng, 20),
                 "www.example.com", "https", str(rng.randrange(100, 900)), "%.3f" % (rng.random() / 5)]
+        if secrets:  # cs(Referer), cs-uri-query and cs(Cookie) carry placeholder secrets
+            vals[9] = "https://www.example.com/p?token=%s&a=1" % SECRET_TOKEN
+            vals[11] = "page=2&token=%s" % SECRET_TOKEN
+            vals[12] = "sessionid=%s" % SECRET_COOKIE
         rows.append(vals)
     if json_fmt:
         names = [f.replace("(", "_").replace(")", "") for f in fields.split()]
@@ -87,7 +96,8 @@ def _cf_body(rng: random.Random, day: dt.date, hour: int, records: int, json_fmt
     return "\n".join(out) + "\n"
 
 
-def _alb_body(rng: random.Random, end: dt.datetime, records: int) -> str:
+def _alb_body(rng: random.Random, end: dt.datetime, records: int, secrets: bool = False,
+              extra_trailing: bool = False) -> str:
     lines = []
     for _ in range(records):
         t = end - dt.timedelta(seconds=rng.randrange(1, 300))
@@ -96,6 +106,8 @@ def _alb_body(rng: random.Random, end: dt.datetime, records: int) -> str:
         target = "198.51.100.%d:8080" % rng.randrange(2, 250)
         status = rng.choice([200, 200, 200, 301, 404, 502])
         path = rng.choice(PATHS)
+        if secrets:
+            path += "?page=2&token=%s" % SECRET_TOKEN
         lines.append(
             'https %s app/%s/%s %s %s 0.001 0.%03d 0.000 %d %d %d %d '
             '"GET https://www.example.com:443%s HTTP/1.1" "%s" ECDHE-RSA-AES128-GCM-SHA256 TLSv1.2 '
@@ -104,10 +116,12 @@ def _alb_body(rng: random.Random, end: dt.datetime, records: int) -> str:
             % (ts, LB_NAME, LB_ID, client, target, rng.randrange(1000), status, status,
                rng.randrange(100, 900), rng.randrange(100, 90000), path, rng.choice(AGENTS),
                REGION, ACCOUNT, _rand_id(rng, 8), _rand_id(rng, 24), REGION, ACCOUNT, ts, target, status))
+        if extra_trailing:  # AWS appends new fields at the end, sometimes first as a lone "-"
+            lines[-1] += ' "-" new-field'
     return "\n".join(lines) + "\n"
 
 
-def _waf_body(rng: random.Random, end: dt.datetime, records: int) -> str:
+def _waf_body(rng: random.Random, end: dt.datetime, records: int, secrets: bool = False) -> str:
     lines = []
     for _ in range(records):
         t = end - dt.timedelta(seconds=rng.randrange(1, 300))
@@ -128,12 +142,14 @@ def _waf_body(rng: random.Random, end: dt.datetime, records: int) -> str:
                 "headers": [{"name": "Host", "value": "www.example.com"},
                             {"name": "User-Agent", "value": rng.choice(AGENTS)}],
                 "uri": rng.choice(PATHS),
-                "args": "q=%d" % rng.randrange(100),
+                "args": "q=%d" % rng.randrange(100) + ("&token=%s" % SECRET_TOKEN if secrets else ""),
                 "httpVersion": "HTTP/1.1",
                 "httpMethod": "GET",
                 "requestId": _rand_id(rng, 24),
             },
         }
+        if secrets:
+            rec["httpRequest"]["headers"].append({"name": "Cookie", "value": "sessionid=%s" % SECRET_COOKIE})
         lines.append(json.dumps(rec, sort_keys=True))
     return "\n".join(lines) + "\n"
 
@@ -144,6 +160,9 @@ def make(root, kind: str, day: dt.date, **opts) -> List[str]:
     Options: bucket, prefix (key prefix), hours (iterable, default 0..23), records (per
     file, default 3). cloudfront: fmt="legacy"|"json", dist. alb/waf: minutes (the
     minute marks within each listed hour that get an end-time file, default (0, 30)).
+    secrets=True puts placeholder secrets (SECRET_TOKEN in query strings/args/referer,
+    SECRET_COOKIE in cookies) where redaction must remove them; alb also takes
+    extra_trailing=True (two fields past the documented last one).
     """
     if kind not in ("cloudfront", "alb", "waf"):
         raise ValueError("unknown kind %r" % (kind,))
@@ -166,15 +185,16 @@ def make(root, kind: str, day: dt.date, **opts) -> List[str]:
         for hh in hours:
             key = cf_key(day, hh, prefix=opts.get("prefix", "cf/"), dist=opts.get("dist", DIST_ID),
                          unique=_rand_id(rng, 11).upper(), ext="json.gz" if json_fmt else "gz")
-            put(key, _cf_body(rng, day, hh, records, json_fmt))
+            put(key, _cf_body(rng, day, hh, records, json_fmt, bool(opts.get("secrets"))))
     else:
         for hh in hours:
             for mm in opts.get("minutes", (0, 30)):
                 end = midnight + dt.timedelta(hours=hh, minutes=mm)
                 if kind == "alb":
                     put(alb_key(day, end, prefix=opts.get("prefix", ""), rand=_rand_id(rng)),
-                        _alb_body(rng, end, records))
+                        _alb_body(rng, end, records, bool(opts.get("secrets")),
+                                  bool(opts.get("extra_trailing"))))
                 else:
                     put(waf_key(end, prefix=opts.get("prefix", ""), rand=_rand_id(rng)),
-                        _waf_body(rng, end, records))
+                        _waf_body(rng, end, records, bool(opts.get("secrets"))))
     return written
