@@ -452,3 +452,122 @@ def test_salt_directory_refused(home):
     salt_path().mkdir()
     with pytest.raises(Refused):
         redact.load_or_create_salt()
+
+
+# ---- fix round 1 ------------------------------------------------------------------------
+
+def test_many_leading_question_marks_do_not_recurse():
+    qs = "?" * 5000 + "token=abc&a=1"
+    assert redact.mask_query(qs, SENSITIVE) == "?" * 5000 + "token=***&a=1"
+    assert redact.mask_query("?" * 5000, SENSITIVE) == "?" * 5000
+    out = redact.waf_record(make_record(**{}), Config(), SALT)
+    rec = make_record()
+    rec["httpRequest"]["args"] = "?" * 5000
+    out = redact.waf_record(rec, Config(), SALT)
+    assert out["query_masked"] == "?" * 5000
+    assert out["terminating_rule_id"] == "ExampleRateRule"
+
+
+@pytest.mark.parametrize(
+    "bad",
+    ["\u00b2", "\u2460", "1" * 5000, "\u0663", 10 ** 5000, "9" * 19, True, 1.5, "-1"],
+    ids=["sup2", "circled1", "str5000", "arabic3", "bigint", "str19", "bool", "float", "neg"],
+)
+def test_odd_numbers_never_raise(bad):
+    rec = make_record(timestamp=bad, responseCodeSent=bad)
+    rec["httpRequest"]["clientAsn"] = bad
+    out = redact.waf_record(rec, Config(), SALT)
+    assert set(out) == EXPECTED_KEYS
+    assert out["terminating_rule_id"] == "ExampleRateRule"  # a real record, not the fallback
+    assert out["ts"] is None and out["response_code_sent"] is None
+
+
+def test_int_boundaries():
+    rec = make_record(responseCodeSent="403")
+    assert redact.waf_record(rec, Config(), SALT)["response_code_sent"] == 403
+
+
+def test_fallback_is_full_key_set_with_masks(monkeypatch):
+    def boom(*a, **k):
+        raise RuntimeError("SECRETDETAIL")
+    monkeypatch.setattr(redact, "hash_value", boom)
+    headers = [{"name": "Authorization", "value": "Bearer ZZ"}]
+    out = redact.waf_record(make_record(headers=headers), Config(), SALT)
+    assert set(out) == EXPECTED_KEYS
+    for k, v in out.items():
+        if k in ("query_masked", "referer_masked"):
+            assert v == "***"
+        else:
+            assert v is None
+    assert "ZZ" not in json.dumps(out) and "SECRETDETAIL" not in json.dumps(out)
+
+
+def test_waf_record_never_raises_on_garbage():
+    for junk in (None, 5, "x", [], {"httpRequest": []}, {"labels": 3, "ruleGroupList": [5, None, {"terminatingRule": 1}]}):
+        assert set(redact.waf_record(junk, Config(), SALT)) == EXPECTED_KEYS
+
+
+def test_mask_path_matrix_params():
+    assert redact.mask_path("/a;jsessionid=ZZ", frozenset({"jsessionid"})) == "/a;jsessionid=***"
+    assert redact.mask_path("/a;x=1;token=ZZ/b;y=2", SENSITIVE) == "/a;x=1;token=***/b;y=2"
+    assert redact.mask_path("/plain/path", SENSITIVE) == "/plain/path"
+    assert redact.mask_path("", SENSITIVE) == ""
+    assert redact.mask_path("/a;%74oken=ZZ", SENSITIVE) == "/a;%74oken=***"
+    assert redact.mask_path("/a;token%3DZZ", SENSITIVE) == "/a;***"
+    assert redact.mask_path("/a;x=%ff", SENSITIVE) == "/a;***"
+    assert redact.mask_path("/a;x=%2541", SENSITIVE) == "/a;***"
+    assert redact.mask_path("/a;access.token=ZZ", SENSITIVE) == "/a;access.token=***"
+    assert redact.mask_path("/a;flag;k=v", SENSITIVE) == "/a;flag;k=v"
+
+
+def test_uri_and_referer_matrix_params_masked_by_default():
+    rec = make_record(headers=[{"name": "Referer", "value": "https://x.example.com/a;jsessionid=REFZZ?a=1"}])
+    rec["httpRequest"]["uri"] = "/a;jsessionid=URIZZ?a=1"
+    out = redact.waf_record(rec, Config(), SALT)
+    assert out["uri"] == "/a;jsessionid=***?a=1"
+    assert out["referer_masked"] == "https://x.example.com/a;jsessionid=***?a=1"
+    assert "ZZ" not in json.dumps(out)
+
+
+def test_identity_cookie_names_masked_in_query_by_default():
+    out = redact.waf_record(make_record(), Config(), SALT)
+    rec = make_record()
+    rec["httpRequest"]["args"] = "jsessionid=QQ&PHPSESSID=RR&a=1"
+    out = redact.waf_record(rec, Config(), SALT)
+    assert out["query_masked"] == "jsessionid=***&PHPSESSID=***&a=1"
+
+
+def test_sensitive_names_helper():
+    names = redact.sensitive_names(Config())
+    assert "jsessionid" in names and "token" in names
+    assert redact.sensitive_names(replace(Config(), identity_cookies=("Acct",))) >= {"acct", "token"}
+
+
+def test_piece_without_equals_that_decodes_to_pair_is_masked():
+    assert redact.mask_query("token%3Dabc&a=1", SENSITIVE) == "***&a=1"
+    assert redact.mask_query("a=1&x%3Dy", SENSITIVE) == "a=1&***"
+    assert redact.mask_query("plain%20word&a=1", SENSITIVE) == "plain%20word&a=1"
+
+
+@pytest.mark.parametrize("qs,expected", [
+    ("access.token=abc", "access.token=***"),
+    ("api key=abc", "api key=***"),
+    ("api+key=abc", "api+key=***"),
+    ("token%00=abc", "token%00=***"),
+    ("tok%00en=abc", "tok%00en=***"),
+    ("Access.Token[]=abc", "Access.Token[]=***"),
+    ("a.b=1", "a.b=1"),
+])
+def test_name_normalisation(qs, expected):
+    assert redact.mask_query(qs, SENSITIVE) == expected
+
+
+def test_salt_created_readable_under_restrictive_umask(home):
+    paths.state_root().parent.mkdir(parents=True)
+    old = os.umask(0o577)
+    try:
+        s = redact.load_or_create_salt()
+    finally:
+        os.umask(old)
+    assert len(s) == 32
+    assert redact.load_or_create_salt() == s

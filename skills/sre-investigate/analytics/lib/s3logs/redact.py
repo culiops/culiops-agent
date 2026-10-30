@@ -34,54 +34,124 @@ _SALT_RE = re.compile(r"[0-9a-f]{64}")
 _EPOCH = datetime(1970, 1, 1)
 
 
-# ---- query strings ----------------------------------------------------------------------
+# ---- query strings and path parameters ---------------------------------------------------
+
+def sensitive_names(cfg) -> "frozenset":
+    """Names to mask in query strings and path parameters: SENSITIVE_PARAMS plus the identity
+    cookie names (so ``jsessionid`` is masked by default). Everything lowercased."""
+    return frozenset(str(n).lower() for n in tuple(cfg.sensitive_params) + tuple(cfg.identity_cookies))
+
+
+def _name_candidates(raw_name: str) -> "List[str]":
+    """Normalised forms of a decoded parameter name to compare against the sensitive set.
+
+    Raises UnicodeError/ValueError when the name does not strictly decode. Control characters
+    are removed, ``.`` and space map to ``_`` (PHP style), and ``name[...]`` also yields
+    ``name``; both the mapped and unmapped spellings are returned.
+    """
+    name = unquote_plus(raw_name, errors="strict")
+    name = "".join(c for c in name if not (ord(c) < 32 or 127 <= ord(c) < 160))
+    name = name.strip().lower()
+    forms = [name, name.replace(".", "_").replace(" ", "_")]
+    forms += [f.split("[", 1)[0].strip() for f in list(forms)]
+    return forms
+
+
+def _is_sensitive(raw_name: str, names: "frozenset") -> bool:
+    return any(f in names for f in _name_candidates(raw_name))
+
 
 def mask_query(qs: str, sensitive: "frozenset") -> str:
     """Mask the values of sensitive parameters, keeping order and raw spelling of the rest.
 
-    Names are compared after one percent-decode (strict UTF-8), lowercased and trimmed; a
-    PHP-style ``name[...]`` also matches on ``name``. ``&`` and ``;`` both separate pairs. If
-    decoding fails, or the decoded text still holds a ``%XX`` escape (double encoding), the
-    whole string becomes ``***``.
+    Names are compared after one percent-decode (strict UTF-8) and normalisation (see
+    ``_name_candidates``). ``&`` and ``;`` both separate pairs. A piece with no ``=`` that
+    decodes to something containing ``=`` is masked whole. If decoding fails, or the decoded
+    text still holds a ``%XX`` escape (double encoding), the whole string becomes ``***``.
     """
     if qs is None or qs == "" or qs == "-":
         return qs
     if not isinstance(qs, str):
         return MASK
-    if qs.startswith("?"):
-        return "?" + mask_query(qs[1:], sensitive)
+    n = len(qs) - len(qs.lstrip("?"))
+    prefix, qs = qs[:n], qs[n:]
+    if qs == "":
+        return prefix
     try:
         decoded = unquote_plus(qs, errors="strict")
     except (UnicodeError, ValueError):
         return MASK
     if _ENCODED_RE.search(decoded):
         return MASK
-    names = frozenset(str(n).lower() for n in sensitive)
+    names = frozenset(str(x).lower() for x in sensitive)
     parts = _SEP_RE.split(qs)
     out = []  # type: List[str]
     for i, piece in enumerate(parts):
-        if i % 2 == 1 or "=" not in piece:
+        if i % 2 == 1:
             out.append(piece)
             continue
-        raw_name, _, _value = piece.partition("=")
         try:
-            name = unquote_plus(raw_name, errors="strict").strip().lower()
+            if "=" not in piece:
+                out.append(MASK if "=" in unquote_plus(piece, errors="strict") else piece)
+                continue
+            raw_name, _, _value = piece.partition("=")
+            out.append(raw_name + "=" + MASK if _is_sensitive(raw_name, names) else piece)
         except (UnicodeError, ValueError):
             return MASK
-        if name in names or name.split("[", 1)[0].strip() in names:
-            out.append(raw_name + "=" + MASK)
-        else:
-            out.append(piece)
-    return "".join(out)
+    return prefix + "".join(out)
+
+
+def mask_path(path: str, sensitive: "frozenset") -> str:
+    """Mask sensitive ``;name=value`` matrix parameters in a URL path (e.g. ``;jsessionid=``).
+
+    Names compare like query names. A parameter that does not strictly decode, still holds a
+    ``%XX`` escape after decoding, or has no ``=`` but decodes to something with one, is
+    replaced by ``***``. Raw spelling of everything else is kept.
+    """
+    if path is None or path == "" or ";" not in path:
+        return path
+    if not isinstance(path, str):
+        return MASK
+    names = frozenset(str(x).lower() for x in sensitive)
+    segments = path.split("/")
+    for si, seg in enumerate(segments):
+        if ";" not in seg:
+            continue
+        pieces = seg.split(";")
+        for pi in range(1, len(pieces)):
+            piece = pieces[pi]
+            if piece == "":
+                continue
+            try:
+                decoded = unquote_plus(piece, errors="strict")
+                if _ENCODED_RE.search(decoded):
+                    pieces[pi] = MASK
+                elif "=" not in piece:
+                    if "=" in decoded:
+                        pieces[pi] = MASK
+                else:
+                    raw_name = piece.partition("=")[0]
+                    if _is_sensitive(raw_name, names):
+                        pieces[pi] = raw_name + "=" + MASK
+            except (UnicodeError, ValueError):
+                pieces[pi] = MASK
+        segments[si] = ";".join(pieces)
+    return "/".join(segments)
+
+
+def _mask_uri(uri: str, sensitive: "frozenset") -> str:
+    path, sep, q = uri.partition("?")
+    path = mask_path(path, sensitive)
+    return path + sep + mask_query(q, sensitive) if sep else path
 
 
 def _mask_referer(value: str, sensitive: "frozenset") -> str:
-    """Mask the query of a referer URL. Also drops userinfo and the fragment (both can carry
-    secrets). An unparseable referer becomes ``***``."""
+    """Mask a referer URL: query via mask_query, path parameters via mask_path. Also drops
+    userinfo and the fragment (both can carry secrets). Unparseable -> ``***``."""
     try:
         sp = urlsplit(value)
         netloc = sp.netloc.rsplit("@", 1)[-1]
-        base = urlunsplit((sp.scheme, netloc, sp.path, "", ""))
+        base = urlunsplit((sp.scheme, netloc, mask_path(sp.path, sensitive), "", ""))
         query = sp.query
     except ValueError:
         return MASK
@@ -155,6 +225,7 @@ def load_or_create_salt() -> bytes:
         raise Refused("cannot create salt file %s: %s" % (p, e.strerror or "error"))
     try:
         try:
+            os.fchmod(fd, 0o600)
             os.write(fd, raw.hex().encode("ascii"))
             os.fsync(fd)
         finally:
@@ -179,7 +250,7 @@ def _str(v: Any) -> Optional[str]:
     if isinstance(v, str):
         return v
     if isinstance(v, int) and not isinstance(v, bool):
-        return str(v)
+        return str(v) if abs(v) < 10 ** 18 else None
     return None
 
 
@@ -187,8 +258,8 @@ def _int(v: Any) -> Optional[int]:
     if isinstance(v, bool):
         return None
     if isinstance(v, int):
-        return v
-    if isinstance(v, str) and v.isdigit():
+        return v if abs(v) < 10 ** 18 else None
+    if isinstance(v, str) and v.isascii() and v.isdigit() and len(v) <= 18:
         return int(v)
     return None
 
@@ -271,9 +342,33 @@ def _match_details(rec: dict) -> List[dict]:
     return []
 
 
+_WAF_KEYS = (
+    "ts", "action", "terminating_rule_id", "terminating_rule_type", "rule_group_matches",
+    "non_terminating_rules", "labels", "client_ip", "country", "asn", "host", "uri",
+    "query_masked", "http_method", "http_version", "request_id", "ja3", "ja4", "header_names",
+    "user_agent", "referer_masked", "client_key", "identity_hashes", "response_code_sent",
+    "matched_field", "match_type", "matched_hash",
+)
+
+
 def waf_record(rec: dict, cfg, salt: bytes) -> dict:
     """Reduce one WAF log record to the fixed, redacted key set. No header or cookie value
-    survives except through a salted hash of a configured identity."""
+    survives except through a salted hash of a configured identity.
+
+    Never raises on the shape of ``rec``. If building the record fails for any reason the
+    result is the full key set, every value null except ``query_masked`` and
+    ``referer_masked`` which are ``***`` (never a partial record).
+    """
+    try:
+        return _waf_record(rec, cfg, salt)
+    except Exception:
+        out = {k: None for k in _WAF_KEYS}
+        out["query_masked"] = MASK
+        out["referer_masked"] = MASK
+        return out
+
+
+def _waf_record(rec: dict, cfg, salt: bytes) -> dict:
     rec = _dict(rec)
     http = _dict(rec.get("httpRequest"))
     headers = _headers(http)
@@ -296,14 +391,11 @@ def waf_record(rec: dict, cfg, salt: bytes) -> dict:
 
     labels = [n for n in (_dict(x).get("name") for x in _list(rec.get("labels"))) if isinstance(n, str)]
 
-    sensitive = cfg.sensitive_params
+    sensitive = sensitive_names(cfg)
     args = http.get("args")
     query_masked = mask_query(args, sensitive) if isinstance(args, str) else None
     uri = http.get("uri")
-    if isinstance(uri, str) and "?" in uri:
-        path, _, q = uri.partition("?")
-        uri = path + "?" + mask_query(q, sensitive)
-    uri = uri if isinstance(uri, str) else None
+    uri = _mask_uri(uri, sensitive) if isinstance(uri, str) else None
 
     referer = _first_header(headers, "referer")
     referer_masked = _mask_referer(referer, sensitive) if referer is not None else None
