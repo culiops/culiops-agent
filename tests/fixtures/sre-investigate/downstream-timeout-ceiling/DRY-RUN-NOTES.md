@@ -84,7 +84,7 @@ Totals: 11 PASS, 0 FAIL, 0 N/A.
 
 ### Run conditions
 
-- One run per case on the finished skill, which includes every fix through P14, the local-time grading rule and the fingerprint-review wording. Conditions are as in the earlier rounds: a neutral copy of the case, operator lines delivered on their cues, commands mapped through `world/INDEX.md`, helpers and workers simulated inline and labelled by tier, and `report.md` saved from the report text the run returned.
+- One run per case on the finished skill, which includes every fix through P14, the local-time grading rule and the wording generalization pass. Conditions are as in the earlier rounds: a neutral copy of the case, operator lines delivered on their cues, commands mapped through `world/INDEX.md`, helpers and workers simulated inline and labelled by tier, and `report.md` saved from the report text the run returned.
 - Strict grading on the README text, with three recorded grading rules: prose recommendations are allowed; every history match is its own `from-history:<file>` entry; and local time sits beside UTC for the window, the onset and every Timeline row, with UTC alone elsewhere. Every PASS cites `<file>:<line>` under `expected-output/`. Every FAIL quotes the output.
 
 ### MUST / MUST-NOT scoring
@@ -117,6 +117,6 @@ Totals: 11 PASS, 0 FAIL, 0 N/A.
   - H1-H4: workers never see past-incident content.
   - P14: old-against-new split for deploy candidates.
   - Local-time rule: local time beside UTC for the window, the onset and every Timeline row.
-  - The fingerprint-review wording.
+  - The wording generalization pass.
 - History: no FAIL in round 1 (after the rewording of the baseline's mutating-command MUST-NOT).
 - Final round: no FAIL. No skill change proposed from this case.

@@ -18,7 +18,7 @@ Cheapest first.
 
 **Caps.** Windows come from `budgets.windows` in `environment.md`: `trace_aggregation` (default 24h) and `trace_samples` (default 1h). Also keep the timeline step at 1 min or more (5 min past 6h) and group on at most 20 values. X-Ray bills traces retrieved and scanned, so its windows stay at the incident plus one baseline.
 
-**Variables.** `START_S`/`END_S` are the ledger's window in epoch seconds, `RUN` the run directory. `TEMPO` is the Tempo base URL or `$GRAFANA_URL/api/datasources/proxy/uid/<datasource-uid>`; `PROM` likewise for Prometheus. `$GRAFANA_SERVICE_ACCOUNT_TOKEN` stands in for the `token_env` named in `environment.md`. A Grafana MCP server takes the same TraceQL strings.
+**Variables.** `START_S`/`END_S` are the ledger's window in epoch seconds, `RUN` the run's raw directory (set in SKILL.md, Terms). `TEMPO` is the Tempo base URL or `$GRAFANA_URL/api/datasources/proxy/uid/<datasource-uid>`; `PROM` likewise for Prometheus. `$GRAFANA_SERVICE_ACCOUNT_TOKEN` stands in for the `token_env` named in `environment.md`. A Grafana MCP server takes the same TraceQL strings.
 
 **Confirm the service name first.** Trace service names are case-sensitive exact strings and wildcards match nothing. Ask Tempo which names exist in the window; if the expected one is absent, a search for slow traces without a service filter, limited to a few results, shows what the service is actually called.
 
@@ -70,7 +70,8 @@ Then group the trace summaries locally:
 ```bash
 aws xray get-trace-summaries --profile <profile> --region <region> \
   --start-time "$START_S" --end-time "$END_S" \
-  --filter-expression 'service("checkout-api")' --output json > "$RUN/xr-summaries.json"
+  --filter-expression 'service("checkout-api")' --max-items 1000 --output json > "$RUN/xr-summaries.json"
+jq -r '"summaries returned: \(.TraceSummaries | length), next token: \(.NextToken // "none")"' "$RUN/xr-summaries.json"
 jq -r '
   [.TraceSummaries[]
    | {ep: ((.Http.HttpMethod // "-") + " " + ((.Http.HttpURL // "-")
@@ -84,7 +85,7 @@ jq -r '
 <!-- doc: https://docs.aws.amazon.com/cli/latest/reference/xray/get-trace-summaries.html -->
 <!-- doc: https://docs.aws.amazon.com/xray/latest/devguide/xray-console-filters.html -->
 
-Numeric path segments are folded to `/N` so that one endpoint is not split into thousands of URLs. X-Ray durations are seconds. For a per-minute X-Ray timeline, use the load balancer or application metrics; summaries are a sample.
+`--max-items` bounds what the CLI pages through (X-Ray bills per trace retrieved and scanned); record the number returned and whether a `NextToken` was left, as coverage, and count the traces against the run's query budget. Numeric path segments are folded to `/N` so that one endpoint is not split into thousands of URLs. X-Ray durations are seconds. For a per-minute X-Ray timeline, use the load balancer or application metrics; summaries are a sample.
 
 Once the slow endpoint is known, check its own call rate (metrics playbook, drill-down rung 2) before reading its latency as "got slower": the same p95 with twice the calls is a volume problem.
 
@@ -108,7 +109,7 @@ X-Ray, the services that X-Ray itself names as the response-time root cause of s
 ```bash
 aws xray get-trace-summaries --profile <profile> --region <region> \
   --start-time "$START_S" --end-time "$END_S" \
-  --filter-expression 'service("checkout-api") AND responsetime > <seconds>' --output json \
+  --filter-expression 'service("checkout-api") AND responsetime > <seconds>' --max-items 500 --output json \
 | jq -r '[.TraceSummaries[].ResponseTimeRootCauses[]?.Services[]?
           | "\(.Name) [\(.Type // "-")]"] | group_by(.) | map([length, .[0]]) | sort_by(-.[0])[] | @tsv'
 ```

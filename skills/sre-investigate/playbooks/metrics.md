@@ -15,7 +15,7 @@ Cheapest first. Stop at the rung that answers the question.
 4. **Prometheus range queries.** Aggregate with `by (...)` on every high-cardinality metric. Quantiles over long windows come from recording rules; computing `histogram_quantile` over many hours of a large histogram is the expensive query to avoid. The widest raw `histogram_quantile` range is `budgets.windows.prom_quantile_range` in `environment.md` (neutral default 12h); a wider one asks first.
 5. **kubectl.** Current state only. It shows what is true now, not what was true at onset, so it confirms or locates; it never dates.
 
-Every recipe below uses the ledger's fixed window: `START`/`END` as RFC 3339 UTC (`2026-01-15T07:40:00Z`), `START_S`/`END_S` as epoch seconds, and `RUN` as the run directory. `PROM` is either the Prometheus base URL or `$GRAFANA_URL/api/datasources/proxy/uid/<datasource-uid>`. The token variable is the `token_env` from `environment.md`; `$GRAFANA_SERVICE_ACCOUNT_TOKEN` stands in for it here. A Grafana MCP server takes the same PromQL strings; only the transport differs.
+Every recipe below uses the ledger's fixed window: `START`/`END` as RFC 3339 UTC (`2026-01-15T07:40:00Z`), `START_S`/`END_S` as epoch seconds, and `RUN` as the run's raw directory (set in SKILL.md, Terms). `PROM` is either the Prometheus base URL or `$GRAFANA_URL/api/datasources/proxy/uid/<datasource-uid>`. The token variable is the `token_env` from `environment.md`; `$GRAFANA_SERVICE_ACCOUNT_TOKEN` stands in for it here. A Grafana MCP server takes the same PromQL strings; only the transport differs.
 
 ## Discover identifiers first
 
@@ -273,7 +273,7 @@ done
 "Requests never reached the application" on Kubernetes means no ready endpoints behind the Service. Current state only:
 
 ```bash
-kubectl get endpointslices -n <namespace> -l kubernetes.io/service-name=<service> \
+kubectl get endpointslices --context <context> -n <namespace> -l kubernetes.io/service-name=<service> \
   -o jsonpath='{range .items[*].endpoints[*]}{.addresses[0]}{" ready="}{.conditions.ready}{" terminating="}{.conditions.terminating}{"\n"}{end}'
 ```
 <!-- doc: https://kubernetes.io/docs/concepts/services-networking/endpoint-slices/ -->
@@ -303,7 +303,7 @@ done
 ```
 <!-- doc: https://prometheus.io/docs/prometheus/latest/querying/basics/ -->
 
-Discovery when the flow has no counter named yet: the `count by (__name__)` query in [Discover identifiers first](#discover-identifiers-first) with the flow's vocabulary in the name matcher, or, on AWS, `aws cloudwatch list-metrics --namespace <custom-namespace>`. Record what you find in the profile.
+Discovery when the flow has no counter named yet: the `count by (__name__)` query in [Discover identifiers first](#discover-identifiers-first) with the flow's vocabulary in the name matcher, or, on AWS, `aws cloudwatch list-metrics --profile <profile> --region <region> --namespace <custom-namespace>`. Record what you find in the profile.
 
 ## Drill-down ladder
 
@@ -344,7 +344,7 @@ Kubernetes signals for the pod and node rung, all through Prometheus (kube-state
 The current state behind those numbers, with the last termination reason and time per container:
 
 ```bash
-kubectl get pods -n <namespace> -l <selector> -o json \
+kubectl get pods --context <context> -n <namespace> -l <selector> -o json \
 | jq -r '.items[] | .metadata.name as $p | .spec.nodeName as $n | .status.containerStatuses[]?
     | [$p, $n, .name, .restartCount, (.lastState.terminated.reason // "-"), (.lastState.terminated.finishedAt // "-")] | @tsv'
 ```
@@ -403,7 +403,7 @@ jq -r '.MetricDataResults[] | select(.StatusCode != "Complete") | "\(.Id) \(.Sta
 ## Gotchas
 
 - **Identifiers differ across backends.** The service can be `checkout-api` in Prometheus labels, `checkout` in a log group name and `checkout-api-prod` in a CloudWatch dimension. Discover label values, dimension values and log group names; never build one from another. An identifier you have not seen in a discovery result stays `(unverified)` in the profile, and a query against it that returns nothing proves nothing.
-- **No data is not zero.** Most empty results come from a mistyped label value, a wrong dimension or the wrong region. Check the identifier before concluding "no errors". The exception is a metric documented as reported only when non-zero (`HTTPCode_ELB_5XX_Count`, `TargetResponseTime`): there, a gap is zero. Read the metric's reporting criteria.
+- **No data is not zero.** Most empty results come from a mistyped label value, a wrong dimension or the wrong region. Check the identifier before concluding "no errors". The exception is a metric documented as reported only when non-zero (`HTTPCode_ELB_5XX_Count`): there, a gap in a count is zero. A gap in a latency metric such as `TargetResponseTime` means no requests, not zero latency. Read the metric's reporting criteria.
 - **Zero is not unused.** A queue with no traffic or a function with no invocations may still be wired to a consumer, an event source mapping or a subscription. Check what consumes it, and ask the owner, before calling it dead.
 - **Averages hide tails.** `TargetResponseTime` Average can stay flat while p99 doubles. Use p95/p99.
 - **Never sum or average percentiles,** across pods, endpoints or siblings. Re-aggregate from histogram buckets or compare maxima.

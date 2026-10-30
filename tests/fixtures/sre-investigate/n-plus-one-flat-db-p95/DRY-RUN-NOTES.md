@@ -174,7 +174,7 @@ Totals: 14 PASS, 0 FAIL, 1 N/A (round 2: 13 PASS, 1 FAIL, 1 N/A).
 
 ### Run conditions
 
-- One run per case on the finished skill, which includes every fix through P14, the local-time grading rule and the fingerprint-review wording. Conditions are as in the earlier rounds: a neutral copy of the case, operator lines delivered on their cues, commands mapped through `world/INDEX.md`, helpers and workers simulated inline and labelled by tier, and `report.md` saved from the report text the run returned.
+- One run per case on the finished skill, which includes every fix through P14, the local-time grading rule and the wording generalization pass. Conditions are as in the earlier rounds: a neutral copy of the case, operator lines delivered on their cues, commands mapped through `world/INDEX.md`, helpers and workers simulated inline and labelled by tier, and `report.md` saved from the report text the run returned.
 - Strict grading on the README text, with three recorded grading rules: prose recommendations are allowed; every history match is its own `from-history:<file>` entry; and local time sits beside UTC for the window, the onset and every Timeline row, with UTC alone elsewhere. Every PASS cites `<file>:<line>` under `expected-output/`. Every FAIL quotes the output.
 
 ### MUST / MUST-NOT scoring
@@ -215,7 +215,7 @@ Past-incident isolation: the from-history worker received only the line the main
   - H1-H4: workers never see past-incident content.
   - P14: old-against-new split for deploy candidates.
   - Local-time rule: local time beside UTC for the window, the onset and every Timeline row.
-  - The fingerprint-review wording.
+  - The wording generalization pass.
 - History: round 1 FAIL row 7 was fixed by P3/P4. Round 2 FAIL row 5 was fixed by P11. Row 6 is graded literally since round 3, fixed by P12 in round 3.
 - Final round: rows 5 and 7 pass.
 - **Final FAIL, row 6 (literal ID):** the run wrote `from-history:2026-08-14-orders-api`, without the `.md` the README names. Everything else about the entry is right: it was created after ranking, got its own worker, received only the main session's line, and was ruled out. Gap: SKILL.md and `templates/ledger.md` say `from-history:<file>` but do not say that `<file>` keeps its extension. Proposed fix P16 (applied after the final round; case not re-run, see the row 6 note):

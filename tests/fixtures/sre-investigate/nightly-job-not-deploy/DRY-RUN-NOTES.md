@@ -94,7 +94,7 @@ Superseded by "final 2" below: fixes P15 and P16 and two rule touch-ups were app
 
 ### Run conditions
 
-- One run per case on the finished skill, which includes every fix through P14, the local-time grading rule and the fingerprint-review wording. Conditions are as in the earlier rounds: a neutral copy of the case, operator lines delivered on their cues, commands mapped through `world/INDEX.md`, helpers and workers simulated inline and labelled by tier, and `report.md` saved from the report text the run returned.
+- One run per case on the finished skill, which includes every fix through P14, the local-time grading rule and the wording generalization pass. Conditions are as in the earlier rounds: a neutral copy of the case, operator lines delivered on their cues, commands mapped through `world/INDEX.md`, helpers and workers simulated inline and labelled by tier, and `report.md` saved from the report text the run returned.
 - Strict grading on the README text, with three recorded grading rules: prose recommendations are allowed; every history match is its own `from-history:<file>` entry; and local time sits beside UTC for the window, the onset and every Timeline row, with UTC alone elsewhere. Every PASS cites `<file>:<line>` under `expected-output/`. Every FAIL quotes the output.
 
 ### MUST / MUST-NOT scoring
@@ -159,7 +159,7 @@ Totals: 14 PASS, 0 FAIL, 0 N/A (final round: 13 PASS, 1 FAIL).
   - H1-H4: workers never see past-incident content.
   - P14: old-against-new split for deploy candidates.
   - Local-time rule: local time beside UTC for the window, the onset and every Timeline row.
-  - The fingerprint-review wording.
+  - The wording generalization pass.
 - History: no FAIL in round 1. The later scoring review found round 1 lenient on row 6 (no per-revision counts) and on rows 4/5 (maximum without the 455 night). P8 and P14 were applied.
 - Final round: rows 4 and 5 now pass (maximum 455, incident excluded). Row 6 has the per-revision split with counts for revisions 41, 42 and the one before.
 - **Final FAIL, row 6 (fixed in final 2):** the new revision's own count between rollout completion and onset is missing. Gap: P14 asks for the new revision in the incident window against the old revision's last window, but not for the new revision's clean interval before the onset, which is the direct "new revision served without the failure" evidence. Proposed fix P15 (applied after the final round):

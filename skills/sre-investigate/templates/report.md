@@ -11,7 +11,7 @@ How to fill it in:
 - Delete the guidance lines when you copy the file; keep the headings exactly as written.
 
 Run: <run directory name> · Mode: <Fast | Deep> · Window: <incident window in UTC> (<same window in local zone>) · Onset: <UTC> (<local>)
-Access: <profile or context>: <write-check result in the check's own words, copied from the ledger's Access table: "write-capable: <action>, <action> allowed", "write-capable: <verb> on <resource>, <verb> on <resource>" (Kubernetes), "read-only confirmed (simulation): none of the 10 broad write actions is allowed", "no write verbs in <namespace>" or "write capability unknown (gap)">, one entry per profile and context
+Access: <profile or context>: <write-check result in the check's own words, copied from the ledger's Access table: "write-capable: <action>, <action> allowed", "write-capable: <verb> on <resource>, <verb> on <resource>" (Kubernetes), "read-only confirmed (simulation): none of the 10 broad write actions is allowed", "partly checked (gap): no listed action is allowed, but <action>, <action> returned no usable result", "no write verbs in <namespace>" or "write capability unknown (gap)">, one entry per profile and context
 
 ## TL;DR
 
@@ -84,7 +84,7 @@ The last column never holds a command that changes an investigated system. If ga
 
 ## To confirm, a human would…
 
-A numbered list of checks the run could not do because they would touch the system (reproducing the failure, calling an endpoint, opening a database session, looking at a vendor console, asking a vendor). Describe each in prose with what result would confirm or refute the cause. These are not commands to paste, and nothing in this list may change state.
+A numbered list of checks the run could not do because they would touch the system (reproducing the failure, calling an endpoint, opening a database session, looking at a vendor console, asking a vendor). The run never opens a database session; read-only database queries it handed to the operator and whose results came back are evidence, marked `operator-supplied`, not items here. Describe each check in prose with what result would confirm or refute the cause. The investigation runs none of these; a check that would change state is described in prose for its owner, never as a command to paste.
 
 1. <…>
 

@@ -1,6 +1,6 @@
 # Access and credentials (standalone)
 
-Phase 0 reads this file before any backend is queried. It has six sections, in order: which mode the run is in, who the run is authenticated as, whether AWS credentials could change anything, the same question for Kubernetes, how each backend gets its token, and how a failing backend is recorded. The ledger and report it mentions are defined in SKILL.md (the ledger is `ledger.md` in the run directory); a person checking access by hand needs only the commands under Mode detection, Identity and the two write-check sections.
+Phase 0 reads this file before any backend is queried. It has seven sections, in order: where `environment.md` lives, which mode the run is in, who the run is authenticated as, whether AWS credentials could change anything, the same question for Kubernetes, how each backend gets its token, and how a failing backend is recorded. The ledger and report it mentions are defined in SKILL.md (the ledger is `ledger.md` in the run directory); a person checking access by hand needs only the commands under Mode detection, Identity and the two write-check sections.
 
 Everything here is read-only. The only commands that touch IAM are simulations and describe/get/list calls. No write API is ever called to find out whether a write would work.
 
@@ -126,7 +126,7 @@ What the result does and does not prove:
 
 ### 3. Report the outcome
 
-There are three outcomes. Use the wording below, then continue to the next profile; none of them stops the run.
+There are four outcomes. Use the wording below, then continue to the next profile; none of them stops the run.
 
 **Any action `allowed`: the boxed warning.** Print it as is, filling the brackets, then continue:
 
@@ -145,11 +145,19 @@ There are three outcomes. Use the wording below, then continue to the next profi
 
 Name only the allowed actions. Never include the role ARN or the session name in the box.
 
-**No action allowed: "read-only confirmed", with its limit.**
+**All ten actions came back, none allowed: "read-only confirmed", with its limit.** Use this wording only when the reply holds a row for each of the ten actions and every row is `explicitDeny` or `implicitDeny`.
 
 ```text
 Write check, <profile>: read-only confirmed (simulation): none of the 10 broad write actions is allowed. This is not a full proof; resource-scoped writes are not covered.
 ```
+
+**No action allowed, but some actions missing from the reply or with an unexpected decision: partly checked.** Never call this read-only.
+
+```text
+Write check, <profile>: partly checked (gap): no listed action is allowed, but <action>, <action> returned no usable result. This is not a finding that the credentials are read-only.
+```
+
+Record the missing actions as a gap in the ledger.
 
 **The simulation, or the role lookup it needs, is denied: informational notice, never the warning.**
 
@@ -163,7 +171,7 @@ Record the same sentence as a gap in the ledger, then apply the fallback order.
 
 Stop at the first step that yields an answer. Each step is read-only, and none replaces the notice above: the gap stays in the ledger and the answer is added next to it.
 
-1. **List the attached policies.** For an assumed role, use the role name from the caller ARN. For an IAM user principal, use `aws iam list-attached-user-policies --user-name <name>` (and `list-groups-for-user` for group policies) in the same way, or skip to step 2.
+1. **List the attached policies.** For an assumed role, use the role name from the caller ARN. For an IAM user principal, use `aws iam list-attached-user-policies --profile <profile> --user-name <name>` (and `list-groups-for-user` for group policies) in the same way, or skip to step 2.
 
    ```bash
    aws iam list-attached-role-policies --profile <profile> --role-name "$role" --query 'AttachedPolicies[].PolicyName' --output text
@@ -218,7 +226,7 @@ With no write-capable row, record "no write verbs in <namespace>" in the ledger.
 Write capability unknown (gap), <context>/<namespace>: kubectl auth can-i --list failed, so write access could not be checked. This is not a finding that the identity can write.
 ```
 
- The listing reflects RBAC as the API server evaluates it for this identity; it says nothing about admission rules.
+The listing reflects RBAC as the API server evaluates it for this identity; it says nothing about admission rules.
 
 ## Tokens
 
@@ -249,7 +257,7 @@ A gap is a source the run could not read. It is not an error to route around. Re
 |---|---|
 | Backend | profile, context or datasource name |
 | Cause | expired session, missing token, access denied, unreachable, unknown write capability |
-| Fix | the exact command or variable for the operator, for example `! aws sso login --profile <profile>` or `export <ENV_VAR>=...` (name only) |
+| Fix | the exact command or variable for the operator, for example `! aws sso login --profile <profile>` or the name of the variable the operator must export (never a value or an `export` line) |
 | Effect | which hypotheses or claims lose evidence because of it |
 
 Behaviour that follows:

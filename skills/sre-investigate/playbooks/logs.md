@@ -30,9 +30,9 @@ Cheapest first. Each rung narrows the next one.
 
 **Backoff.** A log backend that answers slowly (more than about 10 s) or errors is under stress. Never answer that with more retries. Cut the window in half, or give the query up, and log the gap in the ledger.
 
-**Budget.** Every bytes-scanned figure (estimated before, actual after) counts against `budgets.<mode>.log_gb_scanned`. One rule decides when to stop and ask, in both modes: an Insights estimate still above `insights_ask_threshold_gb` after narrowing, a query that would pass the run's `budgets.<mode>` totals, or a window wider than its `budgets.windows` cap. `per_query_soft_limit_gb` is not a prompt: a query estimated above it is narrowed first (shorter window, one stream, fewer log groups) and then runs as narrowed unless one of those three conditions applies.
+**Budget.** Every bytes-scanned figure (estimated before, actual after) counts against `budgets.<mode>.log_gb_scanned`. One rule decides when to stop and ask, in both modes: an Insights query whose padded estimate (step 2 below) is still above `insights_ask_threshold_gb` after narrowing, or that has no estimate, a query that would pass the run's `budgets.<mode>` totals, or a window wider than its `budgets.windows` cap. `per_query_soft_limit_gb` is not a prompt: a query estimated above it is narrowed first (shorter window, one stream, fewer log groups) and then runs as narrowed unless one of those three conditions applies.
 
-**Variables.** Recipes use the ledger's fixed window: `START_S`/`END_S` (epoch seconds), `ONSET_S` (onset, epoch seconds), `ONSET_MINUS_10`/`ONSET_PLUS_10` (onset ∓10 min, RFC 3339 UTC), and `RUN` (the run directory). `$GRAFANA_SERVICE_ACCOUNT_TOKEN` stands in for the `token_env` named in `environment.md`.
+**Variables.** Recipes use the ledger's fixed window: `START_S`/`END_S` (epoch seconds), `ONSET_S` (onset, epoch seconds), `ONSET_MINUS_10`/`ONSET_PLUS_10` (onset ∓10 min, RFC 3339 UTC), and `RUN` (the run's raw directory (set in SKILL.md, Terms)). `$GRAFANA_SERVICE_ACCOUNT_TOKEN` stands in for the `token_env` named in `environment.md`.
 
 ## CloudWatch Logs Insights
 
@@ -40,7 +40,7 @@ Logs Insights is billed per GB scanned, so it always runs under the estimate rul
 
 **1. Find the log groups.** Never guess a log group name from the service name. List by prefix; `--log-group-name-pattern` would also find them, but its output omits `storedBytes` and `retentionInDays`, which the estimate needs.
 
-**2. Estimate the scan.** `bytes ≈ storedBytes × window ÷ retention`, where retention is the shorter of `retentionInDays` and the group's age (a group with no retention keeps everything, so its age is the divisor). It assumes an even ingest rate, and `storedBytes` may not be the same measure as the bytes Insights bills as scanned, so the estimate can be low as well as noisy. Treat it as an order of magnitude, and record the ratio of the reported `bytesScanned` to the estimate after every query.
+**2. Estimate the scan.** `bytes ≈ storedBytes × window ÷ retention`, where retention is the shorter of `retentionInDays` and the group's age (a group with no retention keeps everything, so its age is the divisor). It assumes an even ingest rate, and `storedBytes` can be a compressed size while Insights bills the data it scans, so treat the figure as a **lower bound** that can be low by an order of magnitude. The figure the rules compare is the **padded estimate**: the lower bound × `insights_estimate_factor` from `environment.md` (default 10), or × the largest `bytesScanned ÷ estimate` ratio measured earlier in this run or recorded in `lessons.md` for this log group, whichever is larger. When `storedBytes` is missing, zero or unreadable (a denied call, an unfamiliar log class), there is no estimate: the query asks. Record the lower bound, the factor used and, after the query, the reported `bytesScanned` and its ratio to the lower bound.
 
 ```bash
 aws logs describe-log-groups --profile <profile> --region <region> \
@@ -58,7 +58,7 @@ aws logs describe-log-groups --profile <profile> --region <region> \
 <!-- doc: https://docs.aws.amazon.com/cli/latest/reference/logs/describe-log-groups.html -->
 <!-- doc: https://jqlang.org/manual/ -->
 
-**3. Ask above the threshold, even in Fast mode.** Narrow first if the estimate is above `per_query_soft_limit_gb`. If it is still above `insights_ask_threshold_gb` in `environment.md`, show the query, the log groups, the window and the estimate, and wait for a yes. This holds in Fast mode too, where read-only waves otherwise run without waiting. A no is recorded as a gap, with the narrower query that would fit.
+**3. Ask above the threshold, even in Fast mode.** Prefer the narrowest window and the fewest log groups from the start. Narrow further if the padded estimate is above `per_query_soft_limit_gb`. If the padded estimate is still above `insights_ask_threshold_gb` in `environment.md`, or no estimate exists, show the query, the log groups, the window, the lower bound and the factor, and wait for a yes. This holds in Fast mode too, where read-only waves otherwise run without waiting. A no is recorded as a gap, with the narrower query that would fit.
 
 **4. Run, poll, stop.** Narrowest window, fewest log groups, `filter` as the first command. Poll `get-query-results`; if the query is still running after about 2 minutes, stop it and narrow. Run the poll loop as a background job. One Insights query at a time.
 
@@ -170,20 +170,20 @@ When logs are not shipped to a backend, or the backend lags, read them from the 
 
 ```bash
 # the container instance that crashed, with timestamps
-kubectl logs -n <namespace> <pod> -c <container> --previous --timestamps > "$RUN/k-<pod>-previous.log"
+kubectl logs --context <context> -n <namespace> <pod> -c <container> --previous --timestamps > "$RUN/k-<pod>-previous.log"
 # every pod of a workload since onset minus 10 minutes (RFC 3339)
-kubectl logs -n <namespace> -l <selector> --all-containers --prefix --timestamps \
+kubectl logs --context <context> -n <namespace> -l <selector> --all-containers --prefix --timestamps \
   --since-time="$ONSET_MINUS_10" --max-log-requests=10 > "$RUN/k-<workload>-since.log"
 # a short relative window when no exact onset is known yet (reads ONE pod of the deployment; use the -l form above for all of them)
-kubectl logs -n <namespace> deployment/<deployment> --since=30m --timestamps | tail -n 200
+kubectl logs --context <context> -n <namespace> deployment/<deployment> --since=30m --timestamps | tail -n 200
 ```
 <!-- doc: https://kubernetes.io/docs/reference/kubectl/generated/kubectl_logs/ -->
 
 Events carry the platform's side of the story (OOM kills, failed probes, back-off, scheduling failures, image pulls). The API server keeps them for one hour by default, so read them early in the run:
 
 ```bash
-kubectl events -n <namespace> --types=Warning -o json > "$RUN/k-events.json"
-kubectl events -n <namespace> --for pod/<pod>
+kubectl events --context <context> -n <namespace> --types=Warning -o json > "$RUN/k-events.json"
+kubectl events --context <context> -n <namespace> --for pod/<pod>
 ```
 <!-- doc: https://kubernetes.io/docs/reference/kubectl/generated/kubectl_events/ -->
 
@@ -224,7 +224,7 @@ Check the field name in the first record (`head -1`) before trusting the count; 
 - **Identifiers differ across backends.** The log group, the Loki label value and the metrics label for one service rarely match (`/ecs/checkout`, `app="checkout-api"`, `service="checkout-api-prod"`). Discover log group names and label values; never build one from another. Mark an identifier `(unverified)` in the profile until a discovery call has returned it, and treat an empty result against an unverified identifier as "wrong identifier", not "no errors".
 - **Line filters reduce returned lines, not bytes read.** In both Loki and Logs Insights, the selector (or log groups) and the window set the cost. A tighter `|=` or `filter` makes the answer smaller, not the bill.
 - **Timestamps are ingest-side.** A log line's timestamp can sit a second or two away from the event and from other backends. Allow ±1–2 s when lining lines up with traces, metrics or another log source.
-- **The Insights estimate is approximate.** It assumes even ingest across the retention period. A group that ingests in bursts can scan far more than the estimate over a burst window; and if `storedBytes` counts compressed data, every estimate runs low. Record `bytesScanned ÷ estimate` in the ledger for each query, so the run (and the org's next tuning of `insights_ask_threshold_gb`) works from measured ratios.
+- **The Insights estimate is a lower bound.** It assumes even ingest across the retention period. A group that ingests in bursts can scan far more than the estimate over a burst window, and if `storedBytes` counts compressed data every estimate runs low. That is why the rules use the padded estimate. Record `bytesScanned ÷ lower bound` in the ledger for each query; a measured ratio above the factor raises the factor for the rest of the run and is a lesson candidate, and the org tunes `insights_estimate_factor` from those ratios.
 - **Never point Insights at a whole account.** `SOURCE logGroups()` without a prefix, or a long list of log groups, scans everything. Name the groups.
 - **Log classes differ.** `pattern` is not available on Infrequent Access log groups, and the Delivery class does not support Insights at all. Fall back to the metric-query rung with `parse`.
 - **Loki `entries` is not a line count.** Use `count_over_time` for any number you quote.
@@ -237,8 +237,8 @@ One row per query:
 
 - query ID, backend, log groups or selector, and the exact query string;
 - window in UTC, and which rung of the ladder it was;
-- the estimate before and the actual bytes scanned after (Insights `bytesScanned`, Loki stats bytes), their ratio, and the total against the budget;
-- for an Insights query above `insights_ask_threshold_gb`: the question asked and the answer;
+- the estimate before and the actual bytes scanned after (Insights `bytesScanned`, Loki stats bytes), their ratio, and the total against the budget; for Insights, the lower bound, the factor used and the padded estimate;
+- for an Insights query whose padded estimate is above `insights_ask_threshold_gb`, or that had no estimate: the question asked and the answer;
 - whether it completed, was stopped at about 2 minutes, or backed off, and the gap it left;
 - the result in one line, with its confidence label; quoted lines cut to 300 characters, with secrets removed;
 - every identifier used, marked verified or `(unverified)`;
