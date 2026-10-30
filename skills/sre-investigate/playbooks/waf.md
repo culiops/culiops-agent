@@ -5,7 +5,7 @@ verified: docs-only
 
 **Purpose.** This playbook answers three questions. Is the web ACL blocking or challenging real users, and if so which rule, which paths, which countries and clients, since when? Is a spike an attack (volumetric, scraping, credential stuffing), and how concentrated is it? Why are 403s above normal: one client, an attack, or ordinary users whose behaviour changed (a new client release, a link shared widely, a new integration) and now trips a rule? Every answer is compared with the same window seven days earlier.
 
-What WAF data cannot say: the status the origin returned. A `BLOCK` is the WAF's own 403 or custom response; for allowed requests, the real status lives only in the CDN or load balancer access logs, which this version does not read (see [Escalation order](#escalation-order)).
+What WAF data cannot say: the status the origin returned. A `BLOCK` is the WAF's own 403 or custom response; for allowed requests, the real status lives only in the CDN or load balancer access logs (rungs 3 and 4 of the [Escalation order](#escalation-order)).
 
 ## Escalation order
 
@@ -13,8 +13,8 @@ Cheapest first; stop at the rung that answers the question.
 
 1. **Free metrics, by rule, against −7 days.** `AllowedRequests`, `BlockedRequests`, `CountedRequests`, `ChallengeRequests` and `CaptchaRequests` per rule, for the incident window and the same window a week earlier. This shows which rule moved, and when, at no query cost beyond `get-metric-data`.
 2. **Sampled requests,** for the rule that moved, or for the default action to see allowed traffic. Only the last three hours can be sampled, at most 500 requests out of the first 5,000 in the window.
-3. **WAF logs.** Not read by this version. When the question needs full counts, TLS fingerprints, or requests older than three hours, record a gap and add to the report's "To confirm, a human would…" list a sentence such as "count the blocked requests for this rule by client and path in the web ACL's logs for the incident hour". Logs arrive minutes to an hour late, so the newest window is always incomplete.
-4. **CDN or load balancer access logs** for the status the origin actually returned. Also not read by this version; same treatment as rung 3.
+3. **WAF logs,** for full counts, TLS fingerprints, or requests older than three hours. If Phase 0 reported the S3 log module on with a `waf` dataset for this ACL, read them through [logs-s3.md](logs-s3.md). Otherwise, without naming the module, record a gap and add to the report's "To confirm, a human would…" list a sentence such as "count the blocked requests for this rule by client and path in the web ACL's logs for the incident hour". Logs arrive minutes to an hour late, so the newest window is always incomplete.
+4. **CDN or load balancer access logs** for the status the origin actually returned: through [logs-s3.md](logs-s3.md) when the module is on with a `cloudfront` or `alb` dataset for that resource; otherwise the same gap treatment as rung 3.
 
 **Find the web ACL and its rules first.** Regional ACLs (load balancers, API Gateway) live in the resource's Region; CloudFront ACLs are always read in `us-east-1` with `--scope CLOUDFRONT`.
 
@@ -139,7 +139,7 @@ A client is never "one user" on the strength of an IP address. Combine what the 
 - **IP and country,** from the sample;
 - **a hashed client key:** the value of the session cookie or client-ID header that the service profile names, hashed in the pipe and cut to 12 characters;
 - **header shape:** the ordered list of header names (column 10 of the rows file), which differs between browsers, mobile clients, SDKs and scripts;
-- **TLS fingerprint (JA3/JA4):** WAF computes it and writes it to the logs only; sampled requests do not carry it. In this version it is a gap.
+- **TLS fingerprint (JA3/JA4):** WAF computes it and writes it to the logs only; sampled requests do not carry it. With the S3 log module on, the `fingerprints` query of [logs-s3.md](logs-s3.md) reads it; otherwise it is a gap.
 <!-- doc: https://docs.aws.amazon.com/waf/latest/APIReference/API_HTTPRequest.html -->
 <!-- doc: https://docs.aws.amazon.com/waf/latest/developerguide/logging-fields.html -->
 
@@ -160,7 +160,7 @@ Read the result, with the header shapes and user agents from the same rows, agai
 | One IP, one client key (or none), one header shape, at a high rate | A single client: a scraper, a misbehaving integration, or one user's runaway script | That client's paths and rate against −7 days; whether the rule that blocks it is the one that moved |
 | One IP carries a large share of requests, with many distinct client keys and ordinary header shapes behind it | Shared egress: carrier-grade NAT, a corporate proxy, a VPN exit | Spread of countries and user agents behind it; whether a rate-based rule keyed on IP is what blocks them |
 | One client key across many IPs | One client rotating addresses, or one account being abused | That key's request rate and paths; whether the IPs share a country or network |
-| Many IPs with the same user agent, the same sparse header-name list and the same path pattern, few or no client keys | A bot fleet | Rate-based and bot-control rule metrics; TLS fingerprints from the logs (gap in this version) |
+| Many IPs with the same user agent, the same sparse header-name list and the same path pattern, few or no client keys | A bot fleet | Rate-based and bot-control rule metrics; TLS fingerprints from the logs ([logs-s3.md](logs-s3.md) `fingerprints` when the S3 log module is on; otherwise a gap) |
 | A broad rise across normal user agents, countries and header shapes, starting at a deploy, a client release or a campaign | Ordinary users whose traffic changed, tripping a rule (a false positive) or a real customer-driven load change | The rule's own −7 day baseline, the labels it applied, and the changes playbook for what started at that minute |
 
 **COUNT-mode rules: what they would have blocked.** For each COUNT-mode rule, `CountedRequests` against −7 days says how much traffic it would have blocked had it been switched to `BLOCK`. A sample of that rule shows who. This is how to judge the impact of a rule someone wants to enable, and how to spot a rule that was recently switched from COUNT to BLOCK (its `BlockedRequests` appears as its `CountedRequests` disappears; confirm the switch in the changes playbook's CloudTrail recipe).
@@ -173,7 +173,7 @@ Read the result, with the header shapes and user agents from the same rows, agai
 - **CLI time zone.** AWS CLI v2 prints timestamps as ISO 8601 strings in the machine's local zone, not as epoch numbers. Prefix kept reads with `TZ=UTC`, and never assume a timestamp field is a number.
 - **Count rules inside rule groups.** A Count action inside a rule group emits metrics with `Rule`, `RuleGroup` and `Region` dimensions, not `WebACL`; rule groups owned by another account show their per-rule metrics only to the owner unless the action is overridden in your ACL.
 - **A sample is not a count.** Quote totals from CloudWatch. Quote sample-derived numbers as "in a sample of N out of `population` requests, between `<window start>` and `<window end>` UTC", and say when a weight was applied.
-- **Three hours.** Samples older than three hours cannot be requested. For an older incident, rung 1 is all this version can read; the rest is a gap with its "To confirm" sentence.
+- **Three hours.** Samples older than three hours cannot be requested. For an older incident, rung 1 is all that can be read, unless the S3 log module is on (rungs 3 and 4); otherwise the rest is a gap with its "To confirm" sentence.
 - **Headers and cookies.** Sampled requests contain every request header, including cookies and authorization headers. Never store or quote a cookie value or an authorization header value: refer to them by header or cookie name, or by the short hash when identity matters. Never quote a full query string or a referer. The kept sample drops query strings but keeps the path, so a token embedded in a path segment (a reset or download link) is stored; quote such a path with that segment replaced by `<token>`. Quote an IP, a user agent or a hash only when it is the finding; otherwise refer to the client by hash.
 - **ACL with no rules.** An ACL associated with an Application Load Balancer but holding no rules or other active configuration publishes no metrics and no samples for it.
 
@@ -184,5 +184,5 @@ Read the result, with the header shapes and user agents from the same rows, agai
 - per sample: the rule metric name, the requested window, the returned window, `population`, number of rows and how weights were used;
 - concentration results: top IPs and top hashes with their weighted shares, the table row that fits, and the confidence label (a sample-only reading is at most Likely);
 - the logging filter (what is and is not logged);
-- gaps: logs not read, TLS fingerprints unavailable, samples out of the three-hour range, each with its "To confirm" sentence;
+- gaps: samples out of the three-hour range; and, unless the S3 log module read them (then cite its ledger rows per [logs-s3.md](logs-s3.md#what-to-write-in-the-ledger)), logs not read and TLS fingerprints unavailable; each with its "To confirm" sentence;
 - a deeplink for a human: the WAF console page of the ACL with the rule and window, or the CloudWatch console link for the same metrics. Never a link or note carrying a header or cookie value.

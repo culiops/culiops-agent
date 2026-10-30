@@ -19,6 +19,7 @@
 | `cat .culiops/sre-investigate/environment.md` | `environment.md` | |
 | `ls` … `.culiops/sre-investigate` | `ls-01.txt` | |
 | `command -v agentbox-env` | `_empty.txt` | Exit status 1. |
+| `…/analytics/bin/logs-status` | `logs-status-off.txt` | The plugin's `skills/sre-investigate/analytics/bin/logs-status`, called by any path (relative or absolute). Exit status 0. |
 | `aws sts get-caller-identity` | `sts-01.json` | |
 | `aws iam get-role` … | `iam-01.json` | |
 | `aws iam simulate-principal-policy` … `arn:aws:sts::*` | `iam-03.txt` | Exit status 254. |

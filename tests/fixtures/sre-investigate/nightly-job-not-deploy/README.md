@@ -29,6 +29,7 @@ World file names are neutral on purpose (runners see `world/`); this table maps 
 | Credentials | read-only (`implicitDeny` on every simulated write); `agentbox-env` absent | `iam-02.json`, `INDEX.md` |
 | Pre-aggregated companions | daily 5xx sums (e.g. 461 on 10-08, 442 on 10-21 to 02:40); 14-day totals by revision (40: 1,945, 41: 1,546, 42: 439) and by error code (`ER_LOCK_WAIT_TIMEOUT` 3,273); daily rows by revision | `cw-06.json`, `logs-17.json`, `logs-19.json`, `logs-18.json` |
 | Decoys behind the same lookups | other rules, task definitions (`orders-api:40`, `orders-migrate:3`, `orders-reconcile:6`) | `events-04.json`–`events-07.json`, `ecs-14.json`–`ecs-16.json` |
+| S3 log module | off: `logs-status` prints exactly `S3 log module: off (not configured)` (added for the v0.17 off-path re-run; no `logs.env` in this world) | `logs-status-off.txt`, `INDEX.md` |
 
 `environment.md` has no timezone. The operator gives it only when asked (`operator-script.md`, line 2): Asia/Tokyo, UTC+9.
 

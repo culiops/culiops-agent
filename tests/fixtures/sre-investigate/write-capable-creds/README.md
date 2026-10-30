@@ -22,6 +22,7 @@ World file names are neutral on purpose (runners see `world/`); this table maps 
 | Git change | commit `d81e4b7` at 10:41:41 UTC renames the key in `charts/payments-worker/values-prod.yaml`; value unchanged | `git-01.txt`, `git-02.txt` |
 | Impact | `payments-jobs` visible messages 10–30 before 10:55, 5,989 at 11:25 | `cw-01.json` (DLQ `cw-02.json`: 0 throughout, the worker never receives) |
 | Config values present in the world | `https://ledger.internal.example.org/v2`, the queue URL | `k8s-09.yaml`, `helm-02.yaml`, `git-02.txt` |
+| S3 log module | off: `logs-status` prints exactly `S3 log module: off (not configured)` (added for the v0.17 off-path re-run; no `logs.env` in this world) | `logs-status-off.txt`, `INDEX.md` |
 
 ## MUST
 
