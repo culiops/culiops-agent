@@ -83,17 +83,30 @@ def mask_query(qs: str, sensitive: "frozenset") -> str:
     return _mask_query(qs, frozenset(str(x).lower() for x in sensitive), False)
 
 
-def _value_leaks(raw_value: str, names: "frozenset", nested: bool) -> bool:
-    """Does the (non-sensitive) parameter value hide a sensitive nested query or path param?
-    May raise UnicodeError/ValueError, which callers turn into a whole-string mask."""
-    dec = unquote_plus(raw_value, errors="strict")
-    if not any(c in dec for c in "?&;="):
-        return False
-    if nested:
-        return "?" in dec
-    path, sep, q = dec.partition("?")
-    qpart = q if sep else dec
+def _nested_leaks(text: str, names: "frozenset") -> bool:
+    """Would the query part (after the first ``?``, else the whole text) or the path part of
+    ``text`` change under masking? One level: the inner run is ``nested``."""
+    path, sep, q = text.partition("?")
+    qpart = q if sep else text
     return _mask_query(qpart, names, True) != qpart or mask_path(path, names) != path
+
+
+def _value_leaks(raw_value: str, names: "frozenset", nested: bool) -> bool:
+    """Does the (non-sensitive) parameter value hide a sensitive nested query or path param,
+    a sensitive fragment, or URL userinfo? May raise UnicodeError/ValueError, which callers
+    turn into a whole-string mask."""
+    dec = unquote_plus(raw_value, errors="strict")
+    if not any(c in dec for c in "?&;=#@"):
+        return False
+    if "@" in urlsplit(dec).netloc:  # userinfo, same parsing as mask_url
+        return True
+    if nested:
+        # Third level: do not look deeper, just refuse anything that still looks like a URL.
+        return "?" in dec or "#" in dec
+    before, hash_, frag = dec.partition("#")
+    if hash_ and _nested_leaks(frag, names):
+        return True
+    return any(c in before for c in "?&;=") and _nested_leaks(before, names)
 
 
 def _mask_query(qs: str, names: "frozenset", nested: bool) -> str:
@@ -199,9 +212,16 @@ def _mask_uri(uri: str, sensitive: "frozenset") -> str:
     return path + sep + mask_query(q, sensitive) if sep else path
 
 
-def _mask_referer(value: str, sensitive: "frozenset") -> str:
-    """Mask a referer URL: query via mask_query, path parameters via mask_path. Also drops
-    userinfo and the fragment (both can carry secrets). Unparseable -> ``***``."""
+def mask_url(url: str, sensitive: "frozenset") -> str:
+    """Mask a full URL (referer, ALB redirect URL): query via mask_query, path parameters via
+    mask_path. Also drops userinfo and the fragment (both can carry secrets). Unparseable
+    -> ``***``. ``None``, ``""`` and ``"-"`` (the logs' "absent") are returned as they are;
+    a non-string becomes ``***``."""
+    if url is None or url == "" or url == "-":
+        return url
+    if not isinstance(url, str):
+        return MASK
+    value = url
     try:
         sp = urlsplit(value)
         netloc = sp.netloc.rsplit("@", 1)[-1]
@@ -452,7 +472,7 @@ def _waf_record(rec: dict, cfg, salt: bytes) -> dict:
     uri = _mask_uri(uri, sensitive) if isinstance(uri, str) else None
 
     referer = _first_header(headers, "referer")
-    referer_masked = _mask_referer(referer, sensitive) if referer is not None else None
+    referer_masked = mask_url(referer, sensitive) if referer is not None else None
 
     identity = []  # type: List[str]
     keys = []  # type: List[str]

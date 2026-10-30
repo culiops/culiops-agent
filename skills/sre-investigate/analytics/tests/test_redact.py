@@ -650,3 +650,66 @@ def test_uri_and_referer_encoded_semicolon_in_waf_record():
     assert out["uri"] == "/a%3B***?a=1"
     assert out["referer_masked"] == "https://x.example.com/a%3B***?a=1"
     assert "ZZ" not in json.dumps(out)
+
+
+# ---- R27: fragments and userinfo inside a non-sensitive value; public mask_url -----------
+
+@pytest.mark.parametrize("qs,expected", [
+    ("r=%2Fx%23access_token%3DZZ", "r=***"),
+    ("r=%2Fx%3Fa%3D1%23access_token%3DZZ", "r=***"),
+    ("r=%2Fx%23%2Froute%3Ftoken%3DZZ", "r=***"),
+    ("next=https%3A%2F%2Fuser%3Apass%40h.example.com%2Fp", "next=***"),
+    ("next=https%3A%2F%2Fuser%40h.example.com", "next=***"),
+    ("next=%2F%2Fuser%3Apass%40h.example.com%2Fp&a=1", "next=***&a=1"),
+])
+def test_fragment_and_userinfo_in_value_masked(qs, expected):
+    out = redact.mask_query(qs, redact.sensitive_names(Config()))
+    assert out == expected
+    assert "ZZ" not in out and "pass" not in out
+
+
+@pytest.mark.parametrize("qs", [
+    "r=%2Fhome%23section",
+    "r=%2Fhome%3Fa%3D1%23top",
+    "r=%23",
+    "next=https%3A%2F%2Fh.example.com%2Fp%3Fa%3D1%23frag",
+    "email_to=a%40example.com",
+    "next=https%3A%2F%2Fh.example.com%2Fuser%40home",
+])
+def test_benign_fragment_and_at_sign_kept(qs):
+    assert redact.mask_query(qs, redact.sensitive_names(Config())) == qs
+
+
+def test_fragment_check_does_not_recurse_on_deep_values():
+    qs = "r=" + "a%3D%23" * 5000
+    out = redact.mask_query(qs, SENSITIVE)  # must not raise RecursionError
+    assert isinstance(out, str)
+    qs2 = "r=" + "%23" * 5000 + "token%3DZZ"  # name "####...token" is not "token"; only no crash
+    assert isinstance(redact.mask_query(qs2, SENSITIVE), str)
+    qs3 = "r=" + "%3F" * 3000 + "%23token%3DZZ"
+    assert "ZZ" not in redact.mask_query(qs3, SENSITIVE)
+
+
+def test_fragment_and_userinfo_in_value_masked_in_waf_record():
+    rec = make_record(headers=[{"name": "Referer", "value": "https://x.example.com/p?r=%2Fx%23access_token%3DREFZZ"}])
+    rec["httpRequest"]["args"] = "next=https%3A%2F%2Fu%3Apw%40h.example.com&r=%2Fx%23access_token%3DARGZZ"
+    out = redact.waf_record(rec, Config(), SALT)
+    assert out["query_masked"] == "next=***&r=***"
+    assert out["referer_masked"] == "https://x.example.com/p?r=***"
+
+
+def test_mask_url_masks_query_path_and_drops_userinfo_fragment():
+    names = redact.sensitive_names(Config())
+    assert redact.mask_url("https://user:pw@www.example.com/p;jsessionid=ZZ?a=1&token=T#frag", names) == \
+        "https://www.example.com/p;jsessionid=***?a=1&token=***"
+    assert redact.mask_url("/relative?token=T&b=2", names) == "/relative?token=***&b=2"
+    assert redact.mask_url("https://www.example.com/p", names) == "https://www.example.com/p"
+
+
+def test_mask_url_unparseable_and_passthrough():
+    names = redact.sensitive_names(Config())
+    assert redact.mask_url("http://[::1/SECRETPATH?token=x", names) == "***"
+    assert redact.mask_url("-", names) == "-"
+    assert redact.mask_url("", names) == ""
+    assert redact.mask_url(None, names) is None
+    assert redact.mask_url(5, names) == "***"
