@@ -233,3 +233,18 @@ def test_estimate_cost_unit():
     assert ci.estimate_cost(None, Decimal("0.0004"), 10, 1) == "n/a"
     assert ci.estimate_cost(Decimal("0.09"), None, 10, 1) == "n/a"
     assert ci.estimate_cost(Decimal("0.09"), Decimal("0.0004"), 0, 0) == "$0.0000"
+
+
+def test_out_of_range_stamp_counted_unparsed(home, env):
+    base = "AWSLogs/111122223333/elasticloadbalancing/us-east-1/2026/03/09/"
+    gf.make(env.root, "alb", DAY, hours=[1], minutes=(0,))
+    (env.root / BUCKET / (base + "planted_00010101T0000Z_y.log.gz")).write_bytes(b"x")
+    r = run("alb", "2026-03-09", "2026-03-09")
+    assert r.returncode == 0, r.stderr
+    mpath = manifest_path(home, "alb", "2026-03-09", "2026-03-09")
+    text = mpath.read_text()
+    m = json.loads(text)
+    assert m["skipped_unparsed"] >= 1 and len(m["files"]) == 1
+    for out in (text, r.stdout, r.stderr):
+        assert "planted" not in out and "00010101" not in out
+    assert "Traceback" not in r.stderr

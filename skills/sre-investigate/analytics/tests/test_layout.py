@@ -181,3 +181,27 @@ def test_unsupported_format_cloudfront(key, expected):
 def test_unsupported_format_only_for_cloudfront():
     assert layout.is_unsupported_format(WAF, "x/y.json.gz") is False
     assert layout.is_unsupported_format(ALB, "x/y.parquet") is False
+
+
+@pytest.mark.parametrize("ds,key", [
+    (ALB, "AWSLogs/x/y_00010101T0000Z_z.log.gz"),            # end - 5 min underflows year 1
+    (WAF, "AWSLogs/x/y_00010101T0004Z_z.log.gz"),
+    (CF, "cf/E2EXAMPLE.9999-12-31-23.abc.gz"),               # start + 1 h overflows year 9999
+])
+def test_overflowing_stamp_is_unparsable_not_a_crash(ds, key):
+    assert layout.file_time(ds, key) is None
+
+
+def test_valid_extreme_stamps_still_parse():
+    ft = layout.file_time(ALB, "AWSLogs/x/y_99991231T2359Z_z.log.gz")
+    assert ft.end == dt.datetime(9999, 12, 31, 23, 59, tzinfo=UTC)
+    ft = layout.file_time(ALB, "AWSLogs/x/y_00010101T0005Z_z.log.gz")
+    assert ft.start == dt.datetime(1, 1, 1, 0, 0, tzinfo=UTC)
+
+
+def test_select_on_last_calendar_day_refuses_instead_of_crashing():
+    listing = [entry("AWSLogs/x/y_99991231T2359Z_z.log.gz")]
+    with pytest.raises(Refused):
+        layout.select(ALB, listing, dt.date(9999, 12, 31))                     # day+1 does not exist
+    got = layout.select(ALB, listing, dt.date(9999, 12, 31), minutes=(23 * 60, 23 * 60 + 59))
+    assert keys(got) == [listing[0].key]                                       # widen overflow is tolerated

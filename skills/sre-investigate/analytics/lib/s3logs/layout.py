@@ -102,7 +102,10 @@ def file_time(ds: Dataset, key: str) -> Optional[FileTime]:
         if m:
             s = m.group(1)
             end = _utc(int(s[0:4]), int(s[4:6]), int(s[6:8]), int(m.group(2)[0:2]), int(m.group(2)[2:4]))
-            return FileTime(end - _INTERVAL, end) if end else None
+            try:
+                return FileTime(end - _INTERVAL, end) if end else None
+            except OverflowError:       # a stamp at year 1: planted keys must not crash a listing
+                return None
     if "{HH}" not in ds.template:
         return None
     m = _template_regex(ds.template).match(key)
@@ -111,7 +114,10 @@ def file_time(ds: Dataset, key: str) -> Optional[FileTime]:
     start = _utc(int(m.group("yyyy")), int(m.group("MM")), int(m.group("dd")), int(m.group("HH")))
     if start is None:
         return None
-    return FileTime(start, start + dt.timedelta(hours=1))
+    try:
+        return FileTime(start, start + dt.timedelta(hours=1))
+    except OverflowError:               # hour 23 of 9999-12-31
+        return None
 
 
 def is_unsupported_format(ds: Dataset, key: str) -> bool:
@@ -135,14 +141,17 @@ def select(ds: Dataset, entries: Sequence[Entry], day: dt.date,
     if minutes is not None and ds.type == "cloudfront":
         raise Refused("minute slices are not available for CloudFront (hour granularity only)")
     midnight = dt.datetime(day.year, day.month, day.day, tzinfo=UTC)
-    if hours is not None:
-        w_start = midnight + dt.timedelta(hours=hours[0])
-        w_end = midnight + dt.timedelta(hours=hours[1] + 1)
-    elif minutes is not None:
-        w_start = midnight + dt.timedelta(minutes=minutes[0])
-        w_end = midnight + dt.timedelta(minutes=minutes[1])
-    else:
-        w_start, w_end = midnight, midnight + dt.timedelta(days=1)
+    try:
+        if hours is not None:
+            w_start = midnight + dt.timedelta(hours=hours[0])
+            w_end = midnight + dt.timedelta(hours=hours[1] + 1)
+        elif minutes is not None:
+            w_start = midnight + dt.timedelta(minutes=minutes[0])
+            w_end = midnight + dt.timedelta(minutes=minutes[1])
+        else:
+            w_start, w_end = midnight, midnight + dt.timedelta(days=1)
+    except OverflowError:
+        raise Refused("day %s is too close to the end of the calendar to slice" % day.isoformat())
     picked = []
     for e in entries:
         ft = file_time(ds, e.key)
@@ -150,7 +159,11 @@ def select(ds: Dataset, entries: Sequence[Entry], day: dt.date,
             continue
         # Widen by one unit of this file's own width: a file starting right after the
         # window (within one file-width) is taken too.
-        if ft.end > w_start and ft.start < w_end + (ft.end - ft.start):
+        try:
+            hit = ft.end > w_start and ft.start < w_end + (ft.end - ft.start)
+        except OverflowError:           # window ends at the calendar's last instant: no widen possible
+            hit = ft.end > w_start and ft.start < w_end
+        if hit:
             picked.append((ft.start, e.key, e))
     picked.sort(key=lambda t: (t[0], t[1]))
     return [t[2] for t in picked]
