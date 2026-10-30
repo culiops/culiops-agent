@@ -33,7 +33,12 @@ def _private_dir(p: Path, mode: int) -> None:
     if p.exists() and not p.is_dir():
         raise Refused("%s exists and is not a directory" % (p,))
     if not p.exists():
-        p.mkdir(mode=mode)
+        try:
+            p.mkdir(mode=mode)
+        except FileExistsError:
+            # Lost a creation race with another process; re-check what is there now.
+            if p.is_symlink() or not p.is_dir():
+                raise Refused("%s exists and is not a private directory" % (p,))
     os.chmod(str(p), mode)
 
 
