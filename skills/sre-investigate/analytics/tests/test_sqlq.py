@@ -659,7 +659,9 @@ def test_every_shipped_query_binds_against_its_type_schema(home, cfg):
     _convert_into(home, "alb", "alb1", hours=[0], minutes=(0,), records=2)
     for p in sorted(cli_sqlq.SQL_DIR.glob("*/*.sql")):
         ds = {"cloudfront": "cdn1", "waf": "waf1", "alb": "alb1"}[p.parent.name]
-        cp = sqlq(home, ds, "--run", RUN, p.stem)
+        params = {"by_object": ["object=/x"], "object_by_day": ["object=/x"],
+                  "compare_days": ["a=2026-03-09", "b=2026-03-10"]}.get(p.stem, [])   # required params
+        cp = sqlq(home, ds, "--run", RUN, p.stem, *[x for kv in params for x in ("--param", kv)])
         assert cp.returncode == 0, (p, cp.stderr)
 
 

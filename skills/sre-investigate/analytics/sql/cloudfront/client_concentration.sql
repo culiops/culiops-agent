@@ -1,4 +1,4 @@
--- One row: how concentrated traffic is on few clients (top-1 and top-10 share, distinct clients). Sampled datasets: multiply counts by the factor sqlq prints.
+-- One row: how concentrated traffic is on few clients (top-1 and top-10 share, distinct clients). If sampled: requests and top1_requests scale by the factor; distinct_clients are lower bounds; top1_share and top10_share do not scale.
 WITH per AS (
   SELECT c_ip, count(*) AS n FROM logs GROUP BY c_ip
 ), ranked AS (

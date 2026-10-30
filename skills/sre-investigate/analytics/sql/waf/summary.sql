@@ -1,4 +1,4 @@
--- One-row overview of the WAF dataset: window, requests per action, clients, client keys and rules. Sampled datasets: multiply counts by the factor sqlq prints.
+-- One-row overview of the WAF dataset: window, requests per action, clients, client keys and rules. If sampled: requests, allowed, blocked, counted and other_actions scale by the factor; distinct_* are lower bounds.
 SELECT min(ts) AS first_ts, max(ts) AS last_ts, count(*) AS requests,
        count(*) FILTER (WHERE action = 'ALLOW') AS allowed,
        count(*) FILTER (WHERE action = 'BLOCK') AS blocked,

@@ -1,4 +1,4 @@
--- Top 50 user agents with a generic bot/crawler/spider bucket (substring match only). Sampled datasets: multiply counts by the factor sqlq prints.
+-- Top 50 user agents with a generic bot/crawler/spider bucket (substring match only). If sampled: requests and bytes scale by the factor; distinct_clients are lower bounds.
 SELECT CASE WHEN regexp_matches(lower(cs_user_agent), 'bot|crawler|spider') THEN 'bot/crawler/spider'
             ELSE 'other' END AS ua_bucket,
        left(cs_user_agent, 200) AS cs_user_agent, count(*) AS requests,

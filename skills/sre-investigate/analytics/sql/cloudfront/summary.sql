@@ -1,4 +1,4 @@
--- One-row overview of the CloudFront dataset: window, requests, clients, objects, bytes and status classes. Sampled datasets: multiply counts by the factor sqlq prints.
+-- One-row overview of the CloudFront dataset: window, requests, clients, objects, bytes and status classes. If sampled: requests, bytes and status_* counts scale by the factor; distinct_* are lower bounds.
 SELECT min(ts) AS first_ts, max(ts) AS last_ts, count(*) AS requests,
        count(DISTINCT c_ip) AS distinct_clients, count(DISTINCT cs_uri_stem) AS distinct_objects,
        sum(sc_bytes) AS bytes,

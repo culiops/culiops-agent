@@ -1,4 +1,4 @@
--- Top 50 client keys (salted hashes of the configured identity cookie or header, never the value) by requests. Sampled datasets: multiply counts by the factor sqlq prints.
+-- Top 50 client keys (salted hashes of the configured identity cookie or header, never the value) by requests. If sampled: requests and blocked scale by the factor; distinct_ips are lower bounds.
 SELECT client_key, count(*) AS requests, count(DISTINCT client_ip) AS distinct_ips,
        count(*) FILTER (WHERE action = 'BLOCK') AS blocked
 FROM logs

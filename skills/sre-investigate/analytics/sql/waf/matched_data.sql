@@ -1,4 +1,4 @@
--- Top 50 matches by rule, location and match type; counts distinct matched values via salted hash, never shows a value. Sampled datasets: multiply counts by the factor sqlq prints.
+-- Top 50 matches by rule, location and match type; counts distinct matched values via salted hash, never shows a value. If sampled: requests scale by the factor; distinct_* are lower bounds.
 SELECT terminating_rule_id, matched_field, match_type, count(*) AS requests,
        count(DISTINCT matched_hash) AS distinct_matched_values, count(DISTINCT client_ip) AS distinct_clients
 FROM logs

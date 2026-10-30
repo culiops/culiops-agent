@@ -236,11 +236,14 @@ def _cf_query_rows(day: dt.date):
     for k in range(2):
         add(stem="/media/big.bin", client=IPS[2], status=200, bytes=1000000, ua=WEB_UA, length=1000000)
     for k in range(4):
-        add(stem="/media/part.bin", client=IPS[4], status=206, bytes=100000, ua=WEB_UA, length=1000000,
+        add(stem="/media/part.bin", client=IPS[4], status=206, bytes=100000, ua=WEB_UA, length=100000,
             rng=(k * 100000, k * 100000 + 99999))
     for j in range(18):
         status = 404 if j % 9 == 8 else (502 if j == 5 else 200)
-        add(stem="/static/app.js", client=IPS[j % 6], status=status, bytes=5000,
+        # j == 1 is a HEAD (headers only, far fewer bytes than the length: not an abort);
+        # j == 2 is a complete download whose sc-bytes include ~300 bytes of headers
+        add(stem="/static/app.js", client=IPS[j % 6], status=status,
+            bytes={1: 300, 2: 5300}.get(j, 5000), method="HEAD" if j == 1 else "GET",
             ua=BOT_UA if j % 3 == 0 else WEB_UA, length=5000,
             referer=("https://www.example.com/blog/post-1?utm=x" if j < 6 else
                      "https://news.example.com/item/9?id=4" if j < 9 else "-"))
@@ -257,7 +260,7 @@ def _cf_query_files(day: dt.date):
         rng = r.get("rng")
         by_hour[g % 3].append("\t".join([
             day.isoformat(), "%02d:%02d:00" % (g % 3, g), "IAD89-C1" if g % 2 else "FRA56-P2",
-            str(r["bytes"]), r["client"], "GET", "d111111abcdef8.cloudfront.net", r["stem"],
+            str(r["bytes"]), r["client"], r.get("method", "GET"), "d111111abcdef8.cloudfront.net", r["stem"],
             str(r["status"]), r.get("referer", "-"), r["ua"].replace(" ", "%20"), "-",
             "Miss" if g % 4 == 3 else "Hit", "req%05d" % g, "www.example.com", "https", "300", "0.050",
             r.get("detail", "Hit" if g % 4 != 3 else "Miss"), str(r["length"]),
@@ -266,7 +269,7 @@ def _cf_query_files(day: dt.date):
 
 
 def _alb_query_line(ts: dt.datetime, client: str, target: str, elb_status: int, target_status: str,
-                    path: str, tproc: float) -> str:
+                    path: str, tproc: float, reason: str = "-") -> str:
     t = ts.strftime("%Y-%m-%dT%H:%M:%S") + ".000000Z"
     lb_made = target == "-"
     times = "-1 -1 -1" if lb_made else "0.001 %.3f 0.000" % tproc
@@ -275,17 +278,17 @@ def _alb_query_line(ts: dt.datetime, client: str, target: str, elb_status: int, 
         '"%s" ECDHE-RSA-AES128-GCM-SHA256 TLSv1.2 '
         'arn:aws:elasticloadbalancing:%s:%s:targetgroup/example-tg/0123456789abcdef '
         '"Root=1-q-%s" "www.example.com" "arn:aws:acm:%s:%s:certificate/12345678-1234-1234-1234-123456789012" '
-        '0 %s "forward" "-" "-" "%s" "%s" "-" "-"'
+        '0 %s "forward" "-" "%s" "%s" "%s" "-" "-"'
         % (t, LB_NAME, LB_ID, client, "-" if lb_made else target + ":8080", times, elb_status,
            target_status, path, WEB_UA, REGION, ACCOUNT, "%024d" % int(ts.timestamp() % 10**9), REGION,
-           ACCOUNT, t, "-" if lb_made else target + ":8080", target_status))
+           ACCOUNT, t, reason, "-" if lb_made else target + ":8080", target_status))
 
 
 def _alb_query_body(day: dt.date) -> str:
     base = dt.datetime(day.year, day.month, day.day)
     specs = []
-    for i in range(5):
-        specs.append((IPS[0], "-", 502, "-", "/api/orders", 0.0))                 # produced by the LB
+    for i in range(5):                                                            # no target answered
+        specs.append((IPS[0], "-", 502, "-", "/api/orders", 0.0, "TargetNotFound" if i < 2 else "-"))
     for i in range(3):
         specs.append((IPS[1], "198.51.100.10", 502, "502", "/api/orders", 0.9))   # produced by a target
     for i in range(22):

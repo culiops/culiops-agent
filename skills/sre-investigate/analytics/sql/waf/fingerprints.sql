@@ -1,4 +1,4 @@
--- Top 50 TLS fingerprints (JA3, JA4 hashes) with requests, distinct clients and distinct client keys. Sampled datasets: multiply counts by the factor sqlq prints.
+-- Top 50 TLS fingerprints (JA3, JA4 hashes) with requests, distinct clients and distinct client keys. If sampled: requests scale by the factor; distinct_* are lower bounds.
 SELECT ja3, ja4, count(*) AS requests, count(DISTINCT client_ip) AS distinct_clients,
        count(DISTINCT client_key) AS distinct_client_keys
 FROM logs

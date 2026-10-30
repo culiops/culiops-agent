@@ -5,6 +5,7 @@ from __future__ import annotations
 import csv
 import datetime as dt
 import io
+import itertools
 import os
 import re
 import shutil
@@ -152,11 +153,14 @@ def test_reads_only_the_logs_view_and_no_query_strings(kind, name):
 
 # ---- value tests (the brief's four) ---------------------------------------------------------
 
-def test_alb_lb_vs_target_status_counts_lb_generated_502(env):
+def test_alb_lb_vs_target_status_counts_502_without_a_target_response(env):
     rows = run(env, "alb", "lb_vs_target_status")
-    assert int(one(rows, elb_status_code="502", origin="lb_generated")["requests"]) == 5
-    assert int(one(rows, elb_status_code="502", origin="target_generated")["requests"]) == 3
+    none = [r for r in rows if r["origin"] == "no_target_response"]
+    assert {r["elb_status_code"] for r in none} == {"502"} and sum(int(r["requests"]) for r in none) == 5
+    assert {r["error_reason"]: int(r["requests"]) for r in none} == {"TargetNotFound": 2, "-": 3}
+    assert int(one(rows, elb_status_code="502", origin="target_responded")["requests"]) == 3
     assert all(int(r["elb_status_code"]) >= 500 for r in rows)
+    assert not any("lb_generated" in r["origin"] or "target_generated" in r["origin"] for r in rows)
 
 
 def test_waf_concentration_top_share_and_client_keys(env):
@@ -174,6 +178,7 @@ def test_cloudfront_cache_results_three_to_one(env):
     hit, miss = one(rows, x_edge_result_type="Hit"), one(rows, x_edge_result_type="Miss")
     assert (int(hit["requests"]), int(miss["requests"])) == (24, 8)
     assert float(hit["share"]) == pytest.approx(0.75) and float(miss["share"]) == pytest.approx(0.25)
+    assert {r["hit_ratio"] for r in rows} == {"0.75"}
 
 
 def test_waf_compare_days_per_rule_delta(env):
@@ -210,16 +215,20 @@ def test_cloudfront_bytes_per_viewer_flags_repeated_downloads(env):
     big = one(rows, cs_uri_stem="/media/big.bin")
     assert int(big["requests"]) == 10 and int(big["distinct_clients"]) == 2
     assert int(big["object_size"]) == 1000000 and int(big["bytes"]) == 8800000
-    assert int(big["bytes_per_viewer"]) == 4400000
+    assert int(big["bytes_per_viewer"]) == 4400000 and big["size_is_estimate"] == "false"
     assert float(big["repeat_factor"]) == pytest.approx(4.4)
-    assert rows[0]["cs_uri_stem"] == "/media/big.bin"        # highest repeat factor first
+    assert rows[0]["cs_uri_stem"] == "/media/big.bin"        # most bytes first
+    part = one(rows, cs_uri_stem="/media/part.bin")          # only 206s: size is a lower-bound estimate
+    assert part["size_is_estimate"] == "true" and int(part["object_size"]) == 400000
 
 
 def test_cloudfront_aborted_range_edges_and_object(env):
     ab = run(env, "cloudfront", "aborted")
     big = one(ab, cs_uri_stem="/media/big.bin")
     assert int(big["aborted_requests"]) == 2 and int(big["requests"]) == 10
+    # app.js has a HEAD 200 (headers only) and a download whose sc-bytes include header overhead: neither is aborted
     assert all(r["cs_uri_stem"] != "/static/app.js" for r in ab)
+    assert [r["cs_uri_stem"] for r in ab] == ["/media/big.bin"]
     rg = one(run(env, "cloudfront", "range_requests"), cs_uri_stem="/media/part.bin")
     assert int(rg["range_requests"]) == 4 and int(float(rg["avg_range_bytes"])) == 100000
     edges = run(env, "cloudfront", "edges")
@@ -305,32 +314,51 @@ def test_alb_summary_minute_and_targets(env):
     (s,) = run(env, "alb", "summary")
     assert int(s["requests"]) == 34 and int(s["distinct_clients"]) == 6
     assert (int(s["status_2xx"]), int(s["status_4xx"]), int(s["status_5xx"])) == (22, 4, 8)
-    assert int(s["lb_generated_5xx"]) == 5
+    assert int(s["no_target_5xx"]) == 5 and int(s["no_target_time_requests"]) == 5
+    assert s["p95_target_seconds"] == "0.9"
+    assert "lb_generated_5xx" not in s
     mins = run(env, "alb", "by_minute")
-    assert sum(int(r["requests"]) for r in mins) == 34 and sum(int(r["lb_generated_5xx"]) for r in mins) == 5
+    assert sum(int(r["requests"]) for r in mins) == 34 and sum(int(r["no_target_5xx"]) for r in mins) == 5
+    assert sum(int(r["no_target_time_requests"]) for r in mins) == 5
+    # six 10-second-spaced minutes; 0.098/0.158/0.2175 interpolate between neighbours (tolerance for the last digit)
+    assert [float(r["p95_target_seconds"]) for r in mins] == pytest.approx(
+        [0.9, 0.9, 0.098, 0.158, 0.2175, 0.005], abs=1e-3)
     st = run(env, "alb", "status_by_target")
     none = one(st, target_ip="-")
     assert int(none["requests"]) == 5 and int(none["no_target_response"]) == 5 and int(none["elb_5xx"]) == 5
+    assert none["target_port"] == "NULL"
     assert sum(int(r["requests"]) for r in st) == 34
+    assert {(r["target_ip"], r["target_port"]) for r in st} == {
+        ("-", "NULL"), ("198.51.100.10", "8080"), ("198.51.100.11", "8080")}
     lat = run(env, "alb", "target_latency_pct")
     allrow = one(lat, target_ip="ALL")
-    assert int(allrow["requests"]) == 29                 # rows with a target processing time
-    assert float(allrow["max_s"]) == pytest.approx(0.9)
     assert lat[0]["target_ip"] == "ALL"
+    # 29 timed requests: 4 x 0.005, 0.01 .. 0.22, 3 x 0.9; the 5 without a target time are counted, not hidden
+    assert (int(allrow["requests"]), int(allrow["timed_requests"]), int(allrow["no_target_time_requests"])) == (34, 29, 5)
+    assert [allrow[k] for k in ("p50_s", "p90_s", "p95_s", "p99_s", "max_s")] == ["0.11", "0.356", "0.9", "0.9", "0.9"]
+    dash = one(lat, target_ip="-")
+    assert (int(dash["timed_requests"]), int(dash["no_target_time_requests"]), dash["p95_s"]) == (0, 5, "NULL")
 
 
 def test_alb_paths_and_clients(env):
     paths_5xx = run(env, "alb", "top_paths_5xx")
     assert all("?" not in r["path"] and r["path"].startswith("/") for r in paths_5xx)
     r = one(paths_5xx, path="/api/orders", elb_status_code="502")
-    assert int(r["requests"]) == 8 and int(r["lb_generated"]) == 5
+    assert int(r["requests"]) == 8 and int(r["no_target_response"]) == 5
     clients = run(env, "alb", "top_clients")
-    assert sum(int(c["requests"]) for c in clients) == 34 and float(clients[0]["share"]) <= 1
+    assert [(c["client_ip"], int(c["requests"]), float(c["share"]), int(c["status_5xx"])) for c in clients] == [
+        ("192.0.2.10", 9, pytest.approx(0.2647), 5), ("198.51.100.23", 8, pytest.approx(0.2353), 0),
+        ("192.0.2.77", 7, pytest.approx(0.2059), 3), ("198.51.100.7", 4, pytest.approx(0.1176), 0),
+        ("203.0.113.5", 3, pytest.approx(0.0882), 0), ("203.0.113.99", 3, pytest.approx(0.0882), 0)]
 
 
 # ---- privacy and bounds on larger data ------------------------------------------------------
 
-def _wide_dataset(env, ds, select_sql, run_id="wide-prod-20261030-1200"):
+_RUN_SEQ = itertools.count(1)
+
+
+def _wide_dataset(env, ds, select_sql, run_id=None):
+    run_id = run_id or "w%d-prod-20261030-1200" % next(_RUN_SEQ)
     d = paths.state_root() / "data" / run_id / ds
     d.mkdir(parents=True, exist_ok=True)
     os.chmod(str(d), 0o700)
@@ -354,3 +382,98 @@ def test_client_lists_never_exceed_50_rows(env):
         cp = sqlq(env, ds, "--run", rid, name)
         assert cp.returncode == 0, cp.stderr
         assert len(list(csv.reader(io.StringIO(cp.stdout)))) - 1 == 50, (ds, name)
+
+
+# ---- query correctness on purpose-built data ------------------------------------------------
+
+def _csv(cp):
+    return list(csv.DictReader(io.StringIO(cp.stdout)))
+
+
+def test_bytes_per_viewer_ranks_by_bytes_not_ratio_and_handles_206_only_and_no_clients(env):
+    # 60 tiny popular objects (huge repeat factor, few bytes), one bandwidth burner (1 viewer, low ratio),
+    # one object seen only through 206s, one with no client address at all.
+    sql = ("SELECT '/tiny/' || (i % 60)::VARCHAR AS cs_uri_stem, '192.0.2.' || (i % 3)::VARCHAR AS c_ip, "
+           "10::BIGINT AS sc_bytes, 200 AS sc_status, 10::BIGINT AS sc_content_len, NULL::BIGINT AS sc_range_end "
+           "FROM range(0, 600) t(i) "
+           "UNION ALL SELECT '/burner.bin', '198.51.100.7', 1000000, 200, 1000000, NULL FROM range(0, 5) "
+           "UNION ALL SELECT '/ranged.bin', '203.0.113.5', 100, 206, 100, 99999 FROM range(0, 2) "
+           "UNION ALL SELECT '/anon.bin', NULL, 50, 200, 50, NULL")
+    rid = _wide_dataset(env, "cdn1", sql)
+    cp = sqlq(env, "cdn1", "--run", rid, "bytes_per_viewer")
+    assert cp.returncode == 0, cp.stderr
+    rows = _csv(cp)
+    assert len(rows) == 50 and rows[0]["cs_uri_stem"] == "/burner.bin"
+    assert int(rows[0]["bytes"]) == 5000000 and float(rows[0]["repeat_factor"]) == pytest.approx(5.0)
+    assert rows[0]["size_is_estimate"] == "false"
+    # the 206-only object is not in the top 50 by bytes; check it with its own dataset below
+    sql2 = ("SELECT '/ranged.bin' AS cs_uri_stem, '203.0.113.5' AS c_ip, 100::BIGINT AS sc_bytes, 206 AS sc_status, "
+            "100::BIGINT AS sc_content_len, 99999::BIGINT AS sc_range_end FROM range(0, 2) "
+            "UNION ALL SELECT '/anon.bin', NULL, 50, 200, 50, NULL")
+    rid2 = _wide_dataset(env, "cdn1", sql2)
+    rows2 = _csv(sqlq(env, "cdn1", "--run", rid2, "bytes_per_viewer"))
+    rg = one(rows2, cs_uri_stem="/ranged.bin")
+    assert rg["size_is_estimate"] == "true" and int(rg["object_size"]) == 100000
+    anon = one(rows2, cs_uri_stem="/anon.bin")                        # no distinct clients: no division error
+    assert anon["bytes_per_viewer"] == "NULL" and anon["repeat_factor"] == "NULL"
+
+
+def test_aborted_follows_the_documented_definition_and_skips_head(env):
+    base = ("SELECT '/o' AS cs_uri_stem, '192.0.2.1' AS c_ip, %s AS cs_method, %s AS sc_status, %d::BIGINT AS sc_bytes, "
+            "%d::BIGINT AS sc_content_len, %s AS x_edge_result_type, %s AS x_edge_detailed_result_type")
+    parts = [
+        base % ("'GET'", 200, 1000, 1000, "'Hit'", "'Hit'"),                   # complete
+        base % ("'GET'", 200, 1000, 5000, "'Hit'", "'Hit'"),                   # short body: aborted
+        base % ("'GET'", 200, 5000, 5000, "'Error'", "'Error'"),               # documented: GET, 200, result Error
+        base % ("'GET'", 200, 5000, 5000, "'Hit'", "'ClientCommError'"),       # client comm error
+        base % ("'HEAD'", 200, 300, 5000, "'Hit'", "'Hit'"),                   # HEAD: headers only, not aborted
+        base % ("'HEAD'", 200, 5000, 5000, "'Error'", "'Error'"),              # HEAD with Error is not the documented case
+        base % ("'GET'", 206, 100, 5000, "'Hit'", "'Hit'"),                    # 206 partials are not covered
+        base % ("'GET'", 404, 100, 5000, "'Error'", "'Error'"),                # not a 200
+    ]
+    rid = _wide_dataset(env, "cdn1", " UNION ALL ".join(parts))
+    (r,) = _csv(sqlq(env, "cdn1", "--run", rid, "aborted"))
+    assert (int(r["aborted_requests"]), int(r["requests"])) == (3, 8)
+
+
+@pytest.mark.parametrize("kind,name,given,missing", [
+    ("waf", "compare_days", {"b": DAY_B}, "a"),
+    ("waf", "compare_days", {"a": DAY_A}, "b"),
+    ("waf", "compare_days", {}, "a"),
+    ("cloudfront", "object_by_day", {}, "object"),
+    ("cloudfront", "by_object", {}, "object"),
+])
+def test_required_param_missing_is_an_error_not_an_empty_result(env, kind, name, given, missing):
+    args = [DS[kind], "--run", RUN, name] + [x for k, v in given.items() for x in ("--param", "%s=%s" % (k, v))]
+    cp = sqlq(env, *args)
+    assert cp.returncode == 4 and cp.stdout == "", cp.stdout
+    assert "param %s is required" % missing in cp.stderr
+    # a misspelled name is the same as a missing one
+    cp = sqlq(env, DS[kind], "--run", RUN, name, "--param", "objekt=/x", "--param", "aa=%s" % DAY_A)
+    assert cp.returncode == 4 and "is required" in cp.stderr
+
+
+def test_sampling_notes_are_per_query_not_blanket():
+    for kind, name in ALL:
+        first = (SQL_DIR / kind / (name + ".sql")).read_text().split("\n", 1)[0]
+        assert "multiply counts by the factor sqlq prints" not in first, (kind, name)
+        assert "If sampled:" in first or "UNRELIABLE if sampled" in first, (kind, name)
+    bpv = (SQL_DIR / "cloudfront" / "bytes_per_viewer.sql").read_text().split("\n", 1)[0]
+    assert "UNRELIABLE if sampled" in bpv and "do not use" in bpv
+    for kind, name in ALL:
+        first = (SQL_DIR / kind / (name + ".sql")).read_text().split("\n", 1)[0]
+        if "share" in first.split("If sampled:")[-1] and name != "bytes_per_viewer":
+            assert "do not scale" in first, (kind, name)
+        if "distinct_" in first.split("If sampled:")[-1]:
+            assert "lower bound" in first, (kind, name)
+
+
+def test_purpose_lines_say_what_the_numbers_do_not_cover():
+    def purpose(kind, name):
+        return (SQL_DIR / kind / (name + ".sql")).read_text().split("\n", 1)[0]
+    assert "top-level" in purpose("waf", "count_rules") and "rule_group_matches" in purpose("waf", "count_rules")
+    lb = purpose("alb", "lb_vs_target_status")
+    assert "timed out" in lb and "refused" in lb and "no_target_response" in lb
+    ab = purpose("cloudfront", "aborted")
+    assert "206" in ab and "HEAD" in ab
+    assert "cache-statistics" in (SQL_DIR / "cloudfront" / "cache_results.sql").read_text()

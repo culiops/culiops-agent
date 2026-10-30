@@ -1,4 +1,4 @@
--- Top 50 terminating rules (with type and action) by requests and share. Sampled datasets: multiply counts by the factor sqlq prints.
+-- Top 50 terminating rules (with type and action) by requests and share. If sampled: requests scale by the factor; share do not scale.
 SELECT terminating_rule_id, terminating_rule_type, action, count(*) AS requests,
        round(count(*) / sum(count(*)) OVER (), 4) AS share
 FROM logs

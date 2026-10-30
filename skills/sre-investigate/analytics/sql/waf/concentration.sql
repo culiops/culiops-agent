@@ -1,4 +1,4 @@
--- One row: top-1 client IP share of requests, distinct clients and distinct client keys behind the top IP. Sampled datasets: multiply counts by the factor sqlq prints.
+-- One row: top-1 client IP share of requests, distinct clients and distinct client keys behind the top IP. If sampled: requests and top1_requests scale by the factor; distinct_*, top1_client_keys are lower bounds; top1_share do not scale.
 WITH per AS (
   SELECT client_ip, count(*) AS n, count(DISTINCT client_key) AS keys FROM logs GROUP BY client_ip
 ), top1 AS (

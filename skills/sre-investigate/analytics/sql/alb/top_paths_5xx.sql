@@ -1,7 +1,7 @@
--- Top 50 request paths (no query string) with 5xx responses; lb_generated counts those the LB produced without a target. Sampled datasets: multiply counts by the factor sqlq prints.
+-- Top 50 request paths (no query string) with 5xx responses; no_target_response counts those where no target answered (LB answer, timeout, refused connection). If sampled: requests and no_target_response scale by the factor; distinct_clients are lower bounds.
 SELECT coalesce(nullif(regexp_extract(url, '^[A-Za-z][A-Za-z0-9+.-]*://[^/?#]*([^?#]*)', 1), ''), '/') AS path,
        elb_status_code, count(*) AS requests,
-       count(*) FILTER (WHERE target_status_code IS NULL) AS lb_generated,
+       count(*) FILTER (WHERE target_status_code IS NULL) AS no_target_response,
        count(DISTINCT client_ip) AS distinct_clients
 FROM logs
 WHERE elb_status_code BETWEEN 500 AND 599
