@@ -10,7 +10,7 @@
 6. The first matching row wins.
 7. Defaults: an unmatched JSON API call returns `_default.txt` (`{}`); an unmatched text command (`kubectl`, `helm`, `git`, `grep`, `command -v`, `echo`) returns `_empty.txt` (no output, exit status 0 unless a row says otherwise). `cat` or `ls` of a path that no row names prints `No such file or directory` with exit status 1.
 8. Plugin commands: `…/analytics/bin/<name>` stands for the plugin's `skills/sre-investigate/analytics/bin/<name>`, called by any path (relative or absolute). Each row gives the combined stdout and stderr of the command in the order the tool wrote them, and its exit status. A `~` in an output stands for the operator's home directory.
-9. State. The module rows are written for this order, the way the tool behaves: `logs-inventory` before `logs-fetch` (a fetch needs a manifest that covers the slice's day and the day after it; otherwise the refusal row applies); `logs-fetch … --yes --run <id>` before `sqlq … --run <id>`. Wherever an output shows the run id `shop-web-prod-20260412-0915`, show the id the command used instead. A real fetch appends its charge to the ledger, so a second real fetch in the same investigation shows the first one's MB added to its `24h` figure and, for the same run id, to its `run` figure (plain addition; the caps lines then change from `OK` to `OVER` if the sum passes the cap).
+9. State. The module rows are written for this order, the way the tool behaves: `logs-inventory` before `logs-fetch` (a fetch needs a manifest that covers the slice's day and the day after it; otherwise the refusal row applies); `logs-fetch … --yes --run <id>` before `sqlq … --run <id>`. Wherever an output shows `<run-id>`, show the id the command used instead. A real fetch appends its charge to the ledger, so a second real fetch in the same investigation shows the first one's MB added to its `24h` figure and, for the same run id, to its `run` figure (plain addition; the caps lines then change from `OK` to `OVER` if the sum passes the cap).
 10. The fixture's clock is 2026-04-12 09:15:30 UTC. WAF samples reach back three hours from it.
 
 ## Rows
@@ -24,7 +24,7 @@
 | `command -v duckdb` | `tool-02.txt` | |
 | `s5cmd version` | `ver-01.txt` | |
 | `duckdb --version` | `ver-02.txt` | |
-| `date` … | `date-01.txt` | Apply a `+FORMAT` and `-u` to this time (`date -u +%Y%m%d-%H%M` prints `20260412-0915`). |
+| `date` … | `date-01.txt` | Apply a `+FORMAT` and `-u` to this time. |
 | `…/analytics/bin/logs-status` | `mod-01.txt` | Exit status 0. |
 | `cat ~/.config/culiops/sre-investigate/logs.env` | `logs-env.txt` | |
 | `ls` … `~/.config/culiops/sre-investigate` | `ls-02.txt` | No `over-cap.allow` file. `ls`, `cat` or `test -e` of that file: no such file, exit status 1. |
@@ -111,30 +111,30 @@ All inventories exit with status 0 except a refusal.
 
 Needs an inventory that covers the day and the day after it, otherwise `dry-22.txt` (`refused: no manifest covers <day>; run logs-inventory …`, exit status 2; show the first uncovered day and the matching inventory command). Exit status 0 when the verdict line says `OK`; 2 when it says `OVER`.
 
-| Day | Slice (after the day, before any option) | File | Verdict |
-|---|---|---|---|
-| 2026-04-11 | none (whole day) | `dry-01.txt` | OVER (fetch, run, 24h) |
-| 2026-04-11 | none, `--every 12` | `dry-02.txt` | OVER (24h) |
-| 2026-04-11 | none, `--every 20` | `dry-03.txt` | OK |
-| 2026-04-11 | `12-16` | `dry-04.txt` | OVER (fetch, 24h) |
-| 2026-04-11 | `13` | `dry-05.txt` | OK |
-| 2026-04-11 | `14` | `dry-06.txt` | OK |
-| 2026-04-11 | `15` | `dry-07.txt` | OK |
-| 2026-04-11 | `13-14` | `dry-08.txt` | OK |
-| 2026-04-11 | `14-15` | `dry-09.txt` | OK |
-| 2026-04-11 | `13-15` | `dry-10.txt` | OVER (24h) |
-| 2026-04-11 | `13-15 --every 2` | `dry-11.txt` | OK |
-| 2026-04-11 | `13-15 --every 3` | `dry-12.txt` | OK |
-| 2026-04-11 | `13-15 --every 4` | `dry-13.txt` | OK |
-| 2026-04-11 | `13 --every 2` | `dry-14.txt` | OK |
-| 2026-04-11 | `13-14 --every 2` | `dry-15.txt` | OK |
-| 2026-04-11 | `13:35-14:05` | `dry-16.txt` | OK |
-| 2026-04-11 | `13:40-15:15` | `dry-17.txt` | OK |
-| 2026-04-10 | none | `dry-18.txt` | OK (needs an inventory that covers 2026-04-11; the two files it lists belong to 2026-04-11) |
+| Day | Slice (after the day, before any option) | File |
+|---|---|---|
+| 2026-04-11 | none (whole day) | `dry-01.txt` |
+| 2026-04-11 | none, `--every 12` | `dry-02.txt` |
+| 2026-04-11 | none, `--every 20` | `dry-03.txt` |
+| 2026-04-11 | `12-16` | `dry-04.txt` |
+| 2026-04-11 | `13` | `dry-05.txt` |
+| 2026-04-11 | `14` | `dry-06.txt` |
+| 2026-04-11 | `15` | `dry-07.txt` |
+| 2026-04-11 | `13-14` | `dry-08.txt` |
+| 2026-04-11 | `14-15` | `dry-09.txt` |
+| 2026-04-11 | `13-15` | `dry-10.txt` |
+| 2026-04-11 | `13-15 --every 2` | `dry-11.txt` |
+| 2026-04-11 | `13-15 --every 3` | `dry-12.txt` |
+| 2026-04-11 | `13-15 --every 4` | `dry-13.txt` |
+| 2026-04-11 | `13 --every 2` | `dry-14.txt` |
+| 2026-04-11 | `13-14 --every 2` | `dry-15.txt` |
+| 2026-04-11 | `13:35-14:05` | `dry-16.txt` |
+| 2026-04-11 | `13:40-15:15` | `dry-17.txt` |
+| 2026-04-10 | none | `dry-18.txt` |
 
 **P5 — `logs-fetch … --yes --run <id>` (real run)**
 
-The run id must be `<service>-<env>-<YYYYMMDD>-<HHMM>`, lowercase (the id `shop-web-prod-20260412-0915` has that form); anything else prints `refused: invalid run id '<id>' (expected <service>-<env>-<YYYYMMDD>-<HHMM>, lowercase)` (exit status 2). Each output below is for a ledger that already holds the two earlier charges (`ledger-00.txt`).
+A run id that is not of the form the tool expects prints `refused: invalid run id '<id>' (expected <service>-<env>-<YYYYMMDD>-<HHMM>, lowercase)` (exit status 2). Each output below is for a ledger that already holds the two earlier charges (`ledger-00.txt`).
 
 | Day | Slice | `--force` | File | Exit | Set |
 |---|---|---|---|---|---|
@@ -144,10 +144,10 @@ The run id must be `<service>-<env>-<YYYYMMDD>-<HHMM>`, lowercase (the id `shop-
 | 2026-04-11 | none, `--every 20` | no | `run-d.txt` | 0 | d |
 | 2026-04-11 | `13:40-15:15` | no | `run-e.txt` | 0 | e |
 | 2026-04-11 | `13-15 --every 3` | no | `run-f.txt` | 0 | f |
-| 2026-04-11 | `13-15` | no | `dry-19.txt` | 2 | nothing is downloaded or charged |
-| 2026-04-11 | `13-15` | yes | `dry-20.txt` | 2 | no marker file exists, so the override is refused; nothing is downloaded or charged |
-| 2026-04-11 | none | no | `dry-21.txt` | 2 | nothing is downloaded or charged |
-| 2026-04-11 | none | yes | `dry-20.txt` | 2 | same refusal |
+| 2026-04-11 | `13-15` | no | `dry-19.txt` | 2 | |
+| 2026-04-11 | `13-15` | yes | `dry-20.txt` | 2 | |
+| 2026-04-11 | none | no | `dry-21.txt` | 2 | |
+| 2026-04-11 | none | yes | `dry-20.txt` | 2 | |
 | the same slice, `--every` and run id as a fetch already done | | no | `run-b-again.txt` | 0 | `fetched 0 files … skipped <N> present`, N = the files of that fetch, `converted: rows 0` |
 | the same run id and dataset with a different `--every` | | no | `run-b-sample.txt` | 2 | show the earlier and the requested factor |
 | any other slice | | no | `_default.txt` | | not modelled (see above) |

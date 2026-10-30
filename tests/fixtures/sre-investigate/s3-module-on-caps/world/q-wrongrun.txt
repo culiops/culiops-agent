@@ -1,1 +1,1 @@
-refused: no data for shop-waf in run shop-web-prod-20260412-0930; run logs-fetch first
+refused: no data for shop-waf in run <run-id>; run logs-fetch first

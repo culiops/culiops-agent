@@ -1,5 +1,5 @@
 dataset shop-waf (waf)  slice 2026-04-11 13-15 (+1 widen)  every 1
 files 37  MB 120.4  est_cost $0.0130
-caps: fetch 120.4/200 MB  run shop-web-prod-20260412-0915 120.4/1024 MB  24h 2066.0/2048 MB  → OVER (24h)
+caps: fetch 120.4/200 MB  run <run-id> 120.4/1024 MB  24h 2066.0/2048 MB  → OVER (24h)
 ask the user; an override needs their marker file plus --force
 refused: over the cap (24h); nothing was downloaded
