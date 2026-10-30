@@ -32,7 +32,7 @@ Cheapest first. Each rung narrows the next one.
 
 **Budget.** Every bytes-scanned figure (estimated before, actual after) counts against `budgets.<mode>.log_gb_scanned`. One rule decides when to stop and ask, in both modes: an Insights query whose padded estimate (step 2 below) is still above `insights_ask_threshold_gb` after narrowing, or that has no estimate, a query that would pass the run's `budgets.<mode>` totals, or a window wider than its `budgets.windows` cap. `per_query_soft_limit_gb` is not a prompt: a query estimated above it is narrowed first (shorter window, one stream, fewer log groups) and then runs as narrowed unless one of those three conditions applies.
 
-**Variables.** Recipes use the ledger's fixed window: `START_S`/`END_S` (epoch seconds), `ONSET_S` (onset, epoch seconds), `ONSET_MINUS_10`/`ONSET_PLUS_10` (onset ∓10 min, RFC 3339 UTC), and `RUN` (the run's raw directory (set in SKILL.md, Terms)). `$GRAFANA_SERVICE_ACCOUNT_TOKEN` stands in for the `token_env` named in `environment.md`.
+**Variables.** Recipes use the ledger's fixed window: `START_S`/`END_S` (epoch seconds), `ONSET_S` (onset, epoch seconds), `ONSET_MINUS_10`/`ONSET_PLUS_10` (onset ∓10 min, RFC 3339 UTC), and `RUN`, the run's raw directory as set in SKILL.md, Terms. `$GRAFANA_SERVICE_ACCOUNT_TOKEN` stands in for the `token_env` named in `environment.md`.
 
 ## CloudWatch Logs Insights
 
