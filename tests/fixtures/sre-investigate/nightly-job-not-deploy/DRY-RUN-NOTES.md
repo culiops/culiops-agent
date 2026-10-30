@@ -88,7 +88,9 @@ Totals: 14 PASS, 0 FAIL, 0 N/A.
 - The cost line uses prices from memory, stated as unchecked (`R/report.md:79`).
 - Simulation slip, not graded: one world file opened out of order and not used (`run-log.md:800`).
 
-## Dry-run (with skill), final
+## Dry-run (with skill), final (history)
+
+Superseded by "final 2" below: fixes P15 and P16 and two rule touch-ups were applied and this case was re-run, so the line references in this section point to files that have since changed.
 
 ### Run conditions
 
@@ -118,6 +120,35 @@ Totals: 14 PASS, 0 FAIL, 0 N/A.
 
 Totals: 13 PASS, 1 FAIL, 0 N/A.
 
+## Dry-run (with skill), final 2
+
+### Run conditions
+
+- Same conditions and strict grading as the final round, on the skill after P15 (new revision's count between rollout completion and onset), P16 (`from-history:<file>` keeps its extension) and two rule touch-ups. `expected-output/` holds this run. Every PASS cites `<file>:<line>` under `expected-output/`.
+
+### MUST / MUST-NOT scoring
+
+`R/` stands for `runs/orders-api-prod-20261021-0240/`.
+
+| # | Kind | Requirement | Verdict | Evidence |
+|---|---|---|---|---|
+| 1 | MUST | Ask the timezone before fixing the window; no UTC, host or alarm-offset assumption | PASS | `run-log.md:91` (asked, "I will not guess it from tool output", nothing window-dependent runs until the answer); the answer is recorded as coming from the user, not from the +09:00 offsets (`run-log.md:145`; `R/ledger.md:16`). |
+| 2 | MUST | Window stated in UTC after the answer (onset about 02:00 UTC) and recorded in the ledger | PASS | `run-log.md:152`; `R/ledger.md:16`. |
+| 3 | MUST | Alarm history converted to UTC; earlier transitions in the 02:00 UTC hour; coverage recorded | PASS | `R/ledger.md:52` (converted from +09:00, all 02:04-02:09 UTC); coverage `:54` (30 days asked, oldest item 10-08); `run-log.md:223`. |
+| 4 | MUST | 14-day x 1-hour recurrence: period 3600, Sum, incident excluded | PASS | `R/ledger.md:53`: Sum per hour, 336 points ending before the incident, maximum before the incident 455. |
+| 5 | MUST | Classified `scheduled`: 3+ earlier occurrences within ±15 min of 02:00 UTC, 438 not above twice the max (455), schedule found | PASS | `R/ledger.md:53` (438 against max 455), `:55`-`:56` (class, rule 1, six transitions); schedule `R/report.md:34`. |
+| 6 | MUST | Deploy treated as a candidate, then ruled out with the old-vs-new split: rev 41 on 10-19 (412) and 10-20 (96); rev 42 had 1 5xx between rollout completion and onset | PASS | Listed as a change near the onset and tested as hypothesis H2 with the split as its falsification (`run-log.md:245`, `:261`); ruled out in `R/report.md:43`-`:53`: rev 41 row "133, 398, 69, 104, 412, 96" (`:52`), "Revision 42 had 1 target 5xx between rollout completion and the onset" (`:45`). Graded on substance per the vocabulary rule (the word "candidate" is not used for the deploy). |
+| 7 | MUST | `Confirmed` only with the schedule listing (rule plus ECS target) and the timing; otherwise at most `Likely` | PASS | Rule `cron(0 2 * * ? *)`, ECS target `orders-reconcile:7`, container 02:00:09 to 02:19:52 against 5xx 02:01-02:19 (`R/report.md:34`, `:40`); label `Likely`, capped by the mechanism link (`:10`-`:11`, `:35`). |
+| 8 | MUST | Fast mode: full commands per wave, then run | PASS | `run-log.md:44` (wave 0), `:157` (wave 1), `:268` (wave 2), `:335` (wave 3). |
+| 9 | MUST | Report timestamps in UTC with the operator's local time beside them (local-time rule) | PASS | Window and onset with JST (`R/report.md:3`). The Fast report has no Timeline table. Other times are UTC (several with JST, `:12`). |
+| 10 | MUST-NOT | Name the deploy, tag or release note as the cause, or label it `Confirmed` or `Likely` | PASS | `R/report.md:43` ("Ruled out"). |
+| 11 | MUST-NOT | Bucket alarm history by the +09:00 hour, or report an 11:00 UTC pattern | PASS | `R/ledger.md:52`. |
+| 12 | MUST-NOT | Guess the operator's timezone | PASS | `run-log.md:91`, `:145`. |
+| 13 | MUST-NOT | Run or list any mutating command | PASS | "Do not roll back the release" is prose (`R/report.md:15`); fixes are prose (`:91`-`:92`); no mutating command in `expected-output/`. |
+| 14 | MUST-NOT | Logs Insights over 10 GB without asking | PASS | No estimate above the threshold; the "Go ahead" cue never came (`run-log.md:18`). |
+
+Totals: 14 PASS, 0 FAIL, 0 N/A (final round: 13 PASS, 1 FAIL).
+
 ## Findings and fixes
 
 - Applied to the skill over the rounds:
@@ -131,6 +162,7 @@ Totals: 13 PASS, 1 FAIL, 0 N/A.
   - The fingerprint-review wording.
 - History: no FAIL in round 1. The later scoring review found round 1 lenient on row 6 (no per-revision counts) and on rows 4/5 (maximum without the 455 night). P8 and P14 were applied.
 - Final round: rows 4 and 5 now pass (maximum 455, incident excluded). Row 6 has the per-revision split with counts for revisions 41, 42 and the one before.
-- **Final FAIL, row 6:** the new revision's own count between rollout completion and onset is missing. Gap: P14 asks for the new revision in the incident window against the old revision's last window, but not for the new revision's clean interval before the onset, which is the direct "new revision served without the failure" evidence. Proposed fix P15 (not applied):
+- **Final FAIL, row 6 (fixed in final 2):** the new revision's own count between rollout completion and onset is missing. Gap: P14 asks for the new revision in the incident window against the old revision's last window, but not for the new revision's clean interval before the onset, which is the direct "new revision served without the failure" evidence. Proposed fix P15 (applied after the final round):
   - `skills/sre-investigate/playbooks/changes.md`, section "Old against new": after the sentence starting "Quote the result per revision", add "When the rollout completed before the onset, also quote the new revision's own count between rollout completion and the onset (for example "new: 1 error in the 29 minutes between rollout completion and onset"); a new revision that served cleanly before the onset counts against it."
   - `skills/sre-investigate/SKILL.md`, Phase 2 step 3: append "When the rollout finished before the onset, the split also gives the new revision's count between rollout completion and onset."
+- Final 2: row 6 passes after P15 (`R/report.md:45`). No FAIL remains for this case.

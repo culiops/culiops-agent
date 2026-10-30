@@ -1,357 +1,429 @@
 # Run log: sre-investigate, case-c, orders-api prod
 
-Run directory: `orders-api-prod-20261021-0240` (under the simulated output root `.culiops/sre-investigate/`, written here as `out/`). Mode: Fast (the operator said "Fast mode please"). Simulated "now": 2026-10-21 02:40 UTC (11:40 JST). `date -u` has no INDEX row (empty default), so wave Start times in the ledger are approximate (~02:40 wave 0, ~02:42 wave 1, ~02:44 wave 2, ~02:48 wave 3).
+Run directory: `orders-api-prod-20261021-0240` (under the output root `.culiops/sre-investigate/`, simulated at `out/`).
+Skill followed: `<skill dir>/SKILL.md` (Fast mode, chosen because the operator asked "Fast mode please" and the incident was reported as ongoing).
 
-## Operator lines
+Conventions used in this log:
+- "World file" = the file under `world/` that `world/INDEX.md` mapped a command to. Only mapped files were opened.
+- The simulated shell returned nothing for `date -u` (no INDEX row, text command, `_empty.txt`), so Start times are nominal; "now" = 02:40 UTC 2026-10-21, taken from the newest data timestamp the world covers ("to 02:40 UTC").
+- A command that has no INDEX row got `_empty.txt` (text commands) or `_default.txt` `{}` (JSON API calls), per INDEX rule 7.
+- "Query" budget unit = one tool call (chained commands of one kind count once); identity, write-check and the local `ls` are not counted.
 
-| # | Line | When it was received | Cue |
-|---|---|---|---|
-| 1 | `orders-api in prod has been throwing 5xx since around 11 this morning. We shipped a release just before that. Fast mode please.` | Opening request | n/a |
-| 2 | `Tokyo time, UTC+9.` | Right after message 1, while wave 0 was running | I asked which zone to read "around 11 this morning" in (environment.md has no `timezone`) |
-| 3 | `Go ahead.` | **Never given** | The cue never happened: no Logs Insights query was estimated above `insights_ask_threshold_gb` (10 GB) after narrowing. Largest estimate 0.030 GB (reported `bytesScanned` 0.48 GB, an upper bound). I did not run the 14-day `error_code` / revision counts (about 30 GB estimate) and offered them under "go deep" instead. |
+## Operator lines received
 
-## Phase 0: output root, environment, mode, intake
+| # | When | Line |
+|---|---|---|
+| 1 | At the start | `orders-api in prod has been throwing 5xx since around 11 this morning. We shipped a release just before that. Fast mode please.` |
+| 2 | After the skill asked for the time zone (end of Phase 0, after wave 0 and the profile build) | `Tokyo time, UTC+9.` |
+| 3 | Cue never happened: no Logs Insights query was estimated above the 10 GB scan threshold after narrowing, so the operator never said "Go ahead" and was never asked. |  |
 
-### Setup commands (before the first message; simulated, all read-only)
+## Phase 0 step 1-2: output root, environment, Culibox (setup commands, not a wave)
 
-| # | Command | World file | Key facts |
-|---|---|---|---|
-| S1 | `git rev-parse --show-toplevel` | `_empty.txt` (git, no row) | No output. The working directory is taken as the repo root (the INDEX paths are relative to it). |
-| S2 | `echo "${CULIOPS_HOME:-}"` | `_empty.txt` (echo, no row) | Empty, so the output root is `.culiops/sre-investigate/` at the repo root. |
-| S3 | `git check-ignore -q .culiops/sre-investigate; echo $?` | `_empty.txt` (git, no row) | Exit status 0 by the INDEX default: ignored by git. |
-| S4 | `command -v agentbox-env` | `_empty.txt` (INDEX row, exit 1) | Fails: nothing printed about Culibox. |
-| S5 | `ls .culiops/sre-investigate` | `ls-01.txt` | Only `environment.md`: no `profiles/`, `lessons.md`, `incidents/` or `runs/`. |
-| S6 | `cat .culiops/sre-investigate/environment.md` | `environment.md` | Account prod 111122223333 us-east-1, profile `prod-read`; no Kubernetes; backends CloudWatch metrics/alarms, Logs Insights `/ecs/*`, CloudTrail; no tracing or error tracker; app source `example-org/orders-api` via `gh`, no clone; Logs Insights ask above 10 GB; default SEV scale; core flows checkout `POST /orders` and order status `PATCH /orders/{id}`. **No `timezone`. No token backends. Only the ask threshold is set under budgets.** |
+| Command | World file | Key facts |
+|---|---|---|
+| `command -v agentbox-env` | `_empty.txt` (INDEX row; exit 1) | Fails: Culibox absent; per Constraint 8 nothing is said about Culibox. |
+| `echo "${CULIOPS_HOME:-}"` | `_empty.txt` (no row) | Empty: CULIOPS_HOME unset, so the root is `.culiops/sre-investigate/` at the repo root. |
+| `git rev-parse --show-toplevel` | `_empty.txt` (no row) | Empty output (the case directory stands for the repo); the working directory is treated as the repo root. |
+| `git check-ignore -q .culiops/sre-investigate` | `_empty.txt` (no row), exit 0 | Success means git ignores it; told the operator. |
+| `ls .culiops/sre-investigate` | `ls-01.txt` | Only `environment.md`: no `profiles/`, `lessons.md`, `incidents/` (so no stored profile and no lessons to load). |
+| `cat .culiops/sre-investigate/environment.md` | `environment.md` | One AWS profile `prod-read`, account 111122223333, us-east-1; CloudWatch metrics/alarms, Logs Insights, CloudTrail; no Kubernetes; no tracing or error tracker; app source via `gh` repo example-org/orders-api, no local clone; Logs Insights ask threshold 10 GB; default severity scale; core flows checkout `POST /orders`, `PATCH /orders/{id}`. No timezone, no SLO, no query/log budgets, no window caps. |
 
-Run directory and ledger created (`mkdir -p` of `runs/orders-api-prod-20261021-0240/`, ledger copied from the template).
+Run directory and ledger created at this point (Phase 0 step 4) once service (orders-api) and environment (prod) were known.
 
 ### Message 1 (shown to the operator, verbatim)
 
-```text
-Mode: Fast. You said "Fast mode" and the 5xx is ongoing.
-Output root: .culiops/sre-investigate/ (repo root). It is local and is never committed. `git check-ignore -q .culiops/sre-investigate` exited 0, so git ignores it.
-environment.md found. Account prod (111122223333, us-east-1, profile prod-read). Backends: CloudWatch metrics and alarms, Logs Insights on /ecs/*, CloudTrail. No Kubernetes, tracing or error tracker. Code: example-org/orders-api through gh, no local clone.
-Question: environment.md has no `timezone`. Which zone should I read "around 11 this morning" in?
-While you answer I am running wave 0 (identity, write-check, log-group probe, alarm discovery). None of it depends on the incident window.
-```
+~~~text
+sre-investigate, Fast mode. You asked for Fast, and the 5xx are reported as still happening, so Fast it is.
 
-### Wave 0 (printed in full, then run)
+Output root: .culiops/sre-investigate/ at the repo root (CULIOPS_HOME is not set). Everything I write goes under it; it is local and is never committed. `git check-ignore -q .culiops/sre-investigate` succeeded, so git already ignores it.
 
-Printed:
+From .culiops/sre-investigate/environment.md: one AWS profile, prod-read (account 111122223333, us-east-1); CloudWatch metrics and alarms, Logs Insights and CloudTrail; no Kubernetes; no tracing or error-tracking backend; app source read through gh (example-org/orders-api). Logs Insights asks before any scan above 10 GB. The file has no timezone and no budgets beyond that 10 GB threshold, so I will ask you for your zone, and I use the template's neutral Fast budgets (20 queries, 2 GB of logs scanned, 100 CloudWatch metric requests) and window caps.
 
-```text
-W0-C1  date -u +%H:%M:%S; TZ=UTC aws sts get-caller-identity --profile prod-read --region us-east-1 --output json
-W0-C2  arn=$(aws sts get-caller-identity --profile prod-read --query Arn --output text)
-       role=${arn#*:assumed-role/}; role=${role%%/*}
-       role_arn=$(aws iam get-role --profile prod-read --role-name "$role" --query Role.Arn --output text)
-       aws iam simulate-principal-policy --profile prod-read --policy-source-arn "$role_arn" \
-         --action-names s3:PutObject s3:DeleteObject ec2:TerminateInstances ec2:AuthorizeSecurityGroupIngress ecs:UpdateService iam:PutRolePolicy iam:CreateAccessKey rds:ModifyDBInstance lambda:UpdateFunctionCode cloudformation:DeleteStack \
-         --query 'EvaluationResults[].[EvalActionName,EvalDecision]' --output text
-W0-C3  aws logs describe-log-groups --profile prod-read --region us-east-1 --log-group-name-prefix "/ecs/orders-api" --output json
-W0-C4  aws cloudwatch describe-alarms --profile prod-read --region us-east-1 --output json
-Tokens: environment.md lists no token_env, so there is nothing to check.
-Stored profile, lessons.md, incidents/: the output root holds only environment.md (ls), so none exist.
-```
+Service orders-api, environment prod. Run directory: .culiops/sre-investigate/runs/orders-api-prod-20261021-0240/ (ledger.md is already there).
 
-| Query ID | Command | World file | Key facts |
+Wave 0 (access), printed in full, run now. environment.md lists no Kubernetes context and no token-based backend, so there is no kubectl check and no token check.
+
+date -u +%H:%M:%S
+aws sts get-caller-identity --profile prod-read --region us-east-1
+arn=$(aws sts get-caller-identity --profile prod-read --region us-east-1 --query Arn --output text)
+role=${arn#*:assumed-role/}; role=${role%%/*}
+role_arn=$(aws iam get-role --profile prod-read --region us-east-1 --role-name "$role" --query Role.Arn --output text)
+aws iam simulate-principal-policy --profile prod-read --region us-east-1 \
+  --policy-source-arn "$role_arn" \
+  --action-names s3:PutObject s3:DeleteObject ec2:TerminateInstances \
+    ec2:AuthorizeSecurityGroupIngress ecs:UpdateService iam:PutRolePolicy \
+    iam:CreateAccessKey rds:ModifyDBInstance lambda:UpdateFunctionCode \
+    cloudformation:DeleteStack \
+  --query 'EvaluationResults[].[EvalActionName,EvalDecision]' --output text
+aws logs describe-log-groups --profile prod-read --region us-east-1 \
+  --log-group-name-prefix "/ecs/" --output json \
+  | jq -r --argjson win 900 --argjson now 1792550400 '.logGroups[] | (.retentionInDays // null) as $r | (($now - .creationTime / 1000) | floor) as $age | (if $r then ([$r * 86400, $age] | min) else $age end) as $span | [.logGroupName, (.logGroupClass // "-"), ($r // "none"), ((.storedBytes / 1e9 * 100 | round) / 100), ((.storedBytes * $win / $span / 1e9 * 1000 | round) / 1000)] | @tsv'
+aws cloudwatch describe-alarms --profile prod-read --region us-east-1 --output json
+~~~
+
+### Wave 0 commands, world files and key facts
+
+| ID | Command | World file | Key facts |
 |---|---|---|---|
-| (date) | `date -u +%H:%M:%S` | `_empty.txt` (no row) | No output; clock assumed 02:40 UTC. |
-| W0-Q1 | `aws sts get-caller-identity` | `sts-01.json` | Account 111122223333 (matches), assumed role `AWSReservedSSO_ReadOnly_0a1b2c3d4e5f6a7b`. Session name not recorded. |
-| W0-Q2 | `aws iam get-role` + `aws iam simulate-principal-policy` | `iam-01.json`, `iam-02.json` | Path `/aws-reserved/sso.amazonaws.com/`. Simulation: 7 of the 10 requested actions `implicitDeny`; **no row** for `ec2:AuthorizeSecurityGroupIngress`, `iam:CreateAccessKey`, `cloudformation:DeleteStack`; 3 unrequested rows (`ec2:ModifyInstanceAttribute`, `ecs:StopTask`, `iam:AttachRolePolicy`, all `implicitDeny`) ignored. No allowed action, so no boxed warning; not "read-only confirmed" because of the 3 missing rows. |
-| W0-Q3 | `aws logs describe-log-groups --log-group-name-prefix "/ecs/orders-api"` | `logs-01.json` | `/ecs/orders-api` 64,424,509,440 bytes, 30 d retention, STANDARD; `/ecs/orders-reconcile` 1,073,741,824 bytes. Estimates: 15 min 0.022 GB, 70 min 0.104 GB, 14 d 30 GB. |
-| W0-Q4 | `aws cloudwatch describe-alarms` | `cw-01.json` | One alarm `orders-api-5xx-high`: target 5xx Sum, period 60, threshold 25, 2 of 3, OK since 02:12 UTC (the CLI printed 11:12+09:00). LB `app/prod-public/50dc6c495c0c9188`, TG `targetgroup/orders-api/943f017f100becff`. |
+| W0-Q1 | `aws sts get-caller-identity --profile prod-read` (twice: full, then `--query Arn`) and `aws iam get-role --role-name AWSReservedSSO_ReadOnly_0a1b2c3d4e5f6a7b` | `sts-01.json`, `iam-01.json` | Account 111122223333 equals environment.md; assumed-role of IAM Identity Center permission set `AWSReservedSSO_ReadOnly_0a1b2c3d4e5f6a7b`, path `/aws-reserved/sso.amazonaws.com/` (session name not recorded). |
+| W0-Q2 | `aws iam simulate-principal-policy ...` (10 fixed actions) | `iam-02.json` | 7 of the 10 asked actions came back, all implicitDeny. `ec2:AuthorizeSecurityGroupIngress`, `iam:CreateAccessKey`, `cloudformation:DeleteStack` had no row. Three unasked rows (`ec2:ModifyInstanceAttribute`, `ecs:StopTask`, `iam:AttachRolePolicy`, implicitDeny) were ignored. Outcome treated as "write capability unknown (gap)" for the 3 missing actions; not "read-only confirmed". |
+| W0-Q3 | `aws logs describe-log-groups --log-group-name-prefix /ecs/` + jq estimate (900 s) | `logs-01.json` | `/ecs/orders-api` (30 d retention, 64,424,509,440 B stored, created 2024-11-04) and `/ecs/orders-reconcile` (1,073,741,824 B). Estimate for the last 15 min on `/ecs/orders-api` = 0.022 GB. No Insights query. (`$now` fixed at 1792550400 = 02:40:00 UTC because `date +%s` returns nothing here.) |
+| W0-Q4 | `aws cloudwatch describe-alarms` (no filter) | `cw-01.json` | One alarm `orders-api-5xx-high` on `HTTPCode_Target_5XX_Count` Sum period 60, > 25, 2 of 3; LB `app/prod-public/50dc6c495c0c9188`, TG `targetgroup/orders-api/943f017f100becff`; state OK since 2026-10-21T11:12:00+09:00 = 02:12:00 UTC (offset is the tool's, not used for the user's zone). |
 
-### Message 2 (verbatim, after wave 0)
+Stored profile: none (`ls` showed none). Lessons: none (no `lessons.md`). Trigger is not a CloudWatch alarm named by the user, so no wave-0 alarm-history pull; the alarm's history was pulled in wave 1 once the window was set. Error-tracker, ticket, WAF steps: not applicable (no error tracker, no ticket named, symptom is 5xx from the targets, not 403/429).
 
-```text
+### Message 2 (shown after wave 0, verbatim)
+
+~~~text
 Wave 0 results.
-Identity: profile prod-read, account 111122223333 (matches environment.md), role AWSReservedSSO_ReadOnly_0a1b2c3d4e5f6a7b.
-Write check, prod-read: none of the 7 actions that returned a row is allowed (all implicitDeny). The simulation returned no row for ec2:AuthorizeSecurityGroupIngress, iam:CreateAccessKey and cloudformation:DeleteStack. I can't say "read-only confirmed". Write capability for those three is unknown (gap). This is not a finding that the credentials can write. I'm not inferring read-only from the role name.
-Tokens: environment.md lists no token-based backend, so there is nothing to check.
-Log source: /ecs/orders-api, 30-day retention, about 64.4 GB stored. A 15-minute scan estimates at about 0.02 GB.
-Alarm: orders-api-5xx-high (target 5xx above 25/min) is in state OK, last changed 02:12 UTC. That doesn't match "still throwing 5xx". I'll check it against the metrics.
-Gaps so far: no timezone in environment.md (asked above), the three missing write-check rows, no IaC repo or local clone configured, no tracing or error tracker.
-```
 
-**Operator line 2 received here:** `Tokyo time, UTC+9.` Recorded in the ledger as Asia/Tokyo (UTC+9, no DST), source: the user in chat (not environment.md, not the +09:00 the CLI printed).
+Identity: prod-read is account 111122223333, which matches environment.md; role AWSReservedSSO_ReadOnly_0a1b2c3d4e5f6a7b.
 
-Window (rule 2: rough time of day, local): anchor 11:00 JST = 02:00 UTC; window 01:30–02:40 UTC; previous 00:20–01:30; −7d 2026-10-14 01:30–02:40. Stated to the operator in message 3's tail (below).
+Write check, prod-read: no broad write found, but the check is incomplete. The simulation answered 7 of the 10 fixed actions and all 7 are implicitDeny. For ec2:AuthorizeSecurityGroupIngress, iam:CreateAccessKey and cloudformation:DeleteStack the reply had no row at all. It also contained three rows for actions I did not ask about (ec2:ModifyInstanceAttribute, ecs:StopTask, iam:AttachRolePolicy; also implicitDeny); I do not count those.
+Write capability unknown (gap), prod-read: 3 of the 10 write actions could not be checked. This is not a finding that the credentials can write, and I am not calling them read-only. The run stays read-only either way.
 
-## Build profile (no stored profile)
+Log probe: /ecs/orders-api exists (retention 30 days, 64.4 GB stored). The estimated scan for a 15-minute window is about 0.02 GB; no Insights query was run. /ecs/orders-reconcile is a separate log group (another workload).
 
-Helper `TASK: PROFILE`, cheapest tier, simulated inline following `agents/helper.md`. Prompt shown to the operator:
+Alarms: one, orders-api-5xx-high (target 5xx, Sum per minute above 25, 2 of 3 datapoints). It is OK now, since 02:12 UTC. No sibling alarms.
 
-```text
-TASK: PROFILE
-Service: orders-api
-Environment: prod
-Profile template: <skill dir>/templates/profile.md
-Identifier lessons (hints only, up to ten): none
-(discovery checklist as in agents/helper.md; reuses W0-Q3 log groups and W0-Q4 alarm dimensions)
-```
+Gaps so far: the write-check above; no timezone in environment.md; no tracing, error tracker or SLO connected.
 
-Helper wave, printed in full:
+Question for you: which time zone is "around 11 this morning" in? I will not guess it from tool output. I run nothing that depends on the time window until you answer. Meanwhile I am building the service profile, which needs no window. The discovery calls (read-only), printed in full and run now:
 
-```text
-H-1  aws ecs list-clusters --profile prod-read --region us-east-1 --output json
-H-2  aws ecs list-services --profile prod-read --region us-east-1 --cluster <cluster from H-1> --output json
-H-3  aws ecs list-task-definition-families --profile prod-read --region us-east-1 --status ACTIVE --output json
-H-4  aws cloudwatch list-metrics --profile prod-read --region us-east-1 --namespace AWS/ApplicationELB --metric-name RequestCount --output json
-H-5  aws elbv2 describe-target-groups --profile prod-read --region us-east-1 --query "TargetGroups[?contains(TargetGroupName,'orders')].[TargetGroupName,TargetGroupArn]" --output json
-H-6  aws rds describe-db-clusters --profile prod-read --region us-east-1 --db-cluster-identifier orders-db --query 'DBClusters[0].DBClusterIdentifier' --output json
-```
+date -u +%H:%M:%S
+ls .culiops/service-discovery
+aws ecs list-clusters --profile prod-read --region us-east-1 --output json
+aws ecs list-task-definition-families --profile prod-read --region us-east-1 --status ACTIVE --output json
+aws cloudwatch list-metrics --profile prod-read --region us-east-1 --namespace AWS/ApplicationELB --dimensions Name=TargetGroup,Value=targetgroup/orders-api/943f017f100becff --output json
+aws rds describe-db-clusters --profile prod-read --region us-east-1 --output json
+and, once the cluster name is back:
+aws ecs list-services --profile prod-read --region us-east-1 --cluster prod --output json
+~~~
 
-| Query ID | Command | World file | Key facts |
+## Build profile (helper `TASK: PROFILE`, simulated inline, cheapest tier; follows agents/helper.md; no identifier lessons, none exist)
+
+Helper wave 1 and 2 commands as run (printed to the operator at the end of Message 2):
+
+~~~text
+date -u +%H:%M:%S
+ls .culiops/service-discovery
+aws ecs list-clusters --profile prod-read --region us-east-1 --output json
+aws ecs list-task-definition-families --profile prod-read --region us-east-1 --status ACTIVE --output json
+aws cloudwatch list-metrics --profile prod-read --region us-east-1 --namespace AWS/ApplicationELB --dimensions Name=TargetGroup,Value=targetgroup/orders-api/943f017f100becff --output json
+aws rds describe-db-clusters --profile prod-read --region us-east-1 --output json
+(helper wave 2, after the cluster name came back)
+aws ecs list-services --profile prod-read --region us-east-1 --cluster prod --output json
+~~~
+
+| ID | Command | World file | Key facts |
 |---|---|---|---|
-| W0-Q5 (H-1) | `aws ecs list-clusters` | `ecs-11.json` | cluster `prod` |
-| W0-Q6 (H-2) | `aws ecs list-services --cluster prod` | `ecs-09.json` | service `orders-api` |
-| W0-Q7 (H-3) | `aws ecs list-task-definition-families` | `ecs-10.json` | `orders-api`, `orders-migrate`, `orders-reconcile` |
-| W0-Q8 (H-4) | `aws cloudwatch list-metrics --namespace AWS/ApplicationELB` | `cw-05.json` | 6 metrics on the TG/LB; no `HTTPCode_ELB_5XX_Count` |
-| W0-Q9 (H-5) | `aws elbv2 describe-target-groups …` | `_default.txt` | `{}` |
-| W0-Q10 (H-6) | `aws rds describe-db-clusters …` | `_default.txt` | `{}`; Aurora `orders-db` stays (unverified) |
+| W0-Q5 | `ls .culiops/service-discovery` | none: no INDEX row names it, so "No such file or directory", exit 1 | No service-discovery catalog; the profile's dependency table and IaC are the map; suggest `service-discovery` after the incident. |
+| W0-Q6 | `aws ecs list-clusters` ; `aws ecs list-task-definition-families --status ACTIVE` | `ecs-11.json`, `ecs-10.json` | Cluster `prod`; families `orders-api`, `orders-migrate`, `orders-reconcile`. |
+| W0-Q7 | `aws cloudwatch list-metrics --namespace AWS/ApplicationELB --dimensions TargetGroup=...` | `cw-05.json` | Six metrics for LB `app/prod-public/50dc6c495c0c9188` + TG `targetgroup/orders-api/943f017f100becff`: `HTTPCode_Target_5XX_Count`, `HTTPCode_Target_4XX_Count`, `RequestCount`, `TargetResponseTime`, `HealthyHostCount`, `UnHealthyHostCount`. |
+| W0-Q8 | `aws rds describe-db-clusters` (no filter) | `_default.txt` (`{}`) | Empty reply; Aurora `orders-db` stays `(unverified)`; a gap for database hypotheses. |
+| W0-Q9 | `aws ecs list-services --cluster prod` | `ecs-09.json` | Service `orders-api` (only one). |
 
-Helper not asked for: IaC (none configured), dashboards (none), tracing/Prometheus (none).
+Items of the helper checklist with no backend in environment.md (trace names, Prometheus, dashboards, IaC dirs) were recorded as "none" in the profile. Profile written to `runs/orders-api-prod-20261021-0240/profile.md`, marks per Constraint 14 (log group, cluster/service, TG/LB marked verified because a backend listing returned them; Aurora, IaC, code default branch `(unverified)`).
 
-### Message 3 (verbatim, profile shown and windows stated)
+### Message 3 (shown after the profile build, verbatim)
 
-```text
-Profile built for orders-api prod (shown; correct me as I go). Written to the run directory as profile.md.
-- Compute: ECS cluster prod, service orders-api, task definition families orders-api, orders-migrate and orders-reconcile.
-- Load balancer: ALB app/prod-public/50dc6c495c0c9188, target group targetgroup/orders-api/943f017f100becff. Metrics were listed, so these are verified.
-- Logs: /ecs/orders-api in CloudWatch. It is listed but no line has been read yet.
-- Alarm: orders-api-5xx-high.
-- Not found: the target group and Aurora orders-db lookups returned nothing, so those identifiers stay (unverified). No IaC repo and no error tracker are configured.
-- Siblings: none, a single service in one region.
-Run directory: runs/orders-api-prod-20261021-0240/.
-```
+~~~text
+Profile draft (continuing without waiting; tell me if any name is wrong). Written to the run's profile.md.
+- Compute: ECS cluster prod, service orders-api, task definition families orders-api, orders-migrate, orders-reconcile (verified: returned by list calls).
+- Logs: CloudWatch Logs group /ecs/orders-api (verified as listed; no log lines read yet). /ecs/orders-reconcile is another workload and is not treated as this service's logs.
+- Load balancing: LB app/prod-public/50dc6c495c0c9188, target group targetgroup/orders-api/943f017f100becff, six ALB metrics listed (verified).
+- Alarm: orders-api-5xx-high (verified).
+- Data store: Aurora orders-db comes only from environment.md; describe-db-clusters returned an empty reply, so it stays (unverified) and I cannot read database metrics.
+- Code: example-org/orders-api via gh; default branch and the image-tag-to-ref rule are not known yet (unverified). No IaC repo, no service-discovery catalog, no tracing, no error tracker, no Prometheus.
+- Siblings: none (one target group, 6 ECS tasks as replicas).
 
-and, in the same turn: `Windows (UTC), from your Tokyo time: anchor 11:00 JST = 02:00 UTC. Incident 01:30-02:40, previous 00:20-01:30, −7d 2026-10-14 01:30-02:40.`
+I am waiting for your time zone before running anything that needs the incident window.
+~~~
 
-Files written so far: `runs/orders-api-prod-20261021-0240/profile.md`, `runs/orders-api-prod-20261021-0240/ledger.md` (wave 0 rows written before use).
+## Operator line 2 received (after Message 3): "Tokyo time, UTC+9."
 
-## Phase 1: wave 1 (scope, impact, recurrence)
+Recorded in the ledger under "Assumptions made at intake" (zone from the user, not from environment.md and not from the +09:00 offsets the tools printed). Window rule 2 applied: rough time of day = local, window = 30 min before 11:00 JST to now.
 
-Printed in full (shown to the operator, verbatim):
+## Phase 0 step 6 and wave 1
 
-```text
-W1-Q1  date -u +%H:%M:%S; TZ=UTC aws ecs describe-services --profile prod-read --region us-east-1 --cluster prod --services orders-api --query 'services[0].{rollouts: deployments[].{state: status, progress: rolloutState, def: taskDefinition, since: createdAt, last: updatedAt, want: desiredCount, run: runningCount, deployment: id}, recentEvents: events[:30].{at: createdAt, msg: message}}' --output json > "$RUN/c-ecs-deployments.json"
-W1-Q2  for st in RUNNING STOPPED; do arns=$(TZ=UTC aws ecs list-tasks --profile prod-read --region us-east-1 --cluster prod --service-name orders-api --desired-status "$st" --max-items 100 --query 'taskArns' --output text); [ -n "$arns" ] && [ "$arns" != "None" ] && TZ=UTC aws ecs describe-tasks --profile prod-read --region us-east-1 --cluster prod --tasks $arns --query 'tasks[].[taskArn, taskDefinitionArn, startedAt, stoppedAt]' --output text; done > "$RUN/c-task-revisions.tsv"
-W1-Q3  TZ=UTC aws application-autoscaling describe-scheduled-actions --profile prod-read --region us-east-1 --service-namespace ecs --resource-id service/prod/orders-api --query 'ScheduledActions[].[ScheduledActionName, Schedule, Timezone, ScalableTargetAction.MinCapacity, ScalableTargetAction.MaxCapacity]' --output text
-W1-Q4  TZ=UTC aws application-autoscaling describe-scaling-activities --profile prod-read --region us-east-1 --service-namespace ecs --resource-id service/prod/orders-api --max-results 50 --query 'ScalingActivities[].[StartTime, StatusCode, Description, Cause]' --output text
-W1-Q5  (incident, golden + availability, period 60)  TZ=UTC aws cloudwatch get-metric-data --profile prod-read --region us-east-1 --metric-data-queries file://$RUN/q-golden-60.json --start-time 2026-10-21T01:30:00Z --end-time 2026-10-21T02:40:00Z --output json > "$RUN/m-golden-incident.json"
-W1-Q6  (previous)  same, --start-time 2026-10-21T00:20:00Z --end-time 2026-10-21T01:30:00Z > "$RUN/m-golden-previous.json"
-W1-Q7  (-7d)       same, --start-time 2026-10-14T01:30:00Z --end-time 2026-10-14T02:40:00Z > "$RUN/m-golden-minus7d.json"
-        q-golden-60.json: req = RequestCount Sum; t5xx = HTTPCode_Target_5XX_Count Sum; t5xx_pct = 100 * t5xx / req; elb5xx = HTTPCode_ELB_5XX_Count Sum; unhealthy = UnHealthyHostCount Minimum; p95 = TargetResponseTime p95; all Period 60, Namespace AWS/ApplicationELB, Dimensions LoadBalancer app/prod-public/50dc6c495c0c9188 and TargetGroup targetgroup/orders-api/943f017f100becff (the elb5xx dimension is LoadBalancer only)
-W1-Q8  (recurrence, 14d x 1h)  TZ=UTC aws cloudwatch get-metric-data --profile prod-read --region us-east-1 --metric-data-queries file://$RUN/q-recur-3600.json --start-time 2026-10-07T01:30:00Z --end-time 2026-10-21T01:30:00Z --output json > "$RUN/m-recur-14d-cw.json"
-        q-recur-3600.json: main_err_raw = HTTPCode_Target_5XX_Count Sum Period 3600 (ReturnData false); main_err = FILL(main_err_raw, 0); main_req = RequestCount Sum Period 3600; main_p99 = TargetResponseTime p99 Period 3600; same dimensions
-W1-Q9  TZ=UTC aws cloudwatch describe-alarm-history --profile prod-read --region us-east-1 --alarm-name "orders-api-5xx-high" --history-item-type StateUpdate --start-date 2026-09-21T02:40:00Z --end-date 2026-10-21T02:40:00Z --output json
-Metric requests this wave: 5 metrics x 3 windows (15) + 3 for the recurrence pull = 18, against a budget of 100.
-```
+### Message 4 (shown to the operator, verbatim)
 
-| Query ID | Command | World file | Key facts |
+~~~text
+Thanks. Tokyo time, UTC+9 (no daylight saving), recorded as an intake assumption. "Around 11 this morning" is 11:00 JST = 02:00 UTC, so the window runs from 30 minutes before that to now. All queries use UTC; local time is shown beside it.
+- Incident: 2026-10-21 01:30 to 02:40 UTC (10:30 to 11:40 JST)
+- Previous (same length, just before): 2026-10-21 00:20 to 01:30 UTC (09:20 to 10:30 JST)
+- A week earlier (-7d): 2026-10-14 01:30 to 02:40 UTC (10:30 to 11:40 JST)
+
+Wave 1 (change events, golden signals, recurrence, schedules), printed in full and run now. It has six calls because the fixed legs need them. RUN is the run's raw/ directory.
+
+date -u +%H:%M:%S
+
+# W1-Q1: ECS deployments and service events
+TZ=UTC aws ecs describe-services --profile prod-read --region us-east-1 --cluster prod --services orders-api --query 'services[0].{rollouts: deployments[].{state: status, progress: rolloutState, def: taskDefinition, since: createdAt, last: updatedAt, want: desiredCount, run: runningCount, deployment: id}, recentEvents: events[:30].{at: createdAt, msg: message}}' --output json > "$RUN/c-ecs-deployments.json"
+
+# W1-Q2: running and stopped tasks, mapped to task definition revisions
+for st in RUNNING STOPPED; do
+  arns=$(TZ=UTC aws ecs list-tasks --profile prod-read --region us-east-1 --cluster prod --service-name orders-api --desired-status "$st" --max-items 100 --query 'taskArns' --output text)
+  [ -n "$arns" ] && [ "$arns" != "None" ] && \
+  TZ=UTC aws ecs describe-tasks --profile prod-read --region us-east-1 --cluster prod --tasks $arns --query 'tasks[].[taskArn, taskDefinitionArn, startedAt, stoppedAt]' --output text
+done > "$RUN/c-task-revisions.tsv"
+
+# W1-Q3: golden signals, three windows, one query file (period 60)
+cat > "$RUN/q-golden-60.json" <<'EOF'
+[ {"Id": "req", "MetricStat": {"Period": 60, "Stat": "Sum", "Metric": {"Namespace": "AWS/ApplicationELB", "MetricName": "RequestCount", "Dimensions": [{"Name": "LoadBalancer", "Value": "app/prod-public/50dc6c495c0c9188"}, {"Name": "TargetGroup", "Value": "targetgroup/orders-api/943f017f100becff"}]}}},
+  {"Id": "t5xx", "MetricStat": {"Period": 60, "Stat": "Sum", "Metric": {"Namespace": "AWS/ApplicationELB", "MetricName": "HTTPCode_Target_5XX_Count", "Dimensions": [{"Name": "LoadBalancer", "Value": "app/prod-public/50dc6c495c0c9188"}, {"Name": "TargetGroup", "Value": "targetgroup/orders-api/943f017f100becff"}]}}},
+  {"Id": "elb5xx", "MetricStat": {"Period": 60, "Stat": "Sum", "Metric": {"Namespace": "AWS/ApplicationELB", "MetricName": "HTTPCode_ELB_5XX_Count", "Dimensions": [{"Name": "LoadBalancer", "Value": "app/prod-public/50dc6c495c0c9188"}]}}},
+  {"Id": "unhealthy", "MetricStat": {"Period": 60, "Stat": "Minimum", "Metric": {"Namespace": "AWS/ApplicationELB", "MetricName": "UnHealthyHostCount", "Dimensions": [{"Name": "LoadBalancer", "Value": "app/prod-public/50dc6c495c0c9188"}, {"Name": "TargetGroup", "Value": "targetgroup/orders-api/943f017f100becff"}]}}},
+  {"Id": "healthy", "MetricStat": {"Period": 60, "Stat": "Minimum", "Metric": {"Namespace": "AWS/ApplicationELB", "MetricName": "HealthyHostCount", "Dimensions": [{"Name": "LoadBalancer", "Value": "app/prod-public/50dc6c495c0c9188"}, {"Name": "TargetGroup", "Value": "targetgroup/orders-api/943f017f100becff"}]}}},
+  {"Id": "p95", "MetricStat": {"Period": 60, "Stat": "p95", "Metric": {"Namespace": "AWS/ApplicationELB", "MetricName": "TargetResponseTime", "Dimensions": [{"Name": "LoadBalancer", "Value": "app/prod-public/50dc6c495c0c9188"}, {"Name": "TargetGroup", "Value": "targetgroup/orders-api/943f017f100becff"}]}}} ]
+EOF
+for w in "incident 2026-10-21T01:30:00Z 2026-10-21T02:40:00Z" "previous 2026-10-21T00:20:00Z 2026-10-21T01:30:00Z" "minus7d 2026-10-14T01:30:00Z 2026-10-14T02:40:00Z"; do
+  read -r win ws we <<< "$w"
+  aws cloudwatch get-metric-data --profile prod-read --region us-east-1 --metric-data-queries "file://$RUN/q-golden-60.json" --start-time "$ws" --end-time "$we" --output json > "$RUN/m-golden-$win.json"
+done
+
+# W1-Q4: recurrence pull, 14 days at 1 hour, ending at the hour before the incident so the hourly buckets are whole hours; zero-filled
+cat > "$RUN/q-recur-3600.json" <<'EOF'
+[ {"Id": "main_err_raw", "ReturnData": false, "MetricStat": {"Period": 3600, "Stat": "Sum", "Metric": {"Namespace": "AWS/ApplicationELB", "MetricName": "HTTPCode_Target_5XX_Count", "Dimensions": [{"Name": "LoadBalancer", "Value": "app/prod-public/50dc6c495c0c9188"}, {"Name": "TargetGroup", "Value": "targetgroup/orders-api/943f017f100becff"}]}}},
+  {"Id": "main_err", "Expression": "FILL(main_err_raw, 0)", "Period": 3600, "Label": "5xx per hour, zero-filled"} ]
+EOF
+aws cloudwatch get-metric-data --profile prod-read --region us-east-1 --metric-data-queries "file://$RUN/q-recur-3600.json" --start-time 2026-10-07T01:00:00Z --end-time 2026-10-21T01:00:00Z --output json > "$RUN/m-recur-14d-cw.json"
+
+# W1-Q5: alarm state history, both directions, 30 days, converted to UTC
+TZ=UTC aws cloudwatch describe-alarm-history --profile prod-read --region us-east-1 --alarm-name "orders-api-5xx-high" --history-item-type StateUpdate --start-date 2026-09-21T01:30:00Z --end-date 2026-10-21T02:40:00Z --output json \
+| jq -r '
+  def epoch:
+    capture("^(?<d>[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9:]{8})(\\.[0-9]+)?(?<z>Z|[+-][0-9]{2}:?[0-9]{2})$") as $t
+    | ($t.d + "Z" | fromdateiso8601)
+      - (if $t.z == "Z" then 0 else
+           ($t.z | capture("(?<s>[+-])(?<h>[0-9]{2}):?(?<m>[0-9]{2})")
+            | ((.h | tonumber) * 3600 + (.m | tonumber) * 60) * (if .s == "+" then 1 else -1 end))
+         end);
+  .AlarmHistoryItems[]
+  | (.Timestamp | epoch) as $u
+  | [($u | todate), ($u - $u % 3600 | strftime("%H:00")), .AlarmName,
+     ((.HistoryData | fromjson? | "\(.oldState.stateValue)>\(.newState.stateValue)") // .HistorySummary)]
+  | @tsv' > "$RUN/alarm-history-utc.tsv"
+
+# W1-Q6: schedules and scaling (one chained call)
+aws events list-rules --profile prod-read --region us-east-1 --query 'Rules[?ScheduleExpression].[Name, State, ScheduleExpression]' --output text
+aws scheduler list-schedules --profile prod-read --region us-east-1 --query 'Schedules[].[GroupName, Name, State]' --output text
+aws application-autoscaling describe-scheduled-actions --profile prod-read --region us-east-1 --service-namespace ecs --resource-id service/prod/orders-api --query 'ScheduledActions[].[ScheduledActionName, Schedule, Timezone, ScalableTargetAction.MinCapacity, ScalableTargetAction.MaxCapacity]' --output text
+aws application-autoscaling describe-scaling-activities --profile prod-read --region us-east-1 --service-namespace ecs --resource-id service/prod/orders-api --query 'ScalingActivities[].[StartTime, StatusCode, Description, Cause]' --output text
+~~~
+
+### Wave 1 commands, world files and key facts
+
+| ID | Command | World file | Key facts |
 |---|---|---|---|
-| W1-Q1 | `aws ecs describe-services … orders-api` | `ecs-01.json` | One deployment `ecs-svc/4417203958112934411`, PRIMARY, task def `orders-api:42`, created 01:22:07Z, COMPLETED 01:31:40Z, failedTasks 0, 6/6, circuit breaker on. Events: 6 (tasks started 01:22:31; 3 stopped 01:25:48; 3 stopped 01:29:12; steady 01:31:40; earlier steady 10-20 19:02:10). |
-| W1-Q2 | `aws ecs list-tasks` RUNNING / STOPPED `--service-name orders-api`, `describe-tasks` | `ecs-04.json`, `ecs-07.json` (running); `ecs-08.json` (stopped, empty) | 6 running tasks all `orders-api:42`, started 01:23:09–01:23:29, HEALTHY. No stopped tasks listable. |
-| W1-Q3 | `aws application-autoscaling describe-scheduled-actions` | `_default.txt` | `{}` |
-| W1-Q4 | `aws application-autoscaling describe-scaling-activities` | `_default.txt` | `{}` |
-| W1-Q5 / Q6 / Q7 | `aws cloudwatch get-metric-data … HTTPCode_Target_5XX_Count`, period 60 | `cw-04.json` (rows inside each window only) | Only the 5xx series came back (Id `m1`). Incident: sum 439, peak 55 at 02:04, episode 02:01–02:19. Previous: 3 (one per minute at 00:29, 01:24, 01:27). −7d: 459, episode 02:06–02:24, peak 57 at 02:09. RequestCount, ELB 5xx, UnHealthyHostCount, p95 not returned. |
-| W1-Q8 | `aws cloudwatch get-metric-data … HTTPCode_Target_5XX_Count`, period 3600 | `cw-03.json` | Hourly, sparse, zero-filled locally: 336 hours, 233 non-zero; median 1, p95 6 (335 hours below the incident level), max 455 (10-14 02:00), incident hour 438. The 02:00 UTC hour is the top hour on 14 of 14 days (52–455). |
-| W1-Q9 | `aws cloudwatch describe-alarm-history --alarm-name orders-api-5xx-high` | `cw-02.json` | 12 items back to 10-08 02:04Z. Into ALARM at 02:04 on 10-08, 10-11, 10-19, 10-21; 02:05 on 10-16; 02:09 on 10-14. Out of ALARM 02:11–02:17. |
+| W1-Q1 | `aws ecs describe-services ... --services orders-api` | `ecs-01.json` | desired 6 = running 6; one deployment PRIMARY `ecs-svc/4417203958112934411` on `orders-api:42`, created 01:22:07, COMPLETED 01:31:40 (circuit breaker with rollback on); events: 6 tasks started 01:22:31, old tasks stopped 01:25:48 (3) and 01:29:12 (3), steady state 01:31:40; no event newer than 01:31:40; earlier steady state 2026-10-20 19:02:10. |
+| W1-Q2 | `list-tasks --desired-status RUNNING --service-name orders-api` ; `describe-tasks` ; `list-tasks --desired-status STOPPED --service-name orders-api` | `ecs-04.json`, `ecs-07.json`, `ecs-08.json` | 6 running tasks, all `orders-api:42`, started 01:23:09-01:23:29, HEALTHY; stopped list empty (ECS keeps stopped tasks about an hour) so describe-tasks was skipped for STOPPED. |
+| W1-Q3 | `aws cloudwatch get-metric-data` ... `HTTPCode_Target_5XX_Count`, period 60, three windows | `cw-04.json` (rows inside each requested window) | Only the 5xx series returned (Id printed `m1`, label `HTTPCode_Target_5XX_Count`); no entry for req, elb5xx, unhealthy, healthy, p95. Incident: 439 (01:44 = 1; 02:01-02:19 = 438; peak 55 at 02:04; nothing after 02:19). Previous: 3. -7d: 459 (burst 02:06-02:24, peak 57 at 02:09). |
+| W1-Q4 | `aws cloudwatch get-metric-data` ... period 3600, 2026-10-07T01:00Z to 2026-10-21T01:00Z | `cw-03.json` (rows inside the window) | 233 of 336 hours present, zero-filled; median 1, p95 6 (hours below 438), max 455 (10-14 02:00); the 02:00 UTC hour is the day's maximum on all 14 days (88, 421, 61, 117, 386, 74, 52, 455, 133, 398, 69, 104, 412, 96). The 02:00 bucket of 10-21 lies after the pull end and was left out (incident level 438 from W1-Q3). |
+| W1-Q5 | `aws cloudwatch describe-alarm-history --alarm-name orders-api-5xx-high` | `cw-02.json` | 12 items, six ALARM episodes; into ALARM (printed +09:00, converted to UTC): 10-08 02:04, 10-11 02:04, 10-14 02:09, 10-16 02:05, 10-19 02:04, 10-21 02:04; back to OK 02:11, 02:11, 02:17, 02:12, 02:11, 02:12. Oldest item 10-08. |
+| W1-Q6 | `aws events list-rules` ; `aws scheduler list-schedules` ; `aws application-autoscaling describe-scheduled-actions` ; `... describe-scaling-activities` | `events-01.json`, `scheduler-01.json`, `_default.txt`, `_default.txt` | Rules with a schedule: `orders-reconcile-nightly` cron(0 2 * * ? *) ENABLED, `catalog-sitemap-weekly` cron(30 3 ? * SUN *) ENABLED; no Scheduler schedules; both autoscaling replies `{}` (empty). |
 
-Class: `scheduled` (rule 1). Shape: periodic. No re-anchor (true onset 02:01 UTC vs anchor 02:00).
+Ledger written (rows, windows, recurrence, timeline, hypotheses, gaps, lesson candidates) before the next message. Recurrence computed per Phase 1 step 7: scheduled (six alarm episodes within +/-15 min of 02:04 UTC, plus hourly peak at 02:00 on 14 of 14 days); incident 438 far above p95 6, so not chronic; first matching rule wins.
 
-### Message 4 (verbatim, impact block before Phase 2)
+### Message 5: the impact block (shown to the operator before Phase 2, verbatim)
 
-```text
-Impact as of 02:40 UTC (11:40 JST, Asia/Tokyo from you)
-Symptom:   HTTP 5xx from orders-api targets (ALB target-group 5xx count). Which endpoint or flow fails is not known yet; the metric has no path split.
-Affected:  prod, single service, customer-facing. 439 target 5xx in 01:30-02:40 UTC, peak 55/min at 02:04 (alarm threshold 25/min). Previous window: 3. Same window a week ago (10-14): 459, peak 57/min. Share of requests failing: unknown, because RequestCount did not come back. Checkout and order-update flows not split out.
-Since:     02:01 UTC (11:01 JST) · ongoing: no. The last elevated minute was 02:19 UTC (11:19 JST); the alarm has been OK since 02:12 UTC. This differs from "has been throwing 5xx": the errors stopped about 20 minutes ago.
-Severity:  SEV3 (suggested, provisional) because the episode lasted about 19 minutes and is over. SEV1 or SEV2 cannot be excluded: the failing share and the affected flows are unknown. You decide.
-Basis:     load-balancer target 5xx counts against baseline · W1-Q5, W1-Q6, W1-Q7, W1-Q9 · counts and timing Confirmed; request share and flow impact Assumed
+~~~text
+Impact as of 02:44 UTC (11:44 JST, Asia/Tokyo, zone you gave)
+Symptom:   orders-api targets returned HTTP 5xx: 438 target 5xx between 02:01 and 02:19 UTC, peaking at 55 per minute at 02:04 UTC. For comparison, 3 in the 70 minutes before, and 459 in the same time window a week earlier (peak 57/min).
+Affected:  prod orders-api behind ALB prod-public (all 6 tasks, one target group). Share of failing requests: not measurable (RequestCount did not return). Which endpoints failed: not in the metrics. Customer-facing vs internal: not known (the ALB name suggests public; Assumed).
+Since:     02:01 UTC (11:01 JST), about a minute after your 11:00 · ongoing: no (last non-zero minute 02:19 UTC; none from 02:20 to 02:40; the alarm went back to OK at 02:12 UTC)
+Severity:  SEV2 (suggested) because a prod service behind a public-named ALB returned up to 55 5xx/min for about 19 minutes (partial degradation). SEV1 cannot be shown: the more-than-5%-failing test needs RequestCount and core-flow endpoint detail, which I do not have yet. The incident owner decides.
+Basis:     ALB target 5xx counts against the previous window and a week earlier · W1-Q3 · Confirmed for the counts; the failing share and core-flow impact are Assumed
 Third party in the path: none known
-```
+~~~
 
-followed (same turn) by:
+Also from wave 1:
 
-```text
-Wave 1 read, before I plan more.
-- Recurrence: this is the same episode as other days. It starts at 02:01-02:09 UTC, ramps for about 3 minutes and decays over about 15. The 02:00 UTC hour is the top 5xx hour on 14 of 14 days. The alarm fired at 02:04-02:09 UTC on 10-08, 10-11, 10-14, 10-16, 10-19 and 10-21. Class: scheduled (Confirmed for the repeat, from minute-level alarm times). The cause is open.
-- Your release: deployment ecs-svc/4417203958112934411 (orders-api:42) was created at 01:22:07 UTC and completed at 01:31:40 UTC, 29 minutes before the first error. The a-week-ago episode (10-14 02:06-02:24 UTC, 459 errors) had no release of today. I'm treating the release as a candidate, not a cause, and testing it with an old-against-new check.
-- Gaps: only the 5xx series came back from the metric queries (no RequestCount, ELB 5xx, unhealthy hosts or latency). The six old tasks stopped at 01:25-01:29 are no longer listable.
-- Windows: no re-anchor needed (true onset 02:01 UTC vs your 02:00 anchor).
-```
+~~~text
+What wave 1 shows
+- Pattern: scheduled (Confirmed). The alarm went into ALARM at 02:04, 02:04, 02:09, 02:05, 02:04 and 02:04 UTC on 10-08, 10-11, 10-14, 10-16, 10-19 and 10-21 (W1-Q5), and the 02:00 UTC hour was the worst hour of the day on all 14 earlier days (W1-Q4). Alarm history only reaches back to 10-08.
+- Changes near the onset: the ECS deployment of task definition orders-api:42 (presumably your release) rolled out 01:22:07 to 01:31:40 UTC, which is 29 minutes before the onset. EventBridge rule orders-reconcile-nightly fires at 02:00 UTC every day. No scaling schedule, no stopped tasks, no ECS service event after 01:31:40, 6 of 6 tasks running and healthy (W1-Q1, W1-Q2, W1-Q6).
+- Because the class is scheduled, the schedule goes ahead of the deploy until a query rules it out. I am not blaming the release yet.
+- Gaps found: RequestCount, ELB 5xx, healthy-host counts and latency did not come back in the metric batch (W1-Q3), so I cannot give the failing percentage or an app-versus-ALB comparison.
+~~~
 
-(The severity in this block was later revised to SEV2 in the ledger after wave 2 showed both core flows among the failing routes.)
+## Phase 2 and 3, then wave 2
 
-Ledger updated with wave 1 rows, impact, recurrence, timeline, gaps and a lesson candidate before anything above was said.
+History lookup (only after the ranked list existed): `grep -rEil 'orders-api|orders-reconcile|5xx|lock' .culiops/sre-investigate/incidents/ --include='*.md'` -> no INDEX row, text command, `_empty.txt`: no output (and `ls` earlier showed no `incidents/` directory). Nothing from history; no `from-history:` entries; no `failure-mode` lessons (no `lessons.md`). Docs/wiki: no wiki access configured, skipped.
 
-## Phase 2 and 3: change correlation and hypotheses
+### Message 6 (shown to the operator, verbatim)
 
-Change list (ledger timeline): the 01:22 deployment (candidate only), schedules (wave 2), scaling (none returned), no task churn after 01:31:40. Recurrence class `scheduled` placed the schedule ahead of the deploy.
+~~~text
+Phase 2 and 3, from wave 1.
 
-Hypotheses written with falsification queries (ledger): H1 `sched:` nightly job (per candidate schedule after listing), H2 bad deploy, H3 traffic/bot, H4 DB lock/slow, H5 task churn (Ruled out from W1-Q1/W1-Q2 already). Fast mode: main session labels.
+Ranked hypotheses, each with its falsification query written first:
+1. sched:orders-reconcile-nightly. The nightly reconcile job (EventBridge rule orders-reconcile-nightly, 02:00 UTC every day) starts at 02:00 and its work degrades orders-api for about 20 minutes. Falsified if the rule is disabled or has no ECS target, if no reconcile task ran at 02:00 today, or if the 5xx are not inside the job's run window and do not move when the job's start time moves. Queries: rule, target and task definition; the job's stopped task today; the 14-day RunTask history in CloudTrail; orders-api log lines at the onset.
+2. H2, the release (task definition orders-api:42, rollout 01:22:07 to 01:31:40 UTC). Falsified by the old-against-new split: the same burst on earlier revisions, an onset after rollout completion, and a clean stretch for the new revision between completion and onset. Queries: task definition revisions and registration times, CloudTrail UpdateService history, the 14-day hourly series I already have, the release notes.
+3. H3, database lock or connection contention on the orders data store (a possible mechanism for 1). Falsified if the orders-api lines at the onset show no lock, pool or timeout errors. Database metrics are not readable (Aurora orders-db was not listed), so this is tested through log lines only.
+4. sched:aurora-backup-window, a database backup or maintenance window near 02:00 UTC. Cannot be tested here: describe-db-clusters returned an empty reply, so the window is unreadable (a gap).
+5. H5, a traffic spike or an unknown daily caller. RequestCount did not return, so it can only be tested through the log lines.
+Already ruled out by wave 1: H6, task or scaling churn (no stopped tasks, no ECS service event after 01:31:40, 6 of 6 tasks running and healthy, no scaling schedule or activity returned: W1-Q1, W1-Q2, W1-Q6). CPU and memory saturation were not read and are not covered by that.
+History check: no incidents/ directory and no lessons file exist yet, so nothing from past runs.
 
-History lookup, after ranking (simulated):
+Wave 2 (the slower change sources, the first falsification queries, and one log query), printed in full and run now.
+Log query estimate before it runs: /ecs/orders-api, 20 minutes (01:51 to 02:11 UTC, onset minus 10 to plus 10), about 1,200 s x 24,855 bytes/s = 0.030 GB. That is under the 1 GB soft limit and far under the 10 GB ask threshold, inside the 30-minute raw-line window cap, and inside the 2 GB Fast log budget, so I run it without asking.
 
-| Command | World file | Result |
-|---|---|---|
-| `grep -ril -e orders-api -e errors-5xx -e orders-db .culiops/sre-investigate/incidents/` | `_empty.txt` | no output |
-| `grep -h 'type: failure-mode' .culiops/sre-investigate/lessons.md` | `_empty.txt` | no output |
+date -u +%H:%M:%S
 
-No matches, no `from-history:` entries. Logged in the ledger's Memory table.
+# W2-Q1: the last three orders-api task definitions (names of env vars and secrets only, never values) and the release behind the deployed image tag
+for td in $(aws ecs list-task-definitions --profile prod-read --region us-east-1 --family-prefix orders-api --query 'taskDefinitionArns[-3:]' --output text); do
+  aws ecs describe-task-definition --profile prod-read --region us-east-1 --task-definition "$td" \
+    --query 'taskDefinition.{revision: revision, registeredAt: registeredAt, registeredBy: registeredBy, cpu: cpu, memory: memory, containers: containerDefinitions[].{name: name, image: image, memory: memory, memoryReservation: memoryReservation, env: environment[].name, secrets: secrets[].name}}' \
+    --output json > "$RUN/c-td-${td##*/}.json"
+done
+new=$(jq -r '.containers[0].image' "$RUN/c-td-orders-api:42.json"); new=${new##*:}
+old=$(jq -r '.containers[0].image' "$RUN/c-td-orders-api:41.json"); old=${old##*:}
+gh release list --repo example-org/orders-api --limit 10
+gh release view "$new" --repo example-org/orders-api
+gh api "repos/example-org/orders-api/compare/$old...$new" --jq '{total: .total_commits, commits: [.commits[].commit.message | split("\n")[0]], files: [.files[] | {filename, status, changes}]}' > "$RUN/c-compare.json"
 
-### Message 5 (verbatim)
+# W2-Q2: the reconcile job: rule, target, task definition (names only), and the task it started today
+aws events describe-rule --profile prod-read --region us-east-1 --name orders-reconcile-nightly --query '{state: State, schedule: ScheduleExpression, description: Description}' --output json
+td=$(aws events list-targets-by-rule --profile prod-read --region us-east-1 --rule orders-reconcile-nightly --query 'Targets[0].EcsParameters.TaskDefinitionArn' --output text)
+aws events list-targets-by-rule --profile prod-read --region us-east-1 --rule orders-reconcile-nightly --query 'Targets[].{id: Id, arn: Arn, taskDef: EcsParameters.TaskDefinitionArn}' --output json
+aws ecs describe-task-definition --profile prod-read --region us-east-1 --task-definition "$td" --query 'taskDefinition.{revision: revision, registeredAt: registeredAt, cpu: cpu, memory: memory, containers: containerDefinitions[].{name: name, image: image, command: command, env: environment[].name, secrets: secrets[].name}}' --output json
+arns=$(TZ=UTC aws ecs list-tasks --profile prod-read --region us-east-1 --cluster prod --family orders-reconcile --desired-status STOPPED --max-items 100 --query 'taskArns' --output text)
+[ -n "$arns" ] && [ "$arns" != "None" ] && TZ=UTC aws ecs describe-tasks --profile prod-read --region us-east-1 --cluster prod --tasks $arns --query 'tasks[].{task: taskArn, taskDef: taskDefinitionArn, startedBy: startedBy, createdAt: createdAt, startedAt: startedAt, stoppingAt: stoppingAt, stoppedAt: stoppedAt, stopCode: stopCode, reason: stoppedReason, containers: containers[].{name: name, exit: exitCode}}' --output json
 
-```text
-Ranked hypotheses (full table in ledger.md, each with its falsification query):
-1. H1 sched: a job or rule that fires about 02:00 UTC every day. Refuted if no schedule fires within 15 minutes of 02:00 UTC.
-2. H2 bad deploy (orders-api:42). Refuted if the same episode ran on days before revision 42 existed.
-3. H3 traffic spike or bot at 02:00. Refuted if request count is at baseline.
-4. H4 database slow or locked at 02:00. No database metrics are readable in this run (the rds lookup returned nothing), so only the log side can be tested.
-5. H5 task churn. Ruled out already: no service events after 01:31:40 and 6 of 6 tasks running since 01:23 (W1-Q1, W1-Q2).
-History lookup (after ranking): no incidents/ or lessons.md exist, so no history entries.
-```
+# W2-Q3: CloudTrail write events, onset minus 2 h to onset plus 15 min (the CloudTrailEvent record is left out)
+TZ=UTC aws cloudtrail lookup-events --profile prod-read --region us-east-1 --lookup-attributes AttributeKey=ReadOnly,AttributeValue=false --start-time 2026-10-21T00:01:00Z --end-time 2026-10-21T02:16:00Z --query "Events[].[EventTime, EventSource, EventName, Username, EventId, Resources[0].ResourceName]" --output text > "$RUN/c-cloudtrail-writes.tsv"
 
-## Phase 4: wave 2
+# W2-Q4: CloudTrail RunTask and UpdateService over the 14 days (one lookup attribute per call)
+for ev in RunTask UpdateService; do
+  TZ=UTC aws cloudtrail lookup-events --profile prod-read --region us-east-1 --lookup-attributes AttributeKey=EventName,AttributeValue=$ev --start-time 2026-10-07T00:00:00Z --end-time 2026-10-21T02:40:00Z --query "Events[].[EventTime, EventSource, EventName, Username, EventId, Resources[0].ResourceName]" --output text
+done > "$RUN/c-cloudtrail-14d.tsv"
 
-Printed in full (verbatim):
+# W2-Q5: Logs Insights, raw lines around the onset (01:51:00 to 02:11:00 UTC), oldest first, at most 100
+qid=$(aws logs start-query --profile prod-read --region us-east-1 --log-group-names "/ecs/orders-api" --start-time 1792547460 --end-time 1792548660 --query-string 'fields @timestamp, @logStream, @message | filter @message like /(?i)(error|warn|exception|timeout|timed out)/ | sort @timestamp asc | limit 100' --query queryId --output text)
+deadline=$(( $(date +%s) + 120 ))
+while :; do
+  aws logs get-query-results --profile prod-read --region us-east-1 --query-id "$qid" --output json > "$RUN/li-$qid.json"
+  case "$(jq -r .status "$RUN/li-$qid.json")" in Complete|Failed|Cancelled|Timeout|Unknown) break ;; esac
+  if [ "$(date +%s)" -ge "$deadline" ]; then aws logs stop-query --profile prod-read --region us-east-1 --query-id "$qid"; break; fi
+  sleep 5
+done
+jq '.statistics' "$RUN/li-$qid.json"
+~~~
 
-```text
-W2-Q1  date -u +%H:%M:%S; rules=$(TZ=UTC aws events list-rules --profile prod-read --region us-east-1 --query 'Rules[?ScheduleExpression].Name' --output text); TZ=UTC aws events list-rules --profile prod-read --region us-east-1 --query 'Rules[?ScheduleExpression].[Name, State, ScheduleExpression]' --output text; for r in $rules; do TZ=UTC aws events describe-rule --profile prod-read --region us-east-1 --name "$r" --query '{name: Name, state: State, expression: ScheduleExpression}' --output json; TZ=UTC aws events list-targets-by-rule --profile prod-read --region us-east-1 --rule "$r" --query 'Targets[].{id: Id, arn: Arn, taskDef: EcsParameters.TaskDefinitionArn}' --output json; done
-W2-Q2  TZ=UTC aws scheduler list-schedules --profile prod-read --region us-east-1 --query 'Schedules[].[GroupName, Name, State]' --output text   (get-schedule per result, only if it returns any)
-W2-Q3  for td in orders-api:41 orders-api:42; do TZ=UTC aws ecs describe-task-definition --profile prod-read --region us-east-1 --task-definition "$td" --query 'taskDefinition.{revision: revision, registeredAt: registeredAt, cpu: cpu, memory: memory, containers: containerDefinitions[].{name: name, image: image, memory: memory, memoryReservation: memoryReservation, env: environment[].name, secrets: secrets[].name}}' --output json; done
-W2-Q4  TZ=UTC aws cloudtrail lookup-events --profile prod-read --region us-east-1 --lookup-attributes AttributeKey=ReadOnly,AttributeValue=false --start-time 2026-10-21T00:01:00Z --end-time 2026-10-21T02:16:00Z --query "Events[?Resources[?contains(ResourceName || '', 'orders')]].[EventTime, EventSource, EventName, Username, EventId]" --output text
-W2-Q5  TZ=UTC aws cloudtrail lookup-events --profile prod-read --region us-east-1 --lookup-attributes AttributeKey=EventName,AttributeValue=UpdateService --start-time 2026-10-07T00:00:00Z --end-time 2026-10-21T02:40:00Z --query "Events[?Resources[?contains(ResourceName || '', 'orders-api')]].[EventTime, EventSource, EventName, Username, EventId]" --output text
-W2-Q6  gh release list --repo example-org/orders-api --limit 10; gh release view --repo example-org/orders-api
-W2-Q7  (heavy log query, CloudWatch Logs Insights, log group /ecs/orders-api, window 2026-10-21 01:51:00Z–02:11:00Z, estimate 0.030 GB, limit 100 lines)
-       qid=$(aws logs start-query --profile prod-read --region us-east-1 --log-group-names "/ecs/orders-api" --start-time 1792547460 --end-time 1792548660 --query-string 'fields @timestamp, @logStream, @message | filter @message like /ERROR|Error|Exception|Timeout|timed out|5[0-9][0-9]/ | sort @timestamp asc | limit 100' --query queryId --output text); then poll aws logs get-query-results --profile prod-read --region us-east-1 --query-id "$qid" every 5 s for at most 2 minutes, then aws logs stop-query only if still running
-W2-Q8  TZ=UTC aws cloudwatch get-metric-data --profile prod-read --region us-east-1 --metric-data-queries file://$RUN/q-req-60.json --start-time 2026-10-21T01:30:00Z --end-time 2026-10-21T02:40:00Z --output json
-        q-req-60.json: req = RequestCount Sum; elb5xx = HTTPCode_ELB_5XX_Count Sum; unhealthy = UnHealthyHostCount Minimum; p95 = TargetResponseTime p95; Period 60, same LB and TG dimensions (4 metric requests; asked again on its own because W1 returned only the 5xx series)
-```
+### Wave 2 commands, world files and key facts
 
-| Query ID | Command | World file | Key facts |
+| ID | Command | World file | Key facts |
 |---|---|---|---|
-| W2-Q1 | `aws events list-rules` (+ `describe-rule`, `list-targets-by-rule` for scheduled rules) | `events-01.json`; `events-02.json` + `events-03.json` (orders-reconcile-nightly); `events-06.json` + `events-04.json` (catalog-sitemap-weekly) | `orders-reconcile-nightly` `cron(0 2 * * ? *)` ENABLED, target ECS cluster `prod`, task def `orders-reconcile:7`. `catalog-sitemap-weekly` `cron(30 3 ? * SUN *)`, Lambda `catalog-sitemap`. `orders-api-ecs-task-state` is an event-pattern rule, filtered out by the `ScheduleExpression` filter (its describe/targets files `events-07.json`, `events-05.json` were never opened). |
-| W2-Q2 | `aws scheduler list-schedules` | `scheduler-01.json` | `Schedules: []` |
-| W2-Q3 | `aws ecs describe-task-definition orders-api:41`, `orders-api:42` | `ecs-02.json`, `ecs-03.json` | Rev 41 image tag `2026.10.14-2`, registered 2026-10-14 03:10:44Z. Rev 42 image tag `2026.10.21-1`, registered 2026-10-21 01:21:58Z. Env var and secret **names** identical; values not recorded. |
-| W2-Q4 | `aws cloudtrail lookup-events ReadOnly=false` 00:01–02:16 | `cloudtrail-01.json` (rows matching the lookup only) | `RunTask` 02:00:02Z (orders-reconcile:7, `ecsEventsRole-session`), `UpdateService` 01:22:07Z (`deploy-pipeline`). `RegisterTaskDefinition` 01:21:58Z has no resources and falls outside my resource filter. |
-| W2-Q5 | `aws cloudtrail lookup-events EventName=UpdateService` 14 d | `cloudtrail-01.json` | 2 events: 2026-10-14 03:10:53Z (`orders-api:41`), 2026-10-21 01:22:07Z (`orders-api:42`). |
-| W2-Q6 | `gh release list`, `gh release view` | `gh-02.txt`, `gh-01.txt` | Releases 2026.10.21-1 (Latest, created 01:18:02Z), 2026.10.14-2, 2026.10.07-1. Notes: confirmation email delivery date (#1182), http client bump 3.4.1 (#1185), admin pagination (#1187). Image tag = release tag. No instruction-like text. |
-| W2-Q7 | Logs Insights `start-query` `/ecs/orders-api` raw lines, then `get-query-results` | `logs-04.json` (queryId `c3d4e5f6-0718-4293-a4b5-c6d7e8f90a1b`), `logs-14.json` | 6 rows inside 01:51–02:11 on 10-21: 4 x HTTP 500 `ER_LOCK_WAIT_TIMEOUT` (~50 s) on `POST /orders` (insert order_lines) at 02:01:13, 02:04:05, 02:10:18 and `PATCH /orders/{id}` (update orders set status) at 02:02:41; 1 x 502 `ECONNRESET` "payments call reset by peer" on POST /orders at 02:07:30; 1 x 200 "slow request" GET /orders 8,120 ms at 02:05:52. All `ecs_task_revision` 42. Reply also held 10-19 rows and later 10-21 rows outside my window: discarded. `bytesScanned` 481,221,632 reported (whole-reply window; upper bound). |
-| W2-Q8 | `aws cloudwatch get-metric-data` RequestCount etc. | `_default.txt` | `{}`: no data. Gap remains. |
+| W2-Q1 | `aws ecs list-task-definitions --family-prefix orders-api` ; `aws ecs describe-task-definition` for `orders-api:40`, `:41`, `:42` ; `gh release list` ; `gh release view 2026.10.21-1` ; `gh api .../compare/2026.10.14-2...2026.10.21-1` | `ecs-12.json`, `ecs-14.json`, `ecs-02.json`, `ecs-03.json`, `gh-02.txt`, `gh-01.txt`, `_default.txt` | Revisions 40, 41, 42: images tagged `2026.10.07-1`, `2026.10.14-2`, `2026.10.21-1`; registeredAt 10-07 02:58:31, 10-14 03:10:44, 10-21 01:21:58 UTC, by role `deploy-pipeline`; cpu 1024, memory 2048 in all; env names identical in all three (APP_ENV, DB_HOST, DB_POOL_SIZE, LOG_LEVEL, PAYMENTS_URL), secret name DB_PASSWORD (values not read, so a changed value would not be visible). Releases weekly: 2026.10.21-1 (latest), 2026.10.14-2, 2026.10.07-1. Release 2026.10.21-1 created 01:18:02Z by release-bot: #1182 order confirmation email estimated delivery date, #1185 HTTP client library bump to 3.4.1, #1187 admin order-search pagination. The compare reply was `{}` (no commits, no files): app diff not read. |
+| W2-Q2 | `aws events describe-rule` ; `aws events list-targets-by-rule` ; `aws ecs describe-task-definition orders-reconcile:7` ; `aws ecs list-tasks --family orders-reconcile --desired-status STOPPED` ; `aws ecs describe-tasks` | `events-02.json`, `events-03.json`, `ecs-13.json`, `ecs-05.json`, `ecs-06.json` | Rule ENABLED, `cron(0 2 * * ? *)`, "Nightly ledger reconciliation of the orders table"; target = ECS RunTask on cluster prod, Fargate, count 1, task definition `orders-reconcile:7` (subnets and security groups not read). `orders-reconcile:7`: image tag `2026.09.30-1`, registered 2026-09-30 10:02:17 (before the 14-day window), cpu 2048, memory 4096, command `python -m reconcile --window previous_day`, env names DB_HOST, RECON_BATCH_SIZE, RECON_LOCK_MODE, secret DB_PASSWORD (values not read). Today's task: created 02:00:02.774, started 02:00:09.531, stopping 02:19:52, stopped 02:20:14, startedBy `events-rule/orders-reconcile-nightly`, stopCode EssentialContainerExited, exit code 0. |
+| W2-Q3 | `aws cloudtrail lookup-events` ReadOnly=false, 00:01-02:16 UTC | `cloudtrail-01.json` (events inside the window) | 3 write events in 2 h 15 min: RegisterTaskDefinition 01:21:58 and UpdateService (service orders-api) 01:22:07, both by role `deploy-pipeline`; RunTask 02:00:02 by `ecsEventsRole` session on `orders-reconcile:7`. No other writes (no database, security-group, alarm or scaling change). |
+| W2-Q4 | `aws cloudtrail lookup-events` EventName=RunTask ; EventName=UpdateService, 10-07 00:00 to 10-21 02:40 UTC | `cloudtrail-01.json` (events matching) | RunTask on `orders-reconcile:7` by `ecsEventsRole`: 15 events, one per day 10-07 to 10-21, at 02:00:02 on 13 days, 02:05:02 on 10-14, 02:01:02 on 10-16. UpdateService on orders-api: 2 events, 10-14 03:10:53 and 10-21 01:22:07 (deploy-pipeline). No UpdateService on 10-07 although revision 40 was registered that day (not explained; gap). |
+| W2-Q5 | `aws logs start-query` on `/ecs/orders-api` 01:51-02:11 UTC, no `stats`; then `aws logs get-query-results` | `logs-04.json` (queryId `c3d4e5f6-0718-4293-a4b5-c6d7e8f90a1b`), then `logs-14.json` (rows inside the window) | 6 lines in the window (the two later lines at 02:14 and 02:19 and the 10-19 lines in the file are outside the requested window and were not used). JSON lines with fields `level`, `status`, `route`, `error_code`, `msg`, `duration_ms`, `ecs_task_revision`. First line 02:01:13.208 `POST /orders` 500 `ER_LOCK_WAIT_TIMEOUT` ("insert order_lines: Lock wait timeout exceeded; try restarting transaction"), duration 50,021 ms, revision 42. Also 02:02:41 `PATCH /orders/{id}` 500 lock wait ("update orders set status"), 50,008 ms; 02:04:05 `POST /orders` 500 lock wait, 50,017 ms; 02:05:52 `GET /orders` 200 warn "slow request" 8,120 ms; 02:07:30 `POST /orders` 502 `ECONNRESET` "payments call reset by peer" 312 ms; 02:10:18 `POST /orders` 500 lock wait, 50,030 ms. All revision 42. Statistics block: recordsScanned 1,702,114, bytesScanned 481,221,632 (0.481 GB; the file's block describes its whole covered window), against the 0.030 GB estimate: ratio about 16. No instruction-like text. |
 
-Disclosure: the single Read of `cloudtrail-01.json` (mapped by W2-Q4 and W2-Q5) showed all of its rows, including the nightly RunTask rows for 10-07 to 10-20. I did not use those until W3-Q1 mapped them. Likewise `logs-14.json` and `logs-15.json` contained rows outside the windows asked; only in-window rows were used.
+Ledger updated after wave 2 before the next message. Budget after wave 2: 17 of 20 calls, 0.481 of 2 GB logs, 19 of 100 metric requests.
 
-### Message 6 (verbatim, after wave 2, plus wave 3 plan)
+### Message 7 (shown after wave 2 and before wave 3, verbatim)
 
-```text
-Wave 2 results (all in ledger.md).
-- A rule fires at 02:00 UTC every day: EventBridge orders-reconcile-nightly, cron(0 2 * * ? *), starts ECS task orders-reconcile:7 on cluster prod. CloudTrail shows its RunTask at 02:00:02 UTC today, 59 seconds before the first 5xx minute. The other schedule, catalog-sitemap-weekly, fires Sundays at 03:30 UTC and does not fit (today is a Wednesday). Ruled out.
-- Your release is not the cause. Revision 42 was registered at 01:21:58 UTC and rolled out 01:22-01:31. Revision 41 (registered 2026-10-14 03:10:44 UTC) is the only other deploy in 14 days. The same 02:00 UTC episode ran 8 of 8 mornings before revision 41, 6 of 6 mornings on revision 41, and 1 of 1 on revision 42 (02:00-hour 5xx totals 52-455, 52-412 and 438). Environment variable and secret names are identical between the two revisions; only the image changed.
-- Mechanism lead in the app log (sample, 5 error lines in 20 minutes): HTTP 500 after about 50 seconds with ER_LOCK_WAIT_TIMEOUT on POST /orders (insert order_lines) and PATCH /orders/{id} (update orders set status), plus one 502 ECONNRESET on a payments call. Both routes are your core flows. The first failing request began waiting at about 02:00:23 UTC, 21 seconds after the job started.
-- Caveats: the log sample is 5 lines against 439 counted 5xx, so I can't say how much of the 5xx is lock waits. RequestCount did not come back a second time.
-Wave 3 is the last wave in Fast mode. It reads the job's run time, its logs, its 14 nightly start times, and the release diff.
-```
+~~~text
+Wave 2 results (all rows are in the ledger).
+- The nightly reconcile job is the strong candidate. Rule orders-reconcile-nightly is ENABLED at 02:00 UTC and starts an ECS task (orders-reconcile:7). CloudTrail shows the task was started at 02:00:02 UTC today, and the task ran 02:00:09 to 02:19:52 (exit code 0). The 5xx ran from 02:01 to 02:19. CloudTrail also shows the job was started once a day on all 15 days from 10-07. On the two days it started late (10-14 at 02:05:02, 10-16 at 02:01:02) the burst and the alarm moved with it: burst from 02:06 on 10-14, alarm at 02:05 on 10-16, and on all six alarm days the alarm time is the job start plus 4 minutes. A fixed-clock cause, such as a database backup window, would not move with the job.
+- What the failing requests look like: the first sampled error is at 02:01:13 on POST /orders, HTTP 500, ER_LOCK_WAIT_TIMEOUT after 50 seconds ("insert order_lines: Lock wait timeout exceeded"), then PATCH /orders/{id} ("update orders set status") and more POST /orders, all 50-second lock waits. So the first blocked request started waiting at about 02:00:23, about 14 seconds after the job's container started. Both are core flows. One sampled line is a 502 on POST /orders (ECONNRESET calling the payments service) and one is a slow GET /orders that returned 200; I did not count how often either happens. I have only the 6 sampled lines, not counts.
+- The release is not the cause of this burst. The same 02:00 burst happened on all 14 days before revision 42 existed, including five days at a level close to today's when revisions 40 and 41 were running (421, 386, 455, 398 and 412 5xx in the 02:00 hour, against 438 today), and revision 42 itself had 1 5xx between rollout completion (01:31:40) and the onset (02:01). The release notes (#1182 delivery-date email, #1185 HTTP client bump to 3.4.1, #1187 admin search pagination) do not change that, but I could not read the diff: the gh compare reply was empty. Environment variable names and image sizes are identical across revisions 40, 41 and 42; values are never read.
+- No other change: between 00:01 and 02:16 UTC CloudTrail shows only the deploy pipeline's RegisterTaskDefinition (01:21:58) and UpdateService (01:22:07), and the reconcile RunTask (02:00:02).
+- Log scan: the reply reported 0.481 GB scanned, about 16 times my 0.030 GB estimate, so I size the next query with that ratio. Budget used: 17 of 20 calls, 0.48 of 2 GB of logs, 19 of 100 metric requests.
 
-Corrections to message 6, noticed after it was shown: (a) the sampled-lines comparison should read "5 lines against 339 counted target 5xx in the same minutes (02:01–02:10)", not 439 (439 is the whole 70-minute window); the ledger and report use 339. (b) "52-412" for revision 41 should read "69-412" (revision 41 mornings: 133, 398, 69, 104, 412, 96); "52-455" for the revision before 41 is right for 10-07..10-14 (88, 421, 61, 117, 386, 74, 52, 455) but the earlier text mixed the two ranges. The ledger and report carry the per-day numbers. (c) "29 minutes before the first error" (message 4) is time from rollout completion to onset (01:31:40 to 02:01); from rollout start it is 39 minutes; the ledger states both.
+Still unproven: that the job's own locks are what the orders-api requests wait on (I have no database-side view). Wave 3, the last wave Fast mode allows, reads the reconcile job's own log lines for 02:00 to 02:25 UTC. Estimate before it runs: /ecs/orders-reconcile holds 1.07 GB over 30 days, so 1,500 s is about 0.0006 GB, or about 0.01 GB at the 16x ratio I measured. That is under the soft limit, the 10 GB ask threshold and the remaining 1.5 GB Fast log budget, and inside the 30-minute raw-line cap, so I run it without asking.
 
-## Phase 4: wave 3 (last Fast wave)
+date -u +%H:%M:%S
 
-Printed in full (verbatim):
+# W3-Q1: reconcile job log lines, 02:00:00 to 02:25:00 UTC on 2026-10-21, oldest first, at most 100
+qid=$(aws logs start-query --profile prod-read --region us-east-1 --log-group-names "/ecs/orders-reconcile" --start-time 1792548000 --end-time 1792549500 --query-string 'fields @timestamp, @logStream, @message | sort @timestamp asc | limit 100' --query queryId --output text)
+deadline=$(( $(date +%s) + 120 ))
+while :; do
+  aws logs get-query-results --profile prod-read --region us-east-1 --query-id "$qid" --output json > "$RUN/li-$qid.json"
+  case "$(jq -r .status "$RUN/li-$qid.json")" in Complete|Failed|Cancelled|Timeout|Unknown) break ;; esac
+  if [ "$(date +%s)" -ge "$deadline" ]; then aws logs stop-query --profile prod-read --region us-east-1 --query-id "$qid"; break; fi
+  sleep 5
+done
+jq '.statistics' "$RUN/li-$qid.json"
+~~~
 
-```text
-W3-Q1  date -u +%H:%M:%S; TZ=UTC aws cloudtrail lookup-events --profile prod-read --region us-east-1 --lookup-attributes AttributeKey=EventName,AttributeValue=RunTask --start-time 2026-10-07T00:00:00Z --end-time 2026-10-21T02:40:00Z --query "Events[?Resources[?contains(ResourceName || '', 'orders-reconcile')]].[EventTime, EventSource, EventName, Username, EventId]" --output text
-W3-Q2  arns=$(TZ=UTC aws ecs list-tasks --profile prod-read --region us-east-1 --cluster prod --family orders-reconcile --desired-status STOPPED --max-items 100 --query 'taskArns' --output text); [ -n "$arns" ] && [ "$arns" != "None" ] && TZ=UTC aws ecs describe-tasks --profile prod-read --region us-east-1 --cluster prod --tasks $arns --query 'tasks[].{task: taskArn, taskDef: taskDefinitionArn, startedBy: startedBy, startedAt: startedAt, stoppedAt: stoppedAt, stopCode: stopCode, reason: stoppedReason, containers: containers[].{name: name, exit: exitCode, reason: reason}}' --output json
-W3-Q3  (heavy log query, Logs Insights, log group /ecs/orders-reconcile, window 2026-10-21 01:58:00Z–02:28:00Z (30 min, at the raw-lines cap), estimate 0.0007 GB, limit 100 lines)
-       qid=$(aws logs start-query --profile prod-read --region us-east-1 --log-group-names "/ecs/orders-reconcile" --start-time 1792547880 --end-time 1792549680 --query-string 'fields @timestamp, @message | sort @timestamp asc | limit 100' --query queryId --output text); then poll aws logs get-query-results --profile prod-read --region us-east-1 --query-id "$qid" every 5 s for at most 2 minutes
-W3-Q4  gh api repos/example-org/orders-api/compare/2026.10.14-2...2026.10.21-1 --jq '{total: .total_commits, commits: [.commits[].commit.message | split("\n")[0]], files: [.files[] | {filename, status, changes}]}' > "$RUN/c-compare.json"
-W3-Q5  for td in orders-reconcile:6 orders-reconcile:7; do TZ=UTC aws ecs describe-task-definition --profile prod-read --region us-east-1 --task-definition "$td" --query 'taskDefinition.{revision: revision, registeredAt: registeredAt, cpu: cpu, memory: memory, containers: containerDefinitions[].{name: name, image: image, env: environment[].name, secrets: secrets[].name}}' --output json; done
-```
+### Wave 3 command, world files and key facts
 
-| Query ID | Command | World file | Key facts |
+| ID | Command | World file | Key facts |
 |---|---|---|---|
-| W3-Q1 | `aws cloudtrail lookup-events EventName=RunTask` 14 d | `cloudtrail-01.json` (rows matching the lookup) | 15 RunTask on `orders-reconcile:7`: 02:00:02Z on 13 nights, 02:01:02 on 10-16, 02:05:02 on 10-14. First 5xx minute (3 or more) follows by 1 minute on 12 nights and 2 minutes on 3 nights (15 of 15); the onset moved with the fire time on 10-14 (02:06) and 10-16 (02:02). |
-| W3-Q2 | `aws ecs list-tasks --family orders-reconcile --desired-status STOPPED`, `describe-tasks` | `ecs-05.json`, `ecs-06.json` | One stopped task: created 02:00:02.774, started 02:00:09.531, stopping 02:19:52.006, stopped 02:20:14.448, `EssentialContainerExited`, exit code 0, startedBy `events-rule/orders-reconcile-nightly`. |
-| W3-Q3 | Logs Insights `/ecs/orders-reconcile` raw lines | `logs-05.json` (queryId `f0e1d2c3-b4a5-4968-8776-655443322110`), `logs-15.json` | In-window rows: 02:00:11.902 start, mode `SELECT ... FOR UPDATE`; 02:00:12.448 "locking orders rows created 2026-10-20 (estimated 1,184,000 rows)"; 02:09:37.215 progress 600000/1184212; 02:19:48.630 committed 1184212 rows; 02:19:51.877 done in 1179.9 s. 10-19 and 10-20 rows outside the window discarded. |
-| W3-Q4 | `gh api …/compare/2026.10.14-2...2026.10.21-1` | `_default.txt` | `{}`: nothing returned; gap. |
-| W3-Q5 | `aws ecs describe-task-definition orders-reconcile:6`, `:7` | `ecs-16.json`, `ecs-13.json` | Rev 6 image tag `2026.08.19-1` registered 2026-08-19, INACTIVE. Rev 7 image tag `2026.09.30-1` registered 2026-09-30 10:02:17Z. Env names identical (`DB_HOST`, `RECON_BATCH_SIZE`, `RECON_LOCK_MODE`); values not recorded. |
+| W3-Q1 | `aws logs start-query` on `/ecs/orders-reconcile` 02:00-02:25 UTC, no `stats`; then `aws logs get-query-results` | `logs-05.json` (queryId `f0e1d2c3-b4a5-4968-8776-655443322110`), then `logs-15.json` (rows inside the window) | 5 lines in the window (the 10-19 and 10-20 lines in the file were outside the requested window and not used): 02:00:11.902 start run_id=20261021-0200 window=previous_day batch_size=5000 mode=SELECT ... FOR UPDATE; 02:00:12.448 locking orders rows created 2026-10-20 (estimated 1,184,000 rows); 02:09:37.215 progress 600000/1184212 rows; 02:19:48.630 committed 1184212 rows, 37 mismatches written to recon_exceptions; 02:19:51.877 done in 1179.9s. Reported bytesScanned 61,440. No instruction-like text. |
 
-Untrusted text: none seen in any log line, release note or task output. No suspected prompt injection to flag.
+Fast mode stops here (three waves after wave 0 and the profile build). The Phase 5 label work: trigger Confirmed (schedule, RunTask, job log); mechanism Likely (job logs show row locking, orders-api shows 50 s lock-wait failures, timing to the second, burst follows the job; but no database-side view of the blocked statements and the lock-wait share of the 438 5xx was not counted); symptom Confirmed. Cause capped at Likely by the mechanism link. H2 (release) Ruled out by the old-against-new split from metrics plus registration and UpdateService times (per-revision counts quoted in the report). Fixed-clock backup window Ruled out by the follow-the-job shift; H6 Ruled out; H5 and H7 stay Assumed. Ledger updated (query row W3-Q1, timeline rows, hypothesis notes, budget) before this message was composed.
 
-Verdicts written to the ledger: H1 Likely (merged with H4), H1b Ruled out (W2-Q1), H2 Ruled out (W1-Q8, W2-Q3, W2-Q5), H5 Ruled out (W1-Q1, W1-Q2), H3 and H6 open at `Assumed`. Old-against-new quoted per revision: rev 42: 1/1 mornings, 438 target 5xx in the 02:00 hour; rev 41: 6/6 mornings (133, 398, 69, 104, 412, 96); the revision before 41: 8/8 mornings (88, 421, 61, 117, 386, 74, 52, 455).
+### Message 8 (end of Fast run: TL;DR inline, report path, cost line; verbatim)
 
-## Phase 5: conclude
+~~~text
+Wave 3 read the reconcile job's own log: it starts at 02:00:11 and logs "locking orders rows created 2026-10-20 (estimated 1,184,000 rows)" with a SELECT ... FOR UPDATE batch, and it commits all 1,184,212 rows at 02:19:48. That is the same window as the 5xx.
 
-Fast mode, three waves used. No `from-history:` entries. Fixes written as prose only. The report (Fast sections: TL;DR, Impact, Causal chain, Gaps, To confirm, Follow-ups, Cost) is saved separately as `report.md`.
+TL;DR
+Cause:           the nightly reconcile job (EventBridge rule orders-reconcile-nightly, 02:00 UTC) locks about 1.18 million orders rows for about 20 minutes, and orders-api writes (POST /orders, PATCH /orders/{id}) wait out the 50-second database lock-wait limit and return HTTP 500 · label: Likely
+Weakest link:    the mechanism, the job's locks being what orders-api waits on · Likely. No database-side view of the blocked statements, and only 6 error lines were sampled, so the lock-wait share of the 438 5xx is not counted. The trigger (schedule, RunTask 02:00:02) and the symptom (5xx counts) are Confirmed.
+Impact:          438 target 5xx from 02:01 to 02:19 UTC (11:01 to 11:19 JST), peak 55/min at 02:04; over, alarm OK since 02:12 UTC; failing share of requests not measurable (RequestCount did not return).
+Severity:        SEV2 (suggested) because a prod service behind a public-named ALB returned up to 55 5xx/min for about 19 minutes with both core flows among the failures; SEV1 could not be shown (failing share unknown). The incident owner decides.
+Pattern:         scheduled · six alarm episodes within +/-15 min of 02:04 UTC in 14 days, 5xx peak in the 02:00 hour on 14 of 14 prior days, burst follows the job's start time · Confirmed. This is at least the 15th daily burst in the data (10-07 to 10-21).
+Recommended action: do not roll back the release: the same burst happened on every earlier revision. Ask the reconcile job's owner and the database owner to confirm the lock holder for 02:00 to 02:20 UTC, then change how the job reads the orders table (see Follow-ups). Check any change with pre-flight and apply it in a separate session.
+Time to cause:   about 8 minutes of run time (nominal clock) to the first Likely (wave 2); Confirmed not reached.
+Similar past incidents: none (no history yet)
 
-### Message 7 (verbatim, TL;DR printed inline)
+Report: .culiops/sre-investigate/runs/orders-api-prod-20261021-0240/report.md (report saved separately).
+Open items need your input.
+18 queries · 0.481 GB of logs scanned · 19 metric requests · no other metered units · about $0.003 in metered charges (my estimate from CloudWatch list prices, not checked against a bill)
+~~~
 
-```text
-TL;DR (full report path: runs/orders-api-prod-20261021-0240/report.md)
-Cause: the nightly reconcile job (EventBridge orders-reconcile-nightly, 02:00 UTC = 11:00 JST) holds row locks on about 1.18M order rows for about 20 minutes (SELECT ... FOR UPDATE), and orders-api writes (POST /orders, PATCH /orders/{id}) wait out the database lock limit (about 50 s) and return 500. Not your release. Label: Likely.
-Weakest link: that the API's lock waits are waits on the job's locks. No database-side lock view was readable, and the log sample is 5 lines against 339 counted 5xx in the same minutes. Everything else in the chain is Confirmed on its own query. This caps the cause at Likely.
-Impact: 439 target 5xx between 02:01 and 02:19 UTC (11:01-11:19 JST), peak 55/min at 02:04; over now (alarm OK since 02:12). The same episode ran on all 15 mornings from 10-07 to 10-21; the alarm paged 6 times in the 14 days of history. Failing share of requests: unknown.
-Severity (suggested): SEV2, because both core flows are among the failing routes every morning; SEV1 if more than 5% of requests failed. You decide.
-Recommended action: have the reconcile job's owners stop it from holding long row locks on live order data (smaller committed batches, a non-locking read, or a quiet hour), and treat the next 02:00 UTC run as a repeat until that is done. Changes go through pre-flight and a separate session.
-Open: lock holder not seen from the database side; failing share unknown; one ECONNRESET to payments unexplained; why every 2-3 days the episode is about 4x larger.
-open items need your input
-Cost: 7 metered queries, about 0.48 GB of logs scanned, 22 metric requests.
-```
+## Phase 6: record (after the report; nothing written before the reply)
 
-## Phase 6: record
+### Message 9 (the diff, shown to the operator, verbatim)
 
-### Message 8 (verbatim, proposed diff; nothing written until the operator replies)
-
-```text
-Proposed record for runs/orders-api-prod-20261021-0240 (nothing is written until you reply; accept, edit or skip each item).
+~~~text
+Record phase. This is a proposed diff against the files under .culiops/sre-investigate/. Nothing is written until you reply; accept, edit or skip each item. No reply means no write.
 
 1. NEW incidents/2026-10-21-orders-api.md
----
-id: 2026-10-21-orders-api-prod-reconcile-lock-waits
-date: 2026-10-21
-service: orders-api
-env: prod
-siblings: [all]
-window_utc: 2026-10-21T02:01:00Z/2026-10-21T02:19:59Z
-symptoms: [errors-5xx, timeouts]
-cause_category: schedule
-cause: nightly orders-reconcile job (02:00 UTC) holds row locks for about 20 minutes and orders-api writes time out on lock waits
-deps: [orders-reconcile, orders-db]
-label: Likely
-mode: fast
-time_to_cause_min: 5
-run: runs/orders-api-prod-20261021-0240
----
-Body: what happened; causal chain (trigger Confirmed, mechanism Confirmed per leg, lock-holder link Likely); what found it (per-night RunTask times against per-minute 5xx onsets, and the job's own log); what did not help (the release, the alarm threshold, the weekly sitemap rule); follow-ups raised.
++---
++id: 2026-10-21-orders-api-prod-reconcile-lock-waits
++date: 2026-10-21
++service: orders-api
++env: prod
++siblings: [all]
++window_utc: 2026-10-21T01:30:00Z/2026-10-21T02:40:00Z
++symptoms: [errors-5xx, timeouts]
++cause_category: schedule
++cause: nightly orders-reconcile job takes SELECT ... FOR UPDATE row locks on the orders table at 02:00 UTC and orders-api writes fail with 50 s lock wait timeouts
++deps: [orders-reconcile, orders-db]
++label: Likely
++mode: fast
++time_to_cause_min: 8
++run: runs/orders-api-prod-20261021-0240
++---
++- What happened: a 5xx burst (438 target 5xx, 02:01-02:19 UTC) was reported as caused by the release; it is a daily burst that follows the nightly reconcile job.
++- Causal chain: trigger RunTask 02:00:02 (Confirmed); job locks about 1.18M orders rows until commit 02:19:48 and orders-api writes hit ER_LOCK_WAIT_TIMEOUT (Likely); 5xx on POST /orders and PATCH /orders/{id} (Confirmed).
++- What found it: recurrence class from alarm history plus the hourly 14-day series, then CloudTrail RunTask times (burst moved with the job on 10-14 and 10-16) and the reconcile job log.
++- What did not help: blaming the release; the old-against-new split cleared it. Database metrics and RequestCount were not readable.
++- Follow-ups raised: change how the job reads the orders table; read the database lock view for 02:00-02:20 UTC; fix RequestCount access.
 
-2. NEW lessons.md (4 lines, from the ledger's Lesson candidates only)
-- type: process | service: any | source: cloudwatch | statement: get-metric-data replies here carry one entry labelled HTTPCode_Target_5XX_Count with Id m1, not the Ids sent; check the returned Ids before reading a missing series as zero | run: orders-api-prod-20261021-0240 | query_id: W1-Q5 | re-verify: yes
-- type: identifier | service: orders-api | source: cw-logs | statement: log group /ecs/orders-api holds JSON lines with level, status, route, error_code, msg, duration_ms and ecs_task_revision (the ECS task definition revision), usable for a per-revision split | run: orders-api-prod-20261021-0240 | query_id: W2-Q7 | re-verify: no
-- type: process | service: orders-api | source: cw-logs | statement: lines with status 5xx in /ecs/orders-api are a thin sample of the ALB target 5xx count (5 lines against 339 in 01:51-02:11 UTC); size an incident from the ALB metric, not from log lines | run: orders-api-prod-20261021-0240 | query_id: W2-Q7 | re-verify: yes
-- type: failure-mode | service: orders-api | source: cw-logs | statement: daily 02:00 UTC orders-reconcile-nightly runs SELECT ... FOR UPDATE on about 1.18M orders rows for about 19.7 min; POST /orders and PATCH /orders/{id} fail after about 50 s with ER_LOCK_WAIT_TIMEOUT, onset 1-2 min after RunTask | run: orders-api-prod-20261021-0240 | query_id: W3-Q3 | re-verify: no
+2. APPEND lessons.md (each backed by a query ID of this run)
++- type: process | service: orders-api | source: cloudwatch | statement: A get-metric-data batch of six metrics returned only the 5xx series (Id printed as m1); match by Label and record absent Ids as a gap, never as zero. | run: orders-api-prod-20261021-0240 | query_id: W1-Q3 | re-verify: yes
++- type: process | service: any | source: cloudwatch | statement: describe-alarm-history prints the machine offset (+09:00 here) and keeps about 14 days although 30 were asked; convert with the epoch function and never take the user's zone from the offset. | run: orders-api-prod-20261021-0240 | query_id: W1-Q5 | re-verify: no
++- type: identifier | service: orders-api | source: cw-logs | statement: orders-api logs are in /ecs/orders-api (JSON with level, status, route, error_code, msg, duration_ms, ecs_task_revision); /ecs/orders-reconcile in the same prefix is another workload with plain-text lines. | run: orders-api-prod-20261021-0240 | query_id: W2-Q5 | re-verify: no
++- type: process | service: orders-api | source: cw-logs | statement: Logs Insights on /ecs/orders-api scanned about 16x the storedBytes estimate (0.481 GB against 0.030 GB for 20 minutes); size the next query with that ratio. | run: orders-api-prod-20261021-0240 | query_id: W2-Q5 | re-verify: yes
++- type: failure-mode | service: orders-api | source: aws | statement: 5xx burst at 02:00-02:20 UTC daily with ER_LOCK_WAIT_TIMEOUT (about 50 s) on POST /orders and PATCH /orders/{id} while the orders-reconcile-nightly task runs; the burst start follows the RunTask time. | run: orders-api-prod-20261021-0240 | query_id: W2-Q4 | re-verify: no
 
-3. NEW profiles/orders-api-prod.md = this run's profile.md: identifiers verified 2026-10-21 (ECS cluster/service, ALB and target group, log groups /ecs/orders-api and /ecs/orders-reconcile, alarm orders-api-5xx-high), image tag equals release tag, periodic job orders-reconcile-nightly (02:00 UTC, about 19-20 min), payments as a downstream; unverified: Aurora orders-db, target group lookup by elbv2, default branch. Stale identifiers: none.
+3. NEW profiles/orders-api-prod.md = the run's profile.md (first run for this service): identifiers added and verified (log group and its fields, ECS cluster and service, ALB and target group, alarm, release-tag-to-image rule, reconcile rule and log group), Aurora orders-db and the code default branch left (unverified), dependencies (payments service, reconcile job as co-tenant on the orders table), the known periodic job (orders-reconcile-nightly 02:00 UTC) and the benign background of 1 to 6 5xx per hour.
 
-Candidate for the skill itself (not for this repo, to be proposed later in a normal session): when a scheduled job's start time slips on some nights, check that the 5xx onset moves with it (EventName=RunTask lookups in CloudTrail give the fire times); this was the strongest timing check in this run.
-```
+Candidates for the skill itself (to propose later in a normal session, not now): the Logs Insights estimate from storedBytes was 16x low here; describe-alarm-history keeps about 14 days, not the 30 the recipe asks for; a get-metric-data reply may omit requested Ids without a message; a simulate-principal-policy reply may skip requested actions.
+~~~
 
-No reply from the operator, so per Phase 6 nothing was written for items 1–3 (no `incidents/`, `lessons.md` or `profiles/` files exist in `out/`).
+No operator reply to the diff exists in the script, so by the skill's rule nothing was written under `incidents/`, `lessons.md` or `profiles/`.
 
-## Files written (all under `out/`)
+## Files written (all under the simulated output root `out/`)
 
-- `runs/orders-api-prod-20261021-0240/profile.md` (the run's working profile)
-- `runs/orders-api-prod-20261021-0240/ledger.md` (working record, updated after every wave and before results were used)
+- `runs/orders-api-prod-20261021-0240/ledger.md` (created at run start, updated after wave 0, after the profile build, after wave 1 with the Phase 3 hypotheses, after wave 2, and after wave 3)
+- `runs/orders-api-prod-20261021-0240/profile.md` (run profile; marks updated after waves 2 and 3)
+- `runs/orders-api-prod-20261021-0240/raw/m-golden-5xx.tsv` (per-minute 5xx table of the three golden-signal windows)
 - `run-log.md` (this file)
-
-`report.md`: report saved separately. Not written: `raw/` pulls (simulated; query results are summarised in the ledger rows), `environment.md` (no copy was needed), `incidents/`, `lessons.md`, `profiles/` (awaiting the operator's reply).
-
-## World files opened (every one was mapped by a command above)
-
-`INDEX.md`, `_empty.txt`, `ls-01.txt`, `environment.md`, `sts-01.json`, `iam-01.json`, `iam-02.json`, `logs-01.json`, `cw-01.json`, `ecs-11.json`, `ecs-10.json`, `cw-05.json`, `_default.txt`, `ecs-09.json`, `ecs-01.json`, `ecs-04.json`, `ecs-07.json`, `ecs-08.json`, `cw-02.json`, `cw-04.json`, `cw-03.json`, `events-01.json`, `scheduler-01.json`, `ecs-02.json`, `ecs-03.json`, `gh-02.txt`, `gh-01.txt`, `events-02.json`, `events-03.json`, `events-06.json`, `events-04.json`, `cloudtrail-01.json`, `logs-04.json`, `logs-14.json`, `ecs-05.json`, `ecs-06.json`, `logs-05.json`, `logs-15.json`, `ecs-16.json`, `ecs-13.json`. Never opened: `events-05.json`, `events-07.json`, `ecs-12.json`, `ecs-14.json`, `ecs-15.json`, `cw-06.json`, `logs-02.json`, `logs-03.json`, `logs-06.json`, `logs-12.json`, `logs-13.json`, `logs-16.json`, `logs-17.json`, `logs-18.json`, `logs-19.json`.
-
-## Process notes
-
-- The two world-file quirks noted as lesson candidates or gaps: the `get-metric-data` reply carried only the 5xx series (Id `m1`); the IAM simulation reply listed three unrequested actions and omitted three requested ones.
-- Two corrections to my own shown messages are listed under message 6. They are repeated here because message 4's severity (SEV3, provisional) was revised to SEV2 in the ledger after wave 2: the revision is shown to the operator in message 7.
-- Stopped orders-api tasks were gone by ~02:42 (about an hour after the 01:25–01:29 stops); the nightly job's stopped task (stopped 02:20) was still listable at ~02:48.
+- `report.md`: report saved separately. Not written, by rule: `incidents/`, `lessons.md`, `profiles/` (no reply to the Phase 6 diff). `environment.md` was not touched.

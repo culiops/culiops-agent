@@ -201,6 +201,8 @@ Totals: 14 PASS, 0 FAIL, 1 N/A (round 2: 13 PASS, 1 FAIL, 1 N/A).
 
 Totals: 13 PASS, 1 FAIL, 1 N/A.
 
+Row 6 note: P16 now makes the skill write `from-history:<file>.md` (extension kept). This case was not re-run after P16, because it is a naming-only change, so row 6 stays as scored above with this note.
+
 Past-incident isolation: the from-history worker received only the line the main session wrote (`run-log.md:641`). No worker section opens `incidents/` or reads the ledger's Memory section, and the Memory row holds only file names and matched fields.
 
 ## Findings and fixes
@@ -216,6 +218,6 @@ Past-incident isolation: the from-history worker received only the line the main
   - The fingerprint-review wording.
 - History: round 1 FAIL row 7 was fixed by P3/P4. Round 2 FAIL row 5 was fixed by P11. Row 6 is graded literally since round 3, fixed by P12 in round 3.
 - Final round: rows 5 and 7 pass.
-- **Final FAIL, row 6 (literal ID):** the run wrote `from-history:2026-08-14-orders-api`, without the `.md` the README names. Everything else about the entry is right: it was created after ranking, got its own worker, received only the main session's line, and was ruled out. Gap: SKILL.md and `templates/ledger.md` say `from-history:<file>` but do not say that `<file>` keeps its extension. Proposed fix P16 (not applied):
+- **Final FAIL, row 6 (literal ID):** the run wrote `from-history:2026-08-14-orders-api`, without the `.md` the README names. Everything else about the entry is right: it was created after ranking, got its own worker, received only the main session's line, and was ruled out. Gap: SKILL.md and `templates/ledger.md` say `from-history:<file>` but do not say that `<file>` keeps its extension. Proposed fix P16 (applied after the final round; case not re-run, see the row 6 note):
   - `skills/sre-investigate/SKILL.md`, Phase 3 "History after ranking": after "with ID `from-history:<file>`" insert "(the file name as listed, extension included, for example `from-history:2026-01-05-checkout-api.md`)".
   - `skills/sre-investigate/templates/ledger.md`: in the line "Each history match is its own entry with the ID `from-history:<file>`", append "(file name with its extension)".

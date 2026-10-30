@@ -145,3 +145,15 @@ Totals: 9 PASS, 0 FAIL, 0 N/A.
   - The fingerprint-review wording.
 - History: round 1 FAIL on row 4 (back-off event undated) was fixed by P1/P2. Round 1 weak PASS on row 5 became a plain PASS with P5.
 - Final round: no FAIL. No skill change proposed from this case.
+
+## Live check
+
+A read-only write-check against a real account, owed since the access file was written. Only the decisions and counts are recorded here.
+
+- AWS CLI: aws-cli/2.34.32.
+- `iam:SimulatePrincipalPolicy` succeeded for both roles tested, a limited lab role and an administrator role (no `AccessDenied`).
+- The role ARN was resolved from the assumed-role ARN with `iam get-role`. SSO roles carry the `/aws-reserved/sso.amazonaws.com/` path, and the resolved ARN included it.
+- Decisions on the ten fixed actions:
+  - limited lab role: 9 of 10 `allowed`; `cloudformation:DeleteStack` `implicitDeny`;
+  - administrator role: 10 of 10 `allowed`.
+- A ReadOnlyAccess role was not available to test, so the "simulation denied" path (the informational "write capability unknown (gap)" notice and its fallback order) remains docs-only.
