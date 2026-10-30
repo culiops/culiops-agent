@@ -1,7 +1,7 @@
 # Changes playbook
 
 Backends: ECS (AWS CLI) · EC2 Auto Scaling and Application Auto Scaling · EventBridge rules and EventBridge Scheduler · Systems Manager maintenance windows · RDS and ElastiCache events · CloudTrail (`lookup-events`) · kubectl and Helm (read verbs only) · Grafana annotations · git (a local clone, read by ref) and `gh` (read-only calls) · public vendor status pages
-verified: live (AWS CLI, 2026-10-30: ecs describe-services, ecs describe-task-definition, the ecs list-tasks call, events list-rules, application-autoscaling describe-scheduled-actions, ssm describe-maintenance-windows, cloudtrail lookup-events with ReadOnly=false) · docs-only (EventBridge Scheduler, denied on the test role; ecs describe-tasks and the other schedule, scaling and event recipes, which had nothing to read; the old-against-new recipes; recipes added after the live run; kubectl, Helm, git, gh and Grafana)
+verified: live (AWS CLI, 2026-10-30: ecs describe-services, ecs describe-task-definition; on empty results only: the ecs list-tasks call, events list-rules, application-autoscaling describe-scheduled-actions, ssm describe-maintenance-windows, cloudtrail lookup-events with ReadOnly=false) · docs-only (EventBridge Scheduler, denied on the test role; ecs describe-tasks and the other schedule, scaling and event recipes, which had nothing to read; the old-against-new recipes; recipes added after the live run; kubectl, Helm, git, gh and Grafana)
 
 **Purpose.** This playbook builds the list of everything that changed around the onset: deploys, task and pod churn, scaling, schedules that fired, infrastructure applies, managed-service events, upstream deploys and vendor incidents. Each entry goes on the ledger timeline with its UTC time and source. The list is a set of candidates. A change becomes a suspect only when it touches the failing path, and a cause only when evidence from the other playbooks ties it to the symptom.
 
@@ -344,7 +344,7 @@ TZ=UTC aws cloudtrail lookup-events --profile <profile> --region <region> \
     --lookup-attributes AttributeKey=EventName,AttributeValue=UpdateService \
     --start-time <onset-2h> --end-time <onset+15m> --output json \
   | jq -r '.Events[] | .CloudTrailEvent | fromjson
-      | select((.requestParameters.service // "") | contains("<service>"))
+      | select((.requestParameters.service // "") | test("(^|/)<service>$"))
       | [.eventTime, (.userIdentity.sessionContext.sessionIssuer.userName // .userIdentity.type),
          (.requestParameters.cluster // "-"), .requestParameters.service,
          (.requestParameters.desiredCount // "-"), (.requestParameters.taskDefinition // "-")] | @tsv'

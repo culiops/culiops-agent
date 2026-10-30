@@ -1,7 +1,7 @@
 # Metrics playbook
 
 Backends: CloudWatch (metrics, metric math, alarm history) · Prometheus (its HTTP API, the Grafana datasource proxy, or a Grafana MCP server), including kube-state-metrics and cAdvisor series · Grafana annotations · kubectl
-verified: live (AWS CLI, 2026-10-30: cloudwatch get-metric-data in the three-window loop and in the 14d × 1h recurrence pull with its statistics jq, ECS form; cloudwatch list-metrics; cloudwatch describe-alarm-history) · docs-only (the alarm-history jq and the GetMetricData table jq, which ran on empty results only; the ALB, FILL and cluster-peer recipes; Prometheus, kube-state-metrics and kubectl)
+verified: live (AWS CLI, 2026-10-30: cloudwatch get-metric-data in the three-window loop and in the 14d × 1h recurrence pull with its statistics jq, ECS form) · docs-only (cloudwatch list-metrics and cloudwatch describe-alarm-history, whose calls ran only in other forms or on 0 items; the alarm-history jq and the GetMetricData table jq, which ran on empty results only; the ALB, FILL and cluster-peer recipes; Prometheus, kube-state-metrics and kubectl)
 
 **Purpose.** Metrics are the cheapest way to answer five questions: how much traffic, how many failures, how slow, how saturated, and since when. They give the true onset (often minutes before the alert), the shape of the change, and whether the incident level is unusual at all. They never give the mechanism; that comes from logs and traces.
 

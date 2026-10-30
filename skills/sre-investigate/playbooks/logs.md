@@ -60,7 +60,7 @@ done
 aws cloudwatch get-metric-statistics --profile <profile> --region <region> \
   --namespace AWS/Logs --metric-name IncomingBytes \
   --dimensions Name=LogGroupName,Value=<log-group> \
-  --start-time "$START" --end-time "$END" --period 300 --statistics Sum \
+  --start-time "$START_S" --end-time "$END_S" --period 300 --statistics Sum \
   --query 'sum(Datapoints[].Sum)' --output text
 ```
 <!-- doc: https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/CloudWatch-Logs-Monitoring-CloudWatch-Metrics.html -->
