@@ -265,3 +265,25 @@ def test_resource_limits_are_set_and_locked(data):
     for sql in ("SET memory_limit='100GB'", "SET threads=64"):
         with pytest.raises(DuckError):
             duck.run([], sql, [data])
+
+
+def test_script_write_failure_is_a_duckerror(data, monkeypatch):
+    import builtins
+    import errno
+    real_open = builtins.open
+
+    def failing_open(file, *a, **kw):
+        if str(file).endswith("in.sql"):
+            raise OSError(errno.ENOSPC, "No space left on device")
+        return real_open(file, *a, **kw)
+
+    monkeypatch.setattr(builtins, "open", failing_open)
+    with pytest.raises(DuckError, match="cannot run duckdb"):
+        duck.run([], "SELECT 1", [data])
+
+
+def test_stderr_is_read_with_a_cap(data, monkeypatch):
+    monkeypatch.setattr(duck, "_MAX_ERR_BYTES", 10_000)
+    with pytest.raises(DuckError) as ei:
+        duck.run([], "SELECT error(repeat('x', 3000000))", [data])
+    assert len(str(ei.value)) < 2200

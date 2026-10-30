@@ -101,6 +101,12 @@ _ALB_FIELDS = (
     "target_error_code", "elb_error_code",
 )
 _ALB_MIN_FIELDS = 14   # through user_agent; older entries are shorter than today's 36
+# The doc lists 36 fields and says new ones are appended at the end (sometimes first as a lone
+# "-"). A few extra trailing fields are tolerated; a row with more tokens than that is skipped
+# and counted, never truncated: a client-controlled field (the user agent) that injects tokens
+# shifts every later field, and truncating would hide the shift.
+_ALB_TRAILING_TOLERANCE = 4
+_ALB_MAX_FIELDS = len(_ALB_FIELDS) + _ALB_TRAILING_TOLERANCE
 _ALB_TYPES = frozenset(["http", "https", "h2", "grpcs", "ws", "wss"])
 _ALB_TIME_RE = re.compile(r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?Z")
 _ALB_REQUEST_RE = re.compile(r"(\S+) (.*) (HTTP/\d+(?:\.\d+)?|-)")
@@ -331,8 +337,8 @@ def _split_addr(value: str) -> Tuple[str, Optional[str]]:
 
 
 def _alb_row(line: str, names: frozenset) -> Optional[dict]:
-    toks = _tokenize(line, len(_ALB_FIELDS))
-    if toks is None or len(toks) < _ALB_MIN_FIELDS:
+    toks = _tokenize(line, _ALB_MAX_FIELDS + 1)
+    if toks is None or not _ALB_MIN_FIELDS <= len(toks) <= _ALB_MAX_FIELDS:
         return None
     if toks[0] not in _ALB_TYPES or not _ALB_TIME_RE.fullmatch(toks[1]):
         return None

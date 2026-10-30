@@ -83,11 +83,40 @@ def mask_query(qs: str, sensitive: "frozenset") -> str:
     return _mask_query(qs, frozenset(str(x).lower() for x in sensitive), False)
 
 
+_SCHEME_RE = re.compile(r"[A-Za-z][A-Za-z0-9+.-]*:")
+_AUTH_END_RE = re.compile(r"[/?#]")
+_URL_JUNK_RE = re.compile(r"[\t\r\n]")
+_LEADING_JUNK = "".join(chr(i) for i in range(33))  # C0 controls and space, stripped like browsers do
+
+
+def _find_userinfo(text: str, conservative: bool) -> "Tuple[str, int, int]":
+    """Fail-closed userinfo finder. Returns ``(t, start, at)``: ``t`` is ``text`` normalised the
+    way a browser would (``\\`` read as ``/``, tab/CR/LF removed, leading controls and spaces
+    stripped); ``t[start:]`` is what follows the scheme and any run of ``/``; ``at`` is the index
+    of the last ``@`` that sits before the first ``/``, ``?`` or ``#`` of that remainder, or -1.
+
+    The rule applies to a value with a scheme (``name:``, whatever the slashes: ``https:/x@h``,
+    ``https:x@h``, ``https:///x@h``) and to a scheme-less value starting with ``//`` (or, when
+    ``conservative``, with a single ``/``, because a nested value is only ever masked, never
+    rewritten). So ``mailto:user@example.com`` counts as userinfo too: an address is personal data.
+    """
+    t = _URL_JUNK_RE.sub("", text.replace("\\", "/")).lstrip(_LEADING_JUNK)
+    m = _SCHEME_RE.match(t)
+    if m:
+        start = m.end()
+    elif t.startswith("//") or (conservative and t.startswith("/")):
+        start = 0
+    else:
+        return t, 0, -1
+    while start < len(t) and t[start] == "/":
+        start += 1
+    m = _AUTH_END_RE.search(t, start)
+    end = m.start() if m else len(t)
+    return t, start, t.rfind("@", start, end)
+
+
 def _has_userinfo(text: str) -> bool:
-    """Does ``text`` start like a URL with ``user[:pw]@``? Browsers read ``\\`` as ``/`` in
-    special schemes, so it is normalised first. Same parser as ``mask_url``. May raise
-    ValueError."""
-    return "@" in urlsplit(text.replace("\\", "/")).netloc
+    return _find_userinfo(text, True)[2] >= 0
 
 
 def _nested_leaks(text: str, names: "frozenset") -> bool:
@@ -105,13 +134,16 @@ def _value_leaks(raw_value: str, names: "frozenset", nested: bool) -> bool:
     dec = unquote_plus(raw_value, errors="strict")
     if not any(c in dec for c in "?&;=#@"):
         return False
-    before, hash_, frag = dec.partition("#")
-    if _has_userinfo(dec) or (hash_ and _has_userinfo(frag)):
+    # Every '#'-separated piece is checked on its own: the first is the value itself, the rest
+    # are fragments (a second '#' does not start a new URL, but a browser-side script may read it).
+    pieces = dec.split("#")
+    if any(_has_userinfo(p) for p in pieces):
         return True
     if nested:
         # Third level: do not look deeper, just refuse anything that still looks like a URL.
         return "?" in dec or "#" in dec
-    if hash_ and _nested_leaks(frag, names):
+    before = pieces[0]
+    if any(_nested_leaks(p, names) for p in pieces[1:]):
         return True
     return any(c in before for c in "?&;=") and _nested_leaks(before, names)
 
@@ -221,14 +253,17 @@ def _mask_uri(uri: str, sensitive: "frozenset") -> str:
 
 def mask_url(url: str, sensitive: "frozenset") -> str:
     """Mask a full URL (referer, ALB redirect URL): query via mask_query, path parameters via
-    mask_path. Also drops userinfo and the fragment (both can carry secrets). Unparseable
-    -> ``***``. ``None``, ``""`` and ``"-"`` (the logs' "absent") are returned as they are;
+    mask_path. Also drops userinfo (see ``_find_userinfo``: any scheme/slash spelling, and a
+    ``mailto:`` address; a scheme-less value with one leading slash is a path and is kept) and
+    the fragment (both can carry secrets). Unparseable -> ``***``. ``None``, ``""`` and ``"-"`` (the logs' "absent") are returned as they are;
     a non-string becomes ``***``."""
     if url is None or url == "" or url == "-":
         return url
     if not isinstance(url, str):
         return MASK
-    value = url.replace("\\", "/")  # browsers read a backslash as a slash in http(s) URLs
+    value, start, at = _find_userinfo(url, False)
+    if at >= 0:  # drop everything up to and including the userinfo '@' (rebuilt below, else '***')
+        value = value[:start] + value[at + 1:]
     try:
         sp = urlsplit(value)
         netloc = sp.netloc.rsplit("@", 1)[-1]

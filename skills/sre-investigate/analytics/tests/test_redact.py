@@ -734,3 +734,65 @@ def test_mask_url_backslash_userinfo_dropped():
     names = redact.sensitive_names(Config())
     out = redact.mask_url("https:\\\\u:SECRETPW@h.example.com/p?token=T", names)
     assert "SECRETPW" not in out and out.endswith("?token=***")
+
+
+# ---- fix round 2 (R30): fail-closed userinfo rule, every '#' piece ---------------------------
+
+@pytest.mark.parametrize("qs", [
+    "r=https%3A%2Fu%3ASECPW%40h.example.com%2Fp",            # https:/u:pw@h/p
+    "r=https%3Au%3ASECPW%40h.example.com%2Fp",               # https:u:pw@h/p
+    "r=https%3A%5Cu%3ASECPW%40h.example.com%2Fp",            # https:\u:pw@h/p
+    "r=https%3A%2F%2F%2Fu%3ASECPW%40h.example.com%2Fp",      # https:///u:pw@h/p
+    "r=https%3A%5C%5C%5Cu%3ASECPW%40h.example.com",          # https:\\\u:pw@h
+    "r=%2F%2Fu%3ASECPW%40h.example.com",                     # //u:pw@h
+    "r=%5Cu%3ASECPW%40h.example.com",                        # \u:pw@h (scheme-less, conservative here)
+    "r=%2Fu%3ASECPW%40h.example.com",                        # /u:pw@h (scheme-less, conservative here)
+    "r=ht%09tps%3A%2F%2Fu%3ASECPW%40h.example.com",          # tab inside the scheme
+    "r=%20https%3A%2F%2Fu%3ASECPW%40h.example.com",          # leading space
+    "r=mailto%3Auser%40example.com",                         # documented: an address counts as userinfo
+    "r=x%23a%23https%3A%2F%2Fu%3ASECPW%40h",                 # second '#'
+    "r=x%23a%23access_token%3DSECPW",                        # second '#', query-shaped
+    "r=x%23a%23b%23https%3Au%3ASECPW%40h",                   # third '#'
+])
+def test_userinfo_variants_and_every_hash_piece_masked(qs):
+    out = redact.mask_query(qs, redact.sensitive_names(Config()))
+    assert out == "r=***"
+
+
+@pytest.mark.parametrize("qs", [
+    "u=user%40example.com",
+    "email_to=a%40example.com",
+    "r=https%3A%2F%2Fh.example.com%2F%40user",
+    "r=https%3A%2F%2Fh.example.com%2Fp%3Fa%3Db%40c",
+    "r=https%3A%2F%2Fh.example.com%3A8443%2Fp",
+    "r=%2Fhome%23a%23b",
+    "t=12%3A30%40x",
+])
+def test_benign_at_signs_and_colons_kept(qs):
+    assert redact.mask_query(qs, redact.sensitive_names(Config())) == qs
+
+
+@pytest.mark.parametrize("url", [
+    "https:/u:SECPW@h.example.com/p?token=T",
+    "https:u:SECPW@h.example.com/p?token=T",
+    "https:\\u:SECPW@h.example.com/p?token=T",
+    "https:///u:SECPW@h.example.com/p?token=T",
+    "https://u:SECPW@h.example.com/p?token=T",
+    "//u:SECPW@h.example.com/p?token=T",
+    "\\\\u:SECPW@h.example.com/p?token=T",
+    "https://a@b:SECPW@h.example.com/p?token=T",
+    "ht\ttps://u:SECPW@h.example.com/p?token=T",
+])
+def test_mask_url_drops_userinfo_in_every_variant(url):
+    out = redact.mask_url(url, redact.sensitive_names(Config()))
+    assert "SECPW" not in out and "u:" not in out
+    assert "h.example.com/p" in out and out.endswith("?token=***")
+
+
+def test_mask_url_userinfo_documented_choices():
+    names = redact.sensitive_names(Config())
+    assert redact.mask_url("https://u:SECPW@h.example.com/p", names) == "https://h.example.com/p"
+    assert redact.mask_url("mailto:user@example.com", names) == "mailto:example.com"  # address is dropped
+    assert redact.mask_url("/@user/profile?x=1", names) == "/@user/profile?x=1"        # one slash = a path
+    assert redact.mask_url("https://medium.example.com/@user/p", names) == "https://medium.example.com/@user/p"
+    assert redact.mask_url("user%40example.com", names) == "user%40example.com"

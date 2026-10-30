@@ -469,3 +469,36 @@ def test_lone_surrogate_in_waf_record_does_not_lose_the_batch(work):
     row = query(out, "SELECT uri, user_agent FROM read_parquet({t}) WHERE action = 'BLOCK'")[0]
     assert row["uri"].startswith("/a") and row["uri"].endswith("b")
     assert row["user_agent"].startswith("x") and row["user_agent"].endswith("y")
+
+
+# ---- fix round 2 (R30) ------------------------------------------------------------------------
+
+def _forged_ua(injected: int) -> str:
+    """A user agent that closes its quotes and adds `injected` more tokens, all "-" (so the
+    shape checks pass), pushing the real fields to the right."""
+    return 'a"' + ' "-"' * (injected - 1) + ' "z'
+
+
+@pytest.mark.parametrize("injected", [3, 4, 5, 22, 23, 29, 60])
+def test_alb_token_injection_is_skipped_at_any_size(work, injected):
+    ua = _forged_ua(injected)
+    line = alb_line(ua=ua, redirect=REDIRECT, transformed_uri=TRANSFORMED)
+    toks = convert._tokenize(line, 200)
+    assert len(toks) == 36 + injected  # the forgery does what the test says
+    res, out = alb_out(work, [line])
+    assert (res.rows, res.skipped_lines) == (0, 1)
+    assert "SECRET" not in all_text(out)
+
+
+def test_alb_documented_field_count_and_trailing_tolerance():
+    assert len(convert._ALB_FIELDS) == 36  # the doc's 36 fields
+    assert convert._ALB_MAX_FIELDS == 36 + convert._ALB_TRAILING_TOLERANCE
+    assert convert._ALB_TRAILING_TOLERANCE == 4
+
+
+def test_alb_trailing_tolerance_boundary(work):
+    base = alb_line()
+    ok = base + ' "-"' * convert._ALB_TRAILING_TOLERANCE
+    too_many = base + ' "-"' * (convert._ALB_TRAILING_TOLERANCE + 1)
+    res, out = alb_out(work, [ok, too_many])
+    assert (res.rows, res.skipped_lines) == (1, 1)

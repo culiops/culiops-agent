@@ -195,11 +195,11 @@ def run(script_sql: List[str], user_sql: str, allowed_dirs: List[Path], timeout_
         # stdin, stdout and stderr are files (no pipes, so no deadlock and no unbounded
         # buffering); stdout is polled against MAX_OUTPUT_BYTES while the child runs.
         script_f, out_f, err_f = (os.path.join(ctl, n) for n in ("in.sql", "out", "err"))
-        with open(script_f, "wb") as f:
-            f.write(script.encode("utf-8", "surrogateescape"))
         deadline = time.monotonic() + timeout_s
         too_big = timed_out = False
         try:
+            with open(script_f, "wb") as f:
+                f.write(script.encode("utf-8", "surrogateescape"))
             with open(script_f, "rb") as fin, open(out_f, "wb") as fout, open(err_f, "wb") as ferr:
                 proc = subprocess.Popen([exe, "-bail", "-csv", "-init", "/dev/null", ":memory:"],
                                         stdin=fin, stdout=fout, stderr=ferr, env=env, cwd=home)
@@ -229,6 +229,8 @@ def run(script_sql: List[str], user_sql: str, allowed_dirs: List[Path], timeout_
         if too_big or os.path.getsize(out_f) > MAX_OUTPUT_BYTES:
             raise DuckError("output too large; aggregate in SQL")
         if proc.returncode != 0:
+            # stderr is bounded without polling: -bail stops at the first failing statement, so
+            # it holds one error message, and only the first _MAX_ERR_BYTES of it are read.
             with open(err_f, "rb") as f:
                 raw_err = f.read(_MAX_ERR_BYTES)
             err = _scrub(raw_err.decode("utf-8", "replace"), subs).strip()
