@@ -6,6 +6,25 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [0.17.0] — 2026-10-31
+
+### Added
+
+- **sre-investigate: opt-in S3 log module.** Answers "who, which URL, which rule" from CloudFront, ALB and WAF access logs in S3, which the free metrics cannot. Nothing else about the skill changes: it stays read-only and every pull is a leg of a wave like any other.
+  - **On and off.** The module is on only when `~/.config/culiops/sre-investigate/logs.env` exists, parses cleanly and defines a dataset (template: `analytics/logs.env.example`). It is off by default. When it is off, the status prints one line and v0.16 behaviour is otherwise unchanged.
+  - **Commands.** `logs-status` (module state and tool versions), `logs-inventory` (lists files, sizes and estimated cost for a day range; downloads nothing), `logs-fetch` (a dry run by default; `--yes --run <run-id>` downloads, converts to redacted Parquet and deletes the raw files; `--every N` samples one file in N; `--purge <run-id>` removes a run's data) and `sqlq` (named queries for CloudFront, ALB and WAF, plus a guarded `--sql` for ad-hoc SELECTs).
+  - **Caps and override.** Download caps of 200 MiB per fetch, 1024 MiB per run and 2048 MiB per 24 hours, set in `logs.env` and never by environment variables. A slice over a cap is shown as `OVER` and not fetched. The over-cap marker is created by the user only, and it expires after 30 minutes. Every byte that arrived is charged, whether or not verification passes.
+  - **Redaction.** Query-string values are masked, including path matrix parameters, nested queries, fragments and userinfo. Client keys become salted hashes, CloudFront cookies are dropped, and WAF logs are read through an explicit column set, so unlisted fields never reach a query.
+  - **DuckDB lockdown.** Queries run in an in-memory database with external access off, only the run's data directories allowed and the settings locked, with an output cap. Dot-commands are refused, as are symlinks and hard links under the data directories. A SQL guard in front of it allows one read-only statement and refuses file, network and system functions.
+  - **Requirements.** s5cmd 2.2.0 or newer, DuckDB 1.4.0 or newer and AWS CLI v2.9 or newer. SSO profiles work: credentials are exported to s5cmd for each download batch.
+  - **Formats.** CloudFront standard logs (legacy layout and v2 W3C text), ALB access logs, and WAF logs delivered directly to S3 or through Firehose. CloudFront standard logging v2 in JSON or Parquet output is not supported; the module shows it as a gap.
+  - **Verification.** Run live on 2026-10-31 for CloudFront legacy logs and for WAF logs delivered directly to S3. ALB, CloudFront v2 and WAF through Firehose are verified against synthetic logs only. Tested with DuckDB 1.4.5, 1.5.6 and 2.0.0 on Linux; macOS is unverified.
+  - **Fixtures.** Two new dry-run scenarios under `tests/fixtures/sre-investigate/`: `s3-module-off` and `s3-module-on-caps`.
+
+### Changed
+
+- **sre-investigate: run directory names are lowercased** (letters, digits and hyphens). Profile keys are unchanged.
+
 ## [0.16.0] — 2026-10-30
 
 ### Added
