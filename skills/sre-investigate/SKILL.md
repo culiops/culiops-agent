@@ -64,7 +64,7 @@ THE CHEAPEST QUERY THAT CAN ANSWER THE QUESTION, NARROWED FIRST. TRY TO DISPROVE
 | logcli | optional | bulk Loki pulls |
 | psql, mysql | not used by the skill | the operator's own client, when they run the read-only database queries the run hands them |
 | Grafana MCP server | optional | the same PromQL, LogQL and TraceQL through Grafana; run it with `--disable-write` ([mcp-grafana](https://github.com/grafana/mcp-grafana)) |
-| s5cmd, duckdb | optional: s5cmd 2.2.0, duckdb 1.4.0 | the opt-in S3 log module only ([logs-s3.md](playbooks/logs-s3.md)); `logs-status` checks both |
+| s5cmd, duckdb, AWS CLI | optional: s5cmd 2.2.0, duckdb 1.4.0, AWS CLI 2.9 | the opt-in S3 log module only ([logs-s3.md](playbooks/logs-s3.md)); `logs-status` checks all three |
 
 **Auth.** AWS profiles (SSO or assumed roles) named in `environment.md` and passed with `--profile` on every command; kubeconfig contexts named there and passed with `--context`; one environment variable per token-based backend, named in its `datasources[]` row. Nothing is fetched on the user's behalf.
 

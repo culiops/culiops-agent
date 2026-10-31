@@ -1,7 +1,7 @@
 """Where log files live in S3, and which time each file covers.
 
 A dataset URI is a time template (see config.py): {yyyy} {MM} {dd} are required and
-{HH} is optional. Expanding it per day gives the LIST prefix: one per day, even with {HH}
+{HH} is optional (required for cloudfront). Expanding it per day gives the LIST prefix: one per day, even with {HH}
 when the day tokens all come before the first {HH} (the prefix stops just before it, and
 the hour is read from each key). Only an odd template with a day token after {HH} is
 listed per hour. The layouts this module knows, with the AWS documentation for each:
