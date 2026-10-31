@@ -179,7 +179,7 @@ The user writes `~/.config/culiops/sre-investigate/logs.env` (format and caps in
 - For every number from `sqlq`: the dataset, the named query or the SQL, the window, the sample factor and any `-- ` notice, with its label.
 - The data path from the fetch's `data:` line, and the manifest path from the inventory.
 - Gaps: each 0-file day, an unsupported format, a slice that was `OVER` and not fetched (what it would have answered, and the user's answer when it came), skipped unsafe keys, dropped columns, a logging filter, an exit 3 with its `! aws sso login --profile <profile>` fix.
-- The report's Cost section: MB charged per dataset and the summed `est_cost`, next to the other backends' costs.
+- The report's Cost section: MB charged per dataset and the summed `est_cost`, next to the other backends' costs, plus the data path from the fetch's `data:` line and the fact that it stays on this machine until the user purges it. The report must stand alone: a path given only in chat or the ledger does not count.
 
 ## Rationalization Prevention
 
