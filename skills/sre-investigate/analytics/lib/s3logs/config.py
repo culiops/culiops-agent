@@ -108,6 +108,8 @@ def _dataset(name: str, value: str) -> Dataset:
     bkt, sep, template = rest[len("s3://"):].partition("/")
     if not sep or not template:
         raise Refused("dataset location needs a template after the bucket")
+    if "://" in template:
+        raise Refused("template must not contain '://'")
     bucket(bkt)
     for tok in _TOKEN_RE.findall(template):
         if tok not in _ALL_TOKENS:
@@ -117,6 +119,8 @@ def _dataset(name: str, value: str) -> Dataset:
     for tok in _DATE_TOKENS:
         if tok not in template:
             raise Refused("template must contain %s" % tok)
+    if typ == "cloudfront" and "{HH}" not in template:
+        raise Refused("a cloudfront template must contain {HH} (CloudFront log files are named per hour)")
     safe_key(_TOKEN_RE.sub("0", template))
     return Dataset(name, typ, bkt, template)
 

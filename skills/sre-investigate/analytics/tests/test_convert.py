@@ -323,6 +323,58 @@ def test_waf_bad_json_lines_skipped(work):
     assert res.rows == 2 and res.skipped_lines == 2
 
 
+def test_waf_uppercase_cookie_name_gives_client_key(work):
+    rec = {"timestamp": 1773057600123, "action": "ALLOW",
+           "httpRequest": {"clientIp": "192.0.2.10", "headers": [{"name": "Cookie", "value": "JSESSIONID=abc123"}]}}
+    f = gz_file(work / "in" / "w.gz", json.dumps(rec) + "\n")
+    out = work / "out" / "w.parquet"
+    convert.to_parquet("waf", [f], out, CFG, SALT)
+    r = query(out, "SELECT client_key, identity_hashes FROM read_parquet({t})")[0]
+    assert r["client_key"] != "NULL" and r["client_key"] == redact.hash_value("abc123", SALT)
+    assert "abc123" not in all_text(out)
+
+
+def test_waf_uncompressed_firehose_file_converts(work):
+    rec = ('{"timestamp": 1773057600123, "action": "ALLOW", '
+           '"httpRequest": {"clientIp": "192.0.2.10", "uri": "/a?token=SECRETTOKEN"}}')
+    f = work / "in" / "plain.json"
+    f.write_bytes((rec + "\n" + rec + "\n").encode())
+    out = work / "out" / "w.parquet"
+    res = convert.to_parquet("waf", [f], out, CFG, SALT)
+    assert res.rows == 2 and res.skipped_lines == 0
+    assert "SECRETTOKEN" not in all_text(out)
+    assert not f.exists()
+
+
+def test_uncompressed_overlong_line_is_skipped_like_gz(work):
+    rec = '{"timestamp": 1773057600123, "action": "ALLOW", "httpRequest": {"clientIp": "192.0.2.10"}}'
+    f = work / "in" / "plain.json"
+    f.write_bytes((rec + "\n" + "x" * (convert.MAX_LINE_BYTES + 10) + "\n" + rec + "\n").encode())
+    res = convert.to_parquet("waf", [f], work / "out" / "w.parquet", CFG, SALT)
+    assert res.rows == 2 and res.skipped_lines == 1
+
+
+def test_gz_waf_file_still_converts_after_sniffing(work):
+    rec = '{"timestamp": 1773057600123, "action": "ALLOW", "httpRequest": {"clientIp": "192.0.2.10"}}'
+    f = gz_file(work / "in" / "w.gz", rec + "\n")
+    assert f.read_bytes()[:2] == b"\x1f\x8b"
+    res = convert.to_parquet("waf", [f], work / "out" / "w.parquet", CFG, SALT)
+    assert res.rows == 1
+
+
+@pytest.mark.parametrize("compressed", [True, False])
+def test_decompressed_size_cap(work, monkeypatch, compressed):
+    monkeypatch.setattr(convert, "MAX_DECOMPRESSED_BYTES", 1000)
+    rec = '{"timestamp": 1773057600123, "action": "ALLOW", "httpRequest": {"clientIp": "192.0.2.10"}}\n'
+    text = rec * 30
+    f = work / "in" / "big"
+    f.write_bytes(gf._gz(text) if compressed else text.encode())
+    with pytest.raises(convert.ConvertError) as ei:
+        convert.to_parquet("waf", [f], work / "out" / "w.parquet", CFG, SALT)
+    assert "decompressed past the 4 GiB per-file limit" in str(ei.value)
+    assert not f.exists() and staging_entries() == []
+
+
 # ---- cleanup, failures, misc -------------------------------------------------------------------
 
 def test_raw_deleted_even_on_error(work):
@@ -362,9 +414,17 @@ def test_unknown_type_refused_and_inputs_still_deleted(work):
     assert not f.exists() and staging_entries() == []
 
 
-def test_non_gzip_input_is_an_error(work):
+def test_plain_text_input_is_read_as_it_is(work):
     f = work / "in" / "plain.txt"
     f.write_text("#Fields: date time\n2026-03-09\t10:00:00\n")
+    res = convert.to_parquet("cloudfront", [f], work / "out" / "o.parquet", CFG, SALT)
+    assert res.rows == 1
+    assert not f.exists()
+
+
+def test_truncated_gzip_input_is_an_error(work):
+    f = work / "in" / "cut.gz"
+    f.write_bytes(gf._gz("#Fields: date time\n" + "2026-03-09\t10:00:00\n" * 200)[:-12])
     with pytest.raises(convert.ConvertError):
         convert.to_parquet("cloudfront", [f], work / "out" / "o.parquet", CFG, SALT)
     assert not f.exists()

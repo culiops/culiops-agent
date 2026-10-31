@@ -17,6 +17,7 @@ from s3logs import config, paths  # noqa: E402
 
 MIN_S5CMD = (2, 2, 0)
 MIN_DUCKDB = (1, 4, 0)
+MIN_AWS = (2, 9, 0)
 _VERSION_RE = re.compile(r"v?(\d+)\.(\d+)\.(\d+)")
 
 
@@ -63,6 +64,15 @@ def status() -> str:
         if ver < minimum:
             return "S3 log module: off (%s %s < %s)" % (name, _fmt(ver), _fmt(minimum))
         tools.append("%s %s" % (name, _fmt(ver)))
+
+    exe, ver = _tool_version("aws", ["--version"])
+    if exe is None:
+        return "S3 log module: off (aws CLI 2.9+ not found)"
+    if ver is None:
+        return "S3 log module: off (aws CLI version unreadable)"
+    if ver < MIN_AWS:
+        return "S3 log module: off (aws CLI %s < %s)" % (_fmt(ver), _fmt(MIN_AWS))
+    tools.append("aws %s" % _fmt(ver))
 
     ds = ", ".join("%s[%s]" % (d.name, d.type) for d in cfg.datasets.values())
     return "S3 log module: on (datasets: %s; %s)" % (ds, ", ".join(tools))

@@ -430,14 +430,14 @@ def _first_header(headers: List[Tuple[str, str]], name: str) -> Optional[str]:
 
 
 def _cookies(headers: List[Tuple[str, str]]) -> Dict[str, str]:
-    """name -> first non-empty value across every ``cookie`` header (names case-sensitive)."""
+    """lowercased name -> first non-empty value across every ``cookie`` header."""
     jar = {}  # type: Dict[str, str]
     for n, v in headers:
         if n != "cookie":
             continue
         for pair in v.split(";"):
             k, eq, val = pair.partition("=")
-            k = k.strip()
+            k = k.strip().lower()
             val = val.strip()
             if eq and k and val and k not in jar:
                 jar[k] = val
@@ -526,6 +526,7 @@ def _waf_record(rec: dict, cfg, salt: bytes) -> dict:
             identity.append("%s:%s" % (hname.lower(), h))
     jar = _cookies(headers)
     for cname in cfg.identity_cookies:
+        cname = cname.lower()
         if cname in jar:
             h = hash_value(jar[cname], salt)
             keys.append(h)

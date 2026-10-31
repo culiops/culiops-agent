@@ -40,6 +40,7 @@ from s3logs import duck, paths, redact
 from s3logs.validate import Refused
 
 MAX_LINE_BYTES = 1 << 20          # a longer line is skipped, never loaded
+MAX_DECOMPRESSED_BYTES = 4 * 1024 ** 3  # per input file; a gzip bomb stops here
 MAX_DROPPED_NAMES = 50            # reported dropped-column names are capped
 _MAX_NAME_LEN = 64
 _NAME_OK_RE = re.compile(r"[A-Za-z0-9_().:-]{1,64}")
@@ -138,26 +139,39 @@ _WAF_COLS = tuple(k for k in redact._WAF_KEYS)
 # ---- line reading ----------------------------------------------------------------------------
 
 def _read_lines(path: Path) -> Iterator[Optional[str]]:
-    """Decoded lines of a gz file without their newline. ``None`` stands for an overlong line
-    that was skipped. NUL is removed, invalid UTF-8 is replaced. Any read problem becomes a
-    ConvertError naming the file."""
+    """Decoded lines of one log file without their newline. A file that starts with the gzip
+    magic bytes is decompressed; anything else is read as it is (Firehose delivers plain JSON
+    lines unless it is told to compress). ``None`` stands for an overlong line that was
+    skipped. NUL is removed, invalid UTF-8 is replaced. The decompressed size is capped at
+    ``MAX_DECOMPRESSED_BYTES``. Any read problem becomes a ConvertError naming the file."""
+    name = Path(path).name
     try:
-        with gzip.open(str(path), "rb") as g:
+        with open(str(path), "rb") as raw:
+            gz = raw.read(2) == b"\x1f\x8b"
+            raw.seek(0)
+            g = gzip.GzipFile(fileobj=raw, mode="rb") if gz else raw
+            total = 0
             while True:
                 chunk = g.readline(MAX_LINE_BYTES + 1)
                 if not chunk:
                     return
+                total += len(chunk)
                 if len(chunk) > MAX_LINE_BYTES and not chunk.endswith(b"\n"):
                     while True:  # drain the rest of the overlong line in small pieces
                         rest = g.readline(1 << 16)
-                        if not rest or rest.endswith(b"\n"):
+                        total += len(rest)
+                        if not rest or rest.endswith(b"\n") or total > MAX_DECOMPRESSED_BYTES:
                             break
+                    if total > MAX_DECOMPRESSED_BYTES:
+                        raise ConvertError("%s decompressed past the 4 GiB per-file limit" % name)
                     yield None
                     continue
+                if total > MAX_DECOMPRESSED_BYTES:
+                    raise ConvertError("%s decompressed past the 4 GiB per-file limit" % name)
                 text = chunk.decode("utf-8", "replace").replace("\x00", "")
                 yield text.rstrip("\n").rstrip("\r")
     except (OSError, EOFError, zlib.error) as e:
-        raise ConvertError("cannot read %s: %s" % (Path(path).name, type(e).__name__))
+        raise ConvertError("cannot read %s: %s" % (name, type(e).__name__))
 
 
 def _clean(v):

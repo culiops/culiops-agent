@@ -127,6 +127,30 @@ def test_template_requires_date_tokens(tmp_path):
     assert ok.datasets["a"].template == "{yyyy}/{MM}/{dd}/{HH}/"
 
 
+def test_cloudfront_template_requires_hour_token(tmp_path):
+    for tmpl in ("cf/E2EXAMPLE.{yyyy}-{MM}-{dd}", "cf/{yyyy}/{MM}/{dd}/"):
+        with pytest.raises(ConfigError) as ei:
+            config.load(write_cfg(tmp_path, "DATASET_a=cloudfront:s3://logs-bucket/%s\n" % tmpl))
+        assert ei.value.line == 1 and "{HH}" in str(ei.value) and "cloudfront" in str(ei.value)
+    ok = config.load(write_cfg(tmp_path, "DATASET_a=cloudfront:s3://logs-bucket/cf/E2EXAMPLE.{yyyy}-{MM}-{dd}-{HH}\n"))
+    assert ok.datasets["a"].type == "cloudfront"
+    # other types do not need it
+    config.load(write_cfg(tmp_path, "DATASET_a=alb:s3://logs-bucket/{yyyy}/{MM}/{dd}/\n"))
+
+
+def test_scheme_separator_in_template_refused(tmp_path):
+    bad = [
+        "alb:s3://logs-bucket/file://etc/{yyyy}/{MM}/{dd}/",
+        "alb:s3://logs-bucket/a/https://x/{yyyy}/{MM}/{dd}/",
+        "waf:s3://logs-bucket/s3://other/{yyyy}/{MM}/{dd}/{HH}/",
+        "alb:s3://logs-bucket/{yyyy}/{MM}/{dd}/file://",
+    ]
+    for value in bad:
+        with pytest.raises(ConfigError) as ei:
+            config.load(write_cfg(tmp_path, "DATASET_a=" + value + "\n"))
+        assert ei.value.line == 1 and "://" in str(ei.value), value
+
+
 def test_bad_values(tmp_path):
     for line in ["MAX_MB=0", "MAX_MB=-5", "MAX_MB=1.5", "MAX_MB=", "MARKER_TTL_S=abc",
                  "PRICE_PER_GB=abc", "PRICE_PER_GB=-1", "PRICE_PER_GB=NaN", "PRICE_PER_GB=Infinity",

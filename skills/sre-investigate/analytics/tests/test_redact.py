@@ -322,12 +322,24 @@ def test_identity_lists_from_config():
     assert "S1" not in json.dumps(out)
 
 
-def test_cookie_names_case_sensitive_header_names_not():
+def test_cookie_names_and_header_names_both_case_insensitive():
     headers = [{"name": "COOKIE", "value": "SESSION=UP; session=low"}, {"name": "AUTHORIZATION", "value": "x"}]
     out = redact.waf_record(make_record(headers=headers), Config(), SALT)
     assert out["identity_hashes"][0].startswith("authorization:")
-    assert out["identity_hashes"][1] == "session:" + redact.hash_value("low", SALT)
+    assert out["identity_hashes"][1] == "session:" + redact.hash_value("UP", SALT)
     assert len(out["identity_hashes"]) == 2
+
+
+def test_default_identity_cookies_hash_whatever_their_case():
+    headers = [{"name": "Cookie", "value": "JSESSIONID=a; PHPSESSID=b; sid=q"}]
+    out = redact.waf_record(make_record(headers=headers), Config(), SALT)
+    assert sorted(out["identity_hashes"]) == sorted([
+        "jsessionid:" + redact.hash_value("a", SALT),
+        "phpsessid:" + redact.hash_value("b", SALT),
+        "sid:" + redact.hash_value("q", SALT),
+    ])
+    assert out["client_key"] is not None
+    assert "a" not in [x.split(":", 1)[1] for x in out["identity_hashes"]]
 
 
 def test_empty_identity_values_are_ignored():
