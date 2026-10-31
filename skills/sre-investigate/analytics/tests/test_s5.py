@@ -1,6 +1,7 @@
 """s5cmd run-file builder, validator and runner. Review Focus 3: nothing but a safe key reaches s5cmd."""
 from __future__ import annotations
 
+import json
 import subprocess
 
 import pytest
@@ -133,7 +134,7 @@ def test_run_copies_files_and_builds_argv(fake_s3, batch):
     assert (batch / "000001.gz").read_bytes() == b"AAA"
     assert (batch / "000002.gz").read_bytes() == b"BB"
     calls = [c for c in fake_s3.calls() if c[:1] == ["s5cmd"]]
-    assert calls == [["s5cmd", "--profile", "sre-read", "--log", "error", "run", str(rf)]]
+    assert calls == [["s5cmd", "--log", "error", "run", str(rf)]]      # no --profile: keys come from the env
 
 
 def test_run_without_profile_has_no_profile_option(fake_s3, batch):
@@ -272,3 +273,121 @@ def test_run_pins_the_configured_bucket(fake_s3, batch):
         s5.run(rf, None, None, str(batch), BUCKET)
     assert [c for c in fake_s3.calls() if c[:1] == ["s5cmd"]] == []
     assert not (batch / "000001.gz").exists()
+
+
+# ---- credentials exported for s5cmd (R45) -------------------------------------------------------
+
+SECRETS = ["AKIAIOSFODNN7EXAMPLE", "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY", "IQoJb3JpZ2luX2VjEXAMPLETOKEN"]
+
+
+def export_calls(fake_s3):
+    return [c for c in fake_s3.calls() if c[:2] == ["configure", "export-credentials"]]
+
+
+def test_run_exports_credentials_first_and_starts_s5cmd_without_profile(fake_s3, batch):
+    (fake_s3.bucket(BUCKET) / "a.gz").write_bytes(b"A")
+    rf = write_run(batch, ["a.gz"])
+    s5.run(rf, "sre-read", "us-east-1", str(batch), BUCKET)
+    calls = fake_s3.calls()
+    assert [c[:2] for c in calls if c[:1] != ["s5cmd-run-file"]] == [["configure", "export-credentials"], ["s5cmd", "--log"]]
+    assert export_calls(fake_s3) == [["configure", "export-credentials", "--profile", "sre-read",
+                                      "--format", "process"]]
+    s5calls = [c for c in calls if c[:1] == ["s5cmd"]]
+    assert s5calls == [["s5cmd", "--log", "error", "run", str(rf)]]
+    assert "--profile" not in s5calls[0]
+
+
+def test_run_exports_credentials_even_without_a_profile(fake_s3, batch):
+    (fake_s3.bucket(BUCKET) / "a.gz").write_bytes(b"A")
+    s5.run(write_run(batch, ["a.gz"]), None, None, str(batch), BUCKET)
+    assert export_calls(fake_s3) == [["configure", "export-credentials", "--format", "process"]]
+
+
+def test_each_call_refreshes_credentials(fake_s3, batch):
+    (fake_s3.bucket(BUCKET) / "a.gz").write_bytes(b"A")
+    s5.run(write_run(batch, ["a.gz"], "one.run"), "sre-read", None, str(batch), BUCKET)
+    (batch / "000001.gz").unlink()
+    s5.run(write_run(batch, ["a.gz"], "two.run"), "sre-read", None, str(batch), BUCKET)
+    assert len(export_calls(fake_s3)) == 2
+
+
+def test_s5cmd_gets_exported_keys_and_no_profile_or_shared_file_env(fake_s3, batch, monkeypatch):
+    (fake_s3.bucket(BUCKET) / "a.gz").write_bytes(b"A")
+    for k, v in (("AWS_PROFILE", "other"), ("AWS_DEFAULT_PROFILE", "other"),
+                 ("AWS_SHARED_CREDENTIALS_FILE", "/nonexistent/creds"), ("AWS_CONFIG_FILE", "/nonexistent/config"),
+                 ("AWS_ACCESS_KEY_ID", "STALE"), ("AWS_SESSION_TOKEN", "STALE"),
+                 ("AWS_ENDPOINT_URL_S3", "http://203.0.113.9"), ("S5CMD_ENDPOINT_URL", "http://203.0.113.9")):
+        monkeypatch.setenv(k, v)
+    s5.run(write_run(batch, ["a.gz"]), "sre-read", "eu-west-1", str(batch), BUCKET)
+    [env] = fake_s3.s5env()
+    assert env["AWS_ACCESS_KEY_ID"] == SECRETS[0]
+    assert env["AWS_SECRET_ACCESS_KEY"] == SECRETS[1]
+    assert env["AWS_SESSION_TOKEN"] == SECRETS[2]
+    assert env["AWS_REGION"] == "eu-west-1"
+    for gone in ("AWS_PROFILE", "AWS_DEFAULT_PROFILE", "AWS_SHARED_CREDENTIALS_FILE", "AWS_CONFIG_FILE",
+                 "AWS_ENDPOINT_URL_S3", "S5CMD_ENDPOINT_URL"):
+        assert gone not in env
+
+
+def test_a_stale_session_token_is_not_passed_when_the_export_has_none(fake_s3, batch, monkeypatch):
+    (fake_s3.bucket(BUCKET) / "a.gz").write_bytes(b"A")
+    monkeypatch.setenv("FAKE_AWS_CREDS_NO_TOKEN", "1")
+    monkeypatch.setenv("AWS_SESSION_TOKEN", "STALE")
+    monkeypatch.setenv("AWS_SECURITY_TOKEN", "STALE")
+    s5.run(write_run(batch, ["a.gz"]), None, None, str(batch), BUCKET)
+    [env] = fake_s3.s5env()
+    assert "AWS_SESSION_TOKEN" not in env and "AWS_SECURITY_TOKEN" not in env
+    assert env["AWS_ACCESS_KEY_ID"] == SECRETS[0]
+
+
+def test_failing_export_stops_before_s5cmd(fake_s3, batch, monkeypatch):
+    fake_s3.bucket(BUCKET)
+    monkeypatch.setenv("FAKE_AWS_CREDS_ERROR", "The SSO session associated with this profile has expired")
+    with pytest.raises(AwsError) as ei:
+        s5.run(write_run(batch, ["a.gz"]), "sre-read", None, str(batch), BUCKET)
+    assert ei.value.hint == "! aws sso login --profile sre-read"
+    assert [c for c in fake_s3.calls() if c[:1] == ["s5cmd"]] == []
+
+
+def test_validation_failures_do_not_export_credentials(fake_s3, batch, tmp_path):
+    other = tmp_path / "other.run"
+    other.write_text(s5.build_run_file(BUCKET, ["a.gz"], str(batch)))
+    with pytest.raises(Refused):
+        s5.run(other, "sre-read", None, str(batch), BUCKET)
+    assert fake_s3.calls() == []
+
+
+def test_secrets_never_appear_in_a_failing_s5cmd_error(fake_s3, batch, monkeypatch):
+    fake_s3.bucket(BUCKET)
+    monkeypatch.setenv("FAKE_S5CMD_FAIL_ON_BATCH", "1")
+    monkeypatch.setenv("FAKE_S5CMD_ERROR", "ERROR AccessDenied: denied")
+    monkeypatch.setenv("FAKE_S5CMD_ECHO_ENV", "1")
+    with pytest.raises(AwsError) as ei:
+        s5.run(write_run(batch, ["a.gz"]), "sre-read", None, str(batch), BUCKET)
+    text = "%s | %s | %r | %s" % (ei.value.msg, ei.value, ei.value.args, ei.value.hint)
+    for secret in SECRETS:
+        assert secret not in text
+    assert "AccessDenied" in ei.value.msg          # the rest of the message still tells the story
+
+
+def test_secrets_are_not_in_the_run_file_or_argv(fake_s3, batch):
+    (fake_s3.bucket(BUCKET) / "a.gz").write_bytes(b"A")
+    rf = write_run(batch, ["a.gz"])
+    s5.run(rf, "sre-read", None, str(batch), BUCKET)
+    blob = rf.read_text() + json.dumps(fake_s3.calls())
+    for secret in SECRETS:
+        assert secret not in blob
+
+
+def test_shared_creds_load_failure_gets_a_profile_hint(fake_s3, batch, monkeypatch):
+    fake_s3.bucket(BUCKET)
+    monkeypatch.setenv("FAKE_S5CMD_FAIL_ON_BATCH", "1")
+    monkeypatch.setenv("FAKE_S5CMD_ERROR", 'ERROR "cp s3://x/y z": SharedCredsLoad: failed to get profile')
+    with pytest.raises(AwsError) as ei:
+        s5.run(write_run(batch, ["a.gz"]), "sre-read", None, str(batch), BUCKET)
+    assert ei.value.hint == "run aws configure export-credentials --profile sre-read to check the profile"
+    with pytest.raises(AwsError) as ei:
+        (batch / "000001.gz").unlink() if (batch / "000001.gz").exists() else None
+        monkeypatch.setenv("FAKE_S5CMD_FAIL_ON_BATCH", "2")
+        s5.run(write_run(batch, ["a.gz"], "two.run"), None, None, str(batch), BUCKET)
+    assert ei.value.hint == "run aws configure export-credentials to check the profile"

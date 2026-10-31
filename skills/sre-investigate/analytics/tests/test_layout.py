@@ -41,15 +41,40 @@ def keys(entries):
     return [e.key for e in entries]
 
 
-def test_cloudfront_legacy_prefixes():
-    got = layout.list_prefixes(CF, DAY)
-    assert got == ["cf/E2EXAMPLE.2026-03-09-%02d" % h for h in range(24)]
-    assert got[0] == "cf/E2EXAMPLE.2026-03-09-00" and got[23] == "cf/E2EXAMPLE.2026-03-09-23"
+def test_cloudfront_legacy_prefixes_one_per_day():
+    assert layout.list_prefixes(CF, DAY) == ["cf/E2EXAMPLE.2026-03-09-"]
 
 
-def test_cloudfront_v2_and_waf_hour_prefixes():
-    assert layout.list_prefixes(CF_V2, DAY)[5] == "AWSLogs/111122223333/CloudFront/E2EXAMPLE/2026/03/09/05/"
-    assert len(layout.list_prefixes(WAF, DAY)) == 24
+def test_cloudfront_v2_and_waf_one_prefix_per_day():
+    assert layout.list_prefixes(CF_V2, DAY) == ["AWSLogs/111122223333/CloudFront/E2EXAMPLE/2026/03/09/"]
+    assert layout.list_prefixes(WAF, DAY) == ["AWSLogs/111122223333/WAFLogs/us-east-1/example-acl/2026/03/09/"]
+
+
+def test_hour_template_with_a_day_token_after_the_hour_keeps_per_hour_prefixes():
+    odd = Dataset("odd", "cloudfront", "example-logs-bucket", "cf/{yyyy}-{MM}/h{HH}/{dd}/")
+    got = layout.list_prefixes(odd, DAY)
+    assert got == ["cf/2026-03/h%02d/09/" % h for h in range(24)]
+
+
+def test_hour_template_missing_no_day_token_before_hour_keeps_per_hour_prefixes():
+    odd = Dataset("odd", "cloudfront", "example-logs-bucket", "cf/{HH}/{yyyy}/{MM}/{dd}/")
+    assert layout.list_prefixes(odd, DAY) == ["cf/%02d/2026/03/09/" % h for h in range(24)]
+
+
+def test_day_prefix_is_cut_at_the_first_hour_token_only():
+    t = Dataset("t", "cloudfront", "example-logs-bucket", "cf/{yyyy}/{MM}/{dd}/{HH}/E.{yyyy}-{MM}-{dd}-{HH}")
+    assert layout.list_prefixes(t, DAY) == ["cf/2026/03/09/"]
+
+
+def test_in_day_accepts_only_keys_of_that_day_and_template():
+    assert layout.in_day(CF, gf.cf_key(DAY, 7), DAY)
+    assert not layout.in_day(CF, gf.cf_key(NEXT, 7), DAY)                 # another day
+    assert not layout.in_day(CF, "cf/E2EXAMPLE.2026-03-09-7.AAA.gz", DAY)  # hour part does not match
+    assert not layout.in_day(CF, "cf/E2EXAMPLE.2026-03-09.AAA.gz", DAY)
+    assert layout.in_day(CF, "cf/E2EXAMPLE.2026-03-09-99.AAA.gz", DAY)   # shape ok; file_time rejects it
+    assert layout.file_time(CF, "cf/E2EXAMPLE.2026-03-09-99.AAA.gz") is None
+    assert not layout.in_day(WAF, "AWSLogs/111122223333/WAFLogs/us-east-1/example-acl/2026/03/09/loose_20260309T0500Z_a.log.gz", DAY)
+    assert layout.in_day(ALB, "anything/at/all", DAY)                     # no {HH}: nothing to check
 
 
 def test_alb_prefix_is_day_dir():

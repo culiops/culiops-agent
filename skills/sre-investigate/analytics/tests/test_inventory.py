@@ -77,14 +77,48 @@ def test_inventory_lists_day_and_writes_manifest(home, env):
     assert oct(mpath.stat().st_mode & 0o777) == "0o600"
 
 
-def test_inventory_cloudfront_lists_each_hour(home, env):
+def test_inventory_hourly_template_lists_once_per_day(home, env):
     gf.make(env.root, "cloudfront", DAY, hours=[3, 4, 5])
     r = run("cf", "2026-03-09", "2026-03-09")
     assert r.returncode == 0, r.stderr
-    assert len(env.calls()) == 24                       # one LIST per hour prefix
+    assert len(env.calls()) == 1                        # one LIST for the whole day, not 24
+    r = run("cf", "2026-03-09", "2026-03-11")
+    assert r.returncode == 0, r.stderr
+    assert len(env.calls()) == 1 + 3                    # one per day
+    r = run("waf", "2026-03-09", "2026-03-10")
+    assert r.returncode == 0, r.stderr
+    assert len(env.calls()) == 1 + 3 + 2
+    assert all(c[:2] == ["s3api", "list-objects-v2"] for c in env.calls())
     m = json.loads(manifest_path(home, "cf", "2026-03-09", "2026-03-09").read_text())
     assert [f["start"] for f in m["files"]] == ["2026-03-09T03:00:00Z", "2026-03-09T04:00:00Z",
                                                   "2026-03-09T05:00:00Z"]
+
+
+def test_inventory_hourly_template_does_not_count_strays_under_the_day_prefix(home, env, tmp_path):
+    gf.make(env.root, "cloudfront", DAY, hours=[3])
+    b = env.bucket(BUCKET)
+    (b / "cf/E2EXAMPLE.2026-03-09-7.AAA.gz").write_bytes(b"x")      # hour part does not match
+    (b / "cf/E2EXAMPLE.2026-03-09-99.AAA.gz").write_bytes(b"x")     # not an hour
+    (b / "cf/E2EXAMPLE.2026-03-09-.AAA.gz").write_bytes(b"x")
+    (b / "cf/E2EXAMPLE.2026-03-10-03.AAA.gz").write_bytes(b"x")     # next day: outside the day prefix
+    r = run("cf", "2026-03-09", "2026-03-09")
+    assert r.returncode == 0, r.stderr
+    m = json.loads(manifest_path(home, "cf", "2026-03-09", "2026-03-09").read_text())
+    assert len(m["files"]) == 1 and m["files"][0]["start"] == "2026-03-09T03:00:00Z"
+    assert m["skipped_unparsed"] == 3
+    assert m["days"]["2026-03-09"]["files"] == 1
+
+
+def test_inventory_waf_stray_key_directly_under_the_day_dir_is_not_counted(home, env):
+    gf.make(env.root, "waf", DAY, hours=[3], minutes=(0,))
+    b = env.bucket(BUCKET)
+    stray = b / "AWSLogs/111122223333/WAFLogs/us-east-1/example-acl/2026/03/09/loose_20260309T0500Z_a.log.gz"
+    stray.write_bytes(b"x")
+    r = run("waf", "2026-03-09", "2026-03-09")
+    assert r.returncode == 0, r.stderr
+    m = json.loads(manifest_path(home, "waf", "2026-03-09", "2026-03-09").read_text())
+    assert all("loose_" not in f["key"] for f in m["files"])
+    assert m["skipped_unparsed"] == 1
 
 
 def test_manifest_files_are_sorted_and_ranges_span_days(home, env):

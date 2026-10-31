@@ -12,6 +12,11 @@ Knobs (environment):
   FAKE_S5CMD_FAIL_ON_BATCH=<n>     the nth `run` invocation (counted across calls) writes
                                    $FAKE_S5CMD_ERROR to stderr and exits 1 without copying
   FAKE_S5CMD_SLEEP=<seconds>       sleep after logging, before copying (for signal tests)
+  FAKE_S5CMD_ECHO_ENV=1            when failing, also print the AWS_* credential values it was given
+                                   (a real tool may echo them), to prove they are scrubbed
+
+Each call also appends one JSON object per line to $FAKE_ARGV_LOG.s5env: the AWS_* / S5CMD_* /
+S3_* variables s5cmd was started with.
 """
 import json
 import os
@@ -51,6 +56,10 @@ def main():
         with open(log, "a") as f:
             f.write(json.dumps(["s5cmd"] + argv) + "\n")
             f.write(json.dumps(["s5cmd-run-file"] + lines) + "\n")
+    if log:
+        with open(log + ".s5env", "a") as f:
+            f.write(json.dumps({k: v for k, v in os.environ.items()
+                                if k.startswith(("AWS_", "S5CMD_", "S3_"))}) + "\n")
     count = 1
     if log:
         cpath = log + ".s5count"
@@ -61,7 +70,11 @@ def main():
             f.write(str(count))
     fail_on = os.environ.get("FAKE_S5CMD_FAIL_ON_BATCH")
     if fail_on and int(fail_on) == count:
-        sys.stderr.write(os.environ.get("FAKE_S5CMD_ERROR", "ERROR stub failure") + "\n")
+        msg = os.environ.get("FAKE_S5CMD_ERROR", "ERROR stub failure")
+        if os.environ.get("FAKE_S5CMD_ECHO_ENV"):
+            msg += " creds=%s,%s,%s" % tuple(os.environ.get(k, "") for k in (
+                "AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY", "AWS_SESSION_TOKEN"))
+        sys.stderr.write(msg + "\n")
         sys.exit(1)
     pause = os.environ.get("FAKE_S5CMD_SLEEP")
     if pause:

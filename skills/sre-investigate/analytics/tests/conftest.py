@@ -98,6 +98,14 @@ class FakeS3:
         p.mkdir(parents=True, exist_ok=True)
         return p
 
+    def s5env(self) -> list:
+        """The AWS_*/S5CMD_*/S3_* environment of every s5cmd start, as a list of dicts."""
+        import json
+        path = Path(str(self.argv_log) + ".s5env")
+        if not path.exists():
+            return []
+        return [json.loads(line) for line in path.read_text().splitlines() if line.strip()]
+
     def calls(self) -> list:
         """Every logged stub invocation, as a list of argv lists."""
         import json
@@ -119,6 +127,7 @@ def fake_s3(tmp_path, monkeypatch, stub_path):
     log = tmp_path / "argv.log"
     monkeypatch.setenv("FAKE_S3_ROOT", str(root))
     monkeypatch.setenv("FAKE_ARGV_LOG", str(log))
-    for var in ("FAKE_AWS_ERROR", "FAKE_EXTRA_KEYS_JSON"):
+    for var in ("FAKE_AWS_ERROR", "FAKE_EXTRA_KEYS_JSON", "FAKE_AWS_CREDS_ERROR", "FAKE_AWS_CREDS_STDOUT",
+                "FAKE_AWS_CREDS_STDOUT_AND_FAIL", "FAKE_AWS_CREDS_NO_TOKEN", "FAKE_S5CMD_ECHO_ENV"):
         monkeypatch.delenv(var, raising=False)
     return FakeS3(root, log)

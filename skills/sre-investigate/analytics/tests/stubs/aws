@@ -1,11 +1,18 @@
 #!/usr/bin/env python3
-"""Test stub for the aws CLI. Answers only `s3api list-objects-v2`.
+"""Test stub for the aws CLI. Answers `s3api list-objects-v2` and
+`configure export-credentials [--profile P] --format process`.
 
 Objects are the files under $FAKE_S3_ROOT/<bucket>/<key>. Every call appends its
 argv as one JSON line to $FAKE_ARGV_LOG. $FAKE_AWS_ERROR=<text> makes the call
 fail like the real CLI (stderr text, exit 254). $FAKE_EXTRA_KEYS_JSON names a JSON
 file of {"key": ..., "size": ...} objects appended to the listing, for keys the
 fake filesystem cannot hold (a newline, for instance).
+
+export-credentials prints the documented example key pair as `process` JSON (Version 1).
+Knobs: $FAKE_AWS_CREDS_ERROR=<text> fails with that stderr text (exit 255);
+$FAKE_AWS_CREDS_STDOUT=<raw text> prints that instead of the JSON (exit 0);
+$FAKE_AWS_CREDS_STDOUT_AND_FAIL=<raw text> prints it on stdout and exits 255 (stdout must
+never reach an error message); $FAKE_AWS_CREDS_NO_TOKEN=1 leaves SessionToken out.
 """
 import hashlib
 import json
@@ -21,14 +28,48 @@ def refuse(msg):
     sys.exit(252)
 
 
+def export_credentials(rest):
+    opts = {}
+    i = 0
+    while i < len(rest):
+        if rest[i] not in ("--profile", "--format") or i + 1 >= len(rest):
+            refuse("unexpected argument")
+        opts[rest[i]] = rest[i + 1]
+        i += 2
+    if opts.get("--format") != "process":
+        refuse("only --format process is supported")
+    err = os.environ.get("FAKE_AWS_CREDS_ERROR")
+    if err:
+        sys.stderr.write(err + "\n")
+        sys.exit(255)
+    both = os.environ.get("FAKE_AWS_CREDS_STDOUT_AND_FAIL")
+    if both is not None:
+        sys.stdout.write(both)
+        sys.stderr.write("stub aws: export-credentials failed\n")
+        sys.exit(255)
+    raw = os.environ.get("FAKE_AWS_CREDS_STDOUT")
+    if raw is not None:
+        sys.stdout.write(raw)
+        return
+    doc = {"Version": 1, "AccessKeyId": "AKIAIOSFODNN7EXAMPLE",
+           "SecretAccessKey": "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
+           "SessionToken": "IQoJb3JpZ2luX2VjEXAMPLETOKEN", "Expiration": "2026-03-10T01:00:00+00:00"}
+    if os.environ.get("FAKE_AWS_CREDS_NO_TOKEN"):
+        del doc["SessionToken"]
+    print(json.dumps(doc))
+
+
 def main():
     argv = sys.argv[1:]
     log = os.environ.get("FAKE_ARGV_LOG")
     if log:
         with open(log, "a") as f:
             f.write(json.dumps(argv) + "\n")
+    if argv[:2] == ["configure", "export-credentials"]:
+        export_credentials(argv[2:])
+        return
     if argv[:2] != ["s3api", "list-objects-v2"]:
-        refuse("only 's3api list-objects-v2' is supported")
+        refuse("only 's3api list-objects-v2' and 'configure export-credentials' are supported")
     opts = {}
     rest = argv[2:]
     i = 0

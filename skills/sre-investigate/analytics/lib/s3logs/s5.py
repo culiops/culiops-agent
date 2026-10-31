@@ -13,6 +13,12 @@ batch dir must be an absolute path of the same plain alphabet.
 no stdin and an environment without endpoint overrides. A failure becomes `awscli.AwsError`
 (exit 3 in the CLIs) with a scrubbed message and, for an expired or missing session, the
 `! aws sso login` hint.
+
+Credentials: s5cmd (aws-sdk-go v1) cannot load SSO profiles, so every `run` first asks the aws
+CLI for short-lived keys (`awscli.export_credentials`, once per batch so a long fetch gets fresh
+ones) and starts s5cmd WITHOUT `--profile`, with those keys in its environment and the profile and
+shared-file variables removed. The keys are secrets: they live only in the child environment and
+are stripped from any text taken from s5cmd's output before it reaches an error.
 """
 from __future__ import annotations
 
@@ -22,9 +28,9 @@ import shutil
 import stat
 import subprocess
 from pathlib import Path
-from typing import List, Optional, Tuple
+from typing import Dict, Iterable, List, Optional, Tuple
 
-from s3logs import validate
+from s3logs import awscli, validate
 from s3logs.awscli import AwsError
 from s3logs.validate import Refused
 
@@ -41,6 +47,11 @@ _LOGIN_MARKERS = ("ExpiredToken", "Token has expired", "SSO session", "SSOProvid
 _CONTROL_RE = re.compile(r"[\x00-\x1f\x7f]")
 _ENV_DROP_PREFIXES = ("S5CMD_", "AWS_ENDPOINT_URL")
 _ENV_DROP = ("S3_ENDPOINT_URL",)
+# Dropped so s5cmd uses only the exported keys: a profile or shared file would be loaded (and fail)
+# instead, and a stale session token would be paired with the fresh key.
+_ENV_DROP_CREDS = ("AWS_PROFILE", "AWS_DEFAULT_PROFILE", "AWS_SHARED_CREDENTIALS_FILE", "AWS_CONFIG_FILE",
+                   "AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY", "AWS_SESSION_TOKEN", "AWS_SECURITY_TOKEN",
+                   "AWS_CREDENTIAL_EXPIRATION")
 
 
 def _check_batchdir(batchdir: str) -> str:
@@ -110,10 +121,13 @@ def _read_run_file(path: Path, batchdir: str) -> str:
         raise Refused("the run file is not UTF-8")
 
 
-def _scrub(text: str, batchdir: str) -> str:
-    """One short printable-ASCII line: staging and home paths shortened, control chars gone.
-    s5cmd prefixes its real errors with ERROR; its warnings (instance-metadata noise) are left
-    out when there is at least one."""
+def _scrub(text: str, batchdir: str, secrets: Iterable[str] = ()) -> str:
+    """One short printable-ASCII line: staging and home paths shortened, control chars gone,
+    credential values replaced. s5cmd prefixes its real errors with ERROR; its warnings
+    (instance-metadata noise) are left out when there is at least one."""
+    for secret in sorted(set(secrets), key=len, reverse=True):
+        if secret:
+            text = text.replace(secret, "<redacted>")
     errors = [ln for ln in text.splitlines() if ln.lstrip().startswith("ERROR")]
     if errors:
         text = " | ".join(errors[:3])
@@ -131,14 +145,18 @@ def _scrub(text: str, batchdir: str) -> str:
 def _hint(stderr: str, profile: Optional[str]) -> Optional[str]:
     if any(marker in stderr for marker in _LOGIN_MARKERS):
         return "! aws sso login --profile %s" % profile if profile else "! aws sso login"
+    if "SharedCredsLoad" in stderr:
+        return "run aws configure export-credentials%s to check the profile" % (
+            " --profile %s" % profile if profile else "")
     if "AccessDenied" in stderr:
         return "check that the role may s3:GetObject on this bucket and prefix"
     return None
 
 
-def _child_env(region: Optional[str]) -> dict:
+def _child_env(region: Optional[str], creds: Dict[str, str]) -> dict:
     env = {k: v for k, v in os.environ.items()
-           if k not in _ENV_DROP and not k.startswith(_ENV_DROP_PREFIXES)}
+           if k not in _ENV_DROP and k not in _ENV_DROP_CREDS and not k.startswith(_ENV_DROP_PREFIXES)}
+    env.update(creds)
     env["AWS_PAGER"] = ""
     if region:
         env["AWS_REGION"] = region
@@ -146,7 +164,8 @@ def _child_env(region: Optional[str]) -> dict:
 
 
 def run(run_file: Path, profile: Optional[str], region: Optional[str], batchdir: str, bucket: str) -> None:
-    """Run `s5cmd [--profile P] --log error run <run_file>`. Raises Refused or AwsError.
+    """Run `s5cmd --log error run <run_file>` with keys exported from `profile` (see the module
+    docstring). Raises Refused or AwsError.
     `bucket` is the configured bucket: every line of the file must name exactly that one."""
     validate.bucket(bucket)
     _check_batchdir(batchdir)
@@ -159,18 +178,16 @@ def run(run_file: Path, profile: Optional[str], region: Optional[str], batchdir:
     exe = shutil.which("s5cmd")
     if not exe:
         raise Refused("s5cmd was not found on PATH (run logs-status)")
-    argv = [exe]
-    if profile:
-        argv += ["--profile", profile]
-    argv += ["--log", "error", "run", os.path.abspath(str(run_file))]
+    creds = awscli.export_credentials(profile, region)     # per call = per batch: always fresh
+    argv = [exe, "--log", "error", "run", os.path.abspath(str(run_file))]
     try:
         r = subprocess.run(argv, stdin=subprocess.DEVNULL, capture_output=True, text=True,
-                           errors="replace", timeout=_TIMEOUT_S, env=_child_env(region), shell=False)
+                           errors="replace", timeout=_TIMEOUT_S, env=_child_env(region, creds), shell=False)
     except subprocess.TimeoutExpired:
         raise AwsError("s5cmd timed out after %d seconds" % _TIMEOUT_S, "re-run with a narrower slice")
     except OSError as e:
         raise AwsError("could not run s5cmd: %s" % (e.strerror or "error"))
     if r.returncode != 0:
         both = (r.stderr or "") + "\n" + (r.stdout or "")
-        raise AwsError("s5cmd exited %d: %s" % (r.returncode, _scrub(both, batchdir) or "no error text"),
+        raise AwsError("s5cmd exited %d: %s" % (r.returncode, _scrub(both, batchdir, creds.values()) or "no error text"),
                        _hint(both, profile))

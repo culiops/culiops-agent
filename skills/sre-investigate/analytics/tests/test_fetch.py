@@ -416,7 +416,10 @@ def test_real_run_end_to_end(env, cap, capsys):
     assert mode(d) == 0o555 and mode(state() / "data" / RUN) == 0o700
     parts = sorted(p for p in os.listdir(str(d)) if p.endswith(".parquet"))
     assert parts == ["part-000001.parquet"] and mode(d / parts[0]) == 0o444
-    assert s5_calls(env)[0] == ["s5cmd", "--profile", "sre-read", "--log", "error", "run", s5_calls(env)[0][-1]]
+    assert s5_calls(env)[0] == ["s5cmd", "--log", "error", "run", s5_calls(env)[0][-1]]
+    assert [c for c in env.calls() if c[:2] == ["configure", "export-credentials"]] == [
+        ["configure", "export-credentials", "--profile", "sre-read", "--format", "process"]]
+    assert env.s5env()[0]["AWS_ACCESS_KEY_ID"] and "AWS_PROFILE" not in env.s5env()[0]
     assert all(re.fullmatch(r"cp -n --raw s3://%s/\S+ \S+/\d{6}\.gz" % BUCKET, l) for l in run_file_lines(env)[0])
 
 
@@ -560,6 +563,24 @@ def test_run_that_dies_without_verifying_still_charges_what_is_on_disk(env, cap,
     assert code == 143
     assert [e["bytes"] for e in ledger()] == [200]
     assert fetched_keys(ds_dir()) == [] and staging_entries() == [] and mode(ds_dir()) == 0o555
+
+
+def test_credentials_are_exported_for_every_batch(env, cap, capsys, monkeypatch):
+    monkeypatch.setattr(cli_fetch, "MAX_BATCH_FILES", 2)
+    alb10(env, capsys)
+    code, out, err = go(cap)
+    assert code == 0, err
+    assert len([c for c in env.calls() if c[:2] == ["configure", "export-credentials"]]) == len(s5_calls(env)) == 5
+    assert "wJalrXUtnFEMI" not in out + err
+
+
+def test_failed_credential_export_is_exit_3_with_login_hint_and_charges_nothing(env, cap, capsys, monkeypatch):
+    alb10(env, capsys)
+    monkeypatch.setenv("FAKE_AWS_CREDS_ERROR", "The SSO session associated with this profile has expired")
+    code, out, err = go(cap)
+    assert code == 3
+    assert "! aws sso login --profile sre-read" in err
+    assert ledger() == [] and s5_calls(env) == [] and staging_entries() == []
 
 
 def test_aws_error_mid_fetch_charges_only_verified_batches(env, cap, capsys, monkeypatch):

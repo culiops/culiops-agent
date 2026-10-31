@@ -1,8 +1,10 @@
 """Where log files live in S3, and which time each file covers.
 
 A dataset URI is a time template (see config.py): {yyyy} {MM} {dd} are required and
-{HH} is optional. Expanding it per day (or per hour when {HH} is present) gives the
-LIST prefixes. The layouts this module knows, with the AWS documentation for each:
+{HH} is optional. Expanding it per day gives the LIST prefix: one per day, even with {HH}
+when the day tokens all come before the first {HH} (the prefix stops just before it, and
+the hour is read from each key). Only an odd template with a day token after {HH} is
+listed per hour. The layouts this module knows, with the AWS documentation for each:
 
 * ALB access logs: <prefix>/AWSLogs/<acct>/elasticloadbalancing/<region>/yyyy/mm/dd/
   <acct>_elasticloadbalancing_<region>_app.<lb-id>_<end-time>_<ip>_<rand>.log.gz
@@ -65,10 +67,29 @@ def _expand(template: str, day: dt.date, hour: Optional[int]) -> str:
 
 
 def list_prefixes(ds: Dataset, day: dt.date) -> List[str]:
-    """LIST prefixes for one day: one per hour when the template has {HH}, else one."""
-    if "{HH}" in ds.template:
-        return [_expand(ds.template, day, h) for h in range(24)]
-    return [_expand(ds.template, day, None)]
+    """LIST prefixes for one day.
+
+    No {HH}: the expanded template. {HH} with every day token before it: ONE prefix, the
+    template cut just before the first {HH} (a LIST per hour costs an `aws` process each, about
+    a minute a day). Otherwise (a day token after {HH}): one prefix per hour."""
+    tpl = ds.template
+    if "{HH}" not in tpl:
+        return [_expand(tpl, day, None)]
+    head = tpl[:tpl.index("{HH}")]
+    if all(tok in head for tok in ("{yyyy}", "{MM}", "{dd}")):
+        return [_expand(head, day, None)]
+    return [_expand(tpl, day, h) for h in range(24)]
+
+
+def in_day(ds: Dataset, key: str, day: dt.date) -> bool:
+    """For an {HH} template: does the key match the template and carry this day's date? A LIST
+    under a day prefix can return strays (another hour layout, a file dropped in the day directory)
+    that the old per-hour prefixes never reached. Templates without {HH} are not checked."""
+    if "{HH}" not in ds.template:
+        return True
+    m = _template_regex(ds.template).match(key)
+    return bool(m and (int(m.group("yyyy")), int(m.group("MM")), int(m.group("dd")))
+                == (day.year, day.month, day.day))
 
 
 @functools.lru_cache(maxsize=32)

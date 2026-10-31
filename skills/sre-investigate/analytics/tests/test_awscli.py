@@ -56,7 +56,7 @@ def test_wrapper_argv_allow_list(fake_s3):
 def test_no_other_aws_api_is_exposed():
     public_callables = {n for n, o in vars(awscli).items()
                         if inspect.isfunction(o) and not n.startswith("_") and o.__module__ == awscli.__name__}
-    assert public_callables == {"list_objects"}
+    assert public_callables == {"list_objects", "export_credentials"}
 
 
 def test_argv_check_rejects_anything_off_the_allow_list():
@@ -162,3 +162,150 @@ def test_pagination_follows_next_token(monkeypatch):
     assert [e.key for e in got] == ["a", "b"]
     assert "--starting-token" not in seen[0]
     assert seen[1][seen[1].index("--starting-token") + 1] == "tok1"
+
+
+# ---- export_credentials (R45) ------------------------------------------------------------------
+
+SECRET = "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY"
+EXPORT_GOOD = ["aws", "configure", "export-credentials", "--profile", "sre-read", "--format", "process"]
+
+
+def export_calls(fake_s3):
+    return [c for c in fake_s3.calls() if c[:2] == ["configure", "export-credentials"]]
+
+
+def test_export_credentials_returns_env_keys_and_builds_exact_argv(fake_s3):
+    got = awscli.export_credentials("sre-read", "eu-west-1")
+    assert got == {"AWS_ACCESS_KEY_ID": "AKIAIOSFODNN7EXAMPLE", "AWS_SECRET_ACCESS_KEY": SECRET,
+                   "AWS_SESSION_TOKEN": "IQoJb3JpZ2luX2VjEXAMPLETOKEN"}
+    assert export_calls(fake_s3) == [["configure", "export-credentials", "--profile", "sre-read",
+                                      "--format", "process"]]
+
+
+def test_export_credentials_without_profile_has_no_profile_option(fake_s3):
+    awscli.export_credentials(None, None)
+    assert export_calls(fake_s3) == [["configure", "export-credentials", "--format", "process"]]
+
+
+def test_export_credentials_omits_token_key_when_absent(fake_s3, monkeypatch):
+    monkeypatch.setenv("FAKE_AWS_CREDS_NO_TOKEN", "1")
+    got = awscli.export_credentials("sre-read", None)
+    assert set(got) == {"AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY"}
+
+
+def test_export_credentials_runs_without_shell_with_timeout_and_pager_off(fake_s3, monkeypatch):
+    seen = {}
+    real = awscli.subprocess.run
+
+    def spy(cmd, **kw):
+        seen.update(kw)
+        seen["cmd"] = cmd
+        return real(cmd, **kw)
+
+    monkeypatch.setattr(awscli.subprocess, "run", spy)
+    monkeypatch.setenv("AWS_PAGER", "less")
+    awscli.export_credentials("sre-read", None)
+    assert seen["shell"] is False and seen["timeout"] == 60
+    assert seen["env"]["AWS_PAGER"] == "" and seen["env"]["AWS_CLI_AUTO_PROMPT"] == "off"
+    assert seen["stdin"] == awscli.subprocess.DEVNULL
+    assert seen["cmd"][1:3] == ["configure", "export-credentials"]
+
+
+def test_export_credentials_timeout_is_an_aws_error(fake_s3, monkeypatch):
+    def boom(cmd, **kw):
+        raise awscli.subprocess.TimeoutExpired(cmd, 60)
+
+    monkeypatch.setattr(awscli.subprocess, "run", boom)
+    with pytest.raises(AwsError) as ei:
+        awscli.export_credentials("sre-read", None)
+    assert "60" in ei.value.msg
+
+
+@pytest.mark.parametrize("profile,region", [("--endpoint-url=x", None), ("a b", None), ("-x", None),
+                                            (None, "us east"), ("sre-read", "us-east-1;id")])
+def test_export_credentials_refuses_bad_profile_or_region(fake_s3, profile, region):
+    with pytest.raises(Refused):
+        awscli.export_credentials(profile, region)
+    assert fake_s3.calls() == []
+
+
+def test_export_credentials_failure_hides_stdout_and_scrubs_stderr(fake_s3, monkeypatch):
+    monkeypatch.setenv("FAKE_AWS_CREDS_STDOUT_AND_FAIL", '{"SecretAccessKey": "%s"}' % SECRET)
+    with pytest.raises(AwsError) as ei:
+        awscli.export_credentials("sre-read", None)
+    assert SECRET not in ei.value.msg and SECRET not in str(ei.value) and SECRET not in repr(ei.value.hint)
+    assert "export-credentials failed" in ei.value.msg
+    assert ei.value.hint == "aws configure export-credentials needs AWS CLI v2.9 or newer and a working profile"
+
+
+def test_export_credentials_stderr_is_cleaned(fake_s3, monkeypatch):
+    monkeypatch.setenv("FAKE_AWS_CREDS_ERROR", "bad\x1b[31m profile" + "x" * 5000)
+    with pytest.raises(AwsError) as ei:
+        awscli.export_credentials("sre-read", None)
+    assert "\x1b" not in ei.value.msg and len(ei.value.msg) < 700
+
+
+@pytest.mark.parametrize("text", [
+    "The SSO session associated with this profile has expired or is otherwise invalid.",
+    "Error when retrieving token from sso: Token has expired and refresh failed",
+    "An error occurred (ExpiredToken) when calling the AssumeRole operation",
+    "Error loading SSO Token: Token for https://example.com/start does not exist",
+])
+def test_export_credentials_login_hint(fake_s3, monkeypatch, text):
+    monkeypatch.setenv("FAKE_AWS_CREDS_ERROR", text)
+    with pytest.raises(AwsError) as ei:
+        awscli.export_credentials("sre-read", None)
+    assert ei.value.hint == "! aws sso login --profile sre-read"
+    with pytest.raises(AwsError) as ei:
+        awscli.export_credentials(None, None)
+    assert ei.value.hint == "! aws sso login"
+
+
+@pytest.mark.parametrize("out", [
+    "", "not json", "[]", "{}", '{"Version": 2, "AccessKeyId": "A", "SecretAccessKey": "B"}',
+    '{"Version": 1, "SecretAccessKey": "B"}', '{"Version": 1, "AccessKeyId": "A"}',
+    '{"Version": 1, "AccessKeyId": "", "SecretAccessKey": "B"}',
+    '{"Version": 1, "AccessKeyId": 7, "SecretAccessKey": "B"}',
+    '{"Version": 1, "AccessKeyId": "A", "SecretAccessKey": "B", "SessionToken": 5}',
+    '{"Version": 1, "AccessKeyId": "A\\nB", "SecretAccessKey": "SECRETVALUE"}',
+])
+def test_export_credentials_bad_output_is_an_aws_error_without_the_output(fake_s3, monkeypatch, out):
+    monkeypatch.setenv("FAKE_AWS_CREDS_STDOUT", out)
+    with pytest.raises(AwsError) as ei:
+        awscli.export_credentials("sre-read", None)
+    assert "SECRETVALUE" not in ei.value.msg and out.strip() not in ei.value.msg or not out.strip()
+    assert ei.value.hint == "aws configure export-credentials needs AWS CLI v2.9 or newer and a working profile"
+
+
+def test_export_credentials_aws_not_installed(stub_path):
+    stub_path.isolate()
+    with pytest.raises(AwsError) as ei:
+        awscli.export_credentials("sre-read", None)
+    assert "aws" in ei.value.msg.lower() and ei.value.hint
+
+
+def test_check_argv_allows_exactly_the_export_credentials_shapes():
+    awscli._check_argv(EXPORT_GOOD)
+    awscli._check_argv(["aws", "configure", "export-credentials", "--format", "process"])
+    bad = [
+        EXPORT_GOOD + ["--debug"],
+        EXPORT_GOOD + ["--endpoint-url", "http://192.0.2.1"],
+        EXPORT_GOOD + ["--region", "us-east-1"],
+        EXPORT_GOOD[:-1] + ["env"],                                   # other format
+        EXPORT_GOOD[:-2],                                             # no --format
+        ["aws", "configure", "export-credentials"],
+        ["aws", "configure", "export-credentials", "--format", "process", "--profile", "x"],   # order
+        ["aws", "configure", "export-credentials", "--profile", "--format", "process"],
+        ["aws", "configure", "export-credentials", "--profile", "-x", "--format", "process"],
+        ["aws", "configure", "export-credentials", "--profile", "a", "--profile", "b", "--format", "process"],
+        ["aws", "configure", "set", "aws_access_key_id", "x"],
+        ["aws", "configure", "get", "aws_secret_access_key"],
+        ["aws", "configure", "list"],
+        ["aws", "configure"],
+        ["aws", "sso", "login"],
+        ["aws", "sts", "get-caller-identity"],
+        ["aws", "configure", "export-credentials-x", "--format", "process"],
+    ]
+    for argv in bad:
+        with pytest.raises(Refused):
+            awscli._check_argv(argv)

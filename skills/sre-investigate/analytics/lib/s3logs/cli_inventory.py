@@ -100,7 +100,7 @@ def run(dataset: str, day_from: dt.date, day_to: dt.date) -> int:
                 if layout.is_unsupported_format(ds, e.key):
                     unsupported += 1
                     continue
-                ft = layout.file_time(ds, e.key)
+                ft = layout.file_time(ds, e.key) if layout.in_day(ds, e.key, d) else None
                 if ft is None:
                     unparsed += 1
                     continue

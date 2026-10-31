@@ -161,7 +161,7 @@ Module results are query results. A link is `Confirmed` when a `sqlq` result sho
 
 ## Setting up a dataset (for the user)
 
-The user writes `~/.config/culiops/sre-investigate/logs.env` (format and caps in `<skill-base>/analytics/logs.env.example`); the agent never writes or edits it. When the module is on but no dataset covers the resource in question, that is a gap, and this table shows the user what to add. Each template needs `{yyyy}`, `{MM}` and `{dd}`; `{HH}` is optional.
+The user writes `~/.config/culiops/sre-investigate/logs.env` (format and caps in `<skill-base>/analytics/logs.env.example`); the agent never writes or edits it. When the module is on but no dataset covers the resource in question, that is a gap, and this table shows the user what to add. Each template needs `{yyyy}`, `{MM}` and `{dd}`; `{HH}` is optional. The AWS CLI must be v2.9 or newer; SSO profiles work (the module exports short-lived credentials for each download batch, so `AWS_PROFILE` can name any profile the AWS CLI can use).
 
 | Log type | `DATASET_<name>=` value |
 |---|---|
