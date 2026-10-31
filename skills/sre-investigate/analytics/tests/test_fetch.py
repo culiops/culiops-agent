@@ -584,7 +584,7 @@ def test_failed_credential_export_is_exit_3_with_login_hint_and_charges_nothing(
 
 
 def test_aws_error_mid_fetch_charges_only_verified_batches(env, cap, capsys, monkeypatch):
-    """Review Focus 4."""
+    """An AWS error mid-fetch charges only the batches that were verified."""
     monkeypatch.setattr(cli_fetch, "MAX_BATCH_FILES", 2)
     keys = alb10(env, capsys)
     monkeypatch.setenv("FAKE_S5CMD_FAIL_ON_BATCH", "2")
@@ -767,7 +767,7 @@ def test_waf_dataset_converts_with_salt(env, cap, capsys):
 
 
 def test_unsafe_manifest_key_is_refused_before_s5cmd(env, cap, capsys):
-    """Review Focus 3, second line of defence: a doctored manifest never reaches s5cmd."""
+    """Second line of defence: a doctored manifest never reaches s5cmd."""
     alb10(env, capsys)
     mp = state() / "manifests" / "alb" / "2026-03-09_2026-03-10.json"
     doc = json.loads(mp.read_text())

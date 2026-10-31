@@ -1,4 +1,4 @@
-"""s5cmd run-file builder, validator and runner. Review Focus 3: nothing but a safe key reaches s5cmd."""
+"""s5cmd run-file builder, validator and runner. Nothing but a safe key reaches s5cmd."""
 from __future__ import annotations
 
 import json
@@ -76,7 +76,7 @@ def line(n=1, key=KEYS[0], dest=None):
     "",
 ])
 def test_run_file_rejects_unsafe_line(bad):
-    """Review Focus 3: a ';', a second destination or '../' raises Refused."""
+    """A ';', a second destination or '../' raises Refused."""
     with pytest.raises(Refused):
         s5.validate_run_file(bad + "\n", BUCKET, BATCH)
     # also when it hides behind a legitimate first line
