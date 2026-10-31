@@ -1,0 +1,36 @@
+[
+ {
+  "Id": "req",
+  "MetricStat": {
+   "Metric": {
+    "Namespace": "AWS/ApplicationELB",
+    "MetricName": "RequestCount",
+    "Dimensions": [
+     {
+      "Name": "LoadBalancer",
+      "Value": "app/shop-web-alb/9f8e7d6c5b4a3210"
+     }
+    ]
+   },
+   "Period": 60,
+   "Stat": "Sum"
+  }
+ },
+ {
+  "Id": "elb403",
+  "MetricStat": {
+   "Metric": {
+    "Namespace": "AWS/ApplicationELB",
+    "MetricName": "HTTPCode_ELB_403_Count",
+    "Dimensions": [
+     {
+      "Name": "LoadBalancer",
+      "Value": "app/shop-web-alb/9f8e7d6c5b4a3210"
+     }
+    ]
+   },
+   "Period": 60,
+   "Stat": "Sum"
+  }
+ }
+]

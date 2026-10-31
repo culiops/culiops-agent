@@ -1,78 +1,64 @@
 # Profile: shop-web prod
 
-Last verified: 2026-04-12 (updated at the end of the run) · Built by: main session, inline (the PROFILE checklist run as one wave of free reads under the helper's rules; no helper dispatched in this simulation, labelled `[helper PROFILE, cheapest tier]` in the run log) · Status: partly unverified
+Last verified: 2026-04-12 · Built by: main session (profile built inline, helper PROFILE rules, cheapest tier); updated at the end of the run · Status: partly unverified
 
 ## Identity
 
 | Field | Value |
 |---|---|
-| Service | shop-web (the service behind shop.example.com) |
+| Service | shop-web (public site shop.example.com) |
 | Environment | prod |
-| Account or profile / Region | prod-read (account 111122223333) / us-east-1 |
-| Cluster, context and namespace | ECS Fargate per environment.md; cluster and service names NOT discovered (`aws ecs list-clusters` returned `{}`): `(unverified)` |
-| IaC repo and paths | not given in environment.md; not discovered |
-| Core flows served | checkout (`POST /checkout`), cart (`/api/cart`), both listed in environment.md; criticality: core |
+| Account or profile / Region | prod-read (111122223333) / us-east-1 |
+| Cluster, context and namespace | ECS Fargate per environment.md; cluster name not discovered (aws ecs list-clusters returned nothing) (unverified) |
+| IaC repo and paths | not named in environment.md (unverified) |
+| Core flows served | checkout (`POST /checkout`), cart (`/api/cart`), from environment.md; no counters named |
 | SLO or error-budget source | none |
 
 ## Sibling set
 
 | Dimension | Member | How to tell it apart |
 |---|---|---|
-| none identified | web ACL `example-shop-acl` fronts one ALB only (`shop-web-alb`); no regions, shards or replicas found | n/a |
+| (none) | one web ACL, one ALB | single `example-shop-acl` in us-east-1 REGIONAL scope; ACL has no CloudFront-scope sibling |
 
 ## Client identity (for WAF triangulation)
 
 | Field | Value |
 |---|---|
-| Session cookie name | unknown `(unverified)`: not in environment.md; app source (`example-org/shop-web`) not readable in this run (`gh api` returned `{}`); the S3 module's salted `client_key` column is used instead |
-| Client-ID header name | unknown `(unverified)` |
+| Session cookie name | name not known (unverified); the WAF logs carry a salted `client_key` (1,546 distinct keys in 13:40-15:19), so a cookie or header is configured for the module |
+| Client-ID header name | not known (unverified) |
 
 ## Identifiers per source
 
 | Source | Identifier | Verified |
 |---|---|---|
-| Application log label or log group | `/ecs/*` per environment.md; `aws logs describe-log-groups --log-group-name-prefix /ecs/` returned `{}` (no group visible) | (unverified) |
-| Sidecar or proxy logs | none | n/a |
-| APM or trace service name | none (no tracing backend) | n/a |
-| Prometheus job and labels | none | n/a |
-| Business or flow counters | none named in environment.md | n/a |
-| Compute | ECS service shop-web (name from the request/environment.md) | (unverified) |
-| Load balancing | ALB `shop-web-alb`, `app/shop-web-alb/9f8e7d6c5b4a3210`: returned by `wafv2 list-resources-for-web-acl` for the ACL below (association verified); ALB CloudWatch metrics returned no data in wave 1 (ledger W1-Q4..Q6) and `elbv2 describe-load-balancers` returned `{}` (W0-Q14) | association (verified 2026-04-12); metrics (unverified) |
-| WAF | regional web ACL `example-shop-acl`, id `5b0c7a1e-3d42-4f6a-9e8b-2c1d0a9f7e64`, us-east-1, REGIONAL, default action Allow, 4 rules (see below); metric dimensions `WebACL=example-shop-acl`, `Region=us-east-1`, `Rule` = rule name or `ALL` | (verified 2026-04-12) |
-| WAF rule metrics | `AWS-AWSManagedRulesAmazonIpReputationList` (managed group, no override), `geo-block-embargo` (Block, countries KP and IR), `rate-limit-coupon` (Block, rate-based, 10 requests per 300 s per IP, scope-down: URI path starts with `/api/cart/coupon`), `count-new-bot-signals` (COUNT mode: user-agent contains `bot`) | (verified 2026-04-12 by get-web-acl and list-metrics; per-rule BlockedRequests returned data in wave 1; `count-new-bot-signals` CountedRequests returned no data) |
-| WAF logging | S3 bucket `aws-waf-logs-example-shop`, no logging filter, no redacted fields (every request is logged, allowed included) | (verified 2026-04-12 by get-logging-configuration) |
-| S3 log module dataset | `shop-waf` (type waf) in `~/.config/culiops/sre-investigate/logs.env`; the manifest bucket `aws-waf-logs-example-shop` and key path (account 111122223333, us-east-1, example-shop-acl) equal the ACL's logging destination (W2-Q9); fetched and queried 2026-04-11 13:40-15:20 (W3-Q1..Q13) | (verified 2026-04-12) |
-| Data stores | none discovered | n/a |
-| Queues and streams | none | n/a |
-| Functions | none | n/a |
-| Log datasource | CloudWatch via profile prod-read (no group found) | (unverified) |
-| Error tracker project | none | n/a |
-| Code | `example-org/shop-web` via `gh` (default branch and deployed ref not discovered: `gh api` returned `{}`) | (unverified) |
-| Tickets and wiki | none | n/a |
+| Application log label or log group | `/ecs/*` per environment.md; prefix `/ecs/shop` returned nothing | (unverified) |
+| WAF web ACL | `example-shop-acl`, scope REGIONAL, us-east-1, Id 5b0c7a1e-3d42-4f6a-9e8b-2c1d0a9f7e64, metric name `example-shop-acl` | (verified 2026-04-12) |
+| WAF rules (name = metric name) | `AWS-AWSManagedRulesAmazonIpReputationList` (p0, managed group, group's own actions), `geo-block-embargo` (p1, Block, countries KP and IR), `rate-limit-coupon` (p2, Block, 10 requests per 300 s per IP, path starts with `/api/cart/coupon`), `count-new-bot-signals` (p3, Count, UA contains "bot") | (verified 2026-04-12) |
+| WAF logging | S3 `aws-waf-logs-example-shop`, no filter, no redaction; module dataset `shop-waf[waf]` (manifest bucket and key tie it to this ACL; log totals equal CloudWatch for 2026-04-11 13:40-15:19) | (verified 2026-04-12) |
+| WAF CloudWatch | AWS/WAFV2, dimensions WebACL=`example-shop-acl`, Rule=`ALL` or the rule metric name, Region=`us-east-1` | (verified 2026-04-12 via list-metrics) |
+| Load balancing | ALB `app/shop-web-alb/9f8e7d6c5b4a3210` (ARN returned by list-resources-for-web-acl) | the ARN is verified; ALB CloudWatch dimensions and elbv2 listing (unverified): `describe-load-balancers` returned nothing |
+| Compute | ECS Fargate service `shop-web`; cluster unknown | (unverified) |
+| Error tracker / traces | none connected | n/a |
+| Code | `example-org/shop-web` via gh (no clone); image-tag-to-ref rule unknown | (unverified) |
+| Tickets and wiki | none named | n/a |
 
 ## Dependencies
 
 | Direction | Dependency | How | Identifier | Status page or contact |
 |---|---|---|---|---|
-| upstream | clients reaching shop.example.com through the ALB | HTTPS, filtered by the web ACL | `example-shop-acl` | none (no third party in the path found) |
+| upstream | AWS WAF (web ACL) in front of the ALB | ACL association | `example-shop-acl` | none (AWS) |
+| upstream | ALB | ALB to ECS service | `shop-web-alb` | none |
 
 ## Dashboards
 
-| Name | UID or URL | Useful panels |
-|---|---|---|
-| none known | | |
+None named.
 
 ## Baseline notes
 
-- WAF client mix at normal times (13:40-15:20 slice, W3): about 570 distinct clients, 4 browser user agents (Safari macOS/iOS, Chrome Windows/Android) with ~127 clients each, JA4 t13d1516h2_8daaf6152771_02713d6af862, 8-header browser shape with cookie; ExampleSearchBot/2.1 is a known crawler (COUNT-mode rule count-new-bot-signals counts it).
-
-- Normal load: ~3,300-3,500 allowed requests per 5 minutes at 12:30-15:30 UTC; ~230-270 blocked requests per hour all rules (W1-Q1..3, W1-Q7).
-- Known periodic jobs and their usual effect: none discovered (schedule listings returned `{}`).
-- Known benign noise: IP-reputation and geo rules block ~10-20 and ~5-10 requests per 5 minutes in every window checked.
+- Normal load and latency: allowed requests about 666 a minute (2026-04-11 12:30-13:40 and 2026-04-04 13:40-14:50); blocked about 4.4 a minute (IP reputation about 3, geo-block about 1.4); hourly allowed median 39,678 (2026-04-04 to 2026-04-11). Latency not read (no ALB metrics).
+- Known periodic jobs: none found (events list-rules, scheduler list-schedules and ssm describe-maintenance-windows returned nothing; ECS scaling not readable).
+- Known benign noise: IP reputation list blocks (median 158 an hour, max 300) and geo-block (median 77 an hour, max 159) every hour; ExampleSearchBot crawler (about 2,700 requests per 100 minutes, few blocks); count-new-bot-signals counts about 900 requests per 100 minutes (Count only).
 
 ## Stale identifiers
 
-| Identifier | Last empty run | Note |
-|---|---|---|
-| `/ecs/*` log-group prefix (as an application log group) | shop-web-prod-20260412-0915 | `aws logs describe-log-groups --log-group-name-prefix /ecs/` returned `{}` (W0-Q3); nothing replaced it; ask the operator for the exact group name |
-| ECS cluster and service for shop-web | shop-web-prod-20260412-0915 | `aws ecs list-clusters` returned `{}` (W0-Q13); never confirmed |
+None yet.

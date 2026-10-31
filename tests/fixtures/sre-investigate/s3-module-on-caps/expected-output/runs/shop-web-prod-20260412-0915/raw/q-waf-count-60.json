@@ -1,0 +1,27 @@
+[
+ {
+  "Id": "counted_bot",
+  "MetricStat": {
+   "Metric": {
+    "Namespace": "AWS/WAFV2",
+    "MetricName": "CountedRequests",
+    "Dimensions": [
+     {
+      "Name": "WebACL",
+      "Value": "example-shop-acl"
+     },
+     {
+      "Name": "Rule",
+      "Value": "count-new-bot-signals"
+     },
+     {
+      "Name": "Region",
+      "Value": "us-east-1"
+     }
+    ]
+   },
+   "Period": 60,
+   "Stat": "Sum"
+  }
+ }
+]

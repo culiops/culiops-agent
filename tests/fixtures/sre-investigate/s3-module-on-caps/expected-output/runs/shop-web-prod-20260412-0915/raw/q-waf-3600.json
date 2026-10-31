@@ -1,30 +1,5 @@
 [
  {
-  "Id": "blocked_all",
-  "MetricStat": {
-   "Metric": {
-    "Namespace": "AWS/WAFV2",
-    "MetricName": "BlockedRequests",
-    "Dimensions": [
-     {
-      "Name": "WebACL",
-      "Value": "example-shop-acl"
-     },
-     {
-      "Name": "Rule",
-      "Value": "ALL"
-     },
-     {
-      "Name": "Region",
-      "Value": "us-east-1"
-     }
-    ]
-   },
-   "Period": 300,
-   "Stat": "Sum"
-  }
- },
- {
   "Id": "allowed_all",
   "MetricStat": {
    "Metric": {
@@ -45,12 +20,37 @@
      }
     ]
    },
-   "Period": 300,
+   "Period": 3600,
    "Stat": "Sum"
   }
  },
  {
-  "Id": "blocked_iprep",
+  "Id": "blocked_all",
+  "MetricStat": {
+   "Metric": {
+    "Namespace": "AWS/WAFV2",
+    "MetricName": "BlockedRequests",
+    "Dimensions": [
+     {
+      "Name": "WebACL",
+      "Value": "example-shop-acl"
+     },
+     {
+      "Name": "Rule",
+      "Value": "ALL"
+     },
+     {
+      "Name": "Region",
+      "Value": "us-east-1"
+     }
+    ]
+   },
+   "Period": 3600,
+   "Stat": "Sum"
+  }
+ },
+ {
+  "Id": "blocked_ipr",
   "MetricStat": {
    "Metric": {
     "Namespace": "AWS/WAFV2",
@@ -70,7 +70,7 @@
      }
     ]
    },
-   "Period": 300,
+   "Period": 3600,
    "Stat": "Sum"
   }
  },
@@ -95,12 +95,12 @@
      }
     ]
    },
-   "Period": 300,
+   "Period": 3600,
    "Stat": "Sum"
   }
  },
  {
-  "Id": "blocked_ratelimit",
+  "Id": "blocked_rate",
   "MetricStat": {
    "Metric": {
     "Namespace": "AWS/WAFV2",
@@ -120,32 +120,7 @@
      }
     ]
    },
-   "Period": 300,
-   "Stat": "Sum"
-  }
- },
- {
-  "Id": "counted_bot",
-  "MetricStat": {
-   "Metric": {
-    "Namespace": "AWS/WAFV2",
-    "MetricName": "CountedRequests",
-    "Dimensions": [
-     {
-      "Name": "WebACL",
-      "Value": "example-shop-acl"
-     },
-     {
-      "Name": "Rule",
-      "Value": "count-new-bot-signals"
-     },
-     {
-      "Name": "Region",
-      "Value": "us-east-1"
-     }
-    ]
-   },
-   "Period": 300,
+   "Period": 3600,
    "Stat": "Sum"
   }
  }
