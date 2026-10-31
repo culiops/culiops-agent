@@ -275,7 +275,7 @@ def test_run_pins_the_configured_bucket(fake_s3, batch):
     assert not (batch / "000001.gz").exists()
 
 
-# ---- credentials exported for s5cmd (R45) -------------------------------------------------------
+# ---- credentials exported for s5cmd -------------------------------------------------------
 
 SECRETS = ["AKIAIOSFODNN7EXAMPLE", "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY", "IQoJb3JpZ2luX2VjEXAMPLETOKEN"]
 

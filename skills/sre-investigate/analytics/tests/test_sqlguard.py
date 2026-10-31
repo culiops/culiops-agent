@@ -90,7 +90,7 @@ def test_refuses_set_and_attach_statements():
     refused("WITH x AS (SELECT 1) INSERT INTO t SELECT * FROM x")
 
 
-# ---- functions (R6) -------------------------------------------------------------------------
+# ---- functions -------------------------------------------------------------------------
 
 @pytest.mark.parametrize("sql", [
     "SELECT * FROM read_parquet('/x')",
@@ -233,7 +233,7 @@ def test_string_or_path_after_from_is_refused():
     assert sqlguard.check("SELECT extract(year FROM ts) FROM logs")
 
 
-# ---- dot-commands (R11) ---------------------------------------------------------------------
+# ---- dot-commands ---------------------------------------------------------------------
 
 @pytest.mark.parametrize("sql", [
     ".shell id",

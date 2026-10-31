@@ -175,7 +175,7 @@ class Plan(NamedTuple):
 
 
 def _needs_next_day(ds: config.Dataset, day: dt.date, hours, minutes) -> bool:
-    """Does the widened slice reach into the next day's first unit (R4)?"""
+    """Does the widened slice reach into the next day's first unit?"""
     # A file starting within one file-width after the window end is taken too (widen). For the
     # 5-minute types the interval ending exactly at midnight sits in the NEXT day's directory
     # and starts 5 minutes before it, so the reach is two widths: any end after 23:50 needs

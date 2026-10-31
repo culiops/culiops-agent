@@ -85,7 +85,7 @@ Snapshot = Dict[str, Tuple[int, int, int]]
 
 
 def _walk_allowed(d: Path) -> Snapshot:
-    """Refuse symlinks, special files and multiply-linked files under ``d`` (R12). Returns a
+    """Refuse symlinks, special files and multiply-linked files under ``d``. Returns a
     snapshot of the regular files: relative path -> (size, mtime_ns, inode); directories are
     included as (-1, mtime_ns, inode) so added/removed entries show up."""
     try:

@@ -13,10 +13,10 @@ identifiers become single tokens. Then:
 * no deny keyword appears as a word anywhere (a quoted identifier is not a keyword);
 * no deny function is called: an identifier (quoted or not, last part of a qualified name)
   directly followed by ``(`` and named ``read_*``, ``*_scan``, ``glob``, ``sniff_csv``,
-  ``query``, ``query_table``, ``getenv`` or one of the extras below (R6: a plain identifier
+  ``query``, ``query_table``, ``getenv`` or one of the extras below (a plain identifier
   that is not called is never refused);
 * no line starts with ``.`` (DuckDB CLI dot-commands such as ``.shell`` are not SQL and bypass
-  every setting; R11). This is checked on the raw text, before comments are removed, and
+  every setting). This is checked on the raw text, before comments are removed, and
   again on the normalized text, with every line terminator the CLI accepts counted as a break.
 
 Where this is deliberately stricter than the plain rules, because the lexer must agree with
@@ -26,7 +26,7 @@ control characters, unbalanced parentheses (the CLI wraps the statement in ``( .
 string literal or a path-like quoted name in table position (after FROM, JOIN, DESCRIBE, SUMMARIZE,
 PIVOT, UNPIVOT, or after a comma inside a FROM clause; DuckDB would read it as a file) are refused.
 
-Extra denied function names beyond the brief: ``parquet_*``, ``duckdb_*``, ``pragma_*``,
+Extra denied function names beyond the base list: ``parquet_*``, ``duckdb_*``, ``pragma_*``,
 ``current_setting``, ``which_secret``, ``json_execute_serialized_sql`` (runs serialized SQL).
 """
 from __future__ import annotations

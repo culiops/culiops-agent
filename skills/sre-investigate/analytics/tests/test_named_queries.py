@@ -39,7 +39,7 @@ BRIEF_NAMES = {
     "alb": {"summary", "by_minute", "status_by_target", "target_latency_pct", "top_paths_5xx",
             "top_clients", "lb_vs_target_status"},
 }
-EXTRA_NAMES = {"cloudfront": {"by_object"}, "waf": set(), "alb": set()}   # R34: Task 8 added by_object
+EXTRA_NAMES = {"cloudfront": {"by_object"}, "waf": set(), "alb": set()}   # by_object is an extra CloudFront query
 
 DAY_A = DAY.isoformat()
 DAY_B = (DAY + dt.timedelta(days=1)).isoformat()
@@ -151,7 +151,7 @@ def test_reads_only_the_logs_view_and_no_query_strings(kind, name):
         assert col not in code, "never select query strings, not even masked ones"
 
 
-# ---- value tests (the brief's four) ---------------------------------------------------------
+# ---- value tests (four named values) ---------------------------------------------------------
 
 def test_alb_lb_vs_target_status_counts_502_without_a_target_response(env):
     rows = run(env, "alb", "lb_vs_target_status")

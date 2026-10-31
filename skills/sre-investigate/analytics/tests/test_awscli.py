@@ -164,7 +164,7 @@ def test_pagination_follows_next_token(monkeypatch):
     assert seen[1][seen[1].index("--starting-token") + 1] == "tok1"
 
 
-# ---- export_credentials (R45) ------------------------------------------------------------------
+# ---- export_credentials ------------------------------------------------------------------
 
 SECRET = "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY"
 EXPORT_GOOD = ["aws", "configure", "export-credentials", "--profile", "sre-read", "--format", "process"]

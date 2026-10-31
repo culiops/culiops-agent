@@ -346,7 +346,7 @@ def test_concurrent_charges_not_lost(home):
     assert budget.headroom(Config(), RUN, NOW).run_mb_used == pytest.approx(700 / MIB)
 
 
-# ---- write failures and the documented limitation (Task 7, R21/R22) --------------------------
+# ---- write failures and the documented limitation --------------------------
 
 def test_charge_write_failure_is_refused_naming_the_ledger(home, monkeypatch):
     import errno

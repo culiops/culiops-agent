@@ -12,7 +12,7 @@ re-formats a row). Notices go to stderr as lines starting ``-- ``. Exit codes: 0
 Two layers stand between the SQL and the machine. ``sqlguard.check`` screens an ad-hoc
 statement; ``duck.run`` locks DuckDB down (allowed directories, no external access, locked
 configuration, symlink and hard-link refusal) and is always called with ``allow_writes=False``;
-dataset directories are also kept read-only on disk by logs-fetch (R28).
+dataset directories are also kept read-only on disk by logs-fetch.
 """
 from __future__ import annotations
 

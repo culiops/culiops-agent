@@ -354,7 +354,7 @@ def test_dry_run_with_force_and_marker_reports_override(home, env, cap, capsys):
 
 
 def test_cap_reached_mid_fetch_stops_the_fetch(home, env, cap, capsys, monkeypatch):
-    """R20: before each batch budget.check runs again with that batch's bytes."""
+    """Before each batch budget.check runs again with that batch's bytes."""
     monkeypatch.setattr(cli_fetch, "MAX_BATCH_FILES", 3)
     alb10(env, capsys)
     real = convert.to_parquet
@@ -479,7 +479,7 @@ def sizes(env, keys):
 
 
 def test_size_mismatch_is_charged_but_not_converted(env, cap, capsys, monkeypatch):
-    """R31: every byte that arrived is charged; verification only decides conversion."""
+    """Every byte that arrived is charged; verification only decides conversion."""
     keys = alb10(env, capsys)
     bad = keys[3]
     monkeypatch.setenv("FAKE_S5CMD_TRUNCATE", bad)
@@ -1071,7 +1071,7 @@ def test_symlinked_dataset_dir_is_not_chmodded_through_the_link(env, cap, capsys
 
 
 def test_signal_after_the_download_still_charges_and_stores_the_batch(env, cap, capsys, monkeypatch):
-    """R33: a first signal between s5.run and the charge is held until the batch is stored."""
+    """A first signal between s5.run and the charge is held until the batch is stored."""
     keys = alb10(env, capsys)
     real = cli_fetch._received
     calls = []

@@ -74,7 +74,7 @@ Coverage is limited, so the class is recorded with its caveat.
 | 15:00-15:09 | coupon blocks decay: 196 (15:00), 122 (15:03), 82 (15:05), 46 (15:07), 10 (15:09) | CloudWatch | W2-Q3 |
 | 15:10 | last coupon block was 15:09; none from 15:10 to 16:49; total blocked back to 1-9 a minute | CloudWatch | W2-Q3 |
 | 11:42-13:57 | no wafv2 write event listed in CloudTrail (no UpdateWebACL): no rule change before the onset | CloudTrail | W2-Q1, W2-Q2 |
-| 13:42-15:09 | logs show the same minute-by-minute counts as CloudWatch; the 62-client fleet (ASN 64511, JA4 t13d1811h1_a09f3c656075_e42f34c56612, python-requests/2.31.0 or an instruction-like UA, 5 header names, no cookie) POSTs /api/cart/coupon; the fleet's own first request minute was not queried | WAF logs via module | W3-Q3..Q18 |
+| 13:42-15:09 | logs show the same minute-by-minute counts as CloudWatch; the 62-client fleet (ASN 64511, JA4 t13d1811h1_cccccccccccc_dddddddddddd, python-requests/2.31.0 or an instruction-like UA, 5 header names, no cookie) POSTs /api/cart/coupon; the fleet's own first request minute was not queried | WAF logs via module | W3-Q3..Q18 |
 
 ## Hypotheses
 
@@ -151,7 +151,7 @@ Not read yet. environment.md names `example-org/shop-web` through `gh` (no local
 | W3-Q6 | 09:15:30 | …/sqlq … concentration | same | local | top address 0.45% of requests (394): no single dominant address |
 | W3-Q7 | 09:15:30 | …/sqlq … clients | same | local | top 50 addresses all in one /24, 329-394 requests each, 85-93% blocked, 0 client keys |
 | W3-Q8 | 09:15:30 | …/sqlq … client_keys | same | local | top 50 keys each on one address, 49-55 requests, almost no blocks; no fleet address carries a key |
-| W3-Q9 | 09:15:30 | …/sqlq … fingerprints | same | local | JA4 t13d1811h1_a09f3c656075_e42f34c56612: 20,811 requests, 62 clients, 0 keys; JA4 t13d1516h2_8daaf6152771_02713d6af862: 67,552 requests, 508 clients, 1,546 keys |
+| W3-Q9 | 09:15:30 | …/sqlq … fingerprints | same | local | JA4 t13d1811h1_cccccccccccc_dddddddddddd: 20,811 requests, 62 clients, 0 keys; JA4 t13d1516h2_aaaaaaaaaaaa_bbbbbbbbbbbb: 67,552 requests, 508 clients, 1,546 keys |
 | W3-Q10 | 09:15:30 | …/sqlq … asns | same | local | ASN 64511: 20,811 requests, 18,692 blocked, 62 clients; five other ASNs 76-172 blocked each |
 | W3-Q11 | 09:15:30 | …/sqlq … countries | same | local | VN, BR, ID, RO hold 4,599-4,748 blocks each (62 clients: 16, 16, 15, 15); IR 62 and KP 58 geo-blocked; US/FR/AU/CA/DE/GB 21-227 blocked |
 | W3-Q12 | 09:15:30 | …/sqlq … user_agents | same | local | python-requests/2.31.0: 20,581 requests, 18,488 blocked, 60 clients; one instruction-like UA: 230 requests, 204 blocked, 2 clients (Untrusted text); ordinary browser UAs 83-208 blocked each; ExampleSearchBot 2,706 requests, 15 blocked |

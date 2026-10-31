@@ -7,7 +7,7 @@
 - Baseline run without the skill, one run per case, on a neutral copy of the case: the run saw only the operator's opening line and `world/` under a neutral directory name. No README, no case name, no expected output.
 - Mode of the case: **Fast**. Commands are simulated: each command's output was read from `world/` via `world/INDEX.md` (unmatched commands fall back to `world/_default.txt`). Each run kept an investigation log of the commands, the mapped files, the key facts and a final report.
 - The operator was offline after the opening line. The run wrote `ASK:` lines and went on with stated assumptions. An `ASK:` counts as asking only when the run did not then use a guessed value as fact.
-- Contamination caveat: baseline runs may have had background notes loaded.
+- Contamination caveat: baseline runs may have had earlier project notes in context.
 - Vocabulary rule used for every case: a README line that names a confidence label (`Confirmed`, `Likely`) or a recurrence class (`scheduled`) is FAIL when the run does not use that term ("high confidence" does not count); lines that name a shape or step word are graded on substance, and the Basis says so.
 - Scored against this fixture's README MUST / MUST-NOT lines. The raw log is not copied into the repo; quotes below are short excerpts of it.
 
@@ -30,7 +30,7 @@
 
 Totals: 5 PASS, 7 FAIL, 0 N/A.
 
-### Failure modes for Task 11
+### Failure modes
 
 The quoted sentences below are paraphrases of what the run did, not quotes from its log.
 

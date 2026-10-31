@@ -420,7 +420,7 @@ def test_result_is_a_named_tuple_with_documented_fields():
     assert (r.rows, r.dropped_columns, r.skipped_lines) == (3, ("x",), 1)
 
 
-# ---- fix round 1 ----------------------------------------------------------------------------
+# ---- further cases ----------------------------------------------------------------------------
 
 REDIRECT = "https://www.example.com:443/home?token=SECRETRED"
 TRANSFORMED = "/b?password=SECRETPW"
@@ -471,7 +471,7 @@ def test_lone_surrogate_in_waf_record_does_not_lose_the_batch(work):
     assert row["user_agent"].startswith("x") and row["user_agent"].endswith("y")
 
 
-# ---- fix round 2 (R30) ------------------------------------------------------------------------
+# ---- more cases ------------------------------------------------------------------------
 
 def _forged_ua(injected: int) -> str:
     """A user agent that closes its quotes and adds `injected` more tokens, all "-" (so the

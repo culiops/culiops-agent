@@ -454,7 +454,7 @@ def test_salt_directory_refused(home):
         redact.load_or_create_salt()
 
 
-# ---- fix round 1 ------------------------------------------------------------------------
+# ---- further cases ------------------------------------------------------------------------
 
 def test_many_leading_question_marks_do_not_recurse():
     qs = "?" * 5000 + "token=abc&a=1"
@@ -573,7 +573,7 @@ def test_salt_created_readable_under_restrictive_umask(home):
     assert redact.load_or_create_salt() == s
 
 
-# ---- fix round 2 ------------------------------------------------------------------------
+# ---- more cases ------------------------------------------------------------------------
 
 @pytest.mark.parametrize("qs,expected", [
     ("redirect=%2Fx%3Ftoken%3Dabc", "redirect=***"),
@@ -652,7 +652,7 @@ def test_uri_and_referer_encoded_semicolon_in_waf_record():
     assert "ZZ" not in json.dumps(out)
 
 
-# ---- R27: fragments and userinfo inside a non-sensitive value; public mask_url -----------
+# ---- fragments and userinfo inside a non-sensitive value; public mask_url -----------
 
 @pytest.mark.parametrize("qs,expected", [
     ("r=%2Fx%23access_token%3DZZ", "r=***"),
@@ -715,7 +715,7 @@ def test_mask_url_unparseable_and_passthrough():
     assert redact.mask_url(5, names) == "***"
 
 
-# ---- fix round 1: userinfo inside a fragment, backslash spellings -------------------------
+# ---- userinfo inside a fragment, backslash spellings -------------------------
 
 @pytest.mark.parametrize("qs", [
     "r=%2Fx%23https%3A%2F%2Fu%3Apw%40h.example.com",
@@ -736,7 +736,7 @@ def test_mask_url_backslash_userinfo_dropped():
     assert "SECRETPW" not in out and out.endswith("?token=***")
 
 
-# ---- fix round 2 (R30): fail-closed userinfo rule, every '#' piece ---------------------------
+# ---- fail-closed userinfo rule, every '#' piece ---------------------------
 
 @pytest.mark.parametrize("qs", [
     "r=https%3A%2Fu%3ASECPW%40h.example.com%2Fp",            # https:/u:pw@h/p
