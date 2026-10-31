@@ -1,0 +1,4 @@
+-- sampled 1/3: requests scale by 3; distinct_* are lower bounds.
+ja3,ja4,requests,distinct_clients,distinct_client_keys
+0123456789abcdef0123456789abcdef,t13d1516h2_aaaaaaaaaaaa_bbbbbbbbbbbb,44129,508,1537
+fedcba9876543210fedcba9876543210,t13d1811h1_cccccccccccc_dddddddddddd,7223,62,0

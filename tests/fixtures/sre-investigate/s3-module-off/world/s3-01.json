@@ -1,0 +1,221 @@
+{
+    "Contents": [
+        {
+            "Key": "cf/static/E3EXAMPLEDIST.2026-04-12-00.1A9FGXJ1GB.gz",
+            "LastModified": "2026-04-12T00:49:05+00:00",
+            "ETag": "\"9239cf5cb2767a25a27fa431558d3e8b\"",
+            "Size": 111958,
+            "StorageClass": "STANDARD"
+        },
+        {
+            "Key": "cf/static/E3EXAMPLEDIST.2026-04-12-00.AMMNK8JV2T.gz",
+            "LastModified": "2026-04-12T00:50:02+00:00",
+            "ETag": "\"72e8b1464a57701c95563518c24d6e57\"",
+            "Size": 70016,
+            "StorageClass": "STANDARD"
+        },
+        {
+            "Key": "cf/static/E3EXAMPLEDIST.2026-04-12-01.3SS8VN9CKY.gz",
+            "LastModified": "2026-04-12T01:38:27+00:00",
+            "ETag": "\"9c4c347e150fa2e067d82a76205b2d39\"",
+            "Size": 141448,
+            "StorageClass": "STANDARD"
+        },
+        {
+            "Key": "cf/static/E3EXAMPLEDIST.2026-04-12-01.PUB9WYSN2P.gz",
+            "LastModified": "2026-04-12T01:42:15+00:00",
+            "ETag": "\"d599d06fcaf7a33d854e5a0d7fbced83\"",
+            "Size": 78599,
+            "StorageClass": "STANDARD"
+        },
+        {
+            "Key": "cf/static/E3EXAMPLEDIST.2026-04-12-01.XPEDTG343L.gz",
+            "LastModified": "2026-04-12T01:24:32+00:00",
+            "ETag": "\"f7cd3585901c512a3ee1e6904f7ec983\"",
+            "Size": 52654,
+            "StorageClass": "STANDARD"
+        },
+        {
+            "Key": "cf/static/E3EXAMPLEDIST.2026-04-12-02.G8YCTU3UN5.gz",
+            "LastModified": "2026-04-12T02:09:45+00:00",
+            "ETag": "\"61c2cb1715d06e776399f66755d24fad\"",
+            "Size": 115833,
+            "StorageClass": "STANDARD"
+        },
+        {
+            "Key": "cf/static/E3EXAMPLEDIST.2026-04-12-02.MFFS3GSH2J.gz",
+            "LastModified": "2026-04-12T02:59:12+00:00",
+            "ETag": "\"e9ad3842a901f4db3c5a5e4131b9f906\"",
+            "Size": 92992,
+            "StorageClass": "STANDARD"
+        },
+        {
+            "Key": "cf/static/E3EXAMPLEDIST.2026-04-12-03.3H58H56690.gz",
+            "LastModified": "2026-04-12T03:35:57+00:00",
+            "ETag": "\"5be74d75941b923b788f81c4a5c96a1b\"",
+            "Size": 97864,
+            "StorageClass": "STANDARD"
+        },
+        {
+            "Key": "cf/static/E3EXAMPLEDIST.2026-04-12-03.6P2EGFJ2J9.gz",
+            "LastModified": "2026-04-12T03:58:52+00:00",
+            "ETag": "\"139597cb4ee47b73f9c757b4c6a7d84f\"",
+            "Size": 110334,
+            "StorageClass": "STANDARD"
+        },
+        {
+            "Key": "cf/static/E3EXAMPLEDIST.2026-04-12-03.TZF4ZZ8GC3.gz",
+            "LastModified": "2026-04-12T04:11:37+00:00",
+            "ETag": "\"8e6e7119e1a8169c7b935ca5e407374e\"",
+            "Size": 118793,
+            "StorageClass": "STANDARD"
+        },
+        {
+            "Key": "cf/static/E3EXAMPLEDIST.2026-04-12-04.8CKC7ANVAE.gz",
+            "LastModified": "2026-04-12T04:17:00+00:00",
+            "ETag": "\"60f4efd2c4beaadf0784c253e998d7c2\"",
+            "Size": 110084,
+            "StorageClass": "STANDARD"
+        },
+        {
+            "Key": "cf/static/E3EXAMPLEDIST.2026-04-12-04.A7A5PQ51BS.gz",
+            "LastModified": "2026-04-12T04:49:46+00:00",
+            "ETag": "\"e9448669e23116f683c270c6b34cc95b\"",
+            "Size": 121826,
+            "StorageClass": "STANDARD"
+        },
+        {
+            "Key": "cf/static/E3EXAMPLEDIST.2026-04-12-04.RGRXCH737R.gz",
+            "LastModified": "2026-04-12T04:16:50+00:00",
+            "ETag": "\"da9966bb8f9488425876a425b3b15fea\"",
+            "Size": 72819,
+            "StorageClass": "STANDARD"
+        },
+        {
+            "Key": "cf/static/E3EXAMPLEDIST.2026-04-12-05.2J4MY4WL25.gz",
+            "LastModified": "2026-04-12T05:26:37+00:00",
+            "ETag": "\"e0928da4d9083ddb44f64f23217f54ae\"",
+            "Size": 102159,
+            "StorageClass": "STANDARD"
+        },
+        {
+            "Key": "cf/static/E3EXAMPLEDIST.2026-04-12-05.SF4YZ3638Y.gz",
+            "LastModified": "2026-04-12T05:44:02+00:00",
+            "ETag": "\"83fd079f473ba5808c3e5c5608b25f40\"",
+            "Size": 129115,
+            "StorageClass": "STANDARD"
+        },
+        {
+            "Key": "cf/static/E3EXAMPLEDIST.2026-04-12-05.TF7FQ1TBK6.gz",
+            "LastModified": "2026-04-12T05:23:18+00:00",
+            "ETag": "\"f0988791572391619f03e9907962fae5\"",
+            "Size": 109751,
+            "StorageClass": "STANDARD"
+        },
+        {
+            "Key": "cf/static/E3EXAMPLEDIST.2026-04-12-06.KKAR7J8VRK.gz",
+            "LastModified": "2026-04-12T06:26:25+00:00",
+            "ETag": "\"6b38ea1c5cafdd7b8d7b59022111bf8d\"",
+            "Size": 110308,
+            "StorageClass": "STANDARD"
+        },
+        {
+            "Key": "cf/static/E3EXAMPLEDIST.2026-04-12-06.TA2PVPHX73.gz",
+            "LastModified": "2026-04-12T07:00:10+00:00",
+            "ETag": "\"fea11d1feb2b3e3e606cc7e64439782a\"",
+            "Size": 105450,
+            "StorageClass": "STANDARD"
+        },
+        {
+            "Key": "cf/static/E3EXAMPLEDIST.2026-04-12-06.WU02TFKVW6.gz",
+            "LastModified": "2026-04-12T06:20:41+00:00",
+            "ETag": "\"5aa669da0c978d12d302a36f20487b9c\"",
+            "Size": 95058,
+            "StorageClass": "STANDARD"
+        },
+        {
+            "Key": "cf/static/E3EXAMPLEDIST.2026-04-12-07.GKGZ8S8G7W.gz",
+            "LastModified": "2026-04-12T08:03:46+00:00",
+            "ETag": "\"e365656fc41c650d9339e929dad5f7f3\"",
+            "Size": 128848,
+            "StorageClass": "STANDARD"
+        },
+        {
+            "Key": "cf/static/E3EXAMPLEDIST.2026-04-12-07.PSRUPAL70N.gz",
+            "LastModified": "2026-04-12T07:26:04+00:00",
+            "ETag": "\"0bfbdeebe02aad51fc29e3c3e6003990\"",
+            "Size": 103283,
+            "StorageClass": "STANDARD"
+        },
+        {
+            "Key": "cf/static/E3EXAMPLEDIST.2026-04-12-07.WYCG30E1YM.gz",
+            "LastModified": "2026-04-12T07:45:28+00:00",
+            "ETag": "\"7a3d773833ada017e7a63857d748f6e9\"",
+            "Size": 64609,
+            "StorageClass": "STANDARD"
+        },
+        {
+            "Key": "cf/static/E3EXAMPLEDIST.2026-04-12-08.E06V8D4KR1.gz",
+            "LastModified": "2026-04-12T08:32:57+00:00",
+            "ETag": "\"3faa7d44c1920aa9884e80d164075ab6\"",
+            "Size": 79328,
+            "StorageClass": "STANDARD"
+        },
+        {
+            "Key": "cf/static/E3EXAMPLEDIST.2026-04-12-08.JZPAVHTW5R.gz",
+            "LastModified": "2026-04-12T08:37:15+00:00",
+            "ETag": "\"b841562ae9b69cd5521e044dc6da90a0\"",
+            "Size": 94661,
+            "StorageClass": "STANDARD"
+        },
+        {
+            "Key": "cf/static/E3EXAMPLEDIST.2026-04-12-08.LBC3FXZAFG.gz",
+            "LastModified": "2026-04-12T08:40:54+00:00",
+            "ETag": "\"7ed35c6e7a0e94fa92bb6f764baf6032\"",
+            "Size": 82673,
+            "StorageClass": "STANDARD"
+        },
+        {
+            "Key": "cf/static/E3EXAMPLEDIST.2026-04-12-09.EAQ626GV7B.gz",
+            "LastModified": "2026-04-12T09:55:37+00:00",
+            "ETag": "\"cdafc0cfcb2095208356aee9b0aa0d94\"",
+            "Size": 223685,
+            "StorageClass": "STANDARD"
+        },
+        {
+            "Key": "cf/static/E3EXAMPLEDIST.2026-04-12-09.G64BPVGLU7.gz",
+            "LastModified": "2026-04-12T09:33:36+00:00",
+            "ETag": "\"8053bc43b6fd8517ffa0556b5b01f314\"",
+            "Size": 198908,
+            "StorageClass": "STANDARD"
+        },
+        {
+            "Key": "cf/static/E3EXAMPLEDIST.2026-04-12-09.WYM7NL2N5H.gz",
+            "LastModified": "2026-04-12T09:37:25+00:00",
+            "ETag": "\"9ff4eff60693ae71df848bfddcff67fa\"",
+            "Size": 174584,
+            "StorageClass": "STANDARD"
+        },
+        {
+            "Key": "cf/static/E3EXAMPLEDIST.2026-04-12-10.7JW7KET5XM.gz",
+            "LastModified": "2026-04-12T10:17:30+00:00",
+            "ETag": "\"8b9fb86301ebb74e096e0a13e8cbeae4\"",
+            "Size": 216693,
+            "StorageClass": "STANDARD"
+        },
+        {
+            "Key": "cf/static/E3EXAMPLEDIST.2026-04-12-10.A582C55ZAM.gz",
+            "LastModified": "2026-04-12T10:43:45+00:00",
+            "ETag": "\"7ba42f86ac8a9720ea009232b1a515fa\"",
+            "Size": 193203,
+            "StorageClass": "STANDARD"
+        },
+        {
+            "Key": "cf/static/E3EXAMPLEDIST.2026-04-12-10.V5VMF9JMGP.gz",
+            "LastModified": "2026-04-12T11:06:45+00:00",
+            "ETag": "\"ab24d283bc310f649b1adb47425ad2df\"",
+            "Size": 195819,
+            "StorageClass": "STANDARD"
+        }
+    ]
+}

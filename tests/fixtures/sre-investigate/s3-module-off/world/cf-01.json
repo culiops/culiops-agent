@@ -1,0 +1,57 @@
+{
+    "DistributionList": {
+        "Marker": "",
+        "MaxItems": 100,
+        "IsTruncated": false,
+        "Quantity": 1,
+        "Items": [
+            {
+                "Id": "E3EXAMPLEDIST",
+                "ARN": "arn:aws:cloudfront::111122223333:distribution/E3EXAMPLEDIST",
+                "Status": "Deployed",
+                "LastModifiedTime": "2026-02-18T09:41:12.504000+00:00",
+                "DomainName": "d3examplestatic.cloudfront.net",
+                "Aliases": {
+                    "Quantity": 1,
+                    "Items": [
+                        "static.example.com"
+                    ]
+                },
+                "Origins": {
+                    "Quantity": 1,
+                    "Items": [
+                        {
+                            "Id": "origin-static",
+                            "DomainName": "origin-static.example.com",
+                            "OriginPath": "",
+                            "CustomHeaders": {
+                                "Quantity": 0
+                            },
+                            "CustomOriginConfig": {
+                                "HTTPPort": 80,
+                                "HTTPSPort": 443,
+                                "OriginProtocolPolicy": "https-only",
+                                "OriginSslProtocols": {
+                                    "Quantity": 1,
+                                    "Items": [
+                                        "TLSv1.2"
+                                    ]
+                                },
+                                "OriginReadTimeout": 30,
+                                "OriginKeepaliveTimeout": 5
+                            },
+                            "ConnectionAttempts": 3,
+                            "ConnectionTimeout": 10
+                        }
+                    ]
+                },
+                "Comment": "static assets for shop.example.com",
+                "PriceClass": "PriceClass_100",
+                "Enabled": true,
+                "HttpVersion": "http2and3",
+                "IsIPV6Enabled": true,
+                "WebACLId": ""
+            }
+        ]
+    }
+}

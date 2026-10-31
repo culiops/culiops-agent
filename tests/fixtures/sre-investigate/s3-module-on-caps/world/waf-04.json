@@ -1,0 +1,5 @@
+{
+    "ResourceArns": [
+        "arn:aws:elasticloadbalancing:us-east-1:111122223333:loadbalancer/app/shop-web-alb/9f8e7d6c5b4a3210"
+    ]
+}

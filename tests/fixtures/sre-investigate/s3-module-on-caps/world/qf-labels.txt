@@ -1,0 +1,3 @@
+-- sampled 1/3: requests scale by 3; distinct_clients are lower bounds.
+label,requests,distinct_clients
+example:rate:coupon,6539,63

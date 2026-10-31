@@ -1,0 +1,7 @@
+DRY RUN — nothing downloaded
+dataset shop-waf (waf)  slice 2026-04-11 all (+1 widen)  every 12
+files 24  MB 154.7  est_cost $0.0166
+caps: fetch 154.7/200 MB  run - 154.7/1024 MB  24h 2100.3/2048 MB  → OVER (24h)
+ask the user; an override needs their marker file plus --force
+to run: logs-fetch shop-waf 2026-04-11 --every 12 --yes --run <run-id>
+refused: over the cap (24h)

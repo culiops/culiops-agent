@@ -1,0 +1,2 @@
+label,requests,distinct_clients
+example:rate:coupon,4906,62

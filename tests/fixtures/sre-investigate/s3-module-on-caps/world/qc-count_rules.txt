@@ -1,0 +1,3 @@
+-- sampled 1/2: requests scale by 2; distinct_clients are lower bounds.
+rule_id,rule_action,requests,distinct_clients
+count-new-bot-signals,COUNT,854,404

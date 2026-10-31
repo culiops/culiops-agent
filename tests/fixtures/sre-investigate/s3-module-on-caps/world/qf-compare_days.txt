@@ -1,0 +1,6 @@
+-- sampled 1/3: requests_a, requests_b and delta (same rate on both days) scale by 3.
+rule,requests_a,requests_b,delta
+Default_Action,0,44531,44531
+rate-limit-coupon,0,6539,6539
+AWS-AWSManagedRulesAmazonIpReputationList,0,190,190
+geo-block-embargo,0,92,92

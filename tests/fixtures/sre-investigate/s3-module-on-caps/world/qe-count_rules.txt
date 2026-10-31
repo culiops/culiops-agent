@@ -1,0 +1,2 @@
+rule_id,rule_action,requests,distinct_clients
+count-new-bot-signals,COUNT,914,416

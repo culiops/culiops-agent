@@ -9,9 +9,9 @@ Find out why a service is failing, slow or stuck, without touching it. The run s
 
 **Supported stack:** AWS (Terraform, ecspresso, lambroll) and Kubernetes (Helm, Kustomize, raw manifests). CloudFormation, Serverless Framework, SAM, CDK and Ansible are recognized when they appear in the IaC history, and are read as plain git history only. GCP and Azure are out of scope: say "not supported by sre-investigate" and stop.
 
-**Backends.** First-class: CloudWatch (metrics, alarms, Logs Insights), Prometheus, Loki, Tempo, X-Ray, Sentry and kubectl, reached through their own CLIs or HTTP APIs or through a Grafana MCP server. Mapped (same method, translated queries): Datadog, New Relic and Elastic APM, in [other-backends.md](playbooks/other-backends.md). Recipes are checked against official documentation, and each playbook header says how its recipes were verified, per backend. The core AWS CLI reads (identity and write-check, CloudWatch metrics, Logs Insights, ECS, scheduling and CloudTrail listings) ran live in an owner-approved Fast run against a sandbox account and are marked `verified: live` with the date; everything else, every non-AWS backend included, is `verified: docs-only`.
+**Backends.** First-class: CloudWatch (metrics, alarms, Logs Insights), Prometheus, Loki, Tempo, X-Ray, Sentry and kubectl, reached through their own CLIs or HTTP APIs or through a Grafana MCP server. Mapped (same method, translated queries): Datadog, New Relic and Elastic APM, in [other-backends.md](playbooks/other-backends.md). Recipes are checked against official documentation, and each playbook header says how its recipes were verified, per backend. The core AWS CLI reads (identity and write-check, CloudWatch metrics, Logs Insights, ECS, scheduling and CloudTrail listings) ran live in an owner-approved Fast run against a sandbox account and are marked `verified: live` with the date; the opt-in S3 log module's recipes ran live on 2026-10-31 for CloudFront standard logs (legacy layout) and WAF logs delivered straight to S3 (`verified: live`), and on synthetic logs for the rest (`verified: synthetic`); everything else, every non-AWS backend included, is `verified: docs-only`.
 
-**Skill files.** Every path in this file (`access/`, `playbooks/`, `templates/`, `agents/`, `environment.template.md`) is relative to the base directory announced when the skill loaded. Use that base directory; never assume a fixed install path.
+**Skill files.** Every path in this file (`access/`, `playbooks/`, `templates/`, `agents/`, `analytics/`, `environment.template.md`) is relative to the base directory announced when the skill loaded. Use that base directory; never assume a fixed install path.
 
 ## The Iron Law
 
@@ -64,6 +64,7 @@ THE CHEAPEST QUERY THAT CAN ANSWER THE QUESTION, NARROWED FIRST. TRY TO DISPROVE
 | logcli | optional | bulk Loki pulls |
 | psql, mysql | not used by the skill | the operator's own client, when they run the read-only database queries the run hands them |
 | Grafana MCP server | optional | the same PromQL, LogQL and TraceQL through Grafana; run it with `--disable-write` ([mcp-grafana](https://github.com/grafana/mcp-grafana)) |
+| s5cmd, duckdb, AWS CLI | optional: s5cmd 2.2.0, duckdb 1.4.0, AWS CLI 2.9 | the opt-in S3 log module only ([logs-s3.md](playbooks/logs-s3.md)); `logs-status` checks all three |
 
 **Auth.** AWS profiles (SSO or assumed roles) named in `environment.md` and passed with `--profile` on every command; kubeconfig contexts named there and passed with `--context`; one environment variable per token-based backend, named in its `datasources[]` row. Nothing is fetched on the user's behalf.
 
@@ -73,13 +74,14 @@ THE CHEAPEST QUERY THAT CAN ANSWER THE QUESTION, NARROWED FIRST. TRY TO DISPROVE
 - Kubernetes: the built-in `view` ClusterRole, bound in the namespaces under investigation (it cannot read Secrets, which is intended).
 - Grafana: a service account with the Viewer role.
 - Sentry: a token with read scopes only.
+- S3 log module (optional): `s3:ListBucket` and `s3:GetObject` on the named log buckets only (plus `kms:Decrypt` on the bucket's key when it uses SSE-KMS).
 
-**Metered APIs.** CloudWatch Logs Insights bills per GB scanned, `GetMetricData` bills per metric requested (also when Grafana makes the call), and X-Ray bills per trace retrieved and scanned. Current prices: [CloudWatch pricing](https://aws.amazon.com/cloudwatch/pricing/), [X-Ray pricing](https://aws.amazon.com/xray/pricing/). Describe and list calls are free but share the account's API rate limits with production automation. The budgets in `environment.md` bound what one run may spend.
+**Metered APIs.** CloudWatch Logs Insights bills per GB scanned, `GetMetricData` bills per metric requested (also when Grafana makes the call), and X-Ray bills per trace retrieved and scanned. Current prices: [CloudWatch pricing](https://aws.amazon.com/cloudwatch/pricing/), [X-Ray pricing](https://aws.amazon.com/xray/pricing/). The S3 log module's downloads bill S3 GET requests and data transfer ([S3 pricing](https://aws.amazon.com/s3/pricing/)); its own caps bound them. Describe and list calls are free but share the account's API rate limits with production automation. The budgets in `environment.md` bound what one run may spend.
 
 ## Terms
 
 - **Output root:** see Constraint 5.
-- **Run directory:** `<output root>/runs/<service>-<env>-<YYYYMMDD-HHMM>/`, with the start time in UTC. It holds `ledger.md`, `profile.md`, `report.md` and `raw/`.
+- **Run directory:** `<output root>/runs/<service>-<env>-<YYYYMMDD-HHMM>/`, with the start time in UTC. In the directory name only, `<service>` and `<env>` are written in lowercase letters, digits and hyphens, starting with a letter or digit (any other character becomes a hyphen), so the name is also a valid run id for the analytics tools; profile keys and `incidents/` file names keep the service's own name. It holds `ledger.md`, `profile.md`, `report.md` and `raw/`.
 - **`RUN`:** set to `<run directory>/raw` for the main session's recipes; playbook recipes write `$RUN/<file>`. An evidence worker uses `<run directory>/raw/<hypothesis ID>`, a helper `<run directory>/raw/helper`.
 - **Run profile:** `profile.md` in the run directory, the run's working copy of the service profile. It starts as a copy of `<output root>/profiles/<service>-<env>.md` when that exists, or is built fresh in Build profile. All identifier marks made during the run (verified, `(unverified)`, stale) go here; the stored profile changes only through Phase 6.
 - **Ledger:** `ledger.md` in the run directory, copied from [templates/ledger.md](templates/ledger.md) at the start of the run, with all its sections, including the per-hypothesis status lines under the [Hypotheses](templates/ledger.md#hypotheses) table. It is the working record: every query gets a [Query log](templates/ledger.md#query-log) row before its result is used anywhere. Only the main session writes it, after every wave.
@@ -164,7 +166,8 @@ Read a backend's playbook before its first query in the session. Each playbook g
    - when the trigger is a Grafana-managed or Prometheus alert: its state history (or the `ALERTS` series) over the same range, with coverage;
    - when the profile names an error-tracker project: its top issues for the window ([Aggregates first](playbooks/errors.md#aggregates-first));
    - when the request names a ticket: read it as context ([Tickets and wiki](playbooks/external.md#tickets-and-wiki));
-   - when the report is about WAF blocks, 403 or 429 spikes, attacks or abuse, or about 403/429 responses where you are unsure whether a WAF sits in the path: read [the WAF playbook](playbooks/waf.md#escalation-order) and plan from it.
+   - when the report is about WAF blocks, 403 or 429 spikes, attacks or abuse, or about 403/429 responses where you are unsure whether a WAF sits in the path: read [the WAF playbook](playbooks/waf.md#escalation-order) and plan from it;
+   - the S3 log module state: `<skill-base>/analytics/bin/logs-status`, with `<skill-base>` written out as the base directory announced when the skill loaded. Print its one line exactly as returned, once, in the after-wave-0 message. If it exits non-zero or prints anything other than one line starting `S3 log module:`, the module is off: print `S3 log module: off (logs-status failed)` instead, with no diagnosis and no suggested fix, and continue. `on (…)`: [logs-s3.md](playbooks/logs-s3.md) can read CloudFront, ALB and WAF request logs; read it before the first module command. `off (…)`: that line is the only thing the run says about the module. Run no other module command, and never suggest installing, configuring or enabling it, in questions, gaps, "To confirm" sentences or follow-ups. A question that needs request-level logs is then a Gaps row naming those logs (for example the distribution's access logs for the window) plus a "To confirm, a human would…" sentence, and which objects, paths or clients are affected is `Assumed` or left out.
 8. **Access results** go into the ledger's Access table, gaps into Gaps. Code clones are listed under Code repos with the age of their refs; a stale clone is a gap, and `gh` is the fallback.
 
 ### Build profile
@@ -343,6 +346,7 @@ After the report, never before:
 | Write-capable credentials found and no boxed warning shown, or the report calls them read-only | STOP → print the box, suggest a read-only role, continue; report exactly what the check found |
 | Commands run one at a time, or shown abbreviated | STOP → plan a wave, print every command in full, then run it |
 | A latency symptom whose first metric wave lacks per-endpoint latency and call rate, or a ceiling or volume shape whose next wave lacks the per-endpoint queries | STOP → apply Phase 1 step 2: in wave 1 for latency, otherwise in the very next wave |
+| The S3 log module reported `off`, and a module command runs or any later text mentions the module, its tools or downloading | STOP → remove it; write the request-level question as a gap without naming the module |
 | Part of wave 1 dropped because the answer seemed clear | STOP → run every leg; stop early only on the stated rule |
 | A deploy or rollout given any label without any of: the old-against-new split (per-revision counts or per-pod evidence), onset or recurrence evidence against it, or a gap saying why none exists | STOP → run the split first; quote it per revision in the ledger and report |
 | A deploy named as cause before the recurrence class exists | STOP → classify first; check schedules before people |
@@ -380,7 +384,7 @@ After the report, never before:
 In chat:
 
 - **First message:** the mode and why, the output root (local, never committed), and the Culibox notice if `agentbox-env` exists.
-- **After wave 0:** the write-check warnings or notices, and the gaps found.
+- **After wave 0:** the write-check warnings or notices, the S3 log module line, and the gaps found.
 - **Before Phase 2:** the impact block.
 - **Deep:** checkpoint #1 and checkpoint #2, each waiting for a reply.
 - **End, Fast:** the TL;DR inline, then the report path. **End, Deep:** the TL;DR, the report path, and "open items need your input" when gaps exist. Both end with the cost line.

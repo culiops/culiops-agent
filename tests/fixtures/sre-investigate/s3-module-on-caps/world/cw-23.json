@@ -1,0 +1,12 @@
+{
+  "MetricDataResults": [
+    {
+      "Id": "m1",
+      "Label": "BlockedRequests",
+      "Timestamps": ["2026-04-11T15:00:00+00:00", "2026-04-11T14:00:00+00:00", "2026-04-11T13:00:00+00:00"],
+      "Values": [962.0, 14100.0, 3741.0],
+      "StatusCode": "Complete"
+    }
+  ],
+  "Messages": []
+}

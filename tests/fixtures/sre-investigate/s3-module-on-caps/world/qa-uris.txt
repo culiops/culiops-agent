@@ -1,0 +1,14 @@
+uri,http_method,requests,blocked,distinct_clients
+/,GET,9524,83,507
+/search,GET,7898,55,507
+/products,GET,6075,33,507
+/api/cart/coupon,POST,5523,4906,62
+/static/app.js,GET,5249,31,507
+/api/cart,POST,3142,17,507
+/account,GET,3029,11,506
+/checkout,POST,2116,7,497
+/api/cart,GET,2077,16,502
+/login,POST,1610,7,489
+/checkout,GET,1367,7,473
+/login,GET,1071,4,442
+/api/cart/coupon,GET,426,1,294

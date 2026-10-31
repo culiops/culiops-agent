@@ -1,0 +1,1 @@
+refused: no manifest covers 2026-04-12; run logs-inventory shop-waf 2026-04-11 2026-04-12 first

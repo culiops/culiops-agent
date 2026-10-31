@@ -1,0 +1,2042 @@
+{
+  "bucket": "aws-waf-logs-example-shop",
+  "dataset": "shop-waf",
+  "days": {
+    "2026-04-11": {
+      "bytes": 1932735170,
+      "files": 288,
+      "listed": 288
+    },
+    "2026-04-12": {
+      "bytes": 0,
+      "files": 0,
+      "listed": 0
+    }
+  },
+  "files": [
+    {
+      "end": "2026-04-11T00:00:00Z",
+      "etag": "76a754de433dfd795fe522c0f0aebab5",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/00/00/111122223333_waflogs_us-east-1_example-shop-acl_20260411T0000Z_e09797c7.log.gz",
+      "size": 4871572,
+      "start": "2026-04-10T23:55:00Z"
+    },
+    {
+      "end": "2026-04-11T00:05:00Z",
+      "etag": "03bb31fa60717e720e2e161b33f83acc",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/00/05/111122223333_waflogs_us-east-1_example-shop-acl_20260411T0005Z_ff2111f9.log.gz",
+      "size": 1349111,
+      "start": "2026-04-11T00:00:00Z"
+    },
+    {
+      "end": "2026-04-11T00:10:00Z",
+      "etag": "9a91db8d795c17fa87d0e53dfed0e7de",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/00/10/111122223333_waflogs_us-east-1_example-shop-acl_20260411T0010Z_ae17e0ea.log.gz",
+      "size": 1049125,
+      "start": "2026-04-11T00:05:00Z"
+    },
+    {
+      "end": "2026-04-11T00:15:00Z",
+      "etag": "3f62dcb99bbb6b80c26dc2b930c9c724",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/00/15/111122223333_waflogs_us-east-1_example-shop-acl_20260411T0015Z_4634b432.log.gz",
+      "size": 1251768,
+      "start": "2026-04-11T00:10:00Z"
+    },
+    {
+      "end": "2026-04-11T00:20:00Z",
+      "etag": "02f338e05921038a2b5235891ea9ea80",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/00/20/111122223333_waflogs_us-east-1_example-shop-acl_20260411T0020Z_47eeffdc.log.gz",
+      "size": 1147727,
+      "start": "2026-04-11T00:15:00Z"
+    },
+    {
+      "end": "2026-04-11T00:25:00Z",
+      "etag": "41d43900a7fa42cbc90dd22504347ba6",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/00/25/111122223333_waflogs_us-east-1_example-shop-acl_20260411T0025Z_bff0fbbc.log.gz",
+      "size": 1195206,
+      "start": "2026-04-11T00:20:00Z"
+    },
+    {
+      "end": "2026-04-11T00:30:00Z",
+      "etag": "f5a8d3b612028316d340fa783fcb9770",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/00/30/111122223333_waflogs_us-east-1_example-shop-acl_20260411T0030Z_371c4339.log.gz",
+      "size": 1176121,
+      "start": "2026-04-11T00:25:00Z"
+    },
+    {
+      "end": "2026-04-11T00:35:00Z",
+      "etag": "d6b4fa2b7cc8586e12690cd86beed228",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/00/35/111122223333_waflogs_us-east-1_example-shop-acl_20260411T0035Z_b30e828e.log.gz",
+      "size": 1095987,
+      "start": "2026-04-11T00:30:00Z"
+    },
+    {
+      "end": "2026-04-11T00:40:00Z",
+      "etag": "d45312fc19641247013ee33dd55e923d",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/00/40/111122223333_waflogs_us-east-1_example-shop-acl_20260411T0040Z_8c94bf7b.log.gz",
+      "size": 1166024,
+      "start": "2026-04-11T00:35:00Z"
+    },
+    {
+      "end": "2026-04-11T00:45:00Z",
+      "etag": "aabe6cc5761538643d7280045c8e69b9",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/00/45/111122223333_waflogs_us-east-1_example-shop-acl_20260411T0045Z_c31d6ee9.log.gz",
+      "size": 1328801,
+      "start": "2026-04-11T00:40:00Z"
+    },
+    {
+      "end": "2026-04-11T00:50:00Z",
+      "etag": "1416d4085a4099db2b288ea103eeaa33",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/00/50/111122223333_waflogs_us-east-1_example-shop-acl_20260411T0050Z_786119a0.log.gz",
+      "size": 1253594,
+      "start": "2026-04-11T00:45:00Z"
+    },
+    {
+      "end": "2026-04-11T00:55:00Z",
+      "etag": "fb69432f26031d4dbd965dd91a560df2",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/00/55/111122223333_waflogs_us-east-1_example-shop-acl_20260411T0055Z_09a7a577.log.gz",
+      "size": 1202590,
+      "start": "2026-04-11T00:50:00Z"
+    },
+    {
+      "end": "2026-04-11T01:00:00Z",
+      "etag": "37a37c4a8cba6a0f33c040fa7f8dd675",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/01/00/111122223333_waflogs_us-east-1_example-shop-acl_20260411T0100Z_c32156fb.log.gz",
+      "size": 1140751,
+      "start": "2026-04-11T00:55:00Z"
+    },
+    {
+      "end": "2026-04-11T01:05:00Z",
+      "etag": "4582d7a8f9e58a096223a1b18c37f89d",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/01/05/111122223333_waflogs_us-east-1_example-shop-acl_20260411T0105Z_93d1d3fc.log.gz",
+      "size": 764155,
+      "start": "2026-04-11T01:00:00Z"
+    },
+    {
+      "end": "2026-04-11T01:10:00Z",
+      "etag": "b9fa910ee491760cff6678dccbc5181a",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/01/10/111122223333_waflogs_us-east-1_example-shop-acl_20260411T0110Z_427b2ca8.log.gz",
+      "size": 997151,
+      "start": "2026-04-11T01:05:00Z"
+    },
+    {
+      "end": "2026-04-11T01:15:00Z",
+      "etag": "e21c23e9fddbeca08f8a53e9399bf4c4",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/01/15/111122223333_waflogs_us-east-1_example-shop-acl_20260411T0115Z_89341427.log.gz",
+      "size": 906068,
+      "start": "2026-04-11T01:10:00Z"
+    },
+    {
+      "end": "2026-04-11T01:20:00Z",
+      "etag": "c30ff99e9da646a4c9f0d776ef348d0b",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/01/20/111122223333_waflogs_us-east-1_example-shop-acl_20260411T0120Z_61dcbab8.log.gz",
+      "size": 892237,
+      "start": "2026-04-11T01:15:00Z"
+    },
+    {
+      "end": "2026-04-11T01:25:00Z",
+      "etag": "73b8e42d765aad92aaad7eeb924b0e39",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/01/25/111122223333_waflogs_us-east-1_example-shop-acl_20260411T0125Z_7aba7039.log.gz",
+      "size": 857180,
+      "start": "2026-04-11T01:20:00Z"
+    },
+    {
+      "end": "2026-04-11T01:30:00Z",
+      "etag": "80389e570506f11274230ef05fd45f22",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/01/30/111122223333_waflogs_us-east-1_example-shop-acl_20260411T0130Z_df127515.log.gz",
+      "size": 777491,
+      "start": "2026-04-11T01:25:00Z"
+    },
+    {
+      "end": "2026-04-11T01:35:00Z",
+      "etag": "b7fed698416f1bde746add72169cd1ca",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/01/35/111122223333_waflogs_us-east-1_example-shop-acl_20260411T0135Z_b7a77d70.log.gz",
+      "size": 819903,
+      "start": "2026-04-11T01:30:00Z"
+    },
+    {
+      "end": "2026-04-11T01:40:00Z",
+      "etag": "68c0978d6b676aa93181ac83025a68e5",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/01/40/111122223333_waflogs_us-east-1_example-shop-acl_20260411T0140Z_b76bc79e.log.gz",
+      "size": 859824,
+      "start": "2026-04-11T01:35:00Z"
+    },
+    {
+      "end": "2026-04-11T01:45:00Z",
+      "etag": "a301961f8019ca08ddd68cd20ec55741",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/01/45/111122223333_waflogs_us-east-1_example-shop-acl_20260411T0145Z_7626f767.log.gz",
+      "size": 806704,
+      "start": "2026-04-11T01:40:00Z"
+    },
+    {
+      "end": "2026-04-11T01:50:00Z",
+      "etag": "e0e6dc1c6273528a0ece26ae94e65218",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/01/50/111122223333_waflogs_us-east-1_example-shop-acl_20260411T0150Z_89352862.log.gz",
+      "size": 766188,
+      "start": "2026-04-11T01:45:00Z"
+    },
+    {
+      "end": "2026-04-11T01:55:00Z",
+      "etag": "c344209fa4a7f255f8f50ef2cf7c4196",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/01/55/111122223333_waflogs_us-east-1_example-shop-acl_20260411T0155Z_2f97ec34.log.gz",
+      "size": 823491,
+      "start": "2026-04-11T01:50:00Z"
+    },
+    {
+      "end": "2026-04-11T02:00:00Z",
+      "etag": "bc02d5903d709c0ae1d123c3c734223d",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/02/00/111122223333_waflogs_us-east-1_example-shop-acl_20260411T0200Z_0f957e19.log.gz",
+      "size": 786349,
+      "start": "2026-04-11T01:55:00Z"
+    },
+    {
+      "end": "2026-04-11T02:05:00Z",
+      "etag": "a6a7c3919b855455a851c7096bcc343d",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/02/05/111122223333_waflogs_us-east-1_example-shop-acl_20260411T0205Z_18326e2e.log.gz",
+      "size": 634757,
+      "start": "2026-04-11T02:00:00Z"
+    },
+    {
+      "end": "2026-04-11T02:10:00Z",
+      "etag": "66bed3794e10325bf29b22141ba8de24",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/02/10/111122223333_waflogs_us-east-1_example-shop-acl_20260411T0210Z_430b3f65.log.gz",
+      "size": 747993,
+      "start": "2026-04-11T02:05:00Z"
+    },
+    {
+      "end": "2026-04-11T02:15:00Z",
+      "etag": "c09ca2ee4e499e6face24c0a63c6bf0c",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/02/15/111122223333_waflogs_us-east-1_example-shop-acl_20260411T0215Z_f6f1e2af.log.gz",
+      "size": 676797,
+      "start": "2026-04-11T02:10:00Z"
+    },
+    {
+      "end": "2026-04-11T02:20:00Z",
+      "etag": "4d38030d89d87f2242de92feacf067d7",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/02/20/111122223333_waflogs_us-east-1_example-shop-acl_20260411T0220Z_d3bc719d.log.gz",
+      "size": 664709,
+      "start": "2026-04-11T02:15:00Z"
+    },
+    {
+      "end": "2026-04-11T02:25:00Z",
+      "etag": "84828fe2adb51381e50e28d565fa0995",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/02/25/111122223333_waflogs_us-east-1_example-shop-acl_20260411T0225Z_5f340abf.log.gz",
+      "size": 733391,
+      "start": "2026-04-11T02:20:00Z"
+    },
+    {
+      "end": "2026-04-11T02:30:00Z",
+      "etag": "0151ed4a543e23cafac9a80248cae4d3",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/02/30/111122223333_waflogs_us-east-1_example-shop-acl_20260411T0230Z_b26247bd.log.gz",
+      "size": 656115,
+      "start": "2026-04-11T02:25:00Z"
+    },
+    {
+      "end": "2026-04-11T02:35:00Z",
+      "etag": "5787da86e894b270e6c0c4d53cf036a3",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/02/35/111122223333_waflogs_us-east-1_example-shop-acl_20260411T0235Z_51ef101d.log.gz",
+      "size": 659305,
+      "start": "2026-04-11T02:30:00Z"
+    },
+    {
+      "end": "2026-04-11T02:40:00Z",
+      "etag": "e1d597d1777051847ec47b867568939d",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/02/40/111122223333_waflogs_us-east-1_example-shop-acl_20260411T0240Z_388b3f4c.log.gz",
+      "size": 642216,
+      "start": "2026-04-11T02:35:00Z"
+    },
+    {
+      "end": "2026-04-11T02:45:00Z",
+      "etag": "dcbb19ed34a5a2386ecb810df0d8d314",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/02/45/111122223333_waflogs_us-east-1_example-shop-acl_20260411T0245Z_c2cbfc82.log.gz",
+      "size": 666467,
+      "start": "2026-04-11T02:40:00Z"
+    },
+    {
+      "end": "2026-04-11T02:50:00Z",
+      "etag": "78027136eedc830795e187c39dcc2194",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/02/50/111122223333_waflogs_us-east-1_example-shop-acl_20260411T0250Z_da6933c1.log.gz",
+      "size": 683504,
+      "start": "2026-04-11T02:45:00Z"
+    },
+    {
+      "end": "2026-04-11T02:55:00Z",
+      "etag": "781d191ff093e6aae8ad69b60e211fe3",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/02/55/111122223333_waflogs_us-east-1_example-shop-acl_20260411T0255Z_3e4c1789.log.gz",
+      "size": 719135,
+      "start": "2026-04-11T02:50:00Z"
+    },
+    {
+      "end": "2026-04-11T03:00:00Z",
+      "etag": "6d681c6b2c7542f9c4a592c8e252cb6f",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/03/00/111122223333_waflogs_us-east-1_example-shop-acl_20260411T0300Z_1b45b86b.log.gz",
+      "size": 777907,
+      "start": "2026-04-11T02:55:00Z"
+    },
+    {
+      "end": "2026-04-11T03:05:00Z",
+      "etag": "8d3c4196692f060717a590d306b6a757",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/03/05/111122223333_waflogs_us-east-1_example-shop-acl_20260411T0305Z_d85c36ff.log.gz",
+      "size": 591187,
+      "start": "2026-04-11T03:00:00Z"
+    },
+    {
+      "end": "2026-04-11T03:10:00Z",
+      "etag": "3693746ef436897cba5cca0719762f3e",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/03/10/111122223333_waflogs_us-east-1_example-shop-acl_20260411T0310Z_cd38799d.log.gz",
+      "size": 639715,
+      "start": "2026-04-11T03:05:00Z"
+    },
+    {
+      "end": "2026-04-11T03:15:00Z",
+      "etag": "0ab888fba45cb5fefeca692925e6ab58",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/03/15/111122223333_waflogs_us-east-1_example-shop-acl_20260411T0315Z_47c702e6.log.gz",
+      "size": 691389,
+      "start": "2026-04-11T03:10:00Z"
+    },
+    {
+      "end": "2026-04-11T03:20:00Z",
+      "etag": "89c041dd99d331ad4177452aa8de7c71",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/03/20/111122223333_waflogs_us-east-1_example-shop-acl_20260411T0320Z_b682b95b.log.gz",
+      "size": 600978,
+      "start": "2026-04-11T03:15:00Z"
+    },
+    {
+      "end": "2026-04-11T03:25:00Z",
+      "etag": "e8f1b8c7738250099dc82a85bff3e3cd",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/03/25/111122223333_waflogs_us-east-1_example-shop-acl_20260411T0325Z_c63d7e70.log.gz",
+      "size": 647540,
+      "start": "2026-04-11T03:20:00Z"
+    },
+    {
+      "end": "2026-04-11T03:30:00Z",
+      "etag": "d932ce4f7f610d85c2829c04e0622e0f",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/03/30/111122223333_waflogs_us-east-1_example-shop-acl_20260411T0330Z_30820e05.log.gz",
+      "size": 552167,
+      "start": "2026-04-11T03:25:00Z"
+    },
+    {
+      "end": "2026-04-11T03:35:00Z",
+      "etag": "ecc83faeb07f481c24a21e5da4e6c0c8",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/03/35/111122223333_waflogs_us-east-1_example-shop-acl_20260411T0335Z_5775a383.log.gz",
+      "size": 582133,
+      "start": "2026-04-11T03:30:00Z"
+    },
+    {
+      "end": "2026-04-11T03:40:00Z",
+      "etag": "626e0cc643a8dcda36ca2d3163fbcb71",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/03/40/111122223333_waflogs_us-east-1_example-shop-acl_20260411T0340Z_7bdf3fcc.log.gz",
+      "size": 679173,
+      "start": "2026-04-11T03:35:00Z"
+    },
+    {
+      "end": "2026-04-11T03:45:00Z",
+      "etag": "866f384ab608bcb64f8f15f4ebc46513",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/03/45/111122223333_waflogs_us-east-1_example-shop-acl_20260411T0345Z_eb6d3468.log.gz",
+      "size": 582958,
+      "start": "2026-04-11T03:40:00Z"
+    },
+    {
+      "end": "2026-04-11T03:50:00Z",
+      "etag": "7050a50b7c2e26b836db396c0af4f8f7",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/03/50/111122223333_waflogs_us-east-1_example-shop-acl_20260411T0350Z_6632a067.log.gz",
+      "size": 638293,
+      "start": "2026-04-11T03:45:00Z"
+    },
+    {
+      "end": "2026-04-11T03:55:00Z",
+      "etag": "e3b40b6124b1ff3a44fafe70a2ec2328",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/03/55/111122223333_waflogs_us-east-1_example-shop-acl_20260411T0355Z_4895457d.log.gz",
+      "size": 590761,
+      "start": "2026-04-11T03:50:00Z"
+    },
+    {
+      "end": "2026-04-11T04:00:00Z",
+      "etag": "28cde135fb8136a2c7bca77a65932842",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/04/00/111122223333_waflogs_us-east-1_example-shop-acl_20260411T0400Z_6e47f553.log.gz",
+      "size": 608578,
+      "start": "2026-04-11T03:55:00Z"
+    },
+    {
+      "end": "2026-04-11T04:05:00Z",
+      "etag": "8133b810a763c891dad32273a4512e4c",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/04/05/111122223333_waflogs_us-east-1_example-shop-acl_20260411T0405Z_85783984.log.gz",
+      "size": 756859,
+      "start": "2026-04-11T04:00:00Z"
+    },
+    {
+      "end": "2026-04-11T04:10:00Z",
+      "etag": "34053620c93c96347a02a20e34199adb",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/04/10/111122223333_waflogs_us-east-1_example-shop-acl_20260411T0410Z_e9299f15.log.gz",
+      "size": 620947,
+      "start": "2026-04-11T04:05:00Z"
+    },
+    {
+      "end": "2026-04-11T04:15:00Z",
+      "etag": "9531abb4e27fef2034ce041cd3c41732",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/04/15/111122223333_waflogs_us-east-1_example-shop-acl_20260411T0415Z_68c7c094.log.gz",
+      "size": 727926,
+      "start": "2026-04-11T04:10:00Z"
+    },
+    {
+      "end": "2026-04-11T04:20:00Z",
+      "etag": "159d659f282dfdfcf210679cbe67d39b",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/04/20/111122223333_waflogs_us-east-1_example-shop-acl_20260411T0420Z_883446f8.log.gz",
+      "size": 746289,
+      "start": "2026-04-11T04:15:00Z"
+    },
+    {
+      "end": "2026-04-11T04:25:00Z",
+      "etag": "72a633f4f8aea836c00bf64bf2760d69",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/04/25/111122223333_waflogs_us-east-1_example-shop-acl_20260411T0425Z_51c27106.log.gz",
+      "size": 759552,
+      "start": "2026-04-11T04:20:00Z"
+    },
+    {
+      "end": "2026-04-11T04:30:00Z",
+      "etag": "cfcc70e49a23993369b8aec8379b199e",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/04/30/111122223333_waflogs_us-east-1_example-shop-acl_20260411T0430Z_c3faaa6b.log.gz",
+      "size": 648473,
+      "start": "2026-04-11T04:25:00Z"
+    },
+    {
+      "end": "2026-04-11T04:35:00Z",
+      "etag": "e4b25a246cd12941344c98e80f586b17",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/04/35/111122223333_waflogs_us-east-1_example-shop-acl_20260411T0435Z_ee6a66c0.log.gz",
+      "size": 714430,
+      "start": "2026-04-11T04:30:00Z"
+    },
+    {
+      "end": "2026-04-11T04:40:00Z",
+      "etag": "efd42fd8d47ba60dd7512724b5d618ed",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/04/40/111122223333_waflogs_us-east-1_example-shop-acl_20260411T0440Z_ba1b60cf.log.gz",
+      "size": 800771,
+      "start": "2026-04-11T04:35:00Z"
+    },
+    {
+      "end": "2026-04-11T04:45:00Z",
+      "etag": "3833d10e54ae8902918b29cffa9d515c",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/04/45/111122223333_waflogs_us-east-1_example-shop-acl_20260411T0445Z_3918c765.log.gz",
+      "size": 813385,
+      "start": "2026-04-11T04:40:00Z"
+    },
+    {
+      "end": "2026-04-11T04:50:00Z",
+      "etag": "6dab892c471476569e0c2e5fc78a6ee2",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/04/50/111122223333_waflogs_us-east-1_example-shop-acl_20260411T0450Z_c025dc17.log.gz",
+      "size": 689929,
+      "start": "2026-04-11T04:45:00Z"
+    },
+    {
+      "end": "2026-04-11T04:55:00Z",
+      "etag": "831a6d2b13d97c311f218aa339cd2a02",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/04/55/111122223333_waflogs_us-east-1_example-shop-acl_20260411T0455Z_d8c74296.log.gz",
+      "size": 799233,
+      "start": "2026-04-11T04:50:00Z"
+    },
+    {
+      "end": "2026-04-11T05:00:00Z",
+      "etag": "cada3e2cb173d76bfe1beced05e5a360",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/05/00/111122223333_waflogs_us-east-1_example-shop-acl_20260411T0500Z_b95cc500.log.gz",
+      "size": 740602,
+      "start": "2026-04-11T04:55:00Z"
+    },
+    {
+      "end": "2026-04-11T05:05:00Z",
+      "etag": "47fe0aa2a59fdab5165daf79143be4de",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/05/05/111122223333_waflogs_us-east-1_example-shop-acl_20260411T0505Z_7822e094.log.gz",
+      "size": 1043142,
+      "start": "2026-04-11T05:00:00Z"
+    },
+    {
+      "end": "2026-04-11T05:10:00Z",
+      "etag": "c901baddbe0ca9e9358da8405b4270ca",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/05/10/111122223333_waflogs_us-east-1_example-shop-acl_20260411T0510Z_58b4e1a8.log.gz",
+      "size": 1130401,
+      "start": "2026-04-11T05:05:00Z"
+    },
+    {
+      "end": "2026-04-11T05:15:00Z",
+      "etag": "87f9c451ef762b8aaf827cfee2ef8411",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/05/15/111122223333_waflogs_us-east-1_example-shop-acl_20260411T0515Z_4491d646.log.gz",
+      "size": 1008292,
+      "start": "2026-04-11T05:10:00Z"
+    },
+    {
+      "end": "2026-04-11T05:20:00Z",
+      "etag": "659c91ea7a7a576b2fce67444425c889",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/05/20/111122223333_waflogs_us-east-1_example-shop-acl_20260411T0520Z_78cc93c9.log.gz",
+      "size": 896933,
+      "start": "2026-04-11T05:15:00Z"
+    },
+    {
+      "end": "2026-04-11T05:25:00Z",
+      "etag": "f36c9ab31c139b7f9f6de485fc1799bf",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/05/25/111122223333_waflogs_us-east-1_example-shop-acl_20260411T0525Z_93764237.log.gz",
+      "size": 937231,
+      "start": "2026-04-11T05:20:00Z"
+    },
+    {
+      "end": "2026-04-11T05:30:00Z",
+      "etag": "3c924f218bad9b44c0c2f94bb92d817f",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/05/30/111122223333_waflogs_us-east-1_example-shop-acl_20260411T0530Z_eb1c989f.log.gz",
+      "size": 891631,
+      "start": "2026-04-11T05:25:00Z"
+    },
+    {
+      "end": "2026-04-11T05:35:00Z",
+      "etag": "c5b68ab4c967a4d1e94b6e3f974eac14",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/05/35/111122223333_waflogs_us-east-1_example-shop-acl_20260411T0535Z_f909ecdb.log.gz",
+      "size": 863204,
+      "start": "2026-04-11T05:30:00Z"
+    },
+    {
+      "end": "2026-04-11T05:40:00Z",
+      "etag": "3fb413c70766d1681e39db6585ebd95d",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/05/40/111122223333_waflogs_us-east-1_example-shop-acl_20260411T0540Z_5e81f471.log.gz",
+      "size": 943454,
+      "start": "2026-04-11T05:35:00Z"
+    },
+    {
+      "end": "2026-04-11T05:45:00Z",
+      "etag": "11d78992ea7c5688e3355bdab329bd46",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/05/45/111122223333_waflogs_us-east-1_example-shop-acl_20260411T0545Z_2b05988a.log.gz",
+      "size": 1087075,
+      "start": "2026-04-11T05:40:00Z"
+    },
+    {
+      "end": "2026-04-11T05:50:00Z",
+      "etag": "d6486dd6c53a9a388f0b01624c09f664",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/05/50/111122223333_waflogs_us-east-1_example-shop-acl_20260411T0550Z_d6f07c6d.log.gz",
+      "size": 1139560,
+      "start": "2026-04-11T05:45:00Z"
+    },
+    {
+      "end": "2026-04-11T05:55:00Z",
+      "etag": "b9ce2bba7be252c28a83b005c4168778",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/05/55/111122223333_waflogs_us-east-1_example-shop-acl_20260411T0555Z_c3333eb2.log.gz",
+      "size": 914130,
+      "start": "2026-04-11T05:50:00Z"
+    },
+    {
+      "end": "2026-04-11T06:00:00Z",
+      "etag": "06917e829df26afae6d3d95e9eae0d8d",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/06/00/111122223333_waflogs_us-east-1_example-shop-acl_20260411T0600Z_f18919fa.log.gz",
+      "size": 1058478,
+      "start": "2026-04-11T05:55:00Z"
+    },
+    {
+      "end": "2026-04-11T06:05:00Z",
+      "etag": "7f4d35546631f9d16205532b7d0cb4c2",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/06/05/111122223333_waflogs_us-east-1_example-shop-acl_20260411T0605Z_c99e0cff.log.gz",
+      "size": 1574730,
+      "start": "2026-04-11T06:00:00Z"
+    },
+    {
+      "end": "2026-04-11T06:10:00Z",
+      "etag": "863203f2f93daf0259714cfaa2580e0a",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/06/10/111122223333_waflogs_us-east-1_example-shop-acl_20260411T0610Z_24479507.log.gz",
+      "size": 1660802,
+      "start": "2026-04-11T06:05:00Z"
+    },
+    {
+      "end": "2026-04-11T06:15:00Z",
+      "etag": "a8f57f220dfa63c9403505e8bc948499",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/06/15/111122223333_waflogs_us-east-1_example-shop-acl_20260411T0615Z_be7c02f5.log.gz",
+      "size": 1797422,
+      "start": "2026-04-11T06:10:00Z"
+    },
+    {
+      "end": "2026-04-11T06:20:00Z",
+      "etag": "833fa8608022d683bcd6f106852177f5",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/06/20/111122223333_waflogs_us-east-1_example-shop-acl_20260411T0620Z_014446d7.log.gz",
+      "size": 1623981,
+      "start": "2026-04-11T06:15:00Z"
+    },
+    {
+      "end": "2026-04-11T06:25:00Z",
+      "etag": "6b8e50ef6da22afbc5692a24bd1adea4",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/06/25/111122223333_waflogs_us-east-1_example-shop-acl_20260411T0625Z_a531f5a5.log.gz",
+      "size": 1794411,
+      "start": "2026-04-11T06:20:00Z"
+    },
+    {
+      "end": "2026-04-11T06:30:00Z",
+      "etag": "a6877eeeb763f1a2bc8e3613a60b6a40",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/06/30/111122223333_waflogs_us-east-1_example-shop-acl_20260411T0630Z_8957483f.log.gz",
+      "size": 1719639,
+      "start": "2026-04-11T06:25:00Z"
+    },
+    {
+      "end": "2026-04-11T06:35:00Z",
+      "etag": "9547b3dd927b9168487fde38125b496f",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/06/35/111122223333_waflogs_us-east-1_example-shop-acl_20260411T0635Z_8c2370bd.log.gz",
+      "size": 1428136,
+      "start": "2026-04-11T06:30:00Z"
+    },
+    {
+      "end": "2026-04-11T06:40:00Z",
+      "etag": "b0d73f0ac858dec6a33f9dd6bbd39fc9",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/06/40/111122223333_waflogs_us-east-1_example-shop-acl_20260411T0640Z_740795c7.log.gz",
+      "size": 1676259,
+      "start": "2026-04-11T06:35:00Z"
+    },
+    {
+      "end": "2026-04-11T06:45:00Z",
+      "etag": "1f1c64a37b4a922fa1c7b166b8b14e7a",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/06/45/111122223333_waflogs_us-east-1_example-shop-acl_20260411T0645Z_c9bf4c39.log.gz",
+      "size": 1704135,
+      "start": "2026-04-11T06:40:00Z"
+    },
+    {
+      "end": "2026-04-11T06:50:00Z",
+      "etag": "ce049fb9d4e12f34ccb52bc6e000e817",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/06/50/111122223333_waflogs_us-east-1_example-shop-acl_20260411T0650Z_355984ba.log.gz",
+      "size": 1691044,
+      "start": "2026-04-11T06:45:00Z"
+    },
+    {
+      "end": "2026-04-11T06:55:00Z",
+      "etag": "491332f21b12a511759011d1329c1dac",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/06/55/111122223333_waflogs_us-east-1_example-shop-acl_20260411T0655Z_4a3d0c93.log.gz",
+      "size": 1521318,
+      "start": "2026-04-11T06:50:00Z"
+    },
+    {
+      "end": "2026-04-11T07:00:00Z",
+      "etag": "0585992eced829f3aa39dec967f2700a",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/07/00/111122223333_waflogs_us-east-1_example-shop-acl_20260411T0700Z_d4ff4265.log.gz",
+      "size": 1491087,
+      "start": "2026-04-11T06:55:00Z"
+    },
+    {
+      "end": "2026-04-11T07:05:00Z",
+      "etag": "2fa2ea84312186036af6b75d85e49e22",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/07/05/111122223333_waflogs_us-east-1_example-shop-acl_20260411T0705Z_d220575b.log.gz",
+      "size": 2824272,
+      "start": "2026-04-11T07:00:00Z"
+    },
+    {
+      "end": "2026-04-11T07:10:00Z",
+      "etag": "a2b2a85663beb8ae1f6d0b7d2edf28c1",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/07/10/111122223333_waflogs_us-east-1_example-shop-acl_20260411T0710Z_94692ed1.log.gz",
+      "size": 2620626,
+      "start": "2026-04-11T07:05:00Z"
+    },
+    {
+      "end": "2026-04-11T07:15:00Z",
+      "etag": "bb3678450eff857d31340503edd067fb",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/07/15/111122223333_waflogs_us-east-1_example-shop-acl_20260411T0715Z_bb29ed48.log.gz",
+      "size": 2326419,
+      "start": "2026-04-11T07:10:00Z"
+    },
+    {
+      "end": "2026-04-11T07:20:00Z",
+      "etag": "fc1747afc7b076496e1b81682b508025",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/07/20/111122223333_waflogs_us-east-1_example-shop-acl_20260411T0720Z_145afb4b.log.gz",
+      "size": 2778799,
+      "start": "2026-04-11T07:15:00Z"
+    },
+    {
+      "end": "2026-04-11T07:25:00Z",
+      "etag": "eeeb59f6c19a14d7678920f55fe908d8",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/07/25/111122223333_waflogs_us-east-1_example-shop-acl_20260411T0725Z_9ce67264.log.gz",
+      "size": 2807399,
+      "start": "2026-04-11T07:20:00Z"
+    },
+    {
+      "end": "2026-04-11T07:30:00Z",
+      "etag": "505a0ac437c57a8b5b88ab61383e3f67",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/07/30/111122223333_waflogs_us-east-1_example-shop-acl_20260411T0730Z_b3fcb5be.log.gz",
+      "size": 2271733,
+      "start": "2026-04-11T07:25:00Z"
+    },
+    {
+      "end": "2026-04-11T07:35:00Z",
+      "etag": "9700a35ef5ca9a78f1a0566233d26a1b",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/07/35/111122223333_waflogs_us-east-1_example-shop-acl_20260411T0735Z_8372c881.log.gz",
+      "size": 2657302,
+      "start": "2026-04-11T07:30:00Z"
+    },
+    {
+      "end": "2026-04-11T07:40:00Z",
+      "etag": "58bda3f44e67fe38164bd2810b8a556c",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/07/40/111122223333_waflogs_us-east-1_example-shop-acl_20260411T0740Z_52f85fcc.log.gz",
+      "size": 2691057,
+      "start": "2026-04-11T07:35:00Z"
+    },
+    {
+      "end": "2026-04-11T07:45:00Z",
+      "etag": "3488448ef2100cf1ca513006127d7fbe",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/07/45/111122223333_waflogs_us-east-1_example-shop-acl_20260411T0745Z_a0243f08.log.gz",
+      "size": 2593044,
+      "start": "2026-04-11T07:40:00Z"
+    },
+    {
+      "end": "2026-04-11T07:50:00Z",
+      "etag": "2aebd8a439172fd6a685c9b6868fed89",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/07/50/111122223333_waflogs_us-east-1_example-shop-acl_20260411T0750Z_804b5262.log.gz",
+      "size": 2844705,
+      "start": "2026-04-11T07:45:00Z"
+    },
+    {
+      "end": "2026-04-11T07:55:00Z",
+      "etag": "40580616c7974094da27357cf6c95dfa",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/07/55/111122223333_waflogs_us-east-1_example-shop-acl_20260411T0755Z_7c860b4d.log.gz",
+      "size": 2616460,
+      "start": "2026-04-11T07:50:00Z"
+    },
+    {
+      "end": "2026-04-11T08:00:00Z",
+      "etag": "c943f6c9bd607fc7bcab74d212f7c834",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/08/00/111122223333_waflogs_us-east-1_example-shop-acl_20260411T0800Z_037f95d4.log.gz",
+      "size": 2328774,
+      "start": "2026-04-11T07:55:00Z"
+    },
+    {
+      "end": "2026-04-11T08:05:00Z",
+      "etag": "9fbb6ed7bee981685850422f36c5a53a",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/08/05/111122223333_waflogs_us-east-1_example-shop-acl_20260411T0805Z_ae09201a.log.gz",
+      "size": 3373663,
+      "start": "2026-04-11T08:00:00Z"
+    },
+    {
+      "end": "2026-04-11T08:10:00Z",
+      "etag": "e1bc4b61a5502e6ea1b4156256858809",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/08/10/111122223333_waflogs_us-east-1_example-shop-acl_20260411T0810Z_12a8a763.log.gz",
+      "size": 3762278,
+      "start": "2026-04-11T08:05:00Z"
+    },
+    {
+      "end": "2026-04-11T08:15:00Z",
+      "etag": "2d2753b680a6850e60a16e9ba8b0d1c3",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/08/15/111122223333_waflogs_us-east-1_example-shop-acl_20260411T0815Z_cdb54a36.log.gz",
+      "size": 2958168,
+      "start": "2026-04-11T08:10:00Z"
+    },
+    {
+      "end": "2026-04-11T08:20:00Z",
+      "etag": "9712aae65f615908b003335016e61502",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/08/20/111122223333_waflogs_us-east-1_example-shop-acl_20260411T0820Z_0d54ed1a.log.gz",
+      "size": 3376612,
+      "start": "2026-04-11T08:15:00Z"
+    },
+    {
+      "end": "2026-04-11T08:25:00Z",
+      "etag": "c0b812730a0f12ccde7f695fb7254b24",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/08/25/111122223333_waflogs_us-east-1_example-shop-acl_20260411T0825Z_946c1fe6.log.gz",
+      "size": 3070967,
+      "start": "2026-04-11T08:20:00Z"
+    },
+    {
+      "end": "2026-04-11T08:30:00Z",
+      "etag": "89df64fc0e0c48dadbcfa977356c75d9",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/08/30/111122223333_waflogs_us-east-1_example-shop-acl_20260411T0830Z_ac2aa1d3.log.gz",
+      "size": 3087376,
+      "start": "2026-04-11T08:25:00Z"
+    },
+    {
+      "end": "2026-04-11T08:35:00Z",
+      "etag": "d986821212e217e51973851d39910f3e",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/08/35/111122223333_waflogs_us-east-1_example-shop-acl_20260411T0835Z_49587ec0.log.gz",
+      "size": 3708959,
+      "start": "2026-04-11T08:30:00Z"
+    },
+    {
+      "end": "2026-04-11T08:40:00Z",
+      "etag": "29876c2615eaa05f12a54e6697010b64",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/08/40/111122223333_waflogs_us-east-1_example-shop-acl_20260411T0840Z_1c7897aa.log.gz",
+      "size": 3024676,
+      "start": "2026-04-11T08:35:00Z"
+    },
+    {
+      "end": "2026-04-11T08:45:00Z",
+      "etag": "e54f15d72ae98e9cb4c48ce276b46b2c",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/08/45/111122223333_waflogs_us-east-1_example-shop-acl_20260411T0845Z_478f1c89.log.gz",
+      "size": 3888105,
+      "start": "2026-04-11T08:40:00Z"
+    },
+    {
+      "end": "2026-04-11T08:50:00Z",
+      "etag": "18bb3b037e6a96112d6f38f0d3ae52aa",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/08/50/111122223333_waflogs_us-east-1_example-shop-acl_20260411T0850Z_d645de61.log.gz",
+      "size": 3072321,
+      "start": "2026-04-11T08:45:00Z"
+    },
+    {
+      "end": "2026-04-11T08:55:00Z",
+      "etag": "4dcea057f0a6c2021ac0ce61191d1b85",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/08/55/111122223333_waflogs_us-east-1_example-shop-acl_20260411T0855Z_06e15534.log.gz",
+      "size": 3135059,
+      "start": "2026-04-11T08:50:00Z"
+    },
+    {
+      "end": "2026-04-11T09:00:00Z",
+      "etag": "446147a7c44ac46757ac456a4c9f0316",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/09/00/111122223333_waflogs_us-east-1_example-shop-acl_20260411T0900Z_37ab99d0.log.gz",
+      "size": 3697675,
+      "start": "2026-04-11T08:55:00Z"
+    },
+    {
+      "end": "2026-04-11T09:05:00Z",
+      "etag": "464aee3515b9051e2381eca65ca6044d",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/09/05/111122223333_waflogs_us-east-1_example-shop-acl_20260411T0905Z_4b98f872.log.gz",
+      "size": 3523569,
+      "start": "2026-04-11T09:00:00Z"
+    },
+    {
+      "end": "2026-04-11T09:10:00Z",
+      "etag": "5b225cff921fbd5f707a558ad3133ebf",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/09/10/111122223333_waflogs_us-east-1_example-shop-acl_20260411T0910Z_082722bb.log.gz",
+      "size": 3895915,
+      "start": "2026-04-11T09:05:00Z"
+    },
+    {
+      "end": "2026-04-11T09:15:00Z",
+      "etag": "954da301e3c3694d07d6f72aa54a99b3",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/09/15/111122223333_waflogs_us-east-1_example-shop-acl_20260411T0915Z_11506db9.log.gz",
+      "size": 3943777,
+      "start": "2026-04-11T09:10:00Z"
+    },
+    {
+      "end": "2026-04-11T09:20:00Z",
+      "etag": "701f11505ba4e930161d73e03e09256e",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/09/20/111122223333_waflogs_us-east-1_example-shop-acl_20260411T0920Z_912233b9.log.gz",
+      "size": 3913322,
+      "start": "2026-04-11T09:15:00Z"
+    },
+    {
+      "end": "2026-04-11T09:25:00Z",
+      "etag": "7cbc05afbd3c4fac8c7eca42cd94beb6",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/09/25/111122223333_waflogs_us-east-1_example-shop-acl_20260411T0925Z_830a41b6.log.gz",
+      "size": 4273112,
+      "start": "2026-04-11T09:20:00Z"
+    },
+    {
+      "end": "2026-04-11T09:30:00Z",
+      "etag": "9a3104d4ee84e82180aed3add898a8fe",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/09/30/111122223333_waflogs_us-east-1_example-shop-acl_20260411T0930Z_e99247e4.log.gz",
+      "size": 3471474,
+      "start": "2026-04-11T09:25:00Z"
+    },
+    {
+      "end": "2026-04-11T09:35:00Z",
+      "etag": "986ed096ba609c1c283830a3d0861ae3",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/09/35/111122223333_waflogs_us-east-1_example-shop-acl_20260411T0935Z_76058a6d.log.gz",
+      "size": 4177276,
+      "start": "2026-04-11T09:30:00Z"
+    },
+    {
+      "end": "2026-04-11T09:40:00Z",
+      "etag": "7c821688ab234b23c0bbe2f18b0673e2",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/09/40/111122223333_waflogs_us-east-1_example-shop-acl_20260411T0940Z_670089cc.log.gz",
+      "size": 3436964,
+      "start": "2026-04-11T09:35:00Z"
+    },
+    {
+      "end": "2026-04-11T09:45:00Z",
+      "etag": "972044906692eb43fca2ab819435cb5d",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/09/45/111122223333_waflogs_us-east-1_example-shop-acl_20260411T0945Z_aeb1d221.log.gz",
+      "size": 3919324,
+      "start": "2026-04-11T09:40:00Z"
+    },
+    {
+      "end": "2026-04-11T09:50:00Z",
+      "etag": "a461faa2d0fd7ed9193a366a6780a298",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/09/50/111122223333_waflogs_us-east-1_example-shop-acl_20260411T0950Z_faf54c67.log.gz",
+      "size": 3430718,
+      "start": "2026-04-11T09:45:00Z"
+    },
+    {
+      "end": "2026-04-11T09:55:00Z",
+      "etag": "6280af33d1d3f86fc52888df93f615b9",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/09/55/111122223333_waflogs_us-east-1_example-shop-acl_20260411T0955Z_d1274fb3.log.gz",
+      "size": 3630914,
+      "start": "2026-04-11T09:50:00Z"
+    },
+    {
+      "end": "2026-04-11T10:00:00Z",
+      "etag": "b100727a1d315c3d9831c41f003ea188",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/10/00/111122223333_waflogs_us-east-1_example-shop-acl_20260411T1000Z_4187e185.log.gz",
+      "size": 4196370,
+      "start": "2026-04-11T09:55:00Z"
+    },
+    {
+      "end": "2026-04-11T10:05:00Z",
+      "etag": "0943873910262dc1c0f74f3928df3570",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/10/05/111122223333_waflogs_us-east-1_example-shop-acl_20260411T1005Z_6becb884.log.gz",
+      "size": 4417851,
+      "start": "2026-04-11T10:00:00Z"
+    },
+    {
+      "end": "2026-04-11T10:10:00Z",
+      "etag": "9043ffd234bf8c467dd41929ec3e53cb",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/10/10/111122223333_waflogs_us-east-1_example-shop-acl_20260411T1010Z_0dcf75b6.log.gz",
+      "size": 3678632,
+      "start": "2026-04-11T10:05:00Z"
+    },
+    {
+      "end": "2026-04-11T10:15:00Z",
+      "etag": "dafe5fa50137403c7b4c3e4fdecea394",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/10/15/111122223333_waflogs_us-east-1_example-shop-acl_20260411T1015Z_b0863559.log.gz",
+      "size": 4352963,
+      "start": "2026-04-11T10:10:00Z"
+    },
+    {
+      "end": "2026-04-11T10:20:00Z",
+      "etag": "5bfc165ed5940d8c076b433ccdfe407d",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/10/20/111122223333_waflogs_us-east-1_example-shop-acl_20260411T1020Z_dd82c0e0.log.gz",
+      "size": 3841852,
+      "start": "2026-04-11T10:15:00Z"
+    },
+    {
+      "end": "2026-04-11T10:25:00Z",
+      "etag": "aeb4ad40a45a43974cdf684088d74d03",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/10/25/111122223333_waflogs_us-east-1_example-shop-acl_20260411T1025Z_b1a814c4.log.gz",
+      "size": 3967463,
+      "start": "2026-04-11T10:20:00Z"
+    },
+    {
+      "end": "2026-04-11T10:30:00Z",
+      "etag": "d1a5499668e3000ad7063aa98cef4862",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/10/30/111122223333_waflogs_us-east-1_example-shop-acl_20260411T1030Z_cc7db7f6.log.gz",
+      "size": 4095143,
+      "start": "2026-04-11T10:25:00Z"
+    },
+    {
+      "end": "2026-04-11T10:35:00Z",
+      "etag": "ce655d849ad34bfc39733e7580dd6e67",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/10/35/111122223333_waflogs_us-east-1_example-shop-acl_20260411T1035Z_5a8e7eca.log.gz",
+      "size": 4400940,
+      "start": "2026-04-11T10:30:00Z"
+    },
+    {
+      "end": "2026-04-11T10:40:00Z",
+      "etag": "47bcb3e7884d2570c11a2f8e77e224d4",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/10/40/111122223333_waflogs_us-east-1_example-shop-acl_20260411T1040Z_4234010a.log.gz",
+      "size": 4350848,
+      "start": "2026-04-11T10:35:00Z"
+    },
+    {
+      "end": "2026-04-11T10:45:00Z",
+      "etag": "9b4be778f153c173e29b0d1d3d672760",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/10/45/111122223333_waflogs_us-east-1_example-shop-acl_20260411T1045Z_5ef1f7b4.log.gz",
+      "size": 4410376,
+      "start": "2026-04-11T10:40:00Z"
+    },
+    {
+      "end": "2026-04-11T10:50:00Z",
+      "etag": "aee40572030506ccb95e7f2fadea2522",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/10/50/111122223333_waflogs_us-east-1_example-shop-acl_20260411T1050Z_5b95c50a.log.gz",
+      "size": 4075761,
+      "start": "2026-04-11T10:45:00Z"
+    },
+    {
+      "end": "2026-04-11T10:55:00Z",
+      "etag": "e9350ab0b4e206aff79cfddefe59b3ac",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/10/55/111122223333_waflogs_us-east-1_example-shop-acl_20260411T1055Z_ef9438bf.log.gz",
+      "size": 3932750,
+      "start": "2026-04-11T10:50:00Z"
+    },
+    {
+      "end": "2026-04-11T11:00:00Z",
+      "etag": "f7e5b719aff9744f1e6c619377aa5866",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/11/00/111122223333_waflogs_us-east-1_example-shop-acl_20260411T1100Z_1bae8471.log.gz",
+      "size": 4467558,
+      "start": "2026-04-11T10:55:00Z"
+    },
+    {
+      "end": "2026-04-11T11:05:00Z",
+      "etag": "ab1377ea89665fd0192430dc07615936",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/11/05/111122223333_waflogs_us-east-1_example-shop-acl_20260411T1105Z_b7e42ae2.log.gz",
+      "size": 4249672,
+      "start": "2026-04-11T11:00:00Z"
+    },
+    {
+      "end": "2026-04-11T11:10:00Z",
+      "etag": "234360b102954dbc9742271193b2db3a",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/11/10/111122223333_waflogs_us-east-1_example-shop-acl_20260411T1110Z_830e736e.log.gz",
+      "size": 3979882,
+      "start": "2026-04-11T11:05:00Z"
+    },
+    {
+      "end": "2026-04-11T11:15:00Z",
+      "etag": "b2078ff203acc846600f98679311f8c2",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/11/15/111122223333_waflogs_us-east-1_example-shop-acl_20260411T1115Z_99a7b0b6.log.gz",
+      "size": 4124772,
+      "start": "2026-04-11T11:10:00Z"
+    },
+    {
+      "end": "2026-04-11T11:20:00Z",
+      "etag": "312dadcd8c55041d56c8c3b38dc1374d",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/11/20/111122223333_waflogs_us-east-1_example-shop-acl_20260411T1120Z_e908a253.log.gz",
+      "size": 4201475,
+      "start": "2026-04-11T11:15:00Z"
+    },
+    {
+      "end": "2026-04-11T11:25:00Z",
+      "etag": "851689e7fc9ee7ab7ecd2c4797541412",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/11/25/111122223333_waflogs_us-east-1_example-shop-acl_20260411T1125Z_f0c58679.log.gz",
+      "size": 3899441,
+      "start": "2026-04-11T11:20:00Z"
+    },
+    {
+      "end": "2026-04-11T11:30:00Z",
+      "etag": "5d44b7f53c00a6ca81a8c76f566b02dd",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/11/30/111122223333_waflogs_us-east-1_example-shop-acl_20260411T1130Z_47718bc8.log.gz",
+      "size": 3534150,
+      "start": "2026-04-11T11:25:00Z"
+    },
+    {
+      "end": "2026-04-11T11:35:00Z",
+      "etag": "36974745ab0c2c71206bb3b44f6190c1",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/11/35/111122223333_waflogs_us-east-1_example-shop-acl_20260411T1135Z_6b46975a.log.gz",
+      "size": 3603549,
+      "start": "2026-04-11T11:30:00Z"
+    },
+    {
+      "end": "2026-04-11T11:40:00Z",
+      "etag": "6aad1c2c1e512744d7a214a2412a0d00",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/11/40/111122223333_waflogs_us-east-1_example-shop-acl_20260411T1140Z_b4b17ade.log.gz",
+      "size": 3979618,
+      "start": "2026-04-11T11:35:00Z"
+    },
+    {
+      "end": "2026-04-11T11:45:00Z",
+      "etag": "1e371335c55485c73bef90a598379a39",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/11/45/111122223333_waflogs_us-east-1_example-shop-acl_20260411T1145Z_8197e6ac.log.gz",
+      "size": 3595540,
+      "start": "2026-04-11T11:40:00Z"
+    },
+    {
+      "end": "2026-04-11T11:50:00Z",
+      "etag": "e190624fcd95f6406d57015e1d627db1",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/11/50/111122223333_waflogs_us-east-1_example-shop-acl_20260411T1150Z_82db0a71.log.gz",
+      "size": 4275093,
+      "start": "2026-04-11T11:45:00Z"
+    },
+    {
+      "end": "2026-04-11T11:55:00Z",
+      "etag": "e0985d3cb44e293abd967145aa6bf77c",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/11/55/111122223333_waflogs_us-east-1_example-shop-acl_20260411T1155Z_83a0a6f7.log.gz",
+      "size": 4367236,
+      "start": "2026-04-11T11:50:00Z"
+    },
+    {
+      "end": "2026-04-11T12:00:00Z",
+      "etag": "f1f311fbe1c9268e0066350c6a733510",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/12/00/111122223333_waflogs_us-east-1_example-shop-acl_20260411T1200Z_cc930ff4.log.gz",
+      "size": 3259568,
+      "start": "2026-04-11T11:55:00Z"
+    },
+    {
+      "end": "2026-04-11T12:05:00Z",
+      "etag": "e7a89d025f60f9f02dced53d0a3405d3",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/12/05/111122223333_waflogs_us-east-1_example-shop-acl_20260411T1205Z_d4f22ecc.log.gz",
+      "size": 3353649,
+      "start": "2026-04-11T12:00:00Z"
+    },
+    {
+      "end": "2026-04-11T12:10:00Z",
+      "etag": "04e6789e0a0d5534745d86cc9770110e",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/12/10/111122223333_waflogs_us-east-1_example-shop-acl_20260411T1210Z_2bd122b1.log.gz",
+      "size": 3282324,
+      "start": "2026-04-11T12:05:00Z"
+    },
+    {
+      "end": "2026-04-11T12:15:00Z",
+      "etag": "d7e1306aefa0a06113510a283258ee41",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/12/15/111122223333_waflogs_us-east-1_example-shop-acl_20260411T1215Z_30cade67.log.gz",
+      "size": 3255730,
+      "start": "2026-04-11T12:10:00Z"
+    },
+    {
+      "end": "2026-04-11T12:20:00Z",
+      "etag": "6a772e53ab2fc18e9ff8bdf5ed50f992",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/12/20/111122223333_waflogs_us-east-1_example-shop-acl_20260411T1220Z_87c614aa.log.gz",
+      "size": 3283288,
+      "start": "2026-04-11T12:15:00Z"
+    },
+    {
+      "end": "2026-04-11T12:25:00Z",
+      "etag": "3ebf440a171fbf0aba3b934fbfdc5bba",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/12/25/111122223333_waflogs_us-east-1_example-shop-acl_20260411T1225Z_3093bfa9.log.gz",
+      "size": 3216015,
+      "start": "2026-04-11T12:20:00Z"
+    },
+    {
+      "end": "2026-04-11T12:30:00Z",
+      "etag": "bd29c919aba169d93f45bc0b28decf6b",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/12/30/111122223333_waflogs_us-east-1_example-shop-acl_20260411T1230Z_548648df.log.gz",
+      "size": 3292276,
+      "start": "2026-04-11T12:25:00Z"
+    },
+    {
+      "end": "2026-04-11T12:35:00Z",
+      "etag": "ee880b81de26c399b27845d6b9ef3231",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/12/35/111122223333_waflogs_us-east-1_example-shop-acl_20260411T1235Z_64aadad0.log.gz",
+      "size": 3364248,
+      "start": "2026-04-11T12:30:00Z"
+    },
+    {
+      "end": "2026-04-11T12:40:00Z",
+      "etag": "083dd364082e9cf04b92baf335e226e3",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/12/40/111122223333_waflogs_us-east-1_example-shop-acl_20260411T1240Z_582e82b4.log.gz",
+      "size": 3350965,
+      "start": "2026-04-11T12:35:00Z"
+    },
+    {
+      "end": "2026-04-11T12:45:00Z",
+      "etag": "7c68a23bc705e0aaf8ba5b67ff29cb8b",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/12/45/111122223333_waflogs_us-east-1_example-shop-acl_20260411T1245Z_afa867d2.log.gz",
+      "size": 3263518,
+      "start": "2026-04-11T12:40:00Z"
+    },
+    {
+      "end": "2026-04-11T12:50:00Z",
+      "etag": "fa2db6cf15640cbb94152b8abe460f04",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/12/50/111122223333_waflogs_us-east-1_example-shop-acl_20260411T1250Z_add43243.log.gz",
+      "size": 3199465,
+      "start": "2026-04-11T12:45:00Z"
+    },
+    {
+      "end": "2026-04-11T12:55:00Z",
+      "etag": "a6db47765d781ec23da5a18480c438e1",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/12/55/111122223333_waflogs_us-east-1_example-shop-acl_20260411T1255Z_5962ab94.log.gz",
+      "size": 3393075,
+      "start": "2026-04-11T12:50:00Z"
+    },
+    {
+      "end": "2026-04-11T13:00:00Z",
+      "etag": "89e5479fe23aac914e5d403d8b307a9f",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/13/00/111122223333_waflogs_us-east-1_example-shop-acl_20260411T1300Z_1784c7d5.log.gz",
+      "size": 3294172,
+      "start": "2026-04-11T12:55:00Z"
+    },
+    {
+      "end": "2026-04-11T13:05:00Z",
+      "etag": "ee6dee04e5a61a72a33fe289dc3f74e0",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/13/05/111122223333_waflogs_us-east-1_example-shop-acl_20260411T1305Z_30e659e5.log.gz",
+      "size": 3422449,
+      "start": "2026-04-11T13:00:00Z"
+    },
+    {
+      "end": "2026-04-11T13:10:00Z",
+      "etag": "c2010579aec7b8979d1894eb87553f94",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/13/10/111122223333_waflogs_us-east-1_example-shop-acl_20260411T1310Z_c0fb1e15.log.gz",
+      "size": 3376261,
+      "start": "2026-04-11T13:05:00Z"
+    },
+    {
+      "end": "2026-04-11T13:15:00Z",
+      "etag": "2e9e465dd6217db3575bb44df27794d6",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/13/15/111122223333_waflogs_us-east-1_example-shop-acl_20260411T1315Z_985ed069.log.gz",
+      "size": 3449896,
+      "start": "2026-04-11T13:10:00Z"
+    },
+    {
+      "end": "2026-04-11T13:20:00Z",
+      "etag": "61a1a5e7e480977e270c10f1e98daa2b",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/13/20/111122223333_waflogs_us-east-1_example-shop-acl_20260411T1320Z_5619793c.log.gz",
+      "size": 3381512,
+      "start": "2026-04-11T13:15:00Z"
+    },
+    {
+      "end": "2026-04-11T13:25:00Z",
+      "etag": "2b553477c0f578a023404dcb84fa1207",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/13/25/111122223333_waflogs_us-east-1_example-shop-acl_20260411T1325Z_1cd14c16.log.gz",
+      "size": 3310306,
+      "start": "2026-04-11T13:20:00Z"
+    },
+    {
+      "end": "2026-04-11T13:30:00Z",
+      "etag": "02797d69c45688dcb2f58cb9e7a95f6f",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/13/30/111122223333_waflogs_us-east-1_example-shop-acl_20260411T1330Z_cbf41098.log.gz",
+      "size": 3323406,
+      "start": "2026-04-11T13:25:00Z"
+    },
+    {
+      "end": "2026-04-11T13:35:00Z",
+      "etag": "e6a2d8e03c8b4efbbdfbd14ac6cedeae",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/13/35/111122223333_waflogs_us-east-1_example-shop-acl_20260411T1335Z_4add61da.log.gz",
+      "size": 3281227,
+      "start": "2026-04-11T13:30:00Z"
+    },
+    {
+      "end": "2026-04-11T13:40:00Z",
+      "etag": "c7d2b32390b2ae12b612c09b96fff77b",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/13/40/111122223333_waflogs_us-east-1_example-shop-acl_20260411T1340Z_d6055b20.log.gz",
+      "size": 3330295,
+      "start": "2026-04-11T13:35:00Z"
+    },
+    {
+      "end": "2026-04-11T13:45:00Z",
+      "etag": "c0fb625439e307ffe79010af381d809d",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/13/45/111122223333_waflogs_us-east-1_example-shop-acl_20260411T1345Z_b36bb3ad.log.gz",
+      "size": 3330559,
+      "start": "2026-04-11T13:40:00Z"
+    },
+    {
+      "end": "2026-04-11T13:50:00Z",
+      "etag": "abf34b0cd5fd0d2b0aac257b0a572bac",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/13/50/111122223333_waflogs_us-east-1_example-shop-acl_20260411T1350Z_63a3fd9b.log.gz",
+      "size": 3602949,
+      "start": "2026-04-11T13:45:00Z"
+    },
+    {
+      "end": "2026-04-11T13:55:00Z",
+      "etag": "0638f8f70dea265f3d1f576475b29593",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/13/55/111122223333_waflogs_us-east-1_example-shop-acl_20260411T1355Z_935ca6b0.log.gz",
+      "size": 3386654,
+      "start": "2026-04-11T13:50:00Z"
+    },
+    {
+      "end": "2026-04-11T14:00:00Z",
+      "etag": "3e168b0c55c1c2ca93e03ea1b2e8ab2a",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/14/00/111122223333_waflogs_us-east-1_example-shop-acl_20260411T1400Z_f899bee6.log.gz",
+      "size": 3301258,
+      "start": "2026-04-11T13:55:00Z"
+    },
+    {
+      "end": "2026-04-11T14:05:00Z",
+      "etag": "19b813c726880031217764bb3749b3bf",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/14/05/111122223333_waflogs_us-east-1_example-shop-acl_20260411T1405Z_dff808ea.log.gz",
+      "size": 3467923,
+      "start": "2026-04-11T14:00:00Z"
+    },
+    {
+      "end": "2026-04-11T14:10:00Z",
+      "etag": "7e0ee463dac7f39b17fa8aa642c039ce",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/14/10/111122223333_waflogs_us-east-1_example-shop-acl_20260411T1410Z_c50c2ae3.log.gz",
+      "size": 3378076,
+      "start": "2026-04-11T14:05:00Z"
+    },
+    {
+      "end": "2026-04-11T14:15:00Z",
+      "etag": "9bb4be228b197a44dd739507193ab494",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/14/15/111122223333_waflogs_us-east-1_example-shop-acl_20260411T1415Z_73a86004.log.gz",
+      "size": 3302106,
+      "start": "2026-04-11T14:10:00Z"
+    },
+    {
+      "end": "2026-04-11T14:20:00Z",
+      "etag": "7fd7c7676579b74cc47a74f5a36e83d5",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/14/20/111122223333_waflogs_us-east-1_example-shop-acl_20260411T1420Z_b4a749b7.log.gz",
+      "size": 3432998,
+      "start": "2026-04-11T14:15:00Z"
+    },
+    {
+      "end": "2026-04-11T14:25:00Z",
+      "etag": "0d5ec9948c184d9e4b27163086cf2b5d",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/14/25/111122223333_waflogs_us-east-1_example-shop-acl_20260411T1425Z_0e388b6f.log.gz",
+      "size": 3503881,
+      "start": "2026-04-11T14:20:00Z"
+    },
+    {
+      "end": "2026-04-11T14:30:00Z",
+      "etag": "30e81840eae8d41659e9708282fc7eb6",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/14/30/111122223333_waflogs_us-east-1_example-shop-acl_20260411T1430Z_169af2e7.log.gz",
+      "size": 3480967,
+      "start": "2026-04-11T14:25:00Z"
+    },
+    {
+      "end": "2026-04-11T14:35:00Z",
+      "etag": "2b56629a298c3dbb1bd45cf5cc194887",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/14/35/111122223333_waflogs_us-east-1_example-shop-acl_20260411T1435Z_bdfe963c.log.gz",
+      "size": 3543287,
+      "start": "2026-04-11T14:30:00Z"
+    },
+    {
+      "end": "2026-04-11T14:40:00Z",
+      "etag": "b355f035b5b283ffaebad402788531fb",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/14/40/111122223333_waflogs_us-east-1_example-shop-acl_20260411T1440Z_33779be9.log.gz",
+      "size": 3395853,
+      "start": "2026-04-11T14:35:00Z"
+    },
+    {
+      "end": "2026-04-11T14:45:00Z",
+      "etag": "2fc76f357cfc0e2423a4f4e34e77fa73",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/14/45/111122223333_waflogs_us-east-1_example-shop-acl_20260411T1445Z_9964c71f.log.gz",
+      "size": 3453056,
+      "start": "2026-04-11T14:40:00Z"
+    },
+    {
+      "end": "2026-04-11T14:50:00Z",
+      "etag": "3017a9e9436ffd25410a24952aca1677",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/14/50/111122223333_waflogs_us-east-1_example-shop-acl_20260411T1450Z_0fc7f35e.log.gz",
+      "size": 3406877,
+      "start": "2026-04-11T14:45:00Z"
+    },
+    {
+      "end": "2026-04-11T14:55:00Z",
+      "etag": "07f00a917da683c08ab7b08d3e60cfd5",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/14/55/111122223333_waflogs_us-east-1_example-shop-acl_20260411T1455Z_45b395e7.log.gz",
+      "size": 3528883,
+      "start": "2026-04-11T14:50:00Z"
+    },
+    {
+      "end": "2026-04-11T15:00:00Z",
+      "etag": "2b1a2da89c1f3f7149386e9081c5b61f",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/15/00/111122223333_waflogs_us-east-1_example-shop-acl_20260411T1500Z_0347edba.log.gz",
+      "size": 3504689,
+      "start": "2026-04-11T14:55:00Z"
+    },
+    {
+      "end": "2026-04-11T15:05:00Z",
+      "etag": "3f921a67a0faccf1148c4fa70705c91f",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/15/05/111122223333_waflogs_us-east-1_example-shop-acl_20260411T1505Z_8503604b.log.gz",
+      "size": 3334545,
+      "start": "2026-04-11T15:00:00Z"
+    },
+    {
+      "end": "2026-04-11T15:10:00Z",
+      "etag": "f7438bd7abaf0dc6620ce57b2d5d3f97",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/15/10/111122223333_waflogs_us-east-1_example-shop-acl_20260411T1510Z_05c25a4f.log.gz",
+      "size": 3494354,
+      "start": "2026-04-11T15:05:00Z"
+    },
+    {
+      "end": "2026-04-11T15:15:00Z",
+      "etag": "3394437a32d3091e267c9998d739f82a",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/15/15/111122223333_waflogs_us-east-1_example-shop-acl_20260411T1515Z_f0bf2229.log.gz",
+      "size": 3342918,
+      "start": "2026-04-11T15:10:00Z"
+    },
+    {
+      "end": "2026-04-11T15:20:00Z",
+      "etag": "6c6e19846a06b6a9191259ff3aa211ef",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/15/20/111122223333_waflogs_us-east-1_example-shop-acl_20260411T1520Z_34cb71f0.log.gz",
+      "size": 3362696,
+      "start": "2026-04-11T15:15:00Z"
+    },
+    {
+      "end": "2026-04-11T15:25:00Z",
+      "etag": "b92bf76b1c689f616bcf228c6db15f5d",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/15/25/111122223333_waflogs_us-east-1_example-shop-acl_20260411T1525Z_1d09483c.log.gz",
+      "size": 3332443,
+      "start": "2026-04-11T15:20:00Z"
+    },
+    {
+      "end": "2026-04-11T15:30:00Z",
+      "etag": "8aa0fe2d60f8ddfe8b380c3d9b18e8cb",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/15/30/111122223333_waflogs_us-east-1_example-shop-acl_20260411T1530Z_cc416284.log.gz",
+      "size": 3556897,
+      "start": "2026-04-11T15:25:00Z"
+    },
+    {
+      "end": "2026-04-11T15:35:00Z",
+      "etag": "204f6938abe02234a78203eeef171e86",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/15/35/111122223333_waflogs_us-east-1_example-shop-acl_20260411T1535Z_2875100b.log.gz",
+      "size": 3417026,
+      "start": "2026-04-11T15:30:00Z"
+    },
+    {
+      "end": "2026-04-11T15:40:00Z",
+      "etag": "b41e6c28fe2932e1122ef6cc6484e121",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/15/40/111122223333_waflogs_us-east-1_example-shop-acl_20260411T1540Z_bf831dfd.log.gz",
+      "size": 3323874,
+      "start": "2026-04-11T15:35:00Z"
+    },
+    {
+      "end": "2026-04-11T15:45:00Z",
+      "etag": "c23cd8e60bd33aa11384abb18e3e98a9",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/15/45/111122223333_waflogs_us-east-1_example-shop-acl_20260411T1545Z_f82b5883.log.gz",
+      "size": 3441156,
+      "start": "2026-04-11T15:40:00Z"
+    },
+    {
+      "end": "2026-04-11T15:50:00Z",
+      "etag": "d13e87012ee5ad008c3229d0b58425fc",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/15/50/111122223333_waflogs_us-east-1_example-shop-acl_20260411T1550Z_4f1c36c0.log.gz",
+      "size": 3404304,
+      "start": "2026-04-11T15:45:00Z"
+    },
+    {
+      "end": "2026-04-11T15:55:00Z",
+      "etag": "52b5d7dca9287d01bb80a6ce0605bcdf",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/15/55/111122223333_waflogs_us-east-1_example-shop-acl_20260411T1555Z_cc266da7.log.gz",
+      "size": 3400736,
+      "start": "2026-04-11T15:50:00Z"
+    },
+    {
+      "end": "2026-04-11T16:00:00Z",
+      "etag": "1e473da3b9d1a28bb69de436dbd80a63",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/16/00/111122223333_waflogs_us-east-1_example-shop-acl_20260411T1600Z_84463717.log.gz",
+      "size": 3415706,
+      "start": "2026-04-11T15:55:00Z"
+    },
+    {
+      "end": "2026-04-11T16:05:00Z",
+      "etag": "27a167da605da5ae90db2ac5238ed3e6",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/16/05/111122223333_waflogs_us-east-1_example-shop-acl_20260411T1605Z_6727a7f7.log.gz",
+      "size": 3564215,
+      "start": "2026-04-11T16:00:00Z"
+    },
+    {
+      "end": "2026-04-11T16:10:00Z",
+      "etag": "664d9f8cd105ee23524dd03e1ad6b4a9",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/16/10/111122223333_waflogs_us-east-1_example-shop-acl_20260411T1610Z_d8c7deca.log.gz",
+      "size": 3452774,
+      "start": "2026-04-11T16:05:00Z"
+    },
+    {
+      "end": "2026-04-11T16:15:00Z",
+      "etag": "e4df74ac822fcf0beefb464896be2450",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/16/15/111122223333_waflogs_us-east-1_example-shop-acl_20260411T1615Z_f9f95101.log.gz",
+      "size": 3490132,
+      "start": "2026-04-11T16:10:00Z"
+    },
+    {
+      "end": "2026-04-11T16:20:00Z",
+      "etag": "6e9d57815e96ead458f0870b2f77d933",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/16/20/111122223333_waflogs_us-east-1_example-shop-acl_20260411T1620Z_89b4f06e.log.gz",
+      "size": 3502794,
+      "start": "2026-04-11T16:15:00Z"
+    },
+    {
+      "end": "2026-04-11T16:25:00Z",
+      "etag": "35a3d08ae9a059122e02561caaa26eac",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/16/25/111122223333_waflogs_us-east-1_example-shop-acl_20260411T1625Z_60800ad7.log.gz",
+      "size": 3569814,
+      "start": "2026-04-11T16:20:00Z"
+    },
+    {
+      "end": "2026-04-11T16:30:00Z",
+      "etag": "10ca562d33128d57b46cb9f3751509a1",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/16/30/111122223333_waflogs_us-east-1_example-shop-acl_20260411T1630Z_62ec87b5.log.gz",
+      "size": 3575640,
+      "start": "2026-04-11T16:25:00Z"
+    },
+    {
+      "end": "2026-04-11T16:35:00Z",
+      "etag": "256de4cb6c1f3820aeb96e63e734c487",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/16/35/111122223333_waflogs_us-east-1_example-shop-acl_20260411T1635Z_02d56691.log.gz",
+      "size": 3664816,
+      "start": "2026-04-11T16:30:00Z"
+    },
+    {
+      "end": "2026-04-11T16:40:00Z",
+      "etag": "9e2df6f45e400947acee05432f694f48",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/16/40/111122223333_waflogs_us-east-1_example-shop-acl_20260411T1640Z_7950ef88.log.gz",
+      "size": 3587004,
+      "start": "2026-04-11T16:35:00Z"
+    },
+    {
+      "end": "2026-04-11T16:45:00Z",
+      "etag": "9552351133921783e93e595c42957a26",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/16/45/111122223333_waflogs_us-east-1_example-shop-acl_20260411T1645Z_b2cc3895.log.gz",
+      "size": 3616180,
+      "start": "2026-04-11T16:40:00Z"
+    },
+    {
+      "end": "2026-04-11T16:50:00Z",
+      "etag": "d98cd12383b1afbe1ea5d9c01342cb97",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/16/50/111122223333_waflogs_us-east-1_example-shop-acl_20260411T1650Z_6765fc0c.log.gz",
+      "size": 3485758,
+      "start": "2026-04-11T16:45:00Z"
+    },
+    {
+      "end": "2026-04-11T16:55:00Z",
+      "etag": "bf946f958087bc753c67c92794d91c94",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/16/55/111122223333_waflogs_us-east-1_example-shop-acl_20260411T1655Z_f8533a9f.log.gz",
+      "size": 3400951,
+      "start": "2026-04-11T16:50:00Z"
+    },
+    {
+      "end": "2026-04-11T17:00:00Z",
+      "etag": "0d0ebe73eff25ebc40412b52ca97c0e0",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/17/00/111122223333_waflogs_us-east-1_example-shop-acl_20260411T1700Z_db3764bb.log.gz",
+      "size": 3571146,
+      "start": "2026-04-11T16:55:00Z"
+    },
+    {
+      "end": "2026-04-11T17:05:00Z",
+      "etag": "11c68672859477d80c3c34d4caa999b8",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/17/05/111122223333_waflogs_us-east-1_example-shop-acl_20260411T1705Z_1f1344fe.log.gz",
+      "size": 15181240,
+      "start": "2026-04-11T17:00:00Z"
+    },
+    {
+      "end": "2026-04-11T17:10:00Z",
+      "etag": "3361c01a57823a6eedfccad2d16bca15",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/17/10/111122223333_waflogs_us-east-1_example-shop-acl_20260411T1710Z_bbe2b4de.log.gz",
+      "size": 17178363,
+      "start": "2026-04-11T17:05:00Z"
+    },
+    {
+      "end": "2026-04-11T17:15:00Z",
+      "etag": "8fbd8fde2566f386705cea7ab494f503",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/17/15/111122223333_waflogs_us-east-1_example-shop-acl_20260411T1715Z_e657dc72.log.gz",
+      "size": 15042175,
+      "start": "2026-04-11T17:10:00Z"
+    },
+    {
+      "end": "2026-04-11T17:20:00Z",
+      "etag": "e9bac12ffe710391cabd5e73781c290b",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/17/20/111122223333_waflogs_us-east-1_example-shop-acl_20260411T1720Z_fbfc9356.log.gz",
+      "size": 15946633,
+      "start": "2026-04-11T17:15:00Z"
+    },
+    {
+      "end": "2026-04-11T17:25:00Z",
+      "etag": "03302618f120914bec63dd06dbb04f46",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/17/25/111122223333_waflogs_us-east-1_example-shop-acl_20260411T1725Z_73afd6ec.log.gz",
+      "size": 13724443,
+      "start": "2026-04-11T17:20:00Z"
+    },
+    {
+      "end": "2026-04-11T17:30:00Z",
+      "etag": "33b297df0f1578d41ec9c47fb770d31d",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/17/30/111122223333_waflogs_us-east-1_example-shop-acl_20260411T1730Z_d562bbba.log.gz",
+      "size": 16965825,
+      "start": "2026-04-11T17:25:00Z"
+    },
+    {
+      "end": "2026-04-11T17:35:00Z",
+      "etag": "e65715ed4b2082acc2b7f782f580bd55",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/17/35/111122223333_waflogs_us-east-1_example-shop-acl_20260411T1735Z_01aebdf6.log.gz",
+      "size": 14237593,
+      "start": "2026-04-11T17:30:00Z"
+    },
+    {
+      "end": "2026-04-11T17:40:00Z",
+      "etag": "eb25be648befcde39cf39d527305f1ff",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/17/40/111122223333_waflogs_us-east-1_example-shop-acl_20260411T1740Z_8bc0085d.log.gz",
+      "size": 15639557,
+      "start": "2026-04-11T17:35:00Z"
+    },
+    {
+      "end": "2026-04-11T17:45:00Z",
+      "etag": "ff5c31a2af5fcac5aad56eecdb3ea918",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/17/45/111122223333_waflogs_us-east-1_example-shop-acl_20260411T1745Z_e2209aac.log.gz",
+      "size": 16271127,
+      "start": "2026-04-11T17:40:00Z"
+    },
+    {
+      "end": "2026-04-11T17:50:00Z",
+      "etag": "41cf29b7a4226f6bf4d24a02b5addc1e",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/17/50/111122223333_waflogs_us-east-1_example-shop-acl_20260411T1750Z_ac856d03.log.gz",
+      "size": 15906767,
+      "start": "2026-04-11T17:45:00Z"
+    },
+    {
+      "end": "2026-04-11T17:55:00Z",
+      "etag": "53c320a875054d1a0cd7fbc07362b88f",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/17/55/111122223333_waflogs_us-east-1_example-shop-acl_20260411T1755Z_f8a9b754.log.gz",
+      "size": 15333708,
+      "start": "2026-04-11T17:50:00Z"
+    },
+    {
+      "end": "2026-04-11T18:00:00Z",
+      "etag": "ad67757dfe4e15ee312f97b2554bf7f0",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/18/00/111122223333_waflogs_us-east-1_example-shop-acl_20260411T1800Z_35211c92.log.gz",
+      "size": 18282929,
+      "start": "2026-04-11T17:55:00Z"
+    },
+    {
+      "end": "2026-04-11T18:05:00Z",
+      "etag": "0b04df93b2cb6e43eeaa5e2beb210a35",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/18/05/111122223333_waflogs_us-east-1_example-shop-acl_20260411T1805Z_6a1beef9.log.gz",
+      "size": 23159225,
+      "start": "2026-04-11T18:00:00Z"
+    },
+    {
+      "end": "2026-04-11T18:10:00Z",
+      "etag": "4347b22f727b499501dd6106665f9ada",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/18/10/111122223333_waflogs_us-east-1_example-shop-acl_20260411T1810Z_b9b6ad37.log.gz",
+      "size": 20734069,
+      "start": "2026-04-11T18:05:00Z"
+    },
+    {
+      "end": "2026-04-11T18:15:00Z",
+      "etag": "5e70dc90e1006e6ed1e00b32a8400169",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/18/15/111122223333_waflogs_us-east-1_example-shop-acl_20260411T1815Z_cc34d68f.log.gz",
+      "size": 24045693,
+      "start": "2026-04-11T18:10:00Z"
+    },
+    {
+      "end": "2026-04-11T18:20:00Z",
+      "etag": "f3a062382c04aed6fe14da586e6787c1",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/18/20/111122223333_waflogs_us-east-1_example-shop-acl_20260411T1820Z_25abc078.log.gz",
+      "size": 21007396,
+      "start": "2026-04-11T18:15:00Z"
+    },
+    {
+      "end": "2026-04-11T18:25:00Z",
+      "etag": "cb26c48225bea431138c29eb0440c079",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/18/25/111122223333_waflogs_us-east-1_example-shop-acl_20260411T1825Z_7fc4e4c7.log.gz",
+      "size": 20653953,
+      "start": "2026-04-11T18:20:00Z"
+    },
+    {
+      "end": "2026-04-11T18:30:00Z",
+      "etag": "013c3f651afb2aa6e6672cb27a82b233",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/18/30/111122223333_waflogs_us-east-1_example-shop-acl_20260411T1830Z_b109dc0f.log.gz",
+      "size": 18741993,
+      "start": "2026-04-11T18:25:00Z"
+    },
+    {
+      "end": "2026-04-11T18:35:00Z",
+      "etag": "1d7c282b3229fd4e830c91a336c8dcd0",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/18/35/111122223333_waflogs_us-east-1_example-shop-acl_20260411T1835Z_020e2fca.log.gz",
+      "size": 20216746,
+      "start": "2026-04-11T18:30:00Z"
+    },
+    {
+      "end": "2026-04-11T18:40:00Z",
+      "etag": "85d044a8b84dbd8d5d4f8d1b5a0d9fee",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/18/40/111122223333_waflogs_us-east-1_example-shop-acl_20260411T1840Z_80faec59.log.gz",
+      "size": 18802748,
+      "start": "2026-04-11T18:35:00Z"
+    },
+    {
+      "end": "2026-04-11T18:45:00Z",
+      "etag": "588c11a4ac9e1a9667dd4813aa8514b1",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/18/45/111122223333_waflogs_us-east-1_example-shop-acl_20260411T1845Z_e36790be.log.gz",
+      "size": 20811304,
+      "start": "2026-04-11T18:40:00Z"
+    },
+    {
+      "end": "2026-04-11T18:50:00Z",
+      "etag": "3ba21ce0613bbe7054f42dd9a848bed2",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/18/50/111122223333_waflogs_us-east-1_example-shop-acl_20260411T1850Z_1878f948.log.gz",
+      "size": 21287785,
+      "start": "2026-04-11T18:45:00Z"
+    },
+    {
+      "end": "2026-04-11T18:55:00Z",
+      "etag": "ceaaac6564ff25d378711cbdf1a06529",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/18/55/111122223333_waflogs_us-east-1_example-shop-acl_20260411T1855Z_94c7b33d.log.gz",
+      "size": 20703283,
+      "start": "2026-04-11T18:50:00Z"
+    },
+    {
+      "end": "2026-04-11T19:00:00Z",
+      "etag": "9456307650ba8cd1ee84bf5479b994b8",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/19/00/111122223333_waflogs_us-east-1_example-shop-acl_20260411T1900Z_ad7fdcd4.log.gz",
+      "size": 23016459,
+      "start": "2026-04-11T18:55:00Z"
+    },
+    {
+      "end": "2026-04-11T19:05:00Z",
+      "etag": "49b27a40831df31d206e64c2cc73b480",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/19/05/111122223333_waflogs_us-east-1_example-shop-acl_20260411T1905Z_55991521.log.gz",
+      "size": 22461144,
+      "start": "2026-04-11T19:00:00Z"
+    },
+    {
+      "end": "2026-04-11T19:10:00Z",
+      "etag": "0edcacad940806256cc35a8751a6a07a",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/19/10/111122223333_waflogs_us-east-1_example-shop-acl_20260411T1910Z_8f4ee965.log.gz",
+      "size": 21607802,
+      "start": "2026-04-11T19:05:00Z"
+    },
+    {
+      "end": "2026-04-11T19:15:00Z",
+      "etag": "f6d4ec1c1fd4b026e0e163a3aa2c0569",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/19/15/111122223333_waflogs_us-east-1_example-shop-acl_20260411T1915Z_b564baf7.log.gz",
+      "size": 26286889,
+      "start": "2026-04-11T19:10:00Z"
+    },
+    {
+      "end": "2026-04-11T19:20:00Z",
+      "etag": "e481c8f4e367e8d44fa00ada2d30fd45",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/19/20/111122223333_waflogs_us-east-1_example-shop-acl_20260411T1920Z_ce5e6d74.log.gz",
+      "size": 25668743,
+      "start": "2026-04-11T19:15:00Z"
+    },
+    {
+      "end": "2026-04-11T19:25:00Z",
+      "etag": "1681ab1483db9cf4c4fa95b28bb0d355",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/19/25/111122223333_waflogs_us-east-1_example-shop-acl_20260411T1925Z_c0e5333f.log.gz",
+      "size": 21666676,
+      "start": "2026-04-11T19:20:00Z"
+    },
+    {
+      "end": "2026-04-11T19:30:00Z",
+      "etag": "bc51e0c689a7dc42ce838ef195c2b803",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/19/30/111122223333_waflogs_us-east-1_example-shop-acl_20260411T1930Z_72b96985.log.gz",
+      "size": 27471824,
+      "start": "2026-04-11T19:25:00Z"
+    },
+    {
+      "end": "2026-04-11T19:35:00Z",
+      "etag": "e74aeda8d8978871b4d86dc297454568",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/19/35/111122223333_waflogs_us-east-1_example-shop-acl_20260411T1935Z_97e491c2.log.gz",
+      "size": 23547906,
+      "start": "2026-04-11T19:30:00Z"
+    },
+    {
+      "end": "2026-04-11T19:40:00Z",
+      "etag": "24af6f3a28d6be4b229aaf2b68c0ebad",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/19/40/111122223333_waflogs_us-east-1_example-shop-acl_20260411T1940Z_e1812521.log.gz",
+      "size": 25418432,
+      "start": "2026-04-11T19:35:00Z"
+    },
+    {
+      "end": "2026-04-11T19:45:00Z",
+      "etag": "607c750c048d7239db5cf5738ab34a3d",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/19/45/111122223333_waflogs_us-east-1_example-shop-acl_20260411T1945Z_037f35d5.log.gz",
+      "size": 21322237,
+      "start": "2026-04-11T19:40:00Z"
+    },
+    {
+      "end": "2026-04-11T19:50:00Z",
+      "etag": "f5f12a6b320a48b136e3b766bc3d249e",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/19/50/111122223333_waflogs_us-east-1_example-shop-acl_20260411T1950Z_2ad34b6b.log.gz",
+      "size": 25759684,
+      "start": "2026-04-11T19:45:00Z"
+    },
+    {
+      "end": "2026-04-11T19:55:00Z",
+      "etag": "8ecd0ac0656ea9911d6d06bfd7655be5",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/19/55/111122223333_waflogs_us-east-1_example-shop-acl_20260411T1955Z_66c5acbe.log.gz",
+      "size": 25247339,
+      "start": "2026-04-11T19:50:00Z"
+    },
+    {
+      "end": "2026-04-11T20:00:00Z",
+      "etag": "4ed78a5fa38ea6591c7a1291d7858b5d",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/20/00/111122223333_waflogs_us-east-1_example-shop-acl_20260411T2000Z_98a33f1d.log.gz",
+      "size": 23584645,
+      "start": "2026-04-11T19:55:00Z"
+    },
+    {
+      "end": "2026-04-11T20:05:00Z",
+      "etag": "ef4f798fe938366d2b74fbc7d027f762",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/20/05/111122223333_waflogs_us-east-1_example-shop-acl_20260411T2005Z_8f893e18.log.gz",
+      "size": 22863870,
+      "start": "2026-04-11T20:00:00Z"
+    },
+    {
+      "end": "2026-04-11T20:10:00Z",
+      "etag": "3361fe8cc710114e3646d2455392b5f4",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/20/10/111122223333_waflogs_us-east-1_example-shop-acl_20260411T2010Z_acb604bb.log.gz",
+      "size": 21188191,
+      "start": "2026-04-11T20:05:00Z"
+    },
+    {
+      "end": "2026-04-11T20:15:00Z",
+      "etag": "5917f0c1addfa19ada2f8a53ce7eebef",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/20/15/111122223333_waflogs_us-east-1_example-shop-acl_20260411T2015Z_d0e14e00.log.gz",
+      "size": 23690382,
+      "start": "2026-04-11T20:10:00Z"
+    },
+    {
+      "end": "2026-04-11T20:20:00Z",
+      "etag": "74e9f7c66f2e313867360f2a394b31c8",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/20/20/111122223333_waflogs_us-east-1_example-shop-acl_20260411T2020Z_21d94b12.log.gz",
+      "size": 22949476,
+      "start": "2026-04-11T20:15:00Z"
+    },
+    {
+      "end": "2026-04-11T20:25:00Z",
+      "etag": "94e2175ee0995a97f6a513910f627590",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/20/25/111122223333_waflogs_us-east-1_example-shop-acl_20260411T2025Z_df43202e.log.gz",
+      "size": 23131239,
+      "start": "2026-04-11T20:20:00Z"
+    },
+    {
+      "end": "2026-04-11T20:30:00Z",
+      "etag": "c857e0df7263369da273e92f1dd7829b",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/20/30/111122223333_waflogs_us-east-1_example-shop-acl_20260411T2030Z_8a532fb0.log.gz",
+      "size": 21390267,
+      "start": "2026-04-11T20:25:00Z"
+    },
+    {
+      "end": "2026-04-11T20:35:00Z",
+      "etag": "50a6ba1f968e43b59eefdf93e2c8d656",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/20/35/111122223333_waflogs_us-east-1_example-shop-acl_20260411T2035Z_819d40dd.log.gz",
+      "size": 23046818,
+      "start": "2026-04-11T20:30:00Z"
+    },
+    {
+      "end": "2026-04-11T20:40:00Z",
+      "etag": "69a4dbc207d41668400c4d0273633521",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/20/40/111122223333_waflogs_us-east-1_example-shop-acl_20260411T2040Z_6c8a6973.log.gz",
+      "size": 25825241,
+      "start": "2026-04-11T20:35:00Z"
+    },
+    {
+      "end": "2026-04-11T20:45:00Z",
+      "etag": "0d7be1709c9d0d3657442fb442bf41b9",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/20/45/111122223333_waflogs_us-east-1_example-shop-acl_20260411T2045Z_768c100f.log.gz",
+      "size": 24423523,
+      "start": "2026-04-11T20:40:00Z"
+    },
+    {
+      "end": "2026-04-11T20:50:00Z",
+      "etag": "34392cbf23bb43c3513a5e511929af39",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/20/50/111122223333_waflogs_us-east-1_example-shop-acl_20260411T2050Z_25ffeecb.log.gz",
+      "size": 22995191,
+      "start": "2026-04-11T20:45:00Z"
+    },
+    {
+      "end": "2026-04-11T20:55:00Z",
+      "etag": "e2a7241d2a3f6cffef7a84a92ec44152",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/20/55/111122223333_waflogs_us-east-1_example-shop-acl_20260411T2055Z_43dcff9d.log.gz",
+      "size": 22293090,
+      "start": "2026-04-11T20:50:00Z"
+    },
+    {
+      "end": "2026-04-11T21:00:00Z",
+      "etag": "305b9424353c5a287868bfddb070f3e7",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/21/00/111122223333_waflogs_us-east-1_example-shop-acl_20260411T2100Z_3441e64d.log.gz",
+      "size": 22337884,
+      "start": "2026-04-11T20:55:00Z"
+    },
+    {
+      "end": "2026-04-11T21:05:00Z",
+      "etag": "6ebaf68a34c23b972419303d06219036",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/21/05/111122223333_waflogs_us-east-1_example-shop-acl_20260411T2105Z_7b8f7b37.log.gz",
+      "size": 19701512,
+      "start": "2026-04-11T21:00:00Z"
+    },
+    {
+      "end": "2026-04-11T21:10:00Z",
+      "etag": "478abbca441bdf0ffa55fef6c990b095",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/21/10/111122223333_waflogs_us-east-1_example-shop-acl_20260411T2110Z_29255fc0.log.gz",
+      "size": 20203592,
+      "start": "2026-04-11T21:05:00Z"
+    },
+    {
+      "end": "2026-04-11T21:15:00Z",
+      "etag": "a9a39632771dcaef4d37d76287f4f2bb",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/21/15/111122223333_waflogs_us-east-1_example-shop-acl_20260411T2115Z_cc4ef08c.log.gz",
+      "size": 19117422,
+      "start": "2026-04-11T21:10:00Z"
+    },
+    {
+      "end": "2026-04-11T21:20:00Z",
+      "etag": "6be4c9e63f599c5dcd89ef47f2c8ce9e",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/21/20/111122223333_waflogs_us-east-1_example-shop-acl_20260411T2120Z_99f7c137.log.gz",
+      "size": 19144975,
+      "start": "2026-04-11T21:15:00Z"
+    },
+    {
+      "end": "2026-04-11T21:25:00Z",
+      "etag": "11dced923347a3ea54d0ff541908e870",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/21/25/111122223333_waflogs_us-east-1_example-shop-acl_20260411T2125Z_1791afea.log.gz",
+      "size": 17099296,
+      "start": "2026-04-11T21:20:00Z"
+    },
+    {
+      "end": "2026-04-11T21:30:00Z",
+      "etag": "4ff1aa278670209ad9a22f060404e520",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/21/30/111122223333_waflogs_us-east-1_example-shop-acl_20260411T2130Z_d7073ca7.log.gz",
+      "size": 17654898,
+      "start": "2026-04-11T21:25:00Z"
+    },
+    {
+      "end": "2026-04-11T21:35:00Z",
+      "etag": "fd997838d5a6f6335667e44dc17cb5e2",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/21/35/111122223333_waflogs_us-east-1_example-shop-acl_20260411T2135Z_1130f227.log.gz",
+      "size": 21585903,
+      "start": "2026-04-11T21:30:00Z"
+    },
+    {
+      "end": "2026-04-11T21:40:00Z",
+      "etag": "bada3e4c5e84000a9d31eb9a959adcc8",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/21/40/111122223333_waflogs_us-east-1_example-shop-acl_20260411T2140Z_441d5fad.log.gz",
+      "size": 17130609,
+      "start": "2026-04-11T21:35:00Z"
+    },
+    {
+      "end": "2026-04-11T21:45:00Z",
+      "etag": "b6f577b2b9a49aab77db7e835883d153",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/21/45/111122223333_waflogs_us-east-1_example-shop-acl_20260411T2145Z_4d6b8a68.log.gz",
+      "size": 19043516,
+      "start": "2026-04-11T21:40:00Z"
+    },
+    {
+      "end": "2026-04-11T21:50:00Z",
+      "etag": "6b887e1e27fb7ced708005a7bfda278d",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/21/50/111122223333_waflogs_us-east-1_example-shop-acl_20260411T2150Z_66f45ca4.log.gz",
+      "size": 19690794,
+      "start": "2026-04-11T21:45:00Z"
+    },
+    {
+      "end": "2026-04-11T21:55:00Z",
+      "etag": "4c8f889d02c96c742cef149d5b4429f1",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/21/55/111122223333_waflogs_us-east-1_example-shop-acl_20260411T2155Z_1ca04463.log.gz",
+      "size": 19333800,
+      "start": "2026-04-11T21:50:00Z"
+    },
+    {
+      "end": "2026-04-11T22:00:00Z",
+      "etag": "32cf6b5751af690e2f4c01ef9c530293",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/22/00/111122223333_waflogs_us-east-1_example-shop-acl_20260411T2200Z_cbc5b74a.log.gz",
+      "size": 17440887,
+      "start": "2026-04-11T21:55:00Z"
+    },
+    {
+      "end": "2026-04-11T22:05:00Z",
+      "etag": "a20ec75cd2868ef180114d00e2976426",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/22/05/111122223333_waflogs_us-east-1_example-shop-acl_20260411T2205Z_0cec49fe.log.gz",
+      "size": 10445251,
+      "start": "2026-04-11T22:00:00Z"
+    },
+    {
+      "end": "2026-04-11T22:10:00Z",
+      "etag": "27d73583bb1a4c8c0aa7faad92b02ecb",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/22/10/111122223333_waflogs_us-east-1_example-shop-acl_20260411T2210Z_8a939967.log.gz",
+      "size": 10220906,
+      "start": "2026-04-11T22:05:00Z"
+    },
+    {
+      "end": "2026-04-11T22:15:00Z",
+      "etag": "46502dd59fa3dde499e3af1112052884",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/22/15/111122223333_waflogs_us-east-1_example-shop-acl_20260411T2215Z_b7e43c57.log.gz",
+      "size": 9842118,
+      "start": "2026-04-11T22:10:00Z"
+    },
+    {
+      "end": "2026-04-11T22:20:00Z",
+      "etag": "6008464529fc62ca263db19427756124",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/22/20/111122223333_waflogs_us-east-1_example-shop-acl_20260411T2220Z_5392e08b.log.gz",
+      "size": 12429080,
+      "start": "2026-04-11T22:15:00Z"
+    },
+    {
+      "end": "2026-04-11T22:25:00Z",
+      "etag": "0970522f3ca561b8a0d454c0e20e5545",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/22/25/111122223333_waflogs_us-east-1_example-shop-acl_20260411T2225Z_b503efc4.log.gz",
+      "size": 10676668,
+      "start": "2026-04-11T22:20:00Z"
+    },
+    {
+      "end": "2026-04-11T22:30:00Z",
+      "etag": "26f9d9491f2b6857856795aa68432069",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/22/30/111122223333_waflogs_us-east-1_example-shop-acl_20260411T2230Z_8713f9b1.log.gz",
+      "size": 10878598,
+      "start": "2026-04-11T22:25:00Z"
+    },
+    {
+      "end": "2026-04-11T22:35:00Z",
+      "etag": "99d1f1bafb19cbfc159f191902087bff",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/22/35/111122223333_waflogs_us-east-1_example-shop-acl_20260411T2235Z_f2b92809.log.gz",
+      "size": 11332681,
+      "start": "2026-04-11T22:30:00Z"
+    },
+    {
+      "end": "2026-04-11T22:40:00Z",
+      "etag": "166f59aab97f1b437f9ff93cdd93c334",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/22/40/111122223333_waflogs_us-east-1_example-shop-acl_20260411T2240Z_fd849c63.log.gz",
+      "size": 12754378,
+      "start": "2026-04-11T22:35:00Z"
+    },
+    {
+      "end": "2026-04-11T22:45:00Z",
+      "etag": "8df64c69e40309186f854ffc75508ffc",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/22/45/111122223333_waflogs_us-east-1_example-shop-acl_20260411T2245Z_30bfdd0f.log.gz",
+      "size": 10883980,
+      "start": "2026-04-11T22:40:00Z"
+    },
+    {
+      "end": "2026-04-11T22:50:00Z",
+      "etag": "d9886473431f9032e5f6412adb70678a",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/22/50/111122223333_waflogs_us-east-1_example-shop-acl_20260411T2250Z_f735a2c2.log.gz",
+      "size": 12126561,
+      "start": "2026-04-11T22:45:00Z"
+    },
+    {
+      "end": "2026-04-11T22:55:00Z",
+      "etag": "2e22974cfbc411188f9738128a77581d",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/22/55/111122223333_waflogs_us-east-1_example-shop-acl_20260411T2255Z_2d869dcc.log.gz",
+      "size": 10677590,
+      "start": "2026-04-11T22:50:00Z"
+    },
+    {
+      "end": "2026-04-11T23:00:00Z",
+      "etag": "f5c5b95bf0dbdcc3ca8b42283d84fcd0",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/23/00/111122223333_waflogs_us-east-1_example-shop-acl_20260411T2300Z_e987c1b8.log.gz",
+      "size": 9864814,
+      "start": "2026-04-11T22:55:00Z"
+    },
+    {
+      "end": "2026-04-11T23:05:00Z",
+      "etag": "fa0c928b918ed9feb3e9df2050e84adc",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/23/05/111122223333_waflogs_us-east-1_example-shop-acl_20260411T2305Z_97657bdb.log.gz",
+      "size": 6118774,
+      "start": "2026-04-11T23:00:00Z"
+    },
+    {
+      "end": "2026-04-11T23:10:00Z",
+      "etag": "6e4c9e82b118bc69a60d23746bae8447",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/23/10/111122223333_waflogs_us-east-1_example-shop-acl_20260411T2310Z_49a7c04c.log.gz",
+      "size": 5592406,
+      "start": "2026-04-11T23:05:00Z"
+    },
+    {
+      "end": "2026-04-11T23:15:00Z",
+      "etag": "4e6027805ead85b3b2c6b0ccf99d7e40",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/23/15/111122223333_waflogs_us-east-1_example-shop-acl_20260411T2315Z_90d4eb1a.log.gz",
+      "size": 5607683,
+      "start": "2026-04-11T23:10:00Z"
+    },
+    {
+      "end": "2026-04-11T23:20:00Z",
+      "etag": "0aa3efb94a2043b75752ead5f6715fe3",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/23/20/111122223333_waflogs_us-east-1_example-shop-acl_20260411T2320Z_0da53a3d.log.gz",
+      "size": 6015414,
+      "start": "2026-04-11T23:15:00Z"
+    },
+    {
+      "end": "2026-04-11T23:25:00Z",
+      "etag": "165034e21c96fc3e383eb92bbc97459b",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/23/25/111122223333_waflogs_us-east-1_example-shop-acl_20260411T2325Z_a9f588dd.log.gz",
+      "size": 5149363,
+      "start": "2026-04-11T23:20:00Z"
+    },
+    {
+      "end": "2026-04-11T23:30:00Z",
+      "etag": "1b0ab78bfc191838e9ff39879282be5f",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/23/30/111122223333_waflogs_us-east-1_example-shop-acl_20260411T2330Z_e4d3b4c5.log.gz",
+      "size": 5826815,
+      "start": "2026-04-11T23:25:00Z"
+    },
+    {
+      "end": "2026-04-11T23:35:00Z",
+      "etag": "10edb4dd921adb92593e2e41027f9d10",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/23/35/111122223333_waflogs_us-east-1_example-shop-acl_20260411T2335Z_08519406.log.gz",
+      "size": 5758951,
+      "start": "2026-04-11T23:30:00Z"
+    },
+    {
+      "end": "2026-04-11T23:40:00Z",
+      "etag": "b5d24ab15f8d2af8b84d3bfe17b64851",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/23/40/111122223333_waflogs_us-east-1_example-shop-acl_20260411T2340Z_76184c1b.log.gz",
+      "size": 4814285,
+      "start": "2026-04-11T23:35:00Z"
+    },
+    {
+      "end": "2026-04-11T23:45:00Z",
+      "etag": "0865e1eaae79496bfa9acc53b3362a59",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/23/45/111122223333_waflogs_us-east-1_example-shop-acl_20260411T2345Z_ae523032.log.gz",
+      "size": 5070625,
+      "start": "2026-04-11T23:40:00Z"
+    },
+    {
+      "end": "2026-04-11T23:50:00Z",
+      "etag": "c742900097fef3d250c49cd23d56e9e8",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/23/50/111122223333_waflogs_us-east-1_example-shop-acl_20260411T2350Z_18042613.log.gz",
+      "size": 5203080,
+      "start": "2026-04-11T23:45:00Z"
+    },
+    {
+      "end": "2026-04-11T23:55:00Z",
+      "etag": "6d7d4cdb65fe605a4f4256acc84489a4",
+      "key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-shop-acl/2026/04/11/23/55/111122223333_waflogs_us-east-1_example-shop-acl_20260411T2355Z_e6124020.log.gz",
+      "size": 4717972,
+      "start": "2026-04-11T23:50:00Z"
+    }
+  ],
+  "from": "2026-04-11",
+  "listed_at": "2026-04-12T09:15:40Z",
+  "skipped_unparsed": 0,
+  "skipped_unsafe": 0,
+  "skipped_unsupported": 0,
+  "to": "2026-04-12",
+  "type": "waf",
+  "unsupported_format": false
+}

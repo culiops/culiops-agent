@@ -1,0 +1,127 @@
+[
+ {
+  "Id": "allowed_all",
+  "MetricStat": {
+   "Metric": {
+    "Namespace": "AWS/WAFV2",
+    "MetricName": "AllowedRequests",
+    "Dimensions": [
+     {
+      "Name": "WebACL",
+      "Value": "example-shop-acl"
+     },
+     {
+      "Name": "Rule",
+      "Value": "ALL"
+     },
+     {
+      "Name": "Region",
+      "Value": "us-east-1"
+     }
+    ]
+   },
+   "Period": 3600,
+   "Stat": "Sum"
+  }
+ },
+ {
+  "Id": "blocked_all",
+  "MetricStat": {
+   "Metric": {
+    "Namespace": "AWS/WAFV2",
+    "MetricName": "BlockedRequests",
+    "Dimensions": [
+     {
+      "Name": "WebACL",
+      "Value": "example-shop-acl"
+     },
+     {
+      "Name": "Rule",
+      "Value": "ALL"
+     },
+     {
+      "Name": "Region",
+      "Value": "us-east-1"
+     }
+    ]
+   },
+   "Period": 3600,
+   "Stat": "Sum"
+  }
+ },
+ {
+  "Id": "blocked_ipr",
+  "MetricStat": {
+   "Metric": {
+    "Namespace": "AWS/WAFV2",
+    "MetricName": "BlockedRequests",
+    "Dimensions": [
+     {
+      "Name": "WebACL",
+      "Value": "example-shop-acl"
+     },
+     {
+      "Name": "Rule",
+      "Value": "AWS-AWSManagedRulesAmazonIpReputationList"
+     },
+     {
+      "Name": "Region",
+      "Value": "us-east-1"
+     }
+    ]
+   },
+   "Period": 3600,
+   "Stat": "Sum"
+  }
+ },
+ {
+  "Id": "blocked_geo",
+  "MetricStat": {
+   "Metric": {
+    "Namespace": "AWS/WAFV2",
+    "MetricName": "BlockedRequests",
+    "Dimensions": [
+     {
+      "Name": "WebACL",
+      "Value": "example-shop-acl"
+     },
+     {
+      "Name": "Rule",
+      "Value": "geo-block-embargo"
+     },
+     {
+      "Name": "Region",
+      "Value": "us-east-1"
+     }
+    ]
+   },
+   "Period": 3600,
+   "Stat": "Sum"
+  }
+ },
+ {
+  "Id": "blocked_rate",
+  "MetricStat": {
+   "Metric": {
+    "Namespace": "AWS/WAFV2",
+    "MetricName": "BlockedRequests",
+    "Dimensions": [
+     {
+      "Name": "WebACL",
+      "Value": "example-shop-acl"
+     },
+     {
+      "Name": "Rule",
+      "Value": "rate-limit-coupon"
+     },
+     {
+      "Name": "Region",
+      "Value": "us-east-1"
+     }
+    ]
+   },
+   "Period": 3600,
+   "Stat": "Sum"
+  }
+ }
+]

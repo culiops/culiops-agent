@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+# Dry-run or download an S3 log slice (size-verified, capped) into redacted Parquet; --purge removes a run.
+here=$(cd -P -- "$(dirname -- "$0")" && pwd)
+exec python3 -I "$here/../lib/s3logs/cli_fetch.py" "$@"

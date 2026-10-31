@@ -1,0 +1,120 @@
+{
+    "WebACL": {
+        "Name": "example-shop-acl",
+        "Id": "5b0c7a1e-3d42-4f6a-9e8b-2c1d0a9f7e64",
+        "ARN": "arn:aws:wafv2:us-east-1:111122223333:regional/webacl/example-shop-acl/5b0c7a1e-3d42-4f6a-9e8b-2c1d0a9f7e64",
+        "DefaultAction": {
+            "Allow": {}
+        },
+        "Description": "Web ACL for shop.example.com",
+        "Rules": [
+            {
+                "Name": "AWS-AWSManagedRulesAmazonIpReputationList",
+                "Priority": 0,
+                "Statement": {
+                    "ManagedRuleGroupStatement": {
+                        "VendorName": "AWS",
+                        "Name": "AWSManagedRulesAmazonIpReputationList"
+                    }
+                },
+                "OverrideAction": {
+                    "None": {}
+                },
+                "VisibilityConfig": {
+                    "SampledRequestsEnabled": true,
+                    "CloudWatchMetricsEnabled": true,
+                    "MetricName": "AWS-AWSManagedRulesAmazonIpReputationList"
+                }
+            },
+            {
+                "Name": "geo-block-embargo",
+                "Priority": 1,
+                "Statement": {
+                    "GeoMatchStatement": {
+                        "CountryCodes": ["KP", "IR"]
+                    }
+                },
+                "Action": {
+                    "Block": {}
+                },
+                "VisibilityConfig": {
+                    "SampledRequestsEnabled": true,
+                    "CloudWatchMetricsEnabled": true,
+                    "MetricName": "geo-block-embargo"
+                }
+            },
+            {
+                "Name": "rate-limit-coupon",
+                "Priority": 2,
+                "Statement": {
+                    "RateBasedStatement": {
+                        "Limit": 10,
+                        "EvaluationWindowSec": 300,
+                        "AggregateKeyType": "IP",
+                        "ScopeDownStatement": {
+                            "ByteMatchStatement": {
+                                "SearchString": "L2FwaS9jYXJ0L2NvdXBvbg==",
+                                "FieldToMatch": {
+                                    "UriPath": {}
+                                },
+                                "TextTransformations": [
+                                    {
+                                        "Priority": 0,
+                                        "Type": "NONE"
+                                    }
+                                ],
+                                "PositionalConstraint": "STARTS_WITH"
+                            }
+                        }
+                    }
+                },
+                "Action": {
+                    "Block": {}
+                },
+                "VisibilityConfig": {
+                    "SampledRequestsEnabled": true,
+                    "CloudWatchMetricsEnabled": true,
+                    "MetricName": "rate-limit-coupon"
+                }
+            },
+            {
+                "Name": "count-new-bot-signals",
+                "Priority": 3,
+                "Statement": {
+                    "ByteMatchStatement": {
+                        "SearchString": "Ym90",
+                        "FieldToMatch": {
+                            "SingleHeader": {
+                                "Name": "user-agent"
+                            }
+                        },
+                        "TextTransformations": [
+                            {
+                                "Priority": 0,
+                                "Type": "LOWERCASE"
+                            }
+                        ],
+                        "PositionalConstraint": "CONTAINS"
+                    }
+                },
+                "Action": {
+                    "Count": {}
+                },
+                "VisibilityConfig": {
+                    "SampledRequestsEnabled": true,
+                    "CloudWatchMetricsEnabled": true,
+                    "MetricName": "count-new-bot-signals"
+                }
+            }
+        ],
+        "VisibilityConfig": {
+            "SampledRequestsEnabled": true,
+            "CloudWatchMetricsEnabled": true,
+            "MetricName": "example-shop-acl"
+        },
+        "Capacity": 342,
+        "ManagedByFirewallManager": false,
+        "LabelNamespace": "awswaf:111122223333:webacl:example-shop-acl:"
+    },
+    "LockToken": "a1b2c3d4-0000-4000-8000-0123456789ab"
+}

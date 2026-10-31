@@ -247,6 +247,8 @@ jq -r '.line' "$RUN/logs-onset.jsonl" \
 
 Check the field name in the first record (`head -1`) before trusting the count; the JSON layout of `logcli` output can change between versions. Run the same count on the baseline window: a message that is just as frequent before onset is background, not mechanism.
 
+If Phase 0 reported the S3 log module on, a pull saved as JSON lines, CSV or TSV in a directory of its own can also be grouped and counted with `sqlq run:<dir>` ([logs-s3.md](logs-s3.md#recipes)).
+
 ## Gotchas
 
 - **Identifiers differ across backends.** The log group, the Loki label value and the metrics label for one service rarely match (`/ecs/checkout`, `app="checkout-api"`, `service="checkout-api-prod"`). Discover log group names and label values; never build one from another. Mark an identifier `(unverified)` in the profile until a discovery call has returned it, and treat an empty result against an unverified identifier as "wrong identifier", not "no errors".

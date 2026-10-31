@@ -1,0 +1,1 @@
+refused: no data for shop-waf in run <run-id>; run logs-fetch first

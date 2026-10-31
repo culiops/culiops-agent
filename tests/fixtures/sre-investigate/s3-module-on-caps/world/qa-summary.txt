@@ -1,0 +1,2 @@
+first_ts,last_ts,requests,allowed,blocked,counted,other_actions,distinct_clients,distinct_client_keys,distinct_rules
+2026-04-11 13:00:00.002,2026-04-11 14:04:59.909,49107,43929,5178,0,0,569,1521,4

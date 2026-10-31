@@ -1,0 +1,132 @@
+#!/usr/bin/env python3
+"""Test stub for the aws CLI. Answers `--version`, `s3api list-objects-v2` and
+`configure export-credentials [--profile P] --format process`.
+
+`--version` prints a fixed v2 banner (`aws-cli/2.15.0 ...`) on stdout.
+
+Objects are the files under $FAKE_S3_ROOT/<bucket>/<key>. Every call appends its
+argv as one JSON line to $FAKE_ARGV_LOG. $FAKE_AWS_ERROR=<text> makes the call
+fail like the real CLI (stderr text, exit 254). $FAKE_EXTRA_KEYS_JSON names a JSON
+file of {"key": ..., "size": ...} objects appended to the listing, for keys the
+fake filesystem cannot hold (a newline, for instance).
+
+export-credentials prints the documented example key pair as `process` JSON (Version 1).
+Knobs: $FAKE_AWS_CREDS_ERROR=<text> fails with that stderr text (exit 255);
+$FAKE_AWS_CREDS_STDOUT=<raw text> prints that instead of the JSON (exit 0);
+$FAKE_AWS_CREDS_STDOUT_AND_FAIL=<raw text> prints it on stdout and exits 255 (stdout must
+never reach an error message); $FAKE_AWS_CREDS_NO_TOKEN=1 leaves SessionToken out.
+"""
+import hashlib
+import json
+import os
+import sys
+
+VALUE_OPTIONS = {"--bucket", "--prefix", "--profile", "--region", "--output",
+                 "--starting-token", "--page-size"}
+
+
+def refuse(msg):
+    sys.stderr.write("stub aws: %s\n" % msg)
+    sys.exit(252)
+
+
+def export_credentials(rest):
+    opts = {}
+    i = 0
+    while i < len(rest):
+        if rest[i] not in ("--profile", "--format") or i + 1 >= len(rest):
+            refuse("unexpected argument")
+        opts[rest[i]] = rest[i + 1]
+        i += 2
+    if opts.get("--format") != "process":
+        refuse("only --format process is supported")
+    err = os.environ.get("FAKE_AWS_CREDS_ERROR")
+    if err:
+        sys.stderr.write(err + "\n")
+        sys.exit(255)
+    both = os.environ.get("FAKE_AWS_CREDS_STDOUT_AND_FAIL")
+    if both is not None:
+        sys.stdout.write(both)
+        sys.stderr.write("stub aws: export-credentials failed\n")
+        sys.exit(255)
+    raw = os.environ.get("FAKE_AWS_CREDS_STDOUT")
+    if raw is not None:
+        sys.stdout.write(raw)
+        return
+    doc = {"Version": 1, "AccessKeyId": "AKIAIOSFODNN7EXAMPLE",
+           "SecretAccessKey": "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
+           "SessionToken": "IQoJb3JpZ2luX2VjEXAMPLETOKEN", "Expiration": "2026-03-10T01:00:00+00:00"}
+    if os.environ.get("FAKE_AWS_CREDS_NO_TOKEN"):
+        del doc["SessionToken"]
+    print(json.dumps(doc))
+
+
+def main():
+    argv = sys.argv[1:]
+    log = os.environ.get("FAKE_ARGV_LOG")
+    if log:
+        with open(log, "a") as f:
+            f.write(json.dumps(argv) + "\n")
+    if argv == ["--version"]:
+        print("aws-cli/2.15.0 Python/3.11.6 Linux/6.8.0")
+        return
+    if argv[:2] == ["configure", "export-credentials"]:
+        export_credentials(argv[2:])
+        return
+    if argv[:2] != ["s3api", "list-objects-v2"]:
+        refuse("only 's3api list-objects-v2' and 'configure export-credentials' are supported")
+    opts = {}
+    rest = argv[2:]
+    i = 0
+    while i < len(rest):
+        name = rest[i]
+        if name not in VALUE_OPTIONS or i + 1 >= len(rest):
+            refuse("unexpected argument")
+        opts[name] = rest[i + 1]
+        i += 2
+    if "--bucket" not in opts or "--prefix" not in opts:
+        refuse("--bucket and --prefix are required")
+    if opts.get("--output", "json") != "json":
+        refuse("only --output json is supported")
+    err = os.environ.get("FAKE_AWS_ERROR")
+    if err:
+        sys.stderr.write(err + "\n")
+        sys.exit(254)
+    root = os.environ.get("FAKE_S3_ROOT")
+    if not root:
+        refuse("FAKE_S3_ROOT is not set")
+    bucket, prefix = opts["--bucket"], opts["--prefix"]
+    bdir = os.path.join(root, bucket)
+    if not os.path.isdir(bdir):
+        sys.stderr.write("\nAn error occurred (NoSuchBucket) when calling the ListObjectsV2 "
+                         "operation: The specified bucket does not exist\n")
+        sys.exit(254)
+    found = []
+    for dirpath, _dirs, files in os.walk(bdir):
+        for name in files:
+            full = os.path.join(dirpath, name)
+            key = os.path.relpath(full, bdir).replace(os.sep, "/")
+            if not key.startswith(prefix):
+                continue
+            with open(full, "rb") as fh:
+                etag = hashlib.md5(fh.read()).hexdigest()
+            found.append((key, os.path.getsize(full), '"%s"' % etag))
+    extra = os.environ.get("FAKE_EXTRA_KEYS_JSON")
+    if extra:
+        with open(extra) as fh:
+            for obj in json.load(fh):
+                if obj["key"].startswith(prefix):
+                    etag = hashlib.md5(obj["key"].encode()).hexdigest()
+                    found.append((obj["key"], int(obj["size"]), '"%s"' % etag))
+    found.sort(key=lambda t: t[0].encode("utf-8"))
+    out = {}
+    if found:
+        out["Contents"] = [
+            {"Key": k, "LastModified": "2026-03-10T01:00:00+00:00", "ETag": e, "Size": s,
+             "StorageClass": "STANDARD"}
+            for k, s, e in found
+        ]
+    print(json.dumps(out, indent=4))
+
+
+main()

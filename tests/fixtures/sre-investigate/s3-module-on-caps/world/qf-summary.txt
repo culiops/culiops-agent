@@ -1,0 +1,3 @@
+-- sampled 1/3: requests, allowed, blocked, counted and other_actions scale by 3; distinct_* are lower bounds.
+first_ts,last_ts,requests,allowed,blocked,counted,other_actions,distinct_clients,distinct_client_keys,distinct_rules
+2026-04-11 13:00:00.002,2026-04-11 16:04:59.573,51352,44531,6821,0,0,570,1537,4

@@ -1,7 +1,7 @@
 {
   "name": "culiops",
   "description": "SRE, cloud-cost and infrastructure-change skills for Claude Code on AWS + Terraform (ecspresso, lambroll) + Kubernetes (Helm, Kustomize, raw manifests): service discovery, pre-flight risk checks, IaC change execution, cloud cost investigation and optimization, runtime tracing, service takeover, change-communication drafts for any chat or ticket tool, and read-only incident investigation and RCA.",
-  "version": "0.16.0",
+  "version": "0.17.0",
   "author": {
     "name": "chiplonton",
     "email": "chipkogi010790@gmail.com"
@@ -41,6 +41,9 @@
     "incident-investigation",
     "rca",
     "postmortem",
-    "troubleshooting"
+    "troubleshooting",
+    "s3",
+    "access-logs",
+    "duckdb"
   ]
 }

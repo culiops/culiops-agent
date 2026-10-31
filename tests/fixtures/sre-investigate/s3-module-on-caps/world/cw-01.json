@@ -1,0 +1,10 @@
+{
+    "Metrics": [
+        {"Namespace": "AWS/WAFV2", "MetricName": "AllowedRequests", "Dimensions": [{"Name": "WebACL", "Value": "example-shop-acl"}, {"Name": "Rule", "Value": "ALL"}, {"Name": "Region", "Value": "us-east-1"}]},
+        {"Namespace": "AWS/WAFV2", "MetricName": "BlockedRequests", "Dimensions": [{"Name": "WebACL", "Value": "example-shop-acl"}, {"Name": "Rule", "Value": "ALL"}, {"Name": "Region", "Value": "us-east-1"}]},
+        {"Namespace": "AWS/WAFV2", "MetricName": "BlockedRequests", "Dimensions": [{"Name": "WebACL", "Value": "example-shop-acl"}, {"Name": "Rule", "Value": "AWS-AWSManagedRulesAmazonIpReputationList"}, {"Name": "Region", "Value": "us-east-1"}]},
+        {"Namespace": "AWS/WAFV2", "MetricName": "BlockedRequests", "Dimensions": [{"Name": "WebACL", "Value": "example-shop-acl"}, {"Name": "Rule", "Value": "geo-block-embargo"}, {"Name": "Region", "Value": "us-east-1"}]},
+        {"Namespace": "AWS/WAFV2", "MetricName": "BlockedRequests", "Dimensions": [{"Name": "WebACL", "Value": "example-shop-acl"}, {"Name": "Rule", "Value": "rate-limit-coupon"}, {"Name": "Region", "Value": "us-east-1"}]},
+        {"Namespace": "AWS/WAFV2", "MetricName": "CountedRequests", "Dimensions": [{"Name": "WebACL", "Value": "example-shop-acl"}, {"Name": "Rule", "Value": "count-new-bot-signals"}, {"Name": "Region", "Value": "us-east-1"}]}
+    ]
+}

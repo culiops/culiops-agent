@@ -1,0 +1,2 @@
+day,requests,allowed,blocked,distinct_clients
+2026-04-11,104714,85638,19076,570

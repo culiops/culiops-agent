@@ -1,0 +1,20 @@
+{
+    "Events": [
+        {
+            "EventId": "9c1b7d52-6a3e-4f0b-8d21-7e5a4c3b2a10",
+            "EventName": "UpdateDistribution",
+            "ReadOnly": "false",
+            "AccessKeyId": "ASIAEXAMPLEKEY00001",
+            "EventTime": "2026-02-18T09:41:12+00:00",
+            "EventSource": "cloudfront.amazonaws.com",
+            "Username": "deploy-bot",
+            "Resources": [
+                {
+                    "ResourceType": "AWS::CloudFront::Distribution",
+                    "ResourceName": "E3EXAMPLEDIST"
+                }
+            ],
+            "CloudTrailEvent": "{\"eventVersion\":\"1.09\",\"eventTime\":\"2026-02-18T09:41:12Z\",\"eventSource\":\"cloudfront.amazonaws.com\",\"eventName\":\"UpdateDistribution\",\"awsRegion\":\"us-east-1\",\"sourceIPAddress\":\"203.0.113.40\",\"userAgent\":\"Terraform/1.9.0\",\"requestParameters\":{\"id\":\"E3EXAMPLEDIST\"}}"
+        }
+    ]
+}

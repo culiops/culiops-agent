@@ -1,0 +1,5 @@
+terminating_rule_id,terminating_rule_type,action,requests,share
+Default_Action,REGULAR,ALLOW,43929,0.8946
+rate-limit-coupon,RATE_BASED,BLOCK,4906,0.0999
+AWS-AWSManagedRulesAmazonIpReputationList,MANAGED_RULE_GROUP,BLOCK,191,0.0039
+geo-block-embargo,REGULAR,BLOCK,81,0.0016

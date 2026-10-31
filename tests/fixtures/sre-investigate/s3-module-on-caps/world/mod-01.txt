@@ -1,0 +1,1 @@
+S3 log module: on (datasets: shop-waf[waf]; s5cmd 2.3.0, duckdb 1.5.6)

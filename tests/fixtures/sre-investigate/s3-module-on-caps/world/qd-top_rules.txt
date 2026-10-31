@@ -1,0 +1,6 @@
+-- sampled 1/20: requests scale by 20; shares do not scale.
+terminating_rule_id,terminating_rule_type,action,requests,share
+Default_Action,REGULAR,ALLOW,41765,0.9765
+rate-limit-coupon,RATE_BASED,BLOCK,734,0.0172
+AWS-AWSManagedRulesAmazonIpReputationList,MANAGED_RULE_GROUP,BLOCK,172,0.004
+geo-block-embargo,REGULAR,BLOCK,98,0.0023

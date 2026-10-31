@@ -1,0 +1,2 @@
+client_ip,blocked,client_keys,user_agent
+198.51.100.77,111,25,"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36"
