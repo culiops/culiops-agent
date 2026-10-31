@@ -1,0 +1,7 @@
+{
+ "destinations": [
+  "arn:aws:s3:::aws-waf-logs-example-shop"
+ ],
+ "filter": null,
+ "redacted": []
+}

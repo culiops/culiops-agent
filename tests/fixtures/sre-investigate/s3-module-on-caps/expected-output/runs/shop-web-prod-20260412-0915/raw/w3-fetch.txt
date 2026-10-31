@@ -1,0 +1,8 @@
+dataset shop-waf (waf)  slice 2026-04-11 13:40-15:15 (+1 widen)  every 1
+files 20  MB 65.4  est_cost $0.0070
+caps: fetch 65.4/200 MB  run shop-web-prod-20260412-0915 65.4/1024 MB  24h 2011.0/2048 MB  → OK
+batch 1/3: 9 files 29.3 MB verified, 29.3 MB received; rows 40801
+batch 2/3: 9 files 29.7 MB verified, 29.7 MB received; rows 40793
+batch 3/3: 2 files 6.4 MB verified, 6.4 MB received; rows 6769
+fetched 20 files 65.4 MB verified; charged 65.4 MB; skipped 0 present; data: ~/.local/share/culiops/sre-investigate/data/shop-web-prod-20260412-0915/shop-waf; sample: 1/1
+converted: rows 88363; skipped lines 0; dropped columns none

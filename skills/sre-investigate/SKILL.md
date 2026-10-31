@@ -81,7 +81,7 @@ THE CHEAPEST QUERY THAT CAN ANSWER THE QUESTION, NARROWED FIRST. TRY TO DISPROVE
 ## Terms
 
 - **Output root:** see Constraint 5.
-- **Run directory:** `<output root>/runs/<service>-<env>-<YYYYMMDD-HHMM>/`, with the start time in UTC. It holds `ledger.md`, `profile.md`, `report.md` and `raw/`.
+- **Run directory:** `<output root>/runs/<service>-<env>-<YYYYMMDD-HHMM>/`, with the start time in UTC. `<service>` and `<env>` are written in lowercase letters, digits and hyphens (any other character becomes a hyphen), so the directory name is also a valid run id for the analytics tools. It holds `ledger.md`, `profile.md`, `report.md` and `raw/`.
 - **`RUN`:** set to `<run directory>/raw` for the main session's recipes; playbook recipes write `$RUN/<file>`. An evidence worker uses `<run directory>/raw/<hypothesis ID>`, a helper `<run directory>/raw/helper`.
 - **Run profile:** `profile.md` in the run directory, the run's working copy of the service profile. It starts as a copy of `<output root>/profiles/<service>-<env>.md` when that exists, or is built fresh in Build profile. All identifier marks made during the run (verified, `(unverified)`, stale) go here; the stored profile changes only through Phase 6.
 - **Ledger:** `ledger.md` in the run directory, copied from [templates/ledger.md](templates/ledger.md) at the start of the run, with all its sections, including the per-hypothesis status lines under the [Hypotheses](templates/ledger.md#hypotheses) table. It is the working record: every query gets a [Query log](templates/ledger.md#query-log) row before its result is used anywhere. Only the main session writes it, after every wave.

@@ -1,0 +1,52 @@
+[
+ {
+  "Id": "blocked_ratelimit",
+  "MetricStat": {
+   "Metric": {
+    "Namespace": "AWS/WAFV2",
+    "MetricName": "BlockedRequests",
+    "Dimensions": [
+     {
+      "Name": "WebACL",
+      "Value": "example-shop-acl"
+     },
+     {
+      "Name": "Rule",
+      "Value": "rate-limit-coupon"
+     },
+     {
+      "Name": "Region",
+      "Value": "us-east-1"
+     }
+    ]
+   },
+   "Period": 60,
+   "Stat": "Sum"
+  }
+ },
+ {
+  "Id": "blocked_all",
+  "MetricStat": {
+   "Metric": {
+    "Namespace": "AWS/WAFV2",
+    "MetricName": "BlockedRequests",
+    "Dimensions": [
+     {
+      "Name": "WebACL",
+      "Value": "example-shop-acl"
+     },
+     {
+      "Name": "Rule",
+      "Value": "ALL"
+     },
+     {
+      "Name": "Region",
+      "Value": "us-east-1"
+     }
+    ]
+   },
+   "Period": 60,
+   "Stat": "Sum"
+  }
+ }
+]

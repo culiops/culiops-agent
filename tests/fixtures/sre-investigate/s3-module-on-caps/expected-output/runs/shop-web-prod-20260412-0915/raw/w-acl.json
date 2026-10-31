@@ -1,0 +1,52 @@
+{
+ "defaultAction": {
+  "Allow": {}
+ },
+ "aclMetric": "example-shop-acl",
+ "rules": [
+  {
+   "name": "AWS-AWSManagedRulesAmazonIpReputationList",
+   "priority": 0,
+   "action": null,
+   "override": {
+    "None": {}
+   },
+   "metric": "AWS-AWSManagedRulesAmazonIpReputationList",
+   "sampled": true,
+   "groupOverrides": null
+  },
+  {
+   "name": "geo-block-embargo",
+   "priority": 1,
+   "action": {
+    "Block": {}
+   },
+   "override": null,
+   "metric": "geo-block-embargo",
+   "sampled": true,
+   "groupOverrides": null
+  },
+  {
+   "name": "rate-limit-coupon",
+   "priority": 2,
+   "action": {
+    "Block": {}
+   },
+   "override": null,
+   "metric": "rate-limit-coupon",
+   "sampled": true,
+   "groupOverrides": null
+  },
+  {
+   "name": "count-new-bot-signals",
+   "priority": 3,
+   "action": {
+    "Count": {}
+   },
+   "override": null,
+   "metric": "count-new-bot-signals",
+   "sampled": true,
+   "groupOverrides": null
+  }
+ ]
+}
