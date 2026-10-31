@@ -282,3 +282,16 @@ def test_out_of_range_stamp_counted_unparsed(home, env):
     for out in (text, r.stdout, r.stderr):
         assert "planted" not in out and "00010101" not in out
     assert "Traceback" not in r.stderr
+
+
+def test_day_with_only_a_folder_placeholder_is_still_a_gap(home, env, tmp_path, monkeypatch):
+    """A console-created folder marker (zero bytes, key ends in /) is listed but is no log file."""
+    extra = tmp_path / "extra.json"
+    extra.write_text(json.dumps([{"key": "AWSLogs/111122223333/WAFLogs/us-east-1/example-acl/2026/03/09/",
+                                  "size": 0}]))
+    monkeypatch.setenv("FAKE_EXTRA_KEYS_JSON", str(extra))
+    r = run("waf", "2026-03-09", "2026-03-09")
+    assert r.returncode == 0, r.stderr
+    assert "2026-03-09: " + GAP in r.stdout
+    m = json.loads(manifest_path(home, "waf", "2026-03-09", "2026-03-09").read_text())
+    assert m["files"] == [] and m["days"]["2026-03-09"]["listed"] == 1 and m["days"]["2026-03-09"]["files"] == 0

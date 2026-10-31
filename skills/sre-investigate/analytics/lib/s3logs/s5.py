@@ -184,7 +184,7 @@ def run(run_file: Path, profile: Optional[str], region: Optional[str], batchdir:
         r = subprocess.run(argv, stdin=subprocess.DEVNULL, capture_output=True, text=True,
                            errors="replace", timeout=_TIMEOUT_S, env=_child_env(region, creds), shell=False)
     except subprocess.TimeoutExpired:
-        raise AwsError("s5cmd timed out after %d seconds" % _TIMEOUT_S, "re-run with a narrower slice")
+        raise AwsError("s5cmd timed out after %d seconds" % _TIMEOUT_S, "re-run with a narrower slice") from None
     except OSError as e:
         raise AwsError("could not run s5cmd: %s" % (e.strerror or "error"))
     if r.returncode != 0:

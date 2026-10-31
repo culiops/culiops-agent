@@ -134,7 +134,7 @@ def run(dataset: str, day_from: dt.date, day_to: dt.date) -> int:
         "total", tot_files, tot_bytes / _MIB,
         estimate_cost(cfg.price_per_gb, cfg.price_per_1k_get, tot_bytes, tot_files)))
     for d in days:
-        if per_day[d]["listed"] == 0:
+        if per_day[d]["files"] == 0:
             out.append("%s: %s" % (d.isoformat(), GAP_SENTENCE))
     if unsupported:
         out.append("format unsupported (v2 JSON/Parquet): %d objects left out; this is a gap, "

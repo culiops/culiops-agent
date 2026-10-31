@@ -379,15 +379,41 @@ def test_secrets_are_not_in_the_run_file_or_argv(fake_s3, batch):
         assert secret not in blob
 
 
-def test_shared_creds_load_failure_gets_a_profile_hint(fake_s3, batch, monkeypatch):
-    fake_s3.bucket(BUCKET)
+def fail_with_shared_creds_load(monkeypatch):
     monkeypatch.setenv("FAKE_S5CMD_FAIL_ON_BATCH", "1")
     monkeypatch.setenv("FAKE_S5CMD_ERROR", 'ERROR "cp s3://x/y z": SharedCredsLoad: failed to get profile')
+
+
+def test_shared_creds_load_failure_gets_a_profile_hint(fake_s3, batch, monkeypatch):
+    fake_s3.bucket(BUCKET)
+    fail_with_shared_creds_load(monkeypatch)
+    rf = write_run(batch, ["a.gz"])
     with pytest.raises(AwsError) as ei:
-        s5.run(write_run(batch, ["a.gz"]), "sre-read", None, str(batch), BUCKET)
+        s5.run(rf, "sre-read", None, str(batch), BUCKET)
     assert ei.value.hint == "run aws configure export-credentials --profile sre-read to check the profile"
+
+
+def test_shared_creds_load_failure_hint_without_a_profile(fake_s3, batch, monkeypatch):
+    fake_s3.bucket(BUCKET)
+    fail_with_shared_creds_load(monkeypatch)
+    rf = write_run(batch, ["a.gz"])
     with pytest.raises(AwsError) as ei:
-        (batch / "000001.gz").unlink() if (batch / "000001.gz").exists() else None
-        monkeypatch.setenv("FAKE_S5CMD_FAIL_ON_BATCH", "2")
-        s5.run(write_run(batch, ["a.gz"], "two.run"), None, None, str(batch), BUCKET)
+        s5.run(rf, None, None, str(batch), BUCKET)
     assert ei.value.hint == "run aws configure export-credentials to check the profile"
+
+
+def test_s5cmd_timeout_has_no_chained_traceback(fake_s3, batch, monkeypatch):
+    fake_s3.bucket(BUCKET)
+    rf = write_run(batch, ["a.gz"])
+    real = s5.subprocess.run
+
+    def fake_run(cmd, **kw):
+        if "timeout" in kw and kw["timeout"] == s5._TIMEOUT_S:
+            raise s5.subprocess.TimeoutExpired(cmd, kw["timeout"])
+        return real(cmd, **kw)
+
+    monkeypatch.setattr(s5.subprocess, "run", fake_run)
+    with pytest.raises(AwsError) as ei:
+        s5.run(rf, None, None, str(batch), BUCKET)
+    assert "timed out" in ei.value.msg
+    assert ei.value.__suppress_context__ and ei.value.__cause__ is None

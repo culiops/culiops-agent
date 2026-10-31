@@ -182,7 +182,7 @@ def test_example_file_parses_when_uncommented(tmp_path):
     p = tmp_path / "all.env"
     p.write_text("\n".join(uncommented) + "\n")
     cfg = config.load(p)
-    assert set(cfg.datasets) == {"cdn", "cdn2", "alb", "waf", "waf-fh"}
+    assert set(cfg.datasets) == {"cdn", "cdn2", "alb", "waf", "waf-cf", "waf-fh"}
     assert cfg.datasets["cdn"].type == "cloudfront" and cfg.aws_region == "us-east-1"
     assert cfg.price_per_gb == Decimal("0.09")
     assert cfg.sensitive_params == frozenset(config.DEFAULT_SENSITIVE_PARAMS)

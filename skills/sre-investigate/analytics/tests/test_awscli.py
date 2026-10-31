@@ -273,7 +273,8 @@ def test_export_credentials_bad_output_is_an_aws_error_without_the_output(fake_s
     monkeypatch.setenv("FAKE_AWS_CREDS_STDOUT", out)
     with pytest.raises(AwsError) as ei:
         awscli.export_credentials("sre-read", None)
-    assert "SECRETVALUE" not in ei.value.msg and out.strip() not in ei.value.msg or not out.strip()
+    assert "SECRETVALUE" not in ei.value.msg
+    assert (out.strip() not in ei.value.msg) or not out.strip()
     assert ei.value.hint == "aws configure export-credentials needs AWS CLI v2.9 or newer and a working profile"
 
 
@@ -309,3 +310,63 @@ def test_check_argv_allows_exactly_the_export_credentials_shapes():
     for argv in bad:
         with pytest.raises(Refused):
             awscli._check_argv(argv)
+
+
+def test_revoked_sso_token_gets_the_login_hint(fake_s3, monkeypatch):
+    text = ("An error occurred (UnauthorizedException) when calling the GetRoleCredentials operation: "
+            "Session token not found or invalid")
+    monkeypatch.setenv("FAKE_AWS_CREDS_ERROR", text)
+    with pytest.raises(AwsError) as ei:
+        awscli.export_credentials("sre-read", None)
+    assert ei.value.hint == "! aws sso login --profile sre-read"
+    fake_s3.bucket(BUCKET)
+    monkeypatch.setenv("FAKE_AWS_ERROR", text)
+    with pytest.raises(AwsError) as ei:
+        list(awscli.list_objects(BUCKET, "cf/", "sre-read", None))
+    assert ei.value.hint == "! aws sso login --profile sre-read"
+
+
+def test_export_timeout_has_its_own_hint_and_no_chained_traceback(fake_s3, monkeypatch):
+    def boom(cmd, **kw):
+        raise awscli.subprocess.TimeoutExpired(cmd, 60)
+
+    monkeypatch.setattr(awscli.subprocess, "run", boom)
+    with pytest.raises(AwsError) as ei:
+        awscli.export_credentials("sre-read", None)
+    assert ei.value.hint == ("the profile's credential lookup timed out; check the network or run "
+                             "aws configure export-credentials --profile sre-read")
+    assert ei.value.hint != awscli._EXPORT_HINT
+    assert ei.value.__suppress_context__ and ei.value.__cause__ is None
+
+
+def test_export_timeout_hint_without_a_profile(fake_s3, monkeypatch):
+    def boom(cmd, **kw):
+        raise awscli.subprocess.TimeoutExpired(cmd, 60)
+
+    monkeypatch.setattr(awscli.subprocess, "run", boom)
+    with pytest.raises(AwsError) as ei:
+        awscli.export_credentials(None, None)
+    assert ei.value.hint == ("the profile's credential lookup timed out; check the network or run "
+                             "aws configure export-credentials")
+
+
+def test_listing_timeout_hint_is_followable_for_a_one_day_range(fake_s3, monkeypatch):
+    def boom(cmd, **kw):
+        raise awscli.subprocess.TimeoutExpired(cmd, 600)
+
+    monkeypatch.setattr(awscli.subprocess, "run", boom)
+    with pytest.raises(AwsError) as ei:
+        list(awscli.list_objects(BUCKET, "cf/", None, None))
+    assert ei.value.hint == "re-run with a narrower day range, or check the network/prefix"
+    assert ei.value.__suppress_context__
+
+
+def test_long_session_tokens_are_accepted(fake_s3, monkeypatch):
+    token = "T" * 10000
+    monkeypatch.setenv("FAKE_AWS_CREDS_STDOUT", json.dumps(
+        {"Version": 1, "AccessKeyId": "AKIAIOSFODNN7EXAMPLE", "SecretAccessKey": "k", "SessionToken": token}))
+    assert awscli.export_credentials(None, None)["AWS_SESSION_TOKEN"] == token
+    monkeypatch.setenv("FAKE_AWS_CREDS_STDOUT", json.dumps(
+        {"Version": 1, "AccessKeyId": "AKIAIOSFODNN7EXAMPLE", "SecretAccessKey": "k", "SessionToken": "T" * 16385}))
+    with pytest.raises(AwsError):
+        awscli.export_credentials(None, None)

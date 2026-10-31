@@ -31,8 +31,9 @@ _ALLOWED_OPTIONS = frozenset(
 _PROFILE_RE = re.compile(r"[A-Za-z0-9][A-Za-z0-9_.@+-]{0,127}")
 _REGION_RE = re.compile(r"[a-z]{2}(?:-[a-z]+)+-[0-9]")
 _TOKEN_RE = re.compile(r"[A-Za-z0-9+/=_.-]{1,4096}")
-_EXPIRED_MARKERS = ("ExpiredToken", "Token has expired", "SSO session", "SSO Token")
-_CRED_VALUE_RE = re.compile(r"[\x21-\x7e]{1,4096}")
+_EXPIRED_MARKERS = ("ExpiredToken", "Token has expired", "SSO session", "SSO Token",
+                    "UnauthorizedException")
+_CRED_VALUE_RE = re.compile(r"[\x21-\x7e]{1,16384}")
 _EXPORT_HINT = "aws configure export-credentials needs AWS CLI v2.9 or newer and a working profile"
 _CONTROL_RE = re.compile(r"[\x00-\x08\x0b-\x1f\x7f]")
 
@@ -141,13 +142,13 @@ def _exec(argv: List[str], timeout: int, timeout_hint: str,
         return subprocess.run([exe] + argv[1:], stdin=subprocess.DEVNULL, capture_output=True,
                               text=True, errors="replace", timeout=timeout, env=env, shell=False)
     except subprocess.TimeoutExpired:
-        raise AwsError("aws timed out after %d seconds" % timeout, timeout_hint)
+        raise AwsError("aws timed out after %d seconds" % timeout, timeout_hint) from None
     except OSError as e:
         raise AwsError("could not run aws: %s" % (e.strerror or e))
 
 
 def _run(argv: List[str], profile: Optional[str]) -> str:
-    r = _exec(argv, _TIMEOUT_S, "re-run with a narrower day range")
+    r = _exec(argv, _TIMEOUT_S, "re-run with a narrower day range, or check the network/prefix")
     if r.returncode != 0:
         raise AwsError("aws exited %d: %s" % (r.returncode, _clean(r.stderr) or "no error text"),
                        _hint_for(r.stderr, profile))
@@ -204,7 +205,9 @@ def export_credentials(profile: Optional[str], region: Optional[str]) -> Dict[st
         argv += ["--profile", profile]
     argv += ["--format", "process"]
     _check_argv(argv)
-    r = _exec(argv, _EXPORT_TIMEOUT_S, _EXPORT_HINT, region)
+    timeout_hint = ("the profile's credential lookup timed out; check the network or run "
+                    "aws configure export-credentials%s" % (" --profile %s" % profile if profile else ""))
+    r = _exec(argv, _EXPORT_TIMEOUT_S, timeout_hint, region)
     if r.returncode != 0:
         hint = _hint_for(r.stderr, profile)
         if hint is None or hint.startswith("check that"):

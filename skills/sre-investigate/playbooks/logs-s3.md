@@ -1,7 +1,7 @@
 # S3 access logs playbook (opt-in module)
 
 Backends: CloudFront standard logs, ALB access logs and WAF logs stored in S3, read through the module's `logs-inventory`, `logs-fetch` and `sqlq` · CloudWatch metrics (`AWS/CloudFront`, `AWS/ApplicationELB`, `AWS/WAFV2`) for the free first rung
-verified: synthetic (all three log types: every command form and output below ran against generated logs, a stubbed S3 and the real DuckDB CLI; no live bucket yet)
+verified: live (CloudFront standard logs, legacy layout, and WAF logs delivered straight to S3, 2026-10-31: logs-status, logs-inventory, dry runs, logs-fetch --yes with an SSO profile, every named query and the customer query, --purge) · synthetic (ALB access logs, CloudFront v2 and WAF via Firehose: generated logs, a stubbed S3 and the real DuckDB CLI)
 
 **Only when Phase 0 printed `S3 log module: on (…)`.** When it printed `off`, this playbook does not apply to the run: do not read on, and say nothing about the module beyond that line (SKILL.md, Phase 0).
 
@@ -147,7 +147,8 @@ Module results are query results. A link is `Confirmed` when a `sqlq` result sho
 
 - **Late delivery.** WAF and ALB files arrive every few minutes; CloudFront standard logs can lag much longer. The newest hour of any slice near "now" is incomplete. Widening by one unit catches records written into the next file; it does not make a slice ending at "now" complete.
 - **ALB delivery-date directories.** An ALB file sits in the directory of the day it was delivered; requests at 23:57 land in the next day's first file. The fetch handles it, given the inventory of `<day> <day+1>`.
-- **A 0-file day is a gap.** The inventory line `0 files — logging may be off or delivery late; this is a gap, not zero traffic` goes to the Gaps table for each such day, with what it affects. Never write that the day had no traffic or no blocks; that day's numbers come from CloudWatch.
+- **A 0-file day is a gap, except a day that has not started (see rung 2).** A day with only a folder placeholder or stray keys counts as 0 files too. The inventory line `0 files — logging may be off or delivery late; this is a gap, not zero traffic` goes to the Gaps table for each such day, with what it affects. Never write that the day had no traffic or no blocks; that day's numbers come from CloudWatch.
+- **WAF logs of a CloudFront-scope web ACL** are delivered under `AWSLogs/<account>/WAFLogs/cloudfront/<web-acl-name>/…`: the Region segment is the literal `cloudfront`, not `us-east-1`. A template with the wrong Region segment lists 0 files.
 - **Unsupported format.** CloudFront standard logging v2 in JSON or Parquet output is not supported (`format unsupported (v2 JSON/Parquet)`); W3C text is. Those logs are a gap.
 - **Logging filters.** A WAF logging filter that keeps only `BLOCK` or `COUNT` means allowed requests are absent from the logs, not zero; read `get-logging-configuration` ([waf.md](waf.md#escalation-order)) before reading any count of allowed traffic.
 - **By-day cross-check.** When a full day was fetched unsampled, compare `by_day` (or `summary`) requests with CloudWatch for the same day: CloudFront `Requests`, ALB `RequestCount`, WAF `AllowedRequests` + `BlockedRequests` for `Rule=ALL` (plus `ChallengeRequests` and `CaptchaRequests` when the ACL uses those actions). Do not add `CountedRequests`: a Count match does not end the request, so those requests are already inside the other totals. A clear shortfall means missing files or a filter; say which, and treat log counts as a lower bound.
@@ -165,7 +166,7 @@ The user writes `~/.config/culiops/sre-investigate/logs.env` (format and caps in
 
 | Log type | `DATASET_<name>=` value |
 |---|---|
-| CloudFront standard logs, legacy layout (one prefix per hour) | `cloudfront:s3://example-logs-bucket/cloudfront/E2EXAMPLE.{yyyy}-{MM}-{dd}-{HH}` |
+| CloudFront standard logs, legacy layout (hourly files) | `cloudfront:s3://example-logs-bucket/cloudfront/E2EXAMPLE.{yyyy}-{MM}-{dd}-{HH}` |
 | CloudFront standard logging v2, W3C text, partitioned by hour | `cloudfront:s3://example-logs-bucket/cloudfront-v2/{yyyy}/{MM}/{dd}/{HH}/` |
 | ALB access logs (date directory = delivery date) | `alb:s3://example-logs-bucket/alb/AWSLogs/111122223333/elasticloadbalancing/us-east-1/{yyyy}/{MM}/{dd}/` |
 | WAF logs delivered straight to S3 (the bucket name starts with `aws-waf-logs-`) | `waf:s3://aws-waf-logs-example-bucket/AWSLogs/111122223333/WAFLogs/us-east-1/example-web-acl/{yyyy}/{MM}/{dd}/{HH}/` |
@@ -180,7 +181,7 @@ The user writes `~/.config/culiops/sre-investigate/logs.env` (format and caps in
 - One query-log row per module command: the dataset, the full command (with the skill base path and every argument, never shortened to `... sqlq ...`), the window (day, slice and the widen unit), the sample factor (`1/<N>`), the dry run's MB and `est_cost` as the estimate and the fetch's `charged` MB as the actual, and the verdict (`OK`, `OVER (…)`, the exit code).
 - For every number from `sqlq`: the dataset, the named query or the SQL, the window, the sample factor and any `-- ` notice, with its label.
 - The data path from the fetch's `data:` line, and the manifest path from the inventory.
-- Gaps: each 0-file day, an unsupported format, a slice that was `OVER` and not fetched (what it would have answered, and the user's answer when it came), skipped unsafe keys, dropped columns, a logging filter, an exit 3 with its `! aws sso login --profile <profile>` fix.
+- Gaps: each 0-file day (except a day that has not started), an unsupported format, a slice that was `OVER` and not fetched (what it would have answered, and the user's answer when it came), skipped unsafe keys, dropped columns, a logging filter, an exit 3 with its `! aws sso login --profile <profile>` fix.
 - The report's Cost section: MB charged per dataset and the summed `est_cost`, next to the other backends' costs, plus the data path from the fetch's `data:` line and the fact that it stays on this machine until the user purges it. The report must stand alone: a path given only in chat or the ledger does not count.
 
 ## Rationalization Prevention
@@ -190,7 +191,7 @@ The user writes `~/.config/culiops/sre-investigate/logs.env` (format and caps in
 | "The whole day is small; I'll just `aws s3 sync` it, or `s5cmd cp` the objects myself." | STOP: the module is the only download path. It checks the caps, verifies sizes, redacts and deletes the raw files. `aws s3 cp`, `aws s3 sync`, `aws s3api get-object` and direct `s5cmd` are never run, listed or proposed. Narrow the slice instead. |
 | "The cap is in the way; I'll add `--force`." | STOP: `OVER` is a question for the user. Narrow (onset hours, `--every <N>`), fetch what fits, and ask. `--force` only after the user says they created the marker. |
 | "I'll create the marker, raise `MAX_MB` in `logs.env`, or point `HOME` elsewhere to save the user a step." | STOP: each of those is an override, and an override is the user's act alone. The agent can technically do it, and that is exactly why it never does. |
-| "0 files that day, so there was no traffic." | STOP: logging may be off or delivery late. It is a Gaps row; that day's numbers come from CloudWatch. |
+| "0 files that day, so there was no traffic." | STOP: logging may be off or delivery late (a day that has not started is the one exception). It is a Gaps row; that day's numbers come from CloudWatch. |
 | "A short descriptive run id is fine." | STOP: `--run` is the run directory's own id, `<service>-<env>-<YYYYMMDD>-<HHMM>`, the same in every module command. |
 | "The data path is an internal detail; the report needs only findings." | STOP: cite it in the ledger and the report, and tell the user it stays on this machine until they purge it. |
 | "The sampled count is close enough to quote as the total." | STOP: multiply by N and say so, with the factor and window; distinct counts are lower bounds; shares do not scale. |
@@ -206,7 +207,7 @@ The user writes `~/.config/culiops/sre-investigate/logs.env` (format and caps in
 | `--yes` on a slice whose dry run said `OVER`, or `--force` without the user saying they created the marker | STOP → narrow and ask; never override for the user |
 | Any write to `over-cap.allow`, `logs.env` or the budgets directory, or a module command run with a changed `HOME` | STOP → do not do it; tell the user what was over and let them decide |
 | `aws s3 cp`, `aws s3 sync`, `aws s3api get-object` or `s5cmd` in a command, a follow-up or a "To confirm" sentence | STOP → use the module, or record a gap |
-| A 0-file day, an unsupported format or a filtered log read as zero traffic or zero blocks | STOP → Gaps row; numbers for that day from CloudWatch |
+| A 0-file day (not one that has not started), an unsupported format or a filtered log read as zero traffic or zero blocks | STOP → Gaps row; numbers for that day from CloudWatch |
 | `--run` different from the run directory's id, or two ids in one run | STOP → use the run directory's id everywhere |
 | A number from `sqlq` with no dataset, query, window and sample factor in its row, or a sampled count quoted as a total | STOP → add them; scale by N and say so |
 | No data path in the ledger and report, or fetched data or a manifest copied under the output root or a repository | STOP → cite the path under `~/.local/share/culiops/sre-investigate/data/`; never copy the data |
